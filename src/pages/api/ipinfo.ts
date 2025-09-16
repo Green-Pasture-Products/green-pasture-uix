@@ -1,3 +1,4 @@
+import { appConstants } from "@/_redux/constants";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { IPinfoWrapper, IPinfo } from "node-ipinfo";
 
@@ -11,7 +12,7 @@ export default async function handler(
 			req.socket.remoteAddress ||
 			"";
 
-		const token = process.env.IPINFO_TOKEN;
+		const token = appConstants.IPINFO_TOKEN;
 		if (!token) {
 			return res.status(500).json({ error: "IPINFO_TOKEN is missing" });
 		}

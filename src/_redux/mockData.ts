@@ -29,7 +29,7 @@ export const mockProducts: Product[] = [
 			"Improves Gut health | It supports good sleep | Increases organic probiotics | Mental Wellness",
 		inStock: true,
 		organic: true,
-		rating: 4.6,
+		rating: 3.6,
 		reviews: 89,
 	},
 	{
@@ -44,7 +44,7 @@ export const mockProducts: Product[] = [
 			"Immune Booster | Heart, Liver and Kidney Health | Enhance Digestion",
 		inStock: true,
 		organic: true,
-		rating: 4.9,
+		rating: 3.9,
 		reviews: 156,
 	},
 	{
@@ -59,7 +59,7 @@ export const mockProducts: Product[] = [
 			"Libido Enhancer, Increased Testosterone, Stress Management, For Erectile Dysfunction, Improved Sperm Quality",
 		inStock: true,
 		organic: true,
-		rating: 4.7,
+		rating: 2.7,
 		reviews: 203,
 	},
 	{
@@ -73,7 +73,7 @@ export const mockProducts: Product[] = [
 		description: "Enhances reproductive health and boosts immunity naturally",
 		inStock: true,
 		organic: true,
-		rating: 4.5,
+		rating: 2.5,
 		reviews: 78,
 	},
 	{
@@ -88,7 +88,7 @@ export const mockProducts: Product[] = [
 			"Prevents/Fights Cancer | Reduce Heart Disease Risk | Boost Brain Health | Packed with Antioxidant | Radiant Skin | Pre/Post Workout + Many More",
 		inStock: true,
 		organic: true,
-		rating: 4.8,
+		rating: 2.8,
 		reviews: 145,
 	},
 	{
@@ -103,7 +103,7 @@ export const mockProducts: Product[] = [
 			"Promotes Healthy Pregnancy | Supports Eye Health | Boosts Energy | Aids Digestion | Supports Heart Health | Strengthens Bones | Improves Brain Function | Regulates Blood Sugar",
 		inStock: true,
 		organic: true,
-		rating: 4.4,
+		rating: 5,
 		reviews: 92,
 	},
 	{
@@ -118,7 +118,7 @@ export const mockProducts: Product[] = [
 			"Promotes Healthy Skin | Rich in Fiber | Boosts Energy | Supports Heart Health | Regulates Blood Sugar | Good for Weight Management | Dairy-Free & Nut-Free",
 		inStock: false,
 		organic: true,
-		rating: 4.7,
+		rating: 5,
 		reviews: 167,
 	},
 ];

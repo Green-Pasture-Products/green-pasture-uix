@@ -2,12 +2,13 @@ import React from "react";
 import Link from "next/link";
 import { Heart, ShoppingCart, Trash2, Star, XCircle } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import toast from "react-hot-toast";
+
 import {
 	clearWishlist,
 	removeFromWishlist,
 } from "@/_redux/reducers/wishlist.reducer";
 import { addToCart } from "@/_redux/reducers/cart.reducer";
-import toast from "react-hot-toast";
 import Products from "@/_components/Products";
 
 const WishlistPage: React.FC = () => {
@@ -84,117 +85,8 @@ const WishlistPage: React.FC = () => {
 				</div>
 			</div>
 
-			{/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-				{items.map((product) => (
-					<div
-						key={product.id}
-						className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
-					>
-						<div className="relative">
-							<Link href={`/product/${product.id}`}>
-								<img
-									src={product.image}
-									alt={product.name}
-									className="w-full h-48 object-cover hover:scale-105 transition-transform duration-300"
-								/>
-							</Link>
-							<button
-								onClick={() => handleRemoveFromWishlist(product.id)}
-								className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors group"
-							>
-								<Heart className="h-4 w-4 text-red-500 fill-current group-hover:text-red-600" />
-							</button>
-						</div>
-
-						<div className="p-4">
-							<Link href={`/product/${product.id}`}>
-								<h3 className="font-semibold text-lg text-gray-800 mb-2 hover:text-green-600 transition-colors">
-									{product.name}
-								</h3>
-							</Link>
-							<p className="text-gray-600 text-sm mb-3 line-clamp-2">
-								{product.description}
-							</p>
-
-							<div className="flex items-center mb-3">
-								<div className="flex items-center space-x-1">
-									{[...Array(5)].map((_, i) => (
-										<Star
-											key={i}
-											className={`h-4 w-4 ${
-												i < Math.floor(product.rating)
-													? "text-yellow-400 fill-current"
-													: "text-gray-300"
-											}`}
-										/>
-									))}
-								</div>
-								<span className="text-sm text-gray-500 ml-2">
-									({product.reviews})
-								</span>
-							</div>
-
-							<div className="flex items-center justify-between mb-4">
-								<div className="flex items-center space-x-2">
-									<span className="text-xl font-bold text-green-600">
-										${product.price}
-									</span>
-									{product.originalPrice && (
-										<span className="text-sm text-gray-500 line-through">
-											${product.originalPrice}
-										</span>
-									)}
-								</div>
-								{!product.inStock && (
-									<span className="text-red-600 text-sm font-medium">
-										Out of Stock
-									</span>
-								)}
-							</div>
-
-							<div className="flex space-x-2">
-								<button
-									onClick={() => handleAddToCart(product)}
-									disabled={!product.inStock && !isInCart}
-									className={`flex-1 flex items-center justify-center space-x-1 px-4 py-2 rounded-md font-medium transition-colors ${
-										!product.inStock && !isInCart
-											? "bg-gray-300 text-gray-500 cursor-not-allowed"
-											: isInCart
-											? "bg-red-500 text-white hover:bg-red-600"
-											: "bg-green-600 text-white hover:bg-green-700"
-									}`}
-								>
-									{isInCart ? (
-										<>
-											<XCircle className="h-4 w-4" />
-											<span className="text-sm">Remove</span>
-										</>
-									) : (
-										<>
-											<ShoppingCart className="h-3 md:h-4 w-3 md:w-4" />
-											<span className="text-sm">
-												{product.inStock
-													? "Add to Cart"
-													: "Out of Stock"}
-											</span>
-										</>
-									)}
-								</button>
-								<button
-									onClick={() => handleRemoveFromWishlist(product.id)}
-									className="p-2 border border-gray-300 rounded-md hover:bg-red-50 hover:border-red-300 transition-colors"
-								>
-									<Trash2 className="h-4 w-4 text-gray-600 hover:text-red-600" />
-								</button>
-							</div>
-						</div>
-					</div>
-				))}
-			</div> */}
-
 			<Products products={items} />
 
-			{/* Continue Shopping */}
 			<div className="text-center mt-12">
 				<Link
 					href="/products"

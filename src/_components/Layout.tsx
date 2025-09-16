@@ -1,28 +1,21 @@
 // LIBRARY COMPONENTS
+import { Toaster } from "react-hot-toast";
 import Head from "next/head";
 import React from "react";
 
 // CUSTOM COMPONENTS
 import { LayoutProps } from "@/types/client/layout";
+import PromoBanner from "./PromoBanner";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import PromoBanner from "./PromoBanner";
-import { Toaster } from "react-hot-toast";
-import { usePathname } from "next/navigation";
 
-const Layout = ({ children, page_title }: LayoutProps) => {
-	const pathname = usePathname();
-
-	// const lastPart = (pathname as string).split("/").pop() || "";
-	// console.log({ lastPart });
-	// const pageTitle = lastPart.charAt(0).toUpperCase() + lastPart.slice(1);
-
+const Layout = ({ children, pageTitle }: LayoutProps) => {
 	return (
 		<>
 			<Head>
 				<title className="capitalize">
-					{/* {`${pageTitle} page` || "Home"} | */}
-					Green Patures Organics | Living Healthy
+					{`${pageTitle} page` || "Home"} | Green Patures Organics | Living
+					Healthy
 				</title>
 				{/* <meta charset="UTF-8" /> */}
 				<meta
@@ -101,14 +94,14 @@ const Layout = ({ children, page_title }: LayoutProps) => {
 				toastOptions={{
 					success: {
 						style: {
-							background: "#fff", // Tailwind green-500
+							background: "#fff",
 							color: "#10B981",
 							fontWeight: "500",
 						},
 					},
 					error: {
 						style: {
-							background: "#fff", // Tailwind red-500
+							background: "#fff",
 							color: "#EF4444",
 							fontWeight: "500",
 						},

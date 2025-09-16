@@ -1,10 +1,12 @@
-import { Facebook, Instagram, Leaf, MessageCircle } from "lucide-react";
+import { Facebook, Instagram, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
+import { appConstants } from "@/_redux/constants";
+
 interface SocialLink {
-	href: string;
+	href: string | undefined;
 	label: string;
 	title: string;
 	icon: React.ElementType;
@@ -12,19 +14,19 @@ interface SocialLink {
 
 const socialLinks: SocialLink[] = [
 	{
-		href: "https://chat.whatsapp.com/EvV74KvWbB34wU0Zyte1tN",
+		href: process.env.WHATSAPP_URL,
 		label: "Visit WhatsApp",
 		title: "Visit our WhatsApp",
 		icon: MessageCircle,
 	},
 	{
-		href: "https://www.facebook.com/share/1GGim6eNuU/",
+		href: appConstants.FACEBOOK_URL,
 		label: "Visit Facebook",
 		title: "Visit our Facebook",
 		icon: Facebook,
 	},
 	{
-		href: "https://www.instagram.com/greenpastureorganics/profilecard/?igsh=cDkwbHQwcThhczh4",
+		href: appConstants.INSTAGRAM_URL,
 		label: "Visit Instagram",
 		title: "Visit our Instagram",
 		icon: Instagram,
@@ -34,6 +36,7 @@ const socialLinks: SocialLink[] = [
 const navLinks = [
 	{ href: "/", label: "Home" },
 	{ href: "/products", label: "Products" },
+	{ href: "/search", label: "Search" },
 	{ href: "/wishlist", label: "Wishlist" },
 	{ href: "/about", label: "About" },
 	{ href: "/contact", label: "Contact" },
@@ -60,7 +63,7 @@ const Footer = () => {
 										className="object-contain"
 									/>
 								</div>
-								<span className="text-md md:text-lg font-bold text-green-800">
+								<span className="text-md md:text-lg font-bold">
 									Green Pastures Organics
 								</span>
 							</Link>
@@ -73,7 +76,7 @@ const Footer = () => {
 					<div>
 						<h3 className="font-semibold mb-4">Quick Links</h3>
 						<ul className="space-y-2 text-green-200">
-							{navLinks.map(({ href, label }) => (
+							{navLinks?.map(({ href, label }) => (
 								<li key={href}>
 									<Link
 										href={href}
@@ -88,7 +91,7 @@ const Footer = () => {
 					<div>
 						<h3 className="font-semibold mb-4">Categories</h3>
 						<ul className="space-y-2 text-green-200">
-							{categories.map((category) => (
+							{categories?.map((category) => (
 								<li key={category}>
 									<Link
 										href={`/products?category=${category}`}
@@ -103,11 +106,19 @@ const Footer = () => {
 					<div>
 						<h3 className="font-semibold mb-4">Contact Info</h3>
 						<ul className="space-y-2 text-green-200">
-							<li>Phone: (234) 7018845177</li>
-							<li>Email: hello@gporganics.com</li>
+							<li>
+								Phone:{" "}
+								<Link href={`tel:+2347018845177`}>(234)7018845177</Link>
+							</li>
+							<li>
+								Email:{" "}
+								<Link href={`mailto:hello@gporganics.com`} className="">
+									hello@gporganics.com
+								</Link>
+							</li>
 						</ul>
-						<ul className="flex justify-center md:justify-end gap-4">
-							{socialLinks.map(({ href, label, title, icon: Icon }) => (
+						<ul className="flex justify-center md:justify-start gap-4 mt-4 md:mt-8">
+							{socialLinks?.map(({ href, label, title, icon: Icon }) => (
 								<li
 									key={href}
 									className="w-10 h-10 rounded-full border border-white flex items-center justify-center transition-all duration-200 hover:border-transparent hover:scale-110"
@@ -129,8 +140,8 @@ const Footer = () => {
 				</div>
 				<div className="border-t border-green-700 mt-8 pt-8 text-center text-green-200">
 					<p>
-						&copy; 2024 - {new Date().getFullYear()}
-						GP Organics. All rights reserved.
+						&copy; 2024 - {new Date().getFullYear()} Green Pastures
+						Organics. All rights reserved.
 					</p>
 				</div>
 			</div>

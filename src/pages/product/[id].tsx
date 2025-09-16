@@ -1,6 +1,7 @@
 import React, { MouseEvent, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import toast from "react-hot-toast";
 import {
 	Star,
 	ShoppingCart,
@@ -14,11 +15,11 @@ import {
 	Info,
 	XCircle,
 } from "lucide-react";
+
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { addToCart, removeFromCart } from "@/_redux/reducers/cart.reducer";
 import { Product } from "@/types";
 import Products from "@/_components/Products";
-import toast from "react-hot-toast";
 import {
 	addToWishlist,
 	removeFromWishlist,
@@ -38,12 +39,10 @@ const ProductDetailsPage: React.FC = () => {
 	const [selectedImage, setSelectedImage] = useState(0);
 	const [activeTab, setActiveTab] = useState("description");
 
-	// Get related products (same category, excluding current product)
 	const relatedProducts = products
 		.filter((p: Product) => p.category === product?.category && p.id !== id)
 		.slice(0, 4);
 
-	// Check if product is in cart and get quantity
 	const cartItem = cartItems.find((item) => item.id === id);
 	const isInCart = !!cartItem;
 	const cartQuantity = cartItem?.quantity || 0;
@@ -147,7 +146,6 @@ const ProductDetailsPage: React.FC = () => {
 
 	return (
 		<div className="container page-wrapper mx-auto px-4 py-8">
-			{/* Breadcrumb */}
 			<nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
 				<Link href="/" className="hover:text-green-600">
 					Home
@@ -167,7 +165,6 @@ const ProductDetailsPage: React.FC = () => {
 				<span className="text-gray-800">{product.name}</span>
 			</nav>
 
-			{/* Back Button */}
 			<button
 				onClick={() => router.back()}
 				className="flex items-center space-x-2 text-green-600 hover:text-green-700 mb-8"
@@ -177,7 +174,6 @@ const ProductDetailsPage: React.FC = () => {
 			</button>
 
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-				{/* Product Images */}
 				<div className="space-y-4">
 					<div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
 						<img
@@ -187,7 +183,6 @@ const ProductDetailsPage: React.FC = () => {
 						/>
 					</div>
 
-					{/* Thumbnail Images */}
 					<div className="flex space-x-4">
 						{productImages.map((image, index) => (
 							<button
@@ -209,7 +204,6 @@ const ProductDetailsPage: React.FC = () => {
 					</div>
 				</div>
 
-				{/* Product Information */}
 				<div className="space-y-6">
 					<div>
 						<h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -217,8 +211,6 @@ const ProductDetailsPage: React.FC = () => {
 						</h1>
 						<p className="text-gray-600">{product.category}</p>
 					</div>
-
-					{/* Rating */}
 					<div className="flex items-center space-x-4">
 						<div className="flex items-center space-x-1">
 							{[...Array(5)].map((_, i) => (
@@ -237,8 +229,6 @@ const ProductDetailsPage: React.FC = () => {
 							({product.reviews} reviews)
 						</span>
 					</div>
-
-					{/* Price */}
 					<div className="flex items-center space-x-4">
 						<span className="text-3xl font-bold text-green-600">
 							₦{product.price.toLocaleString()}
@@ -257,8 +247,6 @@ const ProductDetailsPage: React.FC = () => {
 							</div>
 						)}
 					</div>
-
-					{/* Badges */}
 					<div className="flex flex-wrap gap-2">
 						{product.organic && (
 							<span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -276,8 +264,6 @@ const ProductDetailsPage: React.FC = () => {
 							</span>
 						)}
 					</div>
-
-					{/* Quantity Selector */}
 					<div className="space-y-4">
 						<div>
 							<label className="block text-sm font-medium text-gray-700 mb-2">
@@ -309,7 +295,6 @@ const ProductDetailsPage: React.FC = () => {
 							)}
 						</div>
 
-						{/* Add to Cart Button */}
 						<div className="flex space-x-4">
 							<button
 								onClick={handleCartToggle}
@@ -358,8 +343,6 @@ const ProductDetailsPage: React.FC = () => {
 							</button>
 						</div>
 					</div>
-
-					{/* Features */}
 					<div className="space-y-3">
 						<h3 className="font-semibold text-gray-800">
 							Product Features:
@@ -376,8 +359,7 @@ const ProductDetailsPage: React.FC = () => {
 							))}
 						</ul>
 					</div>
-
-					{/* Shipping Info */}
+					={" "}
 					<div className="bg-green-50 border border-green-200 rounded-md p-4 space-y-2">
 						<div className="flex items-center space-x-2 text-green-800">
 							<Truck className="h-5 w-5" />
@@ -393,7 +375,6 @@ const ProductDetailsPage: React.FC = () => {
 				</div>
 			</div>
 
-			{/* Product Details Tabs */}
 			<div className="mb-16">
 				<div className="border-b border-gray-200">
 					<nav className="flex space-x-8">
@@ -521,7 +502,6 @@ const ProductDetailsPage: React.FC = () => {
 								Customer Reviews
 							</h3>
 
-							{/* Review Summary */}
 							<div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
 								<div className="flex items-center space-x-6">
 									<div className="text-center">
@@ -588,9 +568,7 @@ const ProductDetailsPage: React.FC = () => {
 								</div>
 							</div>
 
-							{/* Individual Reviews */}
 							<div className="space-y-6">
-								{/* Mock Reviews */}
 								{productReviews.map((review, index) => (
 									<div
 										key={index}
@@ -627,47 +605,11 @@ const ProductDetailsPage: React.FC = () => {
 				</div>
 			</div>
 
-			{/* Related Products */}
 			{relatedProducts.length > 0 && (
 				<div>
 					<h2 className="text-2xl font-bold text-gray-800 mb-8">
 						Related Products
 					</h2>
-					{/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-						{relatedProducts.map((relatedProduct) => (
-							<Link
-								key={relatedProduct.id}
-								href={`/products/${relatedProduct.id}`}
-								className="group"
-							>
-								<div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-									<div className="aspect-square overflow-hidden">
-										<img
-											src={relatedProduct.image}
-											alt={relatedProduct.name}
-											className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-										/>
-									</div>
-									<div className="p-4">
-										<h3 className="font-semibold text-gray-800 mb-2 group-hover:text-green-600 transition-colors">
-											{relatedProduct.name}
-										</h3>
-										<div className="flex items-center justify-between">
-											<span className="text-lg font-bold text-green-600">
-												₦{relatedProduct.price}
-											</span>
-											<div className="flex items-center space-x-1">
-												<Star className="h-4 w-4 text-yellow-400 fill-current" />
-												<span className="text-sm text-gray-600">
-													{relatedProduct.rating}
-												</span>
-											</div>
-										</div>
-									</div>
-								</div>
-							</Link>
-						))}
-					</div> */}
 					<Products products={relatedProducts?.slice(0, 2)} />
 				</div>
 			)}

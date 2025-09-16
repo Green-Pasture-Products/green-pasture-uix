@@ -1,3 +1,4 @@
+import { appConstants } from "@/_redux/constants";
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
 
 let cachedIpInfo: any = null;
@@ -22,7 +23,7 @@ async function getIpInfo(): Promise<any> {
 
 // Create Axios instance
 const axiosInstance: AxiosInstance = axios.create({
-	baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+	baseURL: appConstants.API_BASE_URL,
 	headers: {
 		"Content-Type": "application/json",
 		// Authorization: `Bearer 1`,

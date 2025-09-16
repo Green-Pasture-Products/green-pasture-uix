@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
-// import { useSelector, useDispatch } from "react-redux";
-// import { RootState } from "../store";
-// import {
-// 	setSearchQuery,
-// 	addRecentSearch,
-// 	setSuggestions,
-// } from "../store/searchSlice";
 import { Search, Clock, X, TrendingUp } from "lucide-react";
+
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { Product } from "@/types";
 import {
@@ -168,14 +162,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
 				</div>
 			</form>
 
-			{/* Search Suggestions Dropdown */}
 			{showSuggestions &&
 				(suggestions?.length > 0 || recentSearches?.length > 0) && (
 					<div
 						ref={dropdownRef}
 						className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-96 overflow-y-auto"
 					>
-						{/* Product Suggestions */}
 						{suggestions?.length > 0 && (
 							<div className="p-2">
 								<div className="flex items-center text-xs text-gray-500 mb-2 px-2">
@@ -201,7 +193,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
 							</div>
 						)}
 
-						{/* Recent Searches */}
 						{recentSearches?.length > 0 && (
 							<div className="p-2 border-t border-gray-100">
 								<div className="flex items-center text-xs text-gray-500 mb-2 px-2">

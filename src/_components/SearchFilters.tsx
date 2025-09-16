@@ -27,7 +27,7 @@ const SearchFiltersComponent: React.FC = () => {
 			filters?.organicOnly ||
 			filters?.rating > 0 ||
 			filters?.priceRange[0] > 0 ||
-			filters?.priceRange[1] < 10000000
+			filters?.priceRange[1] < 40000
 		);
 	};
 
@@ -82,7 +82,7 @@ const SearchFiltersComponent: React.FC = () => {
 							<input
 								type="number"
 								min="0"
-								max="100000000"
+								max="40000"
 								value={filters?.priceRange[0]}
 								onChange={(e) =>
 									handleFilterChange({
@@ -98,7 +98,7 @@ const SearchFiltersComponent: React.FC = () => {
 							<input
 								type="number"
 								min="0"
-								max="100000000"
+								max="40000"
 								value={filters?.priceRange[1]}
 								onChange={(e) =>
 									handleFilterChange({
@@ -114,7 +114,7 @@ const SearchFiltersComponent: React.FC = () => {
 						<input
 							type="range"
 							min="0"
-							max="100000000"
+							max="40000"
 							value={filters?.priceRange[1]}
 							onChange={(e) =>
 								handleFilterChange({

@@ -20,7 +20,7 @@ const initialState: SearchState = {
 	query: "",
 	filters: {
 		category: "All",
-		priceRange: [0, 100],
+		priceRange: [0, 40000],
 		inStockOnly: false,
 		organicOnly: false,
 		rating: 0,
