@@ -23,6 +23,7 @@ import {
 import { signupSchema, SignupFormData } from "@/_validations/auth";
 import { authAPI } from "@/_utils/auth";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import Image from "next/image";
 
 const SignupPage: React.FC = () => {
 	const router = useRouter();
@@ -89,9 +90,19 @@ const SignupPage: React.FC = () => {
 				<div>
 					<div className="flex justify-center">
 						<Link href="/" className="flex items-center space-x-2">
-							<Leaf className="h-12 w-12 text-green-600" />
-							<span className="text-3xl font-bold text-green-800">
-								OrganicStore
+							<div className="relative w-[2.2rem] aspect-square bg-transparent">
+								<Image
+									src="/images/GP Organic Logo (Primary).png"
+									alt="Green Pastures Logo"
+									height={100}
+									width={100}
+									priority
+									sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
+									className="object-contain"
+								/>
+							</div>
+							<span className="text-md md:text-lg hidden lg:inline-block font-bold text-green-800">
+								Green Pastures Organics
 							</span>
 						</Link>
 					</div>

@@ -1,15 +1,29 @@
 import React from "react";
 import Link from "next/link";
 import { Home, ArrowLeft, Search, Leaf } from "lucide-react";
+import Image from "next/image";
 
 const Custom404: React.FC = () => {
 	return (
 		<div className="min-h-screen bg-green-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
 			<div className="max-w-lg w-full text-center">
 				<div className="mb-8">
-					<div className="flex justify-center mb-6">
-						<Leaf className="h-20 w-20 text-green-600" />
-					</div>
+					<Link href="/" className="flex items-center space-x-2">
+						<div className="relative w-[2.2rem] aspect-square bg-transparent">
+							<Image
+								src="/images/GP Organic Logo (Primary).png"
+								alt="Green Pastures Logo"
+								height={100}
+								width={100}
+								priority
+								sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
+								className="object-contain"
+							/>
+						</div>
+						<span className="text-md md:text-lg hidden lg:inline-block font-bold text-green-800">
+							Green Pastures Organics
+						</span>
+					</Link>
 
 					<div className="text-9xl font-bold text-green-600 mb-4">404</div>
 
