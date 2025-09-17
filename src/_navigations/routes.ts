@@ -26,6 +26,10 @@ export const getPageNames = (link: string) => {
 	switch (link) {
 		case "/admin/dashboard":
 			return "dashboard";
+		case "/admin/customers":
+			return "customers";
+		case "/admin/customers/[id]":
+			return "customers";
 		case "/admin/products":
 			return "products";
 		case "/admin/products/[id]":
