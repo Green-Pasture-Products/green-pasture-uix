@@ -44,43 +44,37 @@ const Navbar: React.FC = () => {
 		<header className="bg-white shadow-sm border-b border-green-100">
 			<div className="container page-wrapper mx-auto px-4">
 				<div className="flex items-center justify-between h-16 md:h-18">
-					{!pathname?.includes("/admin") && (
-						<>
-							<Link href="/" className="flex items-center space-x-2">
-								<div className="relative w-[2.2rem] aspect-square bg-transparent">
-									<Image
-										src="/images/GP Organic Logo (Primary).png"
-										alt="Green Pastures Logo"
-										height={100}
-										width={100}
-										priority
-										sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
-										className="object-contain"
-									/>
-								</div>
-								<span className="text-md md:text-lg hidden lg:inline-block font-bold text-green-800">
-									Green Pastures Organics
-								</span>
+					<Link href="/" className="flex items-center space-x-2">
+						<div className="relative w-[2.2rem] aspect-square bg-transparent">
+							<Image
+								src="/images/GP Organic Logo (Primary).png"
+								alt="Green Pastures Logo"
+								height={100}
+								width={100}
+								priority
+								sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
+								className="object-contain"
+							/>
+						</div>
+						<span className="text-md md:text-lg hidden lg:inline-block font-bold text-green-800">
+							Green Pastures Organics
+						</span>
+					</Link>
+
+					<nav className="hidden md:flex space-x-8">
+						{navLinks.map(({ href, label }) => (
+							<Link
+								key={href}
+								href={href}
+								className={`${isActive(
+									href
+								)} hover:text-green-600 transition-colors font-bold`}
+							>
+								{label}
 							</Link>
+						))}
+					</nav>
 
-							{/* Navigation */}
-							<nav className="hidden md:flex space-x-8">
-								{navLinks.map(({ href, label }) => (
-									<Link
-										key={href}
-										href={href}
-										className={`${isActive(
-											href
-										)} hover:text-green-600 transition-colors font-bold`}
-									>
-										{label}
-									</Link>
-								))}
-							</nav>
-						</>
-					)}
-
-					{/* Actions */}
 					<div
 						className={`flex items-center space-x-4 ${
 							pathname?.includes("/admin") && "ms-auto"

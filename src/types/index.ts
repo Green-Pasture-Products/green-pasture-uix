@@ -76,7 +76,7 @@ export interface User {
 	email: string;
 	firstName: string;
 	lastName: string;
-	userType?: string;
+	role?: string;
 	isVerified: boolean;
 	createdAt: string;
 }

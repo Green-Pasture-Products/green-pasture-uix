@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
 			// Redirect to home or previous page
 			const redirect = router.query.redirect as string;
 
-			if (user?.userType === "admin") {
+			if (user?.role === "admin") {
 				router.push(redirect || "/admin/dashboard");
 			} else {
 				router.push(redirect || "/");

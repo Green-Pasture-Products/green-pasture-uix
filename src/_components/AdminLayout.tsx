@@ -4,14 +4,14 @@ import React from "react";
 
 // CUSTOM COMPONENTS
 import { LayoutProps } from "@/types/client/layout";
-import { useIsAuthRoute } from "@/_utils";
-import { usePathname } from "next/navigation";
+// import { useIsAuthRoute } from "@/_utils";
+// import { usePathname } from "next/navigation";
 import Sidebar from "../_navigations/Sidebar";
 import Header from "../_navigations/Header";
 
 const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
-	const pathname = usePathname();
-	const authPages = useIsAuthRoute();
+	// const pathname = usePathname();
+	// const authPages = useIsAuthRoute();
 
 	return (
 		<>

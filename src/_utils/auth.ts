@@ -12,7 +12,7 @@ export const authAPI = {
 				firstName: "Admin",
 				lastName: "John",
 				isVerified: true,
-				userType: "admin",
+				role: "admin",
 				createdAt: new Date().toISOString(),
 			};
 		}
