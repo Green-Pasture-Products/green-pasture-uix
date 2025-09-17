@@ -6,6 +6,7 @@ import { productsAction } from "@/_redux/actions";
 import { logger } from "@/_utils";
 import Products from "@/_components/Products";
 import Image from "next/image";
+import Layout from "@/_components/Layout";
 
 const featuredSection = [
 	{
@@ -41,7 +42,7 @@ const HomePage: React.FC = () => {
 	}, []);
 
 	return (
-		<>
+		<Layout pageTitle={"Home"}>
 			<section id="welcome" className="bg-green-50 pb-12">
 				<div className="container page-wrapper mx-auto px-4">
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -208,7 +209,7 @@ const HomePage: React.FC = () => {
 					</div>
 				</div>
 			</section>
-		</>
+		</Layout>
 	);
 };
 

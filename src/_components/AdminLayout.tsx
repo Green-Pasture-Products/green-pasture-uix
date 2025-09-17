@@ -1,17 +1,15 @@
 // LIBRARY COMPONENTS
-import { Toaster } from "react-hot-toast";
 import Head from "next/head";
 import React from "react";
 
 // CUSTOM COMPONENTS
 import { LayoutProps } from "@/types/client/layout";
-import PromoBanner from "./PromoBanner";
-import Navbar from "../_navigations/Navbar";
-import Footer from "../_navigations/Footer";
 import { useIsAuthRoute } from "@/_utils";
 import { usePathname } from "next/navigation";
+import Sidebar from "../_navigations/Sidebar";
+import Header from "../_navigations/Header";
 
-const Layout = ({ children, pageTitle }: LayoutProps) => {
+const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 	const pathname = usePathname();
 	const authPages = useIsAuthRoute();
 
@@ -88,14 +86,15 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 			</Head>
 
-			<div className="min-h-screen overflow-x-hidden bg-green-50">
-				<PromoBanner />
-				<Navbar />
-				<main className="flex-1">{children}</main>
-				<Footer />
+			<div className="min-h-screen overflow-x-hidden bg-green-50 flex">
+				<Sidebar />
+				<div className="w-full">
+					<Header />
+					<main className="flex-1 px-8 py-4">{children}</main>
+				</div>
 			</div>
 		</>
 	);
 };
 
-export default Layout;
+export default AdminLayout;

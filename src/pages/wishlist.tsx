@@ -10,6 +10,7 @@ import {
 } from "@/_redux/reducers/wishlist.reducer";
 import { addToCart } from "@/_redux/reducers/cart.reducer";
 import Products from "@/_components/Products";
+import Layout from "@/_components/Layout";
 
 const WishlistPage: React.FC = () => {
 	const dispatch = useAppDispatch();
@@ -35,67 +36,71 @@ const WishlistPage: React.FC = () => {
 
 	if (items.length === 0) {
 		return (
-			<div className="container mx-auto px-4 py-16 text-center">
-				<div className="max-w-md mx-auto">
-					<Heart className="h-24 w-24 text-gray-300 mx-auto mb-8" />
-					<h1 className="text-3xl font-bold text-gray-800 mb-4">
-						Your Wishlist is Empty
-					</h1>
-					<p className="text-gray-600 mb-8">
-						Save your favorite products to your wishlist so you can easily
-						find them later.
-					</p>
-					<Link
-						href="/products"
-						className="bg-green-600 text-white px-8 py-3 rounded-md font-semibold hover:bg-green-700 transition-colors inline-block"
-					>
-						Start Shopping
-					</Link>
+			<Layout pageTitle={"Wishlist"}>
+				<div className="container mx-auto px-4 py-16 text-center">
+					<div className="max-w-md mx-auto">
+						<Heart className="h-24 w-24 text-gray-300 mx-auto mb-8" />
+						<h1 className="text-3xl font-bold text-gray-800 mb-4">
+							Your Wishlist is Empty
+						</h1>
+						<p className="text-gray-600 mb-8">
+							Save your favorite products to your wishlist so you can
+							easily find them later.
+						</p>
+						<Link
+							href="/products"
+							className="bg-green-600 text-white px-8 py-3 rounded-md font-semibold hover:bg-green-700 transition-colors inline-block"
+						>
+							Start Shopping
+						</Link>
+					</div>
 				</div>
-			</div>
+			</Layout>
 		);
 	}
 
 	return (
-		<div className="container page-wrapper mx-auto px-4 py-8">
-			<div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
-				<div>
-					<h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-						My Wishlist
-					</h1>
-					<p className="text-gray-600 mt-2">
-						{wishlistItemCount}{" "}
-						{wishlistItemCount === 1 ? "item" : "items"} saved
-					</p>
+		<Layout pageTitle={"Wishlist"}>
+			<div className="container page-wrapper mx-auto px-4 py-8">
+				<div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
+					<div>
+						<h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+							My Wishlist
+						</h1>
+						<p className="text-gray-600 mt-2">
+							{wishlistItemCount}{" "}
+							{wishlistItemCount === 1 ? "item" : "items"} saved
+						</p>
+					</div>
+					<div className="flex space-x-4 mt-4 md:mt-0">
+						<button
+							onClick={handleAddAllToCart}
+							className="bg-green-600 text-white px-4 md:px-6 py-2 rounded-md font-medium hover:bg-green-700 transition-colors flex items-center space-x-2 cursor-pointer"
+						>
+							<ShoppingCart className="h-4 w-4" />
+							<span>Add All to Cart</span>
+						</button>
+						<button
+							onClick={handleClearWishlist}
+							className="text-red-600 hover:text-red-700 font-medium px-4 py-2 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
+						>
+							Clear Wishlist
+						</button>
+					</div>
 				</div>
-				<div className="flex space-x-4 mt-4 md:mt-0">
-					<button
-						onClick={handleAddAllToCart}
-						className="bg-green-600 text-white px-4 md:px-6 py-2 rounded-md font-medium hover:bg-green-700 transition-colors flex items-center space-x-2 cursor-pointer"
+
+				<Products products={items} />
+
+				<div className="text-center mt-12">
+					<Link
+						href="/products"
+						className="bg-gray-100 text-gray-800 px-8 py-3 rounded-md font-semibold hover:bg-gray-200 transition-colors inline-block"
 					>
-						<ShoppingCart className="h-4 w-4" />
-						<span>Add All to Cart</span>
-					</button>
-					<button
-						onClick={handleClearWishlist}
-						className="text-red-600 hover:text-red-700 font-medium px-4 py-2 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
-					>
-						Clear Wishlist
-					</button>
+						Continue Shopping
+					</Link>
 				</div>
 			</div>
-
-			<Products products={items} />
-
-			<div className="text-center mt-12">
-				<Link
-					href="/products"
-					className="bg-gray-100 text-gray-800 px-8 py-3 rounded-md font-semibold hover:bg-gray-200 transition-colors inline-block"
-				>
-					Continue Shopping
-				</Link>
-			</div>
-		</div>
+		</Layout>
 	);
 };
 
