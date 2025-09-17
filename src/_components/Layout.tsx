@@ -8,8 +8,11 @@ import { LayoutProps } from "@/types/client/layout";
 import PromoBanner from "./PromoBanner";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import { useIsAuthRoute } from "@/_utils";
 
 const Layout = ({ children, pageTitle }: LayoutProps) => {
+	const authPages = useIsAuthRoute();
+
 	return (
 		<>
 			<Head>
@@ -84,10 +87,14 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 			</Head>
 
 			<div className="min-h-screen overflow-x-hidden bg-green-50">
-				<PromoBanner />
-				<Navbar />
+				{!authPages && (
+					<>
+						<PromoBanner />
+						<Navbar />
+					</>
+				)}
 				<main className="flex-1">{children}</main>
-				<Footer />
+				{!authPages && <Footer />}
 			</div>
 			<Toaster
 				position="top-right"

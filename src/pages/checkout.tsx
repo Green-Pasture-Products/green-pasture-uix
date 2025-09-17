@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreditCard, Truck, CheckCircle, AlertCircle } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { CheckoutFormData, checkoutSchema } from "@/_utils/validations";
+import { CheckoutFormData, checkoutSchema } from "@/_validations/checkout";
 import { clearCart } from "@/_redux/reducers/cart.reducer";
 import Image from "next/image";
 

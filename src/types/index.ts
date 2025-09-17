@@ -70,3 +70,20 @@ export interface IpInfo {
 	timezone?: string;
 	[key: string]: any; // For any extra fields from IPInfo API
 }
+
+export interface User {
+	id: string;
+	email: string;
+	firstName: string;
+	lastName: string;
+	userType?: string;
+	isVerified: boolean;
+	createdAt: string;
+}
+
+export interface AuthState {
+	user: User | null;
+	isAuthenticated: boolean;
+	isLoading: boolean;
+	error: string | null;
+}

@@ -19,7 +19,7 @@ import { appConstants } from "./constants";
 const persistConfig = {
 	key: `${appConstants.ROOT_STORAGE}`,
 	storage,
-	whitelist: ["product", "wishlist", "cart", "search"], // persist only this reducer
+	whitelist: ["product", "wishlist", "cart", "search", "auth"], // persist only this reducer
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

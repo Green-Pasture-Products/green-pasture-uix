@@ -1,3 +1,5 @@
+import { usePathname } from "next/navigation";
+
 export const generateUUID = (): string => {
 	if (
 		typeof crypto !== "undefined" &&
@@ -89,4 +91,22 @@ const countryCurrencyMap: Record<string, string> = {
 export const getCurrencySymbol = (countryCode?: string | null): string => {
 	if (!countryCode) return "₦"; // Fallback to Dollar if no country
 	return countryCurrencyMap[countryCode.toUpperCase()] || "₦";
+};
+
+export const useIsAuthRoute = () => {
+	const pathname = usePathname();
+
+	const routes = [
+		"/404",
+		"/login",
+		"/signup",
+		"/forgot-password",
+		"/reset-password",
+		"/setup-password",
+		"/verify-user/[email]",
+	];
+
+	const checker = (route: string) => routes.indexOf(route) !== -1;
+
+	return checker(pathname);
 };
