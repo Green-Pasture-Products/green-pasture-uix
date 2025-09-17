@@ -55,8 +55,8 @@ const FilteredProducts: React.FC = () => {
 					</div>
 				)}
 
-				<div className="flex items-center justify-between mb-4">
-					<div>
+				<div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+					<div className="">
 						{isSearchPage ? (
 							<h1 className="text-2xl font-bold text-gray-800">
 								{query
@@ -77,7 +77,7 @@ const FilteredProducts: React.FC = () => {
 						)}
 					</div>
 
-					<div className="flex items-center space-x-4">
+					<div className="flex items-center space-x-4 mt-4 md:mt-0">
 						<div className="flex items-center bg-gray-100 rounded-md p-1">
 							<button
 								onClick={() => setViewMode("grid")}

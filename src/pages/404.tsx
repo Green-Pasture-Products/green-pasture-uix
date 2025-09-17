@@ -20,7 +20,7 @@ const Custom404: React.FC = () => {
 								className="object-contain"
 							/>
 						</div>
-						<span className="text-md md:text-lg hidden lg:inline-block font-bold text-green-800">
+						<span className="text-md md:text-lg font-bold text-green-800">
 							Green Pastures Organics
 						</span>
 					</Link>
