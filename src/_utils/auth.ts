@@ -16,6 +16,17 @@ export const authAPI = {
 				createdAt: new Date().toISOString(),
 			};
 		}
+		if (email === "user@example.com" && password === "Password@1") {
+			return {
+				id: "1",
+				email,
+				firstName: "User",
+				lastName: "Daniel",
+				isVerified: true,
+				role: "user",
+				createdAt: new Date().toISOString(),
+			};
+		}
 
 		throw new Error("Invalid email or password");
 	},

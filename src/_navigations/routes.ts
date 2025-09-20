@@ -8,15 +8,22 @@ export const pageRoutes = [
 	},
 	{
 		id: 2,
-		label: "requests",
-		link: "/admin/requests",
+		label: "users",
+		link: "/admin/users",
 		// icon: <RequestsIcon />,
 		// allowedRoles: [5, 1, 3, 4],
 	},
 	{
 		id: 3,
-		label: "items",
-		link: "/admin/items",
+		label: "orders",
+		link: "/admin/orders",
+		// icon: <ItemsIcon />,
+		// allowedRoles: [5, 1, 2, 3, 4],
+	},
+	{
+		id: 4,
+		label: "products",
+		link: "/admin/products",
 		// icon: <ItemsIcon />,
 		// allowedRoles: [5, 1, 2, 3, 4],
 	},
@@ -26,10 +33,10 @@ export const getPageNames = (link: string) => {
 	switch (link) {
 		case "/admin/dashboard":
 			return "dashboard";
-		case "/admin/customers":
-			return "customers";
-		case "/admin/customers/[id]":
-			return "customers";
+		case "/admin/users":
+			return "users";
+		case "/admin/users/[id]":
+			return "users";
 		case "/admin/products":
 			return "products";
 		case "/admin/products/[id]":
