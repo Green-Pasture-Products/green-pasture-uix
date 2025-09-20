@@ -5,6 +5,8 @@ import { appConstants } from "../constants";
 interface CartState {
 	items: CartItem[];
 	total: number;
+	error: string;
+	loading: boolean;
 	itemCount: number;
 	freeShippingThreshold: number;
 }
@@ -12,6 +14,8 @@ interface CartState {
 const initialState: CartState = {
 	items: [],
 	total: 0,
+	error: "",
+	loading: false,
 	itemCount: 0,
 	freeShippingThreshold: appConstants.FREE_SHIPPING_THRESHOLD,
 };

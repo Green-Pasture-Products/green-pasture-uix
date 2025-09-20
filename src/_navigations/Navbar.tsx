@@ -151,12 +151,34 @@ const Navbar: React.FC = () => {
 								)}
 							</div>
 						) : (
-							<Link
+							<>
+								<div className="relative">
+									<button
+										onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+										className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-colors"
+									>
+										<User className="h-6 w-6" />
+									</button>
+
+									{isUserMenuOpen && (
+										<div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+											<Link
+												href="/login"
+												className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+												onClick={() => setIsUserMenuOpen(false)}
+											>
+												Login
+											</Link>
+										</div>
+									)}
+								</div>
+								{/* <Link
 								href="/login"
 								className="text-gray-700 hover:text-green-600 transition-colors"
 							>
 								<User className="h-6 w-6" />
-							</Link>
+							</Link> */}
+							</>
 						)}
 						<Link
 							href="/cart"

@@ -26,7 +26,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const cartItems = useAppSelector((state) => state.cart.items);
 	const isInCart = cartItems.some((item) => item.id === product.id);
 	const wishlistItems = useAppSelector((state) => state.wishlist.items);
-	const isInWishlist = wishlistItems.some((item) => item.id === product.id);
+	const isInWishlist = wishlistItems?.some((item) => item.id === product.id);
 
 	const handleAddToCart = () => {
 		if (isInCart) {

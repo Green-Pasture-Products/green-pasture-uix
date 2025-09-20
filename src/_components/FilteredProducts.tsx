@@ -70,8 +70,10 @@ const FilteredProducts: React.FC = () => {
 						)}
 						{isSearchPage && (
 							<p className="text-gray-600 mt-1">
-								{filteredProducts.length}{" "}
-								{filteredProducts.length === 1 ? "product" : "products"}{" "}
+								{filteredProducts?.length}{" "}
+								{filteredProducts?.length === 1
+									? "product"
+									: "products"}{" "}
 								found
 							</p>
 						)}
