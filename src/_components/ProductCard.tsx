@@ -70,11 +70,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 						priority={false}
 						className="object-cover"
 					/>
-					{/* 
-					{product.originalPrice && (
-						<div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow">
-							Sale
-						</div>
+					{/* {product?.stock === 0 && (
+						<span className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow">
+							Out of Stock
+						</span>
 					)} */}
 					<button
 						aria-label="Add to Wishlist"
@@ -131,7 +130,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 				{/* Price & Button */}
 				<div className="flex flex-col items-start justify-between">
 					{/* Price Section */}
-					<div className="flex items-center space-x-2">
+					<div className="flex items-center flex-wrap space-x-2">
 						<span className="text-sm md:text-xl font-bold text-green-600">
 							₦{product.price?.toLocaleString()}
 						</span>
@@ -140,11 +139,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 								₦{product.originalPrice?.toLocaleString()}
 							</span>
 						)}
-						{/* {!product.stock && (
-							<span className="text-red-600 text-sm font-medium">
-								Out of Stock
-							</span>
-						)} */}
 					</div>
 
 					{/* Add / Remove from Cart */}

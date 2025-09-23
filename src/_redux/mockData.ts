@@ -13,7 +13,6 @@ export const mockProducts: Product[] = [
 		description:
 			"Executive and Cognitive Function | Manage Memory Loss | Mental Wellness",
 		stock: 10,
-		organic: true,
 		rating: 4.8,
 		reviews: 124,
 	},
@@ -28,7 +27,6 @@ export const mockProducts: Product[] = [
 		description:
 			"Improves Gut health | It supports good sleep | Increases organic probiotics | Mental Wellness",
 		stock: 10,
-		organic: true,
 		rating: 3.6,
 		reviews: 89,
 	},
@@ -43,7 +41,6 @@ export const mockProducts: Product[] = [
 		description:
 			"Immune Booster | Heart, Liver and Kidney Health | Enhance Digestion",
 		stock: 10,
-		organic: true,
 		rating: 3.9,
 		reviews: 156,
 	},
@@ -58,7 +55,6 @@ export const mockProducts: Product[] = [
 		description:
 			"Libido Enhancer, Increased Testosterone, Stress Management, For Erectile Dysfunction, Improved Sperm Quality",
 		stock: 10,
-		organic: true,
 		rating: 2.7,
 		reviews: 203,
 	},
@@ -71,8 +67,7 @@ export const mockProducts: Product[] = [
 		image: "/images/gorontula-removebg.png",
 		category: "Vegetables",
 		description: "Enhances reproductive health and boosts immunity naturally",
-		stock: 10,
-		organic: true,
+		stock: 0,
 		rating: 2.5,
 		reviews: 78,
 	},
@@ -87,7 +82,6 @@ export const mockProducts: Product[] = [
 		description:
 			"Prevents/Fights Cancer | Reduce Heart Disease Risk | Boost Brain Health | Packed with Antioxidant | Radiant Skin | Pre/Post Workout + Many More",
 		stock: 10,
-		organic: true,
 		rating: 2.8,
 		reviews: 145,
 	},
@@ -102,7 +96,6 @@ export const mockProducts: Product[] = [
 		description:
 			"Promotes Healthy Pregnancy | Supports Eye Health | Boosts Energy | Aids Digestion | Supports Heart Health | Strengthens Bones | Improves Brain Function | Regulates Blood Sugar",
 		stock: 10,
-		organic: true,
 		rating: 5,
 		reviews: 92,
 	},
@@ -117,7 +110,6 @@ export const mockProducts: Product[] = [
 		description:
 			"Promotes Healthy Skin | Rich in Fiber | Boosts Energy | Supports Heart Health | Regulates Blood Sugar | Good for Weight Management | Dairy-Free & Nut-Free",
 		stock: 10,
-		organic: true,
 		rating: 5,
 		reviews: 167,
 	},

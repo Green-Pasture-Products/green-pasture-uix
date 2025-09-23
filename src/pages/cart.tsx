@@ -52,7 +52,8 @@ const CartPage: React.FC = () => {
 	const calculations = useMemo(() => {
 		const subtotal = total || 0;
 		const freeShippingThreshold = appConstants.FREE_SHIPPING_THRESHOLD;
-		const shipping = subtotal > freeShippingThreshold ? 0 : 20000;
+		const shipping =
+			subtotal > freeShippingThreshold ? 0 : appConstants.SHIPPING_FEE;
 		const taxRate = 0.08;
 		const tax = Math.round(subtotal * taxRate);
 		const finalTotal = subtotal + shipping + tax;

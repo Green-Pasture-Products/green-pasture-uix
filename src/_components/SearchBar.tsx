@@ -23,7 +23,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 }) => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
-	const products = useAppSelector((state) => state.product.items);
+	const products = useAppSelector((state) => state.product.products);
 	const { query, recentSearches, suggestions } = useAppSelector(
 		(state) => state.search
 	);

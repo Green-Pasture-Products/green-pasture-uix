@@ -11,10 +11,11 @@ import {
 import { resetFilters, setSearchQuery } from "@/_redux/reducers/search.reducer";
 import SearchFiltersComponent from "@/_components/SearchFilters";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { filterAndSortProducts, logger } from "@/_utils";
+import { filterAndSortProducts } from "@/_utils";
 import ProductCard from "@/_components/ProductCard";
 import SearchBar from "@/_components/SearchBar";
 import { usePathname } from "next/navigation";
+import { productsAction } from "@/_redux/actions";
 
 const FilteredProducts: React.FC = () => {
 	const router = useRouter();
@@ -24,10 +25,14 @@ const FilteredProducts: React.FC = () => {
 	const isSearchPage = pathanme.includes("/search");
 
 	const { query, filters } = useAppSelector((state) => state.search);
-	const products = useAppSelector((state) => state.product.items);
+	const products = useAppSelector((state) => state.product.products);
 
 	const [showFilters, setShowFilters] = React.useState(false);
 	const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
+
+	useEffect(() => {
+		dispatch(productsAction.fetchAllProducts());
+	}, []);
 
 	useEffect(() => {
 		if (!isSearchPage) {
@@ -38,7 +43,6 @@ const FilteredProducts: React.FC = () => {
 	}, [q, query, dispatch]);
 
 	const filteredProducts = filterAndSortProducts(products, query, filters);
-	logger.log({ filteredProducts });
 
 	const handleSearch = (searchQuery: string) => {
 		router.push(`/search?q=${encodeURIComponent(searchQuery)}`, undefined, {

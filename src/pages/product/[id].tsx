@@ -31,7 +31,7 @@ const ProductDetailsPage: React.FC = () => {
 	const router = useRouter();
 	const { id } = router.query;
 	const dispatch = useAppDispatch();
-	const products = useAppSelector((state) => state.product.items);
+	const products = useAppSelector((state) => state.product.products);
 	const cartItems = useAppSelector((state) => state.cart.items);
 	const wishlistItems = useAppSelector((state) => state.wishlist.items);
 	const product = products?.find((p: Product) => p.id === id);
@@ -78,10 +78,10 @@ const ProductDetailsPage: React.FC = () => {
 		} else {
 			for (let i = 0; i < quantity; i++) {
 				dispatch(addToCart(product));
-				setQuantity(1);
 			}
 			toast.success(`${product.name} added to cart 🛒`);
 		}
+		setQuantity(1);
 	};
 
 	const handleQuantityChange = (newQuantity: number) => {
@@ -253,11 +253,9 @@ const ProductDetailsPage: React.FC = () => {
 							)}
 						</div>
 						<div className="flex flex-wrap gap-2">
-							{product?.organic && (
-								<span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-									Organic Certified
-								</span>
-							)}
+							<span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+								Organic Certified
+							</span>
 							{product?.stock !== 0 ? (
 								<span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
 									<Check className="h-4 w-4 mr-1" />
@@ -288,14 +286,17 @@ const ProductDetailsPage: React.FC = () => {
 									<button
 										onClick={() => handleQuantityChange(quantity + 1)}
 										className="p-2 border border-gray-300 rounded-md hover:bg-gray-50"
-										disabled={quantity >= 99 || !isInCart}
+										disabled={
+											quantity === product?.stock || !isInCart
+										}
 									>
 										<Plus className="h-4 w-4" />
 									</button>
 								</div>
 								{isInCart && (
 									<p className="text-sm text-gray-600 mt-2">
-										{cartQuantity} already in cart
+										{/* {cartQuantity} */}
+										Already in cart
 									</p>
 								)}
 							</div>

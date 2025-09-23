@@ -33,9 +33,9 @@ const featuredSection = [
 
 const HomePage: React.FC = () => {
 	const dispatch = useAppDispatch();
-	const products = useAppSelector((state) => state.product);
-	logger.log(products?.products);
-	const featuredProducts = products?.products?.slice(0, 4);
+	const { products } = useAppSelector((state) => state.product);
+	logger.log({ products });
+	const featuredProducts = products?.slice(0, 4);
 
 	useEffect(() => {
 		dispatch(productsAction.fetchAllProducts());
@@ -51,7 +51,6 @@ const HomePage: React.FC = () => {
 							<div className="flex w-full aspect-square items-center">
 								<div className="w-1/2 h-full overflow-hidden lg:p-3 pr-2 2xl:mr-3">
 									<Image
-										// fill
 										height={100}
 										width={100}
 										priority
@@ -63,7 +62,6 @@ const HomePage: React.FC = () => {
 								</div>
 								<div className="w-1/2 h-full overflow-hidden lg:p-3 pl-2 mt-16 md:mt-24">
 									<Image
-										// fill
 										height={100}
 										width={100}
 										src="/images/strawberries-on-plant.jpg"
@@ -176,7 +174,7 @@ const HomePage: React.FC = () => {
 						</div>
 					)}
 
-					{products?.products?.length > 4 && (
+					{products?.length > 4 && (
 						<div className="text-center">
 							<Link
 								href="/products"

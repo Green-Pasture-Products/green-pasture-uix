@@ -11,7 +11,7 @@ export const generateSearchSuggestions = (
 	const suggestions = new Set<string>();
 	const queryLower = query.toLowerCase();
 
-	products.forEach((product) => {
+	products?.forEach((product) => {
 		// Add product names that match
 		if (product.name.toLowerCase().includes(queryLower)) {
 			suggestions.add(product.name);
@@ -70,9 +70,6 @@ export const filterAndSortProducts = (
 		// Stock filter
 		const matchesStock = !filters?.inStockOnly || product.stock;
 
-		// Organic filter
-		const matchesOrganic = !filters?.organicOnly || product.organic;
-
 		// Rating filter
 		const matchesRating =
 			filters?.rating === 0 || product.rating >= filters?.rating;
@@ -82,7 +79,6 @@ export const filterAndSortProducts = (
 			matchesCategory &&
 			matchesPrice &&
 			matchesStock &&
-			matchesOrganic &&
 			matchesRating;
 
 		// Debug individual product filtering
@@ -93,7 +89,6 @@ export const filterAndSortProducts = (
 				matchesCategory,
 				matchesPrice: `${product.price} in [${filters.priceRange[0]}, ${filters.priceRange[1]}] = ${matchesPrice}`,
 				matchesStock,
-				matchesOrganic,
 				matchesRating,
 				passes,
 			});
@@ -102,26 +97,26 @@ export const filterAndSortProducts = (
 		return passes;
 	});
 
-	logger.log("Filtered results:", filtered.length);
+	logger.log("Filtered results:", filtered?.length);
 
 	// Sort products
 	switch (filters?.sortBy) {
 		case "price-low":
-			filtered.sort((a, b) => a.price - b.price);
+			filtered?.sort((a, b) => a.price - b.price);
 			break;
 		case "price-high":
-			filtered.sort((a, b) => b.price - a.price);
+			filtered?.sort((a, b) => b.price - a.price);
 			break;
 		case "rating":
-			filtered.sort((a, b) => b.rating - a.rating);
+			filtered?.sort((a, b) => b.rating - a.rating);
 			break;
 		case "newest":
 			// Assuming newer products have higher IDs
-			filtered.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+			filtered?.sort((a, b) => parseInt(b.id) - parseInt(a.id));
 			break;
 		case "name":
 		default:
-			filtered.sort((a, b) => a.name.localeCompare(b.name));
+			filtered?.sort((a, b) => a.name.localeCompare(b.name));
 			break;
 	}
 

@@ -7,7 +7,6 @@ export interface Product {
 	category: string;
 	description: string;
 	stock: number;
-	organic: boolean;
 	rating: number;
 	reviews: number;
 }
@@ -17,8 +16,6 @@ export interface ProductsState {
 	isFetchingProduct: boolean;
 	products: Product[];
 	product: Product | null;
-
-	items: Product[];
 	categories: string[];
 	selectedCategory: string;
 	searchTerm: string;

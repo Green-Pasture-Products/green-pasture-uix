@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { productsAction } from "../actions";
 import { Product, ProductsState } from "@/types";
-import { mockProducts } from "../mockData";
 import { categories } from "../constants/categories.constant";
 
 const initialState: ProductsState = {
@@ -9,8 +8,6 @@ const initialState: ProductsState = {
 	isFetchingProduct: false,
 	products: [],
 	product: null,
-
-	items: mockProducts,
 	categories: categories.ALL_CATEGORIES,
 	selectedCategory: "All",
 	searchTerm: "",
