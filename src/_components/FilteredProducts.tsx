@@ -198,7 +198,7 @@ const FilteredProducts: React.FC = () => {
                                              Organic
                                           </span>
                                        )}
-                                       {!product.inStock && (
+                                       {!product.stock && (
                                           <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
                                              Out of Stock
                                           </span>

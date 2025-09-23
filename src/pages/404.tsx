@@ -8,7 +8,10 @@ const Custom404: React.FC = () => {
 		<div className="min-h-screen bg-green-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
 			<div className="max-w-lg w-full text-center">
 				<div className="mb-8">
-					<Link href="/" className="flex items-center space-x-2">
+					<Link
+						href="/"
+						className="flex items-center justify-center space-x-2"
+					>
 						<div className="relative w-[2.2rem] aspect-square bg-transparent">
 							<Image
 								src="/images/GP Organic Logo (Primary).png"

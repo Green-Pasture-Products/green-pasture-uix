@@ -1,5 +1,5 @@
 import React, {
-	MouseEvent,
+	// MouseEvent,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -20,9 +20,9 @@ import {
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import {
 	clearCart,
-	removeFromCart,
+	// removeFromCart,
 	setFreeShippingThreshold,
-	updateQuantity,
+	// updateQuantity,
 } from "@/_redux/reducers/cart.reducer";
 import { appConstants } from "@/_redux/constants";
 import Image from "next/image";
@@ -30,11 +30,11 @@ import Layout from "@/_components/Layout";
 import { useCartOperations } from "@/_hooks/useCart";
 import { CartItemSkeleton } from "@/_skeletonLoading/CartItemSkeleton";
 import { CartErrorBoundary } from "@/_errorBoundaries/CartErrorBoundary";
-import {
-	addToWishlist,
-	removeFromWishlist,
-} from "@/_redux/reducers/wishlist.reducer";
-import toast from "react-hot-toast";
+// import {
+// 	addToWishlist,
+// 	removeFromWishlist,
+// } from "@/_redux/reducers/wishlist.reducer";
+// import toast from "react-hot-toast";
 
 const CartPage: React.FC = () => {
 	const dispatch = useAppDispatch();
@@ -51,8 +51,7 @@ const CartPage: React.FC = () => {
 
 	const calculations = useMemo(() => {
 		const subtotal = total || 0;
-		const freeShippingThreshold =
-			appConstants.FREE_SHIPPING_THRESHOLD || 149999;
+		const freeShippingThreshold = appConstants.FREE_SHIPPING_THRESHOLD;
 		const shipping = subtotal > freeShippingThreshold ? 0 : 20000;
 		const taxRate = 0.08;
 		const tax = Math.round(subtotal * taxRate);
@@ -98,23 +97,22 @@ const CartPage: React.FC = () => {
 		}
 	}, [dispatch, showClearConfirm]);
 
-	const handleWishlistToggle = (e: MouseEvent<HTMLButtonElement>) => {
-		e.stopPropagation();
-		e.preventDefault();
-		// if (isInWishlist) {
-		// 	dispatch(removeFromWishlist(product.id));
-		// 	toast.error(`${product.name} removed from wishlist 💔`);
-		// } else {
-		// 	dispatch(addToWishlist(product));
-		// 	toast.success(`${product.name} added to wishlist ❤️`);
-		// }
-	};
+	// const handleWishlistToggle = (e: MouseEvent<HTMLButtonElement>) => {
+	// 	e.stopPropagation();
+	// 	e.preventDefault();
+	// 	// if (isInWishlist) {
+	// 	// 	dispatch(removeFromWishlist(product.id));
+	// 	// 	toast.error(`${product.name} removed from wishlist 💔`);
+	// 	// } else {
+	// 	// 	dispatch(addToWishlist(product));
+	// 	// 	toast.success(`${product.name} added to wishlist ❤️`);
+	// 	// }
+	// };
 
-	const handleRemoveFromWishlist = (productId: string) => {
-		dispatch(removeFromWishlist(productId));
-	};
+	// const handleRemoveFromWishlist = (productId: string) => {
+	// 	dispatch(removeFromWishlist(productId));
+	// };
 
-	// Handle loading state
 	if (loading) {
 		return (
 			<Layout>
@@ -137,7 +135,6 @@ const CartPage: React.FC = () => {
 		);
 	}
 
-	// Handle error state
 	if (error) {
 		return (
 			<Layout>
@@ -159,7 +156,6 @@ const CartPage: React.FC = () => {
 		);
 	}
 
-	// Empty cart state
 	if (!items || items?.length === 0) {
 		return (
 			<Layout>
@@ -197,18 +193,6 @@ const CartPage: React.FC = () => {
 		<CartErrorBoundary>
 			<Layout>
 				<div className="container page-wrapper mx-auto px-4 py-8">
-					{/* <div className="flex items-center justify-between mb-8">
-					<h1 className="text-xl md:text-3xl font-bold text-gray-800">
-						Shopping Cart ({itemCount} items)
-					</h1>
-					<button
-						onClick={handleClearCart}
-						className="text-red-600 hover:text-red-700 font-medium"
-					>
-						Clear Cart
-					</button>
-				</div> */}
-
 					<div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
 						<div className="flex items-center gap-4">
 							<Link
@@ -423,7 +407,6 @@ const CartPage: React.FC = () => {
 					</div> */}
 
 					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-						{/* Cart Items */}
 						<div className="lg:col-span-2">
 							<div className="bg-white rounded-lg shadow-sm border border-gray-200">
 								{items?.map((item) => (
@@ -438,7 +421,6 @@ const CartPage: React.FC = () => {
 										)}
 
 										<div className="grid grid-cols-2 md:grid-cols-5 gap-4 items-center">
-											{/* Product Image */}
 											<div className="relative flex items-center justify-center">
 												<Image
 													height={100}
@@ -453,14 +435,8 @@ const CartPage: React.FC = () => {
 															"/placeholder-product.jpg";
 													}}
 												/>
-												{/* {item?.organic && (
-													<span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1 rounded-full">
-														Organic
-													</span>
-												)} */}
 											</div>
 
-											{/* Product Info */}
 											<div className="md:col-span-2">
 												<h3 className="font-semibold text-md md:text-lg text-gray-800 leading-5 md:leading-7">
 													{item?.name}
@@ -493,7 +469,6 @@ const CartPage: React.FC = () => {
 												</div>
 											</div>
 
-											{/* Quantity Controls */}
 											<div className="flex items-center justify-center">
 												<div className="flex items-center space-x-3 border rounded-lg p-1">
 													<button
@@ -542,7 +517,6 @@ const CartPage: React.FC = () => {
 												</div>
 											</div>
 
-											{/* Price and Remove */}
 											<div className="flex items-center justify-between md:flex-col md:items-end">
 												<div className="text-right">
 													<div className="font-semibold text-lg text-green-600">
@@ -572,7 +546,6 @@ const CartPage: React.FC = () => {
 							</div>
 						</div>
 
-						{/* Order Summary */}
 						<div className="lg:col-span-1">
 							<div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-8">
 								<h2 className="text-xl font-semibold text-gray-800 mb-6">
@@ -637,7 +610,6 @@ const CartPage: React.FC = () => {
 									</Link>
 								</div>
 
-								{/* Secure Checkout Info */}
 								<div className="mt-4 text-center text-xs text-gray-500">
 									🔒 Secure checkout guaranteed
 								</div>

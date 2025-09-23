@@ -70,17 +70,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 						priority={false}
 						className="object-cover"
 					/>
-					{/* {product.organic && (
-					<div className="absolute top-2 left-2 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold shadow">
-						Organic
-					</div>
-				)}
-				{product.originalPrice && (
-					<div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow">
-						Sale
-					</div>
-				)} */}
-					{/* Wishlist Button */}
+					{/* 
+					{product.originalPrice && (
+						<div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow">
+							Sale
+						</div>
+					)} */}
 					<button
 						aria-label="Add to Wishlist"
 						onClick={
@@ -145,7 +140,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 								₦{product.originalPrice?.toLocaleString()}
 							</span>
 						)}
-						{/* {!product.inStock && (
+						{/* {!product.stock && (
 							<span className="text-red-600 text-sm font-medium">
 								Out of Stock
 							</span>
@@ -157,13 +152,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 						<div className="flex-1">
 							<button
 								onClick={handleAddToCart}
-								disabled={!product.inStock && !isInCart}
+								disabled={product.stock === 0 && !isInCart}
 								className={`flex items-center justify-center w-full space-x-1 px-2 md:px-4 py-2 rounded-md transition-colors text-xs md:text-sm font-medium ${
-									!product.inStock && !isInCart
+									product.stock === 0 && !isInCart
 										? "bg-gray-300 text-gray-500 cursor-not-allowed"
 										: isInCart
-										? "bg-red-500 text-white hover:bg-red-600"
-										: "bg-green-600 text-white hover:bg-green-700"
+										? "bg-red-500 text-white hover:bg-red-600 cursor-pointer"
+										: "bg-green-600 text-white hover:bg-green-700 cursor-pointer"
 								}`}
 							>
 								{isInCart ? (
@@ -175,7 +170,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 									<>
 										<ShoppingCart className="h-3 md:h-4 w-3 md:w-4" />
 										<span>
-											{product.inStock
+											{product.stock !== 0
 												? "Add to Cart"
 												: "Out of Stock"}
 										</span>

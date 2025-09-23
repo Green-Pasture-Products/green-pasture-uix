@@ -6,7 +6,7 @@ export interface Product {
 	image: string;
 	category: string;
 	description: string;
-	inStock: boolean;
+	stock: number;
 	organic: boolean;
 	rating: number;
 	reviews: number;
@@ -26,6 +26,7 @@ export interface ProductsState {
 
 export interface CartItem extends Product {
 	quantity: number;
+	createdAt: number;
 }
 
 export interface Customer {
@@ -86,4 +87,18 @@ export interface AuthState {
 	isAuthenticated: boolean;
 	isLoading: boolean;
 	error: string | null;
+}
+
+export interface CartState {
+	items: CartItem[];
+
+	total: number;
+	error: string | null;
+	appliedCoupons: string[];
+	discountAmount: number;
+	loading: boolean;
+	itemCount: number;
+	taxRate: number;
+	freeShippingThreshold: number;
+	lastUpdated: number | null;
 }

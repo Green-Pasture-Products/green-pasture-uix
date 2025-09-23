@@ -50,7 +50,6 @@ const SearchFiltersComponent: React.FC = () => {
 			</div>
 
 			<div className="space-y-6">
-				{/* Category Filter */}
 				<div>
 					<h4 className="font-medium text-gray-800 mb-3">Category</h4>
 					<div className="space-y-2">
@@ -74,7 +73,6 @@ const SearchFiltersComponent: React.FC = () => {
 					</div>
 				</div>
 
-				{/* Price Range */}
 				<div>
 					<h4 className="font-medium text-gray-800 mb-3">Price Range</h4>
 					<div className="space-y-3">
@@ -129,7 +127,6 @@ const SearchFiltersComponent: React.FC = () => {
 					</div>
 				</div>
 
-				{/* Rating Filter */}
 				<div>
 					<h4 className="font-medium text-gray-800 mb-3">
 						Minimum Rating
@@ -199,7 +196,6 @@ const SearchFiltersComponent: React.FC = () => {
 					</div>
 				</div>
 
-				{/* Availability */}
 				<div>
 					<h4 className="font-medium text-gray-800 mb-3">Availability</h4>
 					<label className="flex items-center">
@@ -215,23 +211,6 @@ const SearchFiltersComponent: React.FC = () => {
 					</label>
 				</div>
 
-				{/* Organic Filter */}
-				<div>
-					<h4 className="font-medium text-gray-800 mb-3">Product Type</h4>
-					<label className="flex items-center">
-						<input
-							type="checkbox"
-							checked={filters?.organicOnly}
-							onChange={(e) =>
-								handleFilterChange({ organicOnly: e.target.checked })
-							}
-							className="mr-3 text-green-600 focus:ring-green-500"
-						/>
-						<span className="text-sm text-gray-700">Organic only</span>
-					</label>
-				</div>
-
-				{/* Sort By */}
 				<div>
 					<h4 className="font-medium text-gray-800 mb-3">Sort By</h4>
 					<select
