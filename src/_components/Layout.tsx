@@ -1,26 +1,26 @@
 // LIBRARY COMPONENTS
-import { Toaster } from "react-hot-toast";
 import Head from "next/head";
 import React from "react";
 
 // CUSTOM COMPONENTS
 import { LayoutProps } from "@/types/client/layout";
-import PromoBanner from "./PromoBanner";
 import Navbar from "../_navigations/Navbar";
 import Footer from "../_navigations/Footer";
-import { useIsAuthRoute } from "@/_utils";
 import { usePathname } from "next/navigation";
 
 const Layout = ({ children, pageTitle }: LayoutProps) => {
-	const pathname = usePathname();
-	const authPages = useIsAuthRoute();
+	const pathnaame = usePathname();
+	const lastSegment = pathnaame.split("/").filter(Boolean).pop() || "";
+
+	// Capitalize first letter
+	const page_name = lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
 
 	return (
 		<>
 			<Head>
 				<title className="capitalize">
-					{`${pageTitle} page` || "Home"} | Green Patures Organics | Living
-					Healthy
+					{`${page_name} Page |` || "Home |"} Green Patures Organics |
+					Living Healthy
 				</title>
 				{/* <meta charset="UTF-8" /> */}
 				<meta
@@ -89,7 +89,7 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 			</Head>
 
 			<div className="min-h-screen overflow-x-hidden bg-green-50">
-				<PromoBanner />
+				{/* <PromoBanner /> */}
 				<Navbar />
 				<main className="flex-1">{children}</main>
 				<Footer />

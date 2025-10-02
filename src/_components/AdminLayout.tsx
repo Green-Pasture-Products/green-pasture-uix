@@ -4,20 +4,22 @@ import React from "react";
 
 // CUSTOM COMPONENTS
 import { LayoutProps } from "@/types/client/layout";
-// import { useIsAuthRoute } from "@/_utils";
-// import { usePathname } from "next/navigation";
 import Sidebar from "../_navigations/Sidebar";
 import Header from "../_navigations/Header";
+import { usePathname } from "next/navigation";
 
 const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
-	// const pathname = usePathname();
-	// const authPages = useIsAuthRoute();
+	const pathnaame = usePathname();
+	const lastSegment = pathnaame.split("/").filter(Boolean).pop() || "";
+
+	// Capitalize first letter
+	const page_name = lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
 
 	return (
 		<>
 			<Head>
 				<title className="capitalize">
-					{`${pageTitle} page` || "Home"} | Green Patures Organics | Living
+					{`${page_name} Page` || "Home"} | Green Patures Organics | Living
 					Healthy
 				</title>
 				{/* <meta charset="UTF-8" /> */}
@@ -86,11 +88,11 @@ const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 			</Head>
 
-			<div className="min-h-screen overflow-x-hidden bg-green-50 flex">
+			<div className="pl-64 min-h-screen overflow-x-hidden bg-green-50 flex">
 				<Sidebar />
-				<div className="w-full">
+				<div className="flex-1">
 					<Header />
-					<main className="flex-1 px-8 py-4">{children}</main>
+					<main className="p-6">{children}</main>
 				</div>
 			</div>
 		</>

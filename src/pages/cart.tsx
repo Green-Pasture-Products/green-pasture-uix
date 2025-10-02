@@ -298,12 +298,12 @@ const CartPage: React.FC = () => {
 												<p className="text-gray-600 text-sm mt-1">
 													{item?.category}
 												</p>
-												{/* {item?.stock && item?.stock < 10 && (
+												{item?.inStock && item?.quantity < 5 && (
 													<p className="text-orange-600 text-xs mt-1">
-														Only {item?.stock} left in stock
+														Only {item?.quantity} left in stock
 													</p>
-												)} */}
-												<div className="flex items-center mt-2 gap-2">
+												)}
+												{/* <div className="flex items-center mt-2 gap-2">
 													<button
 														// onClick={
 														// 	isWishlistPage
@@ -320,7 +320,7 @@ const CartPage: React.FC = () => {
 													<button className="text-gray-400 hover:text-blue-500 transition-colors">
 														<Share2 className="h-4 w-4" />
 													</button>
-												</div>
+												</div> */}
 											</div>
 
 											<div className="flex items-center justify-center">
@@ -329,8 +329,8 @@ const CartPage: React.FC = () => {
 														onClick={() =>
 															handleQuantityChange(
 																item?.id,
-																item?.quantity - 1
-																// item?.stock
+																item?.quantity - 1,
+																item?.quantity
 															)
 														}
 														disabled={
@@ -353,15 +353,14 @@ const CartPage: React.FC = () => {
 														onClick={() =>
 															handleQuantityChange(
 																item?.id,
-																item?.quantity + 1
-																// item?.stock
+																item?.quantity + 1,
+																item?.quantity
 															)
 														}
 														disabled={
-															isUpdating === item?.id
-															// ||
-															// (item?.stock &&
-															// 	item?.quantity >= item?.stock)
+															isUpdating === item?.id ||
+															(item?.inStock &&
+																item?.quantity >= 10)
 														}
 														className="p-1 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 														aria-label="Increase quantity"

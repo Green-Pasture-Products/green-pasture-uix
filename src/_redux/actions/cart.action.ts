@@ -57,8 +57,8 @@ export const updateQuantityAsync = createAsyncThunk(
 			const state = getState() as { cart: CartState };
 			const item = state.cart.items.find((item) => item.id === id);
 
-			if (item && item.stock && quantity > item.stock) {
-				throw new Error(`Only ${item.stock} items available in stock`);
+			if (item && item.inStock && quantity > item.quantity) {
+				throw new Error(`Only ${item.quantity} items available in stock`);
 			}
 
 			// Simulate API call

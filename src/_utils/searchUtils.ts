@@ -68,7 +68,7 @@ export const filterAndSortProducts = (
 			product?.price <= filters?.priceRange[1];
 
 		// Stock filter
-		const matchesStock = !filters?.inStockOnly || product.stock;
+		const matchesStock = !filters?.inStockOnly || product.inStock;
 
 		// Rating filter
 		const matchesRating =

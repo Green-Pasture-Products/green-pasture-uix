@@ -6,7 +6,8 @@ export interface Product {
 	image: string;
 	category: string;
 	description: string;
-	stock: number;
+	quantity: number;
+	inStock: boolean;
 	rating: number;
 	reviews: number;
 }
@@ -98,4 +99,52 @@ export interface CartState {
 	taxRate: number;
 	freeShippingThreshold: number;
 	lastUpdated: number | null;
+}
+
+export interface AdminUser {
+	id: string;
+	username: string;
+	email: string;
+	role: "admin" | "manager" | "editor";
+	lastLogin: string;
+}
+
+export interface AdminStats {
+	totalProducts: number;
+	totalOrders: number;
+	totalCustomers: number;
+	totalRevenue: number;
+	ordersToday: number;
+	revenueToday: number;
+	lowStockProducts: number;
+	pendingOrders: number;
+}
+
+export interface SalesData {
+	date: string;
+	sales: number;
+	orders: number;
+}
+
+export interface AdminState {
+	isAuthenticated: boolean;
+	user: AdminUser | null;
+	stats: AdminStats;
+	salesData: SalesData[];
+	orders: Order[];
+	customers: any[];
+	selectedProduct: Product | null;
+	selectedOrder: Order | null;
+}
+
+type NotificationType = "success" | "error";
+
+export interface StatusModalProps {
+	isOpen: boolean;
+	onClose: () => void;
+	type: NotificationType;
+	title: string;
+	message: string;
+	autoClose?: boolean;
+	autoCloseDelay?: number;
 }

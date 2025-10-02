@@ -201,12 +201,12 @@ const FilteredProducts: React.FC = () => {
                                           <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
                                              Organic
                                           </span>
-                                       )}
-                                       {!product.stock && (
-                                          <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
-                                             Out of Stock
-                                          </span>
                                        )} */}
+													{product.inStock && (
+														<span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
+															Out of Stock
+														</span>
+													)}
 												</div>
 											</div>
 										</div>

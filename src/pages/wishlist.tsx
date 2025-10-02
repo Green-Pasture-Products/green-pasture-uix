@@ -26,7 +26,7 @@ const WishlistPage: React.FC = () => {
 	const handleAddAllToCart = () => {
 		items.forEach((product) => {
 			const isInCart = cartItems.some((item) => item.id === product.id);
-			if (product.stock && !isInCart) {
+			if (product.inStock && !isInCart) {
 				dispatch(addToCart(product));
 				toast.success(`${product.name} added to cart 🛒`);
 				dispatch(removeFromWishlist(product.id));

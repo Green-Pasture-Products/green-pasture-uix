@@ -256,7 +256,7 @@ const ProductDetailsPage: React.FC = () => {
 							<span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
 								Organic Certified
 							</span>
-							{product?.stock !== 0 ? (
+							{product?.inStock ? (
 								<span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
 									<Check className="h-4 w-4 mr-1" />
 									In Stock
@@ -287,7 +287,7 @@ const ProductDetailsPage: React.FC = () => {
 										onClick={() => handleQuantityChange(quantity + 1)}
 										className="p-2 border border-gray-300 rounded-md hover:bg-gray-50"
 										disabled={
-											quantity === product?.stock || !isInCart
+											quantity === product?.quantity || !isInCart
 										}
 									>
 										<Plus className="h-4 w-4" />
@@ -304,9 +304,9 @@ const ProductDetailsPage: React.FC = () => {
 							<div className="flex space-x-4">
 								<button
 									onClick={handleCartToggle}
-									disabled={product?.stock === 0 && !isInCart}
+									disabled={product?.inStock && !isInCart}
 									className={`flex flex-1 items-center justify-center space-x-1 px-6 py-3 rounded-md transition-colors font-medium ${
-										product?.stock === 0 && !isInCart
+										product?.inStock && !isInCart
 											? "bg-gray-300 text-gray-500 cursor-not-allowed"
 											: isInCart
 											? "bg-red-500 text-white hover:bg-red-600"
@@ -322,7 +322,7 @@ const ProductDetailsPage: React.FC = () => {
 										<>
 											<ShoppingCart className="h-5 w-5" />
 											<span>
-												{product?.stock !== 0
+												{product?.inStock
 													? "Add to Cart"
 													: "Out of Stock"}
 											</span>

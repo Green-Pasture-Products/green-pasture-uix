@@ -2,36 +2,23 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, Search, User, Heart, LogOut } from "lucide-react";
+import { Search, User, LogOut } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useRouter } from "next/router";
 import { logout } from "@/_redux/reducers/auth.reducer";
 import { getPageNames } from "./routes";
-
-interface NavLink {
-	href: string;
-	label: string;
-}
-
-const navLinks: NavLink[] = [
-	{ href: "/", label: "Home" },
-	{ href: "/products", label: "Products" },
-	{ href: "/about", label: "About" },
-	{ href: "/contact", label: "Contact" },
-];
 
 const Header: React.FC = () => {
 	const router = useRouter();
 	const pathname = usePathname();
 	const dispatch = useAppDispatch();
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-	const itemCount = useAppSelector((state) => state.cart.itemCount);
+	// const itemCount = useAppSelector((state) => state.cart.itemCount);
 	const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-	const wishlistCount = useAppSelector(
-		(state) => state.wishlist.wishlistItemCount
-	);
+	// const wishlistCount = useAppSelector(
+	// 	(state) => state.wishlist.wishlistItemCount
+	// );
 
 	const handleLogout = () => {
 		dispatch(logout());
@@ -43,7 +30,7 @@ const Header: React.FC = () => {
 
 	return (
 		<header className="bg-white shadow-sm border-b border-green-100">
-			<div className="px-8">
+			<div className="px-6">
 				<div className="flex items-center justify-between h-16 md:h-18">
 					<h3 className="capitalize font-medium">
 						{getPageNames(pathname)}
