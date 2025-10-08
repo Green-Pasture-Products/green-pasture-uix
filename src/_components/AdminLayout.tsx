@@ -90,7 +90,7 @@ const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 
 			<div className="pl-64 min-h-screen overflow-x-hidden bg-green-50 flex">
 				<Sidebar />
-				<div className="flex-1">
+				<div className="flex-1 w-full">
 					<Header />
 					<main className="p-6">{children}</main>
 				</div>

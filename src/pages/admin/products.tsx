@@ -12,17 +12,8 @@ import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
 import AddProduct from "@/_components/Modals/AddProduct";
 import { selectProduct } from "@/_redux/reducers/admin.reducer";
-import { Column, Table } from "@/_components/CustomTable";
+import { Column, CustomTable } from "@/_components/CustomTable";
 import { Product } from "@/types";
-// import { RootState } from "../../../store";
-// import { useSelector, useDispatch } from "react-redux";
-// import {
-// 	addProduct,
-// 	updateProduct,
-// 	removeProduct,
-// } from "../../../store/productsSlice";
-// import { selectProduct } from "../../../store/adminSlice";
-// import AdminLayout from "../../../components/admin/AdminLayout";
 
 interface ActionDropDownProps {
 	row: Product;
@@ -32,6 +23,7 @@ const AdminProducts: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const products = useAppSelector((state) => state.product.products);
 	const [selectedCategory, setSelectedCategory] = useState("All");
+	const [currentPage, setCurrentPage] = useState(1);
 	const [searchQuery, setSearchQuery] = useState("");
 
 	const categories = ["All", "Fruits", "Vegetables", "Grains", "Pantry"];
@@ -115,9 +107,9 @@ const AdminProducts: React.FC = () => {
 		{
 			key: "category",
 			header: "Category",
-			render: (value: string | number, row: Product) => {
-				return <div className="">-</div>;
-			},
+			// render: (value: string | number, row: Product) => {
+			// 	return <div className="">-</div>;
+			// },
 		},
 		{
 			key: "price",
@@ -220,10 +212,11 @@ const AdminProducts: React.FC = () => {
 					</div>
 				</div>
 
-				<Table
-					isLoading={false}
+				<CustomTable
 					columns={columns}
-					data={filteredProducts}
+					tableRow={filteredProducts}
+					currentPage={currentPage}
+					setCurrentPage={setCurrentPage}
 				/>
 			</div>
 		</AdminLayout>
