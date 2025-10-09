@@ -4,8 +4,9 @@ interface PaginationProps {
 	currentPage: number;
 	totalPages?: number;
 	onPageChange: (page: number) => void;
-	itemsPerPage?: number;
+	itemsPerPage: number;
 	totalItems: number;
+	totalPageItems: number;
 	onItemsPerPageChange: (items: number) => void;
 	itemsPerPageOptions?: number[];
 	showItemsPerPage?: boolean;
@@ -15,15 +16,16 @@ interface PaginationProps {
 
 export function Pagination({
 	totalItems,
+	totalPageItems,
 	onPageChange,
-	currentPage = 1,
-	itemsPerPage = 10,
+	currentPage,
+	itemsPerPage,
 	onItemsPerPageChange,
 	totalPages = Math.ceil(totalItems / itemsPerPage),
 	itemsPerPageOptions = [5, 10, 20, 50, 100],
 	showItemsPerPage = true,
 	showPageInfo = true,
-	maxPageButtons = 7,
+	maxPageButtons = 5,
 }: PaginationProps) {
 	const startItem = (currentPage - 1) * itemsPerPage + 1;
 	const endItem = Math.min(currentPage * itemsPerPage, totalItems);
@@ -109,11 +111,11 @@ export function Pagination({
 				<button
 					onClick={() => onPageChange(1)}
 					disabled={currentPage === 1}
-					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
 					aria-label="First page"
 				>
 					<svg
-						className="w-5 h-5 text-gray-600"
+						className="w-5 h-5 text-gray-700"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -131,11 +133,11 @@ export function Pagination({
 				<button
 					onClick={() => onPageChange(currentPage - 1)}
 					disabled={currentPage === 1}
-					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
 					aria-label="Previous page"
 				>
 					<svg
-						className="w-5 h-5 text-gray-600"
+						className="w-5 h-5 text-gray-700"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -155,12 +157,12 @@ export function Pagination({
 						key={index}
 						onClick={() => typeof page === "number" && onPageChange(page)}
 						disabled={page === "..."}
-						className={`min-w-[2.5rem] px-3 py-2 text-sm rounded-md transition-colors ${
+						className={`min-w-[2.5rem] px-3 py-2 text-sm rounded-md hover:bg-gray-100 cursor-pointer transition-colors ${
 							page === currentPage
-								? "bg-blue-600 text-white font-medium"
+								? "bg-green-100 text-green-700 font-medium"
 								: page === "..."
 								? "cursor-default"
-								: "hover:bg-gray-100 text-gray-700"
+								: "hover:text-gray-900 text-gray-700"
 						}`}
 					>
 						{page}
@@ -171,11 +173,11 @@ export function Pagination({
 				<button
 					onClick={() => onPageChange(currentPage + 1)}
 					disabled={currentPage === totalPages}
-					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
 					aria-label="Next page"
 				>
 					<svg
-						className="w-5 h-5 text-gray-600"
+						className="w-5 h-5 text-gray-700"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -193,11 +195,11 @@ export function Pagination({
 				<button
 					onClick={() => onPageChange(totalPages)}
 					disabled={currentPage === totalPages}
-					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
 					aria-label="Last page"
 				>
 					<svg
-						className="w-5 h-5 text-gray-600"
+						className="w-5 h-5 text-gray-700"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"

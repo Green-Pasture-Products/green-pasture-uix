@@ -1,19 +1,12 @@
-import React, { useState } from "react";
-import {
-	Plus,
-	Edit,
-	Trash2,
-	Search,
-	Filter,
-	Eye,
-	EllipsisVertical,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Plus, Edit, Trash2, Search, Eye } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
 import AddProduct from "@/_components/Modals/AddProduct";
 import { selectProduct } from "@/_redux/reducers/admin.reducer";
 import { Column, CustomTable } from "@/_components/CustomTable";
 import { Product } from "@/types";
+import { productsAction } from "@/_redux/actions";
 
 interface ActionDropDownProps {
 	row: Product;
@@ -25,6 +18,10 @@ const AdminProducts: React.FC = () => {
 	const [selectedCategory, setSelectedCategory] = useState("All");
 	const [currentPage, setCurrentPage] = useState(1);
 	const [searchQuery, setSearchQuery] = useState("");
+
+	useEffect(() => {
+		dispatch(productsAction.fetchAllProducts());
+	}, []);
 
 	const categories = ["All", "Fruits", "Vegetables", "Grains", "Pantry"];
 
@@ -222,7 +219,5 @@ const AdminProducts: React.FC = () => {
 		</AdminLayout>
 	);
 };
-
-// Product Modal Component
 
 export default AdminProducts;

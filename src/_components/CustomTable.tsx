@@ -98,8 +98,10 @@ export function CustomTable<T extends Record<string, any>>({
 				<Pagination
 					onItemsPerPageChange={handleItemsPerPageChange}
 					onPageChange={setCurrentPage}
-					totalItems={currentData?.length}
+					totalItems={tableRow?.length}
+					totalPageItems={currentData?.length}
 					currentPage={currentPage}
+					itemsPerPage={itemsPerPage}
 					totalPages={totalPages}
 				/>
 			)}
