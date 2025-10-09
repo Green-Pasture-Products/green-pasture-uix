@@ -6,7 +6,6 @@ interface PaginationProps {
 	onPageChange: (page: number) => void;
 	itemsPerPage: number;
 	totalItems: number;
-	totalPageItems: number;
 	onItemsPerPageChange: (items: number) => void;
 	itemsPerPageOptions?: number[];
 	showItemsPerPage?: boolean;
@@ -16,21 +15,19 @@ interface PaginationProps {
 
 export function Pagination({
 	totalItems,
-	totalPageItems,
 	onPageChange,
 	currentPage,
 	itemsPerPage,
 	onItemsPerPageChange,
 	totalPages = Math.ceil(totalItems / itemsPerPage),
 	itemsPerPageOptions = [5, 10, 20, 50, 100],
-	showItemsPerPage = true,
+	showItemsPerPage = false,
 	showPageInfo = true,
 	maxPageButtons = 5,
 }: PaginationProps) {
 	const startItem = (currentPage - 1) * itemsPerPage + 1;
 	const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
-	// Calculate page numbers to display
 	const getPageNumbers = () => {
 		const pages: (number | string)[] = [];
 

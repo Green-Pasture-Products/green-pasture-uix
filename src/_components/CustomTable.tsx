@@ -25,7 +25,6 @@ export function CustomTable<T extends Record<string, any>>({
 }: TableProps<T>) {
 	const [itemsPerPage, setItemsPerPage] = useState(10);
 
-	// Calculate pagination
 	const totalPages = Math.ceil(tableRow?.length / itemsPerPage);
 	const startIndex = (currentPage - 1) * itemsPerPage;
 	const endIndex = startIndex + itemsPerPage;
@@ -94,14 +93,13 @@ export function CustomTable<T extends Record<string, any>>({
 				</table>
 			</div>
 
-			{!isLoading && currentData?.length > 0 && (
+			{!isLoading && tableRow?.length > 0 && (
 				<Pagination
 					onItemsPerPageChange={handleItemsPerPageChange}
 					onPageChange={setCurrentPage}
 					totalItems={tableRow?.length}
-					totalPageItems={currentData?.length}
-					currentPage={currentPage}
 					itemsPerPage={itemsPerPage}
+					currentPage={currentPage}
 					totalPages={totalPages}
 				/>
 			)}
