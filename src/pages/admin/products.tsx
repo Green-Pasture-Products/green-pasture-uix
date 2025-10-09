@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Search, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Eye } from "lucide-react";
+
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
 import AddProduct from "@/_components/Modals/AddProduct";
@@ -7,6 +8,8 @@ import { selectProduct } from "@/_redux/reducers/admin.reducer";
 import { Column, CustomTable } from "@/_components/CustomTable";
 import { Product } from "@/types";
 import { productsAction } from "@/_redux/actions";
+import SearchBar from "@/_components/SearchBar";
+import { filterAndSortProducts, logger } from "@/_utils";
 
 interface ActionDropDownProps {
 	row: Product;
@@ -15,24 +18,14 @@ interface ActionDropDownProps {
 const AdminProducts: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const products = useAppSelector((state) => state.product.products);
-	const [selectedCategory, setSelectedCategory] = useState("All");
+	const { query, filters } = useAppSelector((state) => state.search);
 	const [currentPage, setCurrentPage] = useState(1);
-	const [searchQuery, setSearchQuery] = useState("");
 
 	useEffect(() => {
 		dispatch(productsAction.fetchAllProducts());
 	}, []);
 
-	const categories = ["All", "Fruits", "Vegetables", "Grains", "Pantry"];
-
-	const filteredProducts = products.filter((product) => {
-		const matchesSearch = product.name
-			.toLowerCase()
-			.includes(searchQuery.toLowerCase());
-		const matchesCategory =
-			selectedCategory === "All" || product.category === selectedCategory;
-		return matchesSearch && matchesCategory;
-	});
+	const filteredProducts = filterAndSortProducts(products, query, filters);
 
 	const ActionDropDown: React.FC<ActionDropDownProps> = (props) => {
 		const handleDelete = (productId: string) => {
@@ -67,18 +60,6 @@ const AdminProducts: React.FC = () => {
 			</div>
 		);
 	};
-
-	// const filteredDepartments = allDepartmentsList?.filter(
-	// 	(department) =>
-	// 		department.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-	// 		department.hodName
-	// 			?.toLowerCase()
-	// 			.includes(searchQuery.toLowerCase()) ||
-	// 		department.hodEmail
-	// 			?.toLowerCase()
-	// 			.includes(searchQuery.toLowerCase()) ||
-	// 		department.hodPhone?.toLowerCase().includes(searchQuery.toLowerCase())
-	// );
 
 	const columns: Column<Product>[] = [
 		{
@@ -161,10 +142,17 @@ const AdminProducts: React.FC = () => {
 		},
 	];
 
+	const handleSearch = (searchQuery: string) => {
+		logger.log({ searchQuery });
+	};
+
 	return (
 		<AdminLayout>
 			<div className="space-y-6">
-				<div className="flex justify-end items-center">
+				<div className="flex justify-between items-center">
+					<div className="max-w-3xl">
+						<SearchBar onSearch={handleSearch} autoFocus />
+					</div>
 					<AddProduct
 						title="add product"
 						className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center space-x-2"
@@ -172,41 +160,6 @@ const AdminProducts: React.FC = () => {
 						<span>Add Product</span>
 						<Plus className="h-5 w-5" />
 					</AddProduct>
-				</div>
-
-				<div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-					<div className="flex flex-col md:flex-row gap-4">
-						<div className="flex-1">
-							<div className="relative">
-								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-								<input
-									type="text"
-									name="searchQuery"
-									value={searchQuery}
-									placeholder="Search"
-									onChange={(e) => {
-										setSearchQuery(e.target.value);
-									}}
-									className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-								/>
-							</div>
-						</div>
-						<div className="flex space-x-2">
-							{categories.map((category) => (
-								<button
-									key={category}
-									onClick={() => setSelectedCategory(category)}
-									className={`px-4 py-2 rounded-md font-medium transition-colors ${
-										selectedCategory === category
-											? "bg-green-600 text-white"
-											: "bg-gray-100 text-gray-700 hover:bg-gray-200"
-									}`}
-								>
-									{category}
-								</button>
-							))}
-						</div>
-					</div>
 				</div>
 
 				<CustomTable

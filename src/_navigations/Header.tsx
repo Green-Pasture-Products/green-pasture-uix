@@ -29,7 +29,7 @@ const Header: React.FC = () => {
 		pathname === path ? "text-green-600" : "text-gray-700";
 
 	return (
-		<header className="bg-white shadow-sm border-b border-green-100 sticky top-0 right-0">
+		<header className="bg-white shadow-sm border-b border-green-100 sticky top-0 right-0 z-[901]">
 			<div className="px-6">
 				<div className="flex items-center justify-between h-16 md:h-18">
 					<h3 className="capitalize font-medium">

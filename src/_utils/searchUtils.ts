@@ -2,48 +2,6 @@ import { SearchFilters } from "@/_redux/reducers/search.reducer";
 import { Product } from "../types";
 import { logger } from "./logger";
 
-export const generateSearchSuggestions = (
-	products: Product[],
-	query: string
-): string[] => {
-	if (!query || query.length < 2) return [];
-
-	const suggestions = new Set<string>();
-	const queryLower = query.toLowerCase();
-
-	products?.forEach((product) => {
-		// Add product names that match
-		if (product.name.toLowerCase().includes(queryLower)) {
-			suggestions.add(product.name);
-		}
-
-		// Add categories that match
-		if (product.category.toLowerCase().includes(queryLower)) {
-			suggestions.add(product.category);
-		}
-
-		// Add partial matches from descriptions
-		const words = product.description.toLowerCase().split(" ");
-		words.forEach((word) => {
-			if (word.includes(queryLower) && word.length > 3) {
-				suggestions.add(word);
-			}
-		});
-	});
-
-	return Array.from(suggestions).slice(0, 8);
-};
-
-export const highlightSearchTerm = (
-	text: string,
-	searchTerm: string
-): string => {
-	if (!searchTerm) return text;
-
-	const regex = new RegExp(`(${searchTerm})`, "gi");
-	return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
-};
-
 export const filterAndSortProducts = (
 	products: Product[],
 	query: string,
@@ -111,12 +69,11 @@ export const filterAndSortProducts = (
 			filtered?.sort((a, b) => b.rating - a.rating);
 			break;
 		case "newest":
-			// Assuming newer products have higher IDs
 			filtered?.sort((a, b) => parseInt(b.id) - parseInt(a.id));
 			break;
 		case "name":
 		default:
-			filtered?.sort((a, b) => a.name.localeCompare(b.name));
+			// filtered?.sort((a, b) => a.name.localeCompare(b.name));
 			break;
 	}
 
