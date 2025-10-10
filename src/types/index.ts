@@ -32,6 +32,16 @@ export interface Customer {
 	lastName: string;
 	email: string;
 	phone: string;
+	totalSpent: number;
+	address: {
+		street: string;
+		city: string;
+		state: string;
+		zipCode: string;
+		country: string;
+	};
+	lastOrderDate: string;
+	totalOrders: number;
 }
 
 export interface Address {

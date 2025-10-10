@@ -53,7 +53,7 @@ export function CustomTable<T extends Record<string, any>>({
 							{columns?.map((col) => (
 								<th
 									key={String(col.key)}
-									className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+									className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
 								>
 									{col.header}
 								</th>
