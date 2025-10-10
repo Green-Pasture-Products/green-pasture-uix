@@ -70,7 +70,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 						priority={false}
 						className="object-cover"
 					/>
-					{product?.inStock && (
+					{!product?.inStock && (
 						<span className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow">
 							Out of Stock
 						</span>
@@ -146,9 +146,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 						<div className="flex-1">
 							<button
 								onClick={handleAddToCart}
-								disabled={product.inStock && !isInCart}
+								disabled={!product.inStock && !isInCart}
 								className={`flex items-center justify-center w-full space-x-1 px-2 md:px-4 py-2 rounded-md transition-colors text-xs md:text-sm font-medium ${
-									product.inStock && !isInCart
+									!product.inStock && !isInCart
 										? "bg-gray-300 text-gray-500 cursor-not-allowed"
 										: isInCart
 										? "bg-red-500 text-white hover:bg-red-600 cursor-pointer"

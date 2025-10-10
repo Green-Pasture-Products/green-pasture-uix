@@ -67,6 +67,13 @@ const Header: React.FC = () => {
 											</p>
 										</div>
 										<Link
+											href="/"
+											className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+											onClick={() => setIsUserMenuOpen(false)}
+										>
+											Home
+										</Link>
+										<Link
 											href="/admin/settings"
 											className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 											onClick={() => setIsUserMenuOpen(false)}

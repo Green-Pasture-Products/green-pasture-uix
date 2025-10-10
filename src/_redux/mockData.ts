@@ -488,6 +488,16 @@ export const mockOrders: Order[] = [
 			lastName: "Doe",
 			email: "john@example.com",
 			phone: "+1234567890",
+			totalSpent: 90,
+			address: {
+				street: "123 Main St",
+				city: "New York",
+				state: "NY",
+				zipCode: "10001",
+				country: "USA",
+			},
+			lastOrderDate: "",
+			totalOrders: 8,
 		},
 		shippingAddress: {
 			street: "123 Main St",
@@ -533,6 +543,16 @@ export const mockOrders: Order[] = [
 			lastName: "Smith",
 			email: "jane@example.com",
 			phone: "+1234567891",
+			totalSpent: 60,
+			address: {
+				street: "123 Main St",
+				city: "New York",
+				state: "NY",
+				zipCode: "10001",
+				country: "USA",
+			},
+			lastOrderDate: "",
+			totalOrders: 6,
 		},
 		shippingAddress: {
 			street: "456 Oak Ave",
