@@ -67,11 +67,11 @@ const Header: React.FC = () => {
 											</p>
 										</div>
 										<Link
-											href="/admin/profile"
+											href="/admin/settings"
 											className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 											onClick={() => setIsUserMenuOpen(false)}
 										>
-											Profile
+											Settings
 										</Link>
 										<button
 											onClick={() => {

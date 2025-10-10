@@ -1,5 +1,5 @@
 import {
-	BarChart3,
+	// BarChart3,
 	LayoutDashboard,
 	Package,
 	Settings,
@@ -27,8 +27,8 @@ export const getPageNames = (link: string) => {
 			return "staff";
 		case "/admin/staff/[id]":
 			return "staff";
-		case "/admin/analytics":
-			return "analytics";
+		// case "/admin/analytics":
+		// 	return "analytics";
 		case "/admin/settings":
 			return "settings";
 		default:
@@ -63,11 +63,11 @@ export const sidebarNavigation = [
 		href: "/admin/staff",
 		icon: Users,
 	},
-	{
-		name: "Analytics",
-		href: "/admin/analytics",
-		icon: BarChart3,
-	},
+	// {
+	// 	name: "Analytics",
+	// 	href: "/admin/analytics",
+	// 	icon: BarChart3,
+	// },
 	{
 		name: "Settings",
 		href: "/admin/settings",

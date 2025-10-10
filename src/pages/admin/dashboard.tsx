@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
 	TrendingUp,
 	TrendingDown,
@@ -7,14 +7,158 @@ import {
 	Users,
 	DollarSign,
 	AlertTriangle,
+	Eye,
 } from "lucide-react";
 
 import AdminLayout from "@/_components/AdminLayout";
-import { useAppSelector } from "@/_redux/store";
+import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import { productsAction } from "@/_redux/actions";
+import { Order } from "@/types";
+import { Column, CustomTable } from "@/_components/CustomTable";
+import { updateOrderStatus } from "@/_redux/reducers/admin.reducer";
 
 const AdminDashboard: React.FC = () => {
+	const dispatch = useAppDispatch();
 	const { stats, salesData, orders } = useAppSelector((state) => state.admin);
+	const products = useAppSelector((state) => state.product.products);
+	const [selectedStatus, setSelectedStatus] = useState("all");
+	const [currentPage, setCurrentPage] = useState(1);
+	const [searchTerm, setSearchTerm] = useState("");
 	const recentOrders = orders?.slice(0, 5);
+
+	useEffect(() => {
+		dispatch(productsAction.fetchAllProducts());
+	}, []);
+
+	const filteredOrders = orders?.filter((order) => {
+		const matchesStatus =
+			selectedStatus === "all" || order.status === selectedStatus;
+		const matchesSearch =
+			order.id.includes(searchTerm) ||
+			order.customer.firstName
+				.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			order.customer.lastName
+				.toLowerCase()
+				.includes(searchTerm.toLowerCase()) ||
+			order.customer.email.toLowerCase().includes(searchTerm.toLowerCase());
+		return matchesStatus && matchesSearch;
+	});
+
+	const topSellingCategories = products?.reduce((acc: any, product) => {
+		acc[product.category] = (acc[product.category] || 0) + 1;
+		return acc;
+	}, {});
+
+	const categoryData = Object.entries(topSellingCategories).map(
+		([category, count]) => ({
+			category,
+			count: count as number,
+		})
+	);
+
+	const handleStatusUpdate = (orderId: string, newStatus: any) => {
+		dispatch(updateOrderStatus({ id: orderId, status: newStatus }));
+	};
+
+	const getStatusColor = (status: string) => {
+		switch (status) {
+			case "pending":
+				return "bg-yellow-100 text-yellow-800";
+			case "confirmed":
+				return "bg-blue-100 text-blue-800";
+			case "shipped":
+				return "bg-purple-100 text-purple-800";
+			case "delivered":
+				return "bg-green-100 text-green-800";
+			default:
+				return "bg-gray-100 text-gray-800";
+		}
+	};
+
+	const columns: Column<Order>[] = [
+		{
+			key: "id",
+			header: "ID",
+			render: (value: string | number, row: Order) => {
+				return (
+					<div className="text-sm font-medium text-gray-900">
+						#{row.id}
+					</div>
+				);
+			},
+		},
+		{
+			key: "customer",
+			header: "Customer",
+			render: (value: string | number, row: Order) => {
+				return (
+					<div>
+						<div className="text-sm font-medium text-gray-900">
+							{row.customer.firstName} {row.customer.lastName}
+						</div>
+						<div className="text-sm text-gray-500">
+							{row.customer.email}
+						</div>
+					</div>
+				);
+			},
+		},
+		{
+			key: "createdAt",
+			header: "Date Created",
+			render: (value: string | number, row: Order) => {
+				return (
+					<span className="">
+						{new Date(row.createdAt).toLocaleDateString()}
+					</span>
+				);
+			},
+		},
+		{
+			key: "total",
+			header: "Total",
+			render: (value: string | number, row: Order) => {
+				return <span>${row.total.toFixed(2)}</span>;
+			},
+		},
+		{
+			key: "status",
+			header: "Status",
+			render: (value: string | number, row: Order) => {
+				return (
+					<select
+						value={row.status}
+						onChange={(e) => handleStatusUpdate(row.id, e.target.value)}
+						className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border-0 focus:outline-none focus:ring-2 focus:ring-green-500 ${getStatusColor(
+							row.status
+						)}`}
+					>
+						<option value="pending">Pending</option>
+						<option value="confirmed">Confirmed</option>
+						<option value="shipped">Shipped</option>
+						<option value="delivered">Delivered</option>
+					</select>
+				);
+			},
+		},
+		{
+			key: "id",
+			header: "#",
+			render: (value: string | number, row: Order) => {
+				return (
+					<div className="flex items-center justify-center space-x-2">
+						<button
+							className="text-green-600 hover:text-green-900 p-1 rounded"
+							title="View Details"
+						>
+							<Eye className="h-4 w-4" />
+						</button>
+					</div>
+				);
+			},
+		},
+	];
 
 	const statCards = [
 		{
@@ -183,48 +327,48 @@ const AdminDashboard: React.FC = () => {
 						</div>
 					</div>
 
-					{/* Recent Orders */}
+					{/* Category Distribution */}
 					<div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
 						<h3 className="text-lg font-semibold text-gray-900 mb-4">
-							Recent Orders
+							Products by Category
 						</h3>
 						<div className="space-y-4">
-							{recentOrders.map((order) => (
-								<div
-									key={order.id}
-									className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
-								>
-									<div>
-										<p className="font-medium text-gray-900">
-											#{order.id}
-										</p>
-										<p className="text-sm text-gray-500">
-											{order.customer.firstName}{" "}
-											{order.customer.lastName}
-										</p>
-									</div>
-									<div className="text-right">
-										<p className="font-medium text-gray-900">
-											${order.total.toFixed(2)}
-										</p>
-										<span
-											className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-												order.status === "pending"
-													? "bg-yellow-100 text-yellow-800"
-													: order.status === "confirmed"
-													? "bg-blue-100 text-blue-800"
-													: order.status === "shipped"
-													? "bg-purple-100 text-purple-800"
-													: "bg-green-100 text-green-800"
-											}`}
-										>
-											{order.status}
+							{categoryData?.map((item, index) => (
+								<div key={item.category}>
+									<div className="flex justify-between items-center mb-2">
+										<span className="text-sm font-medium text-gray-700">
+											{item.category}
 										</span>
+										<span className="text-sm text-gray-500">
+											{item.count} products
+										</span>
+									</div>
+									<div className="w-full bg-gray-200 rounded-full h-2">
+										<div
+											className="bg-green-600 h-2 rounded-full transition-all duration-300"
+											style={{
+												width: `${
+													(item.count / products.length) * 100
+												}%`,
+											}}
+										></div>
 									</div>
 								</div>
 							))}
 						</div>
 					</div>
+				</div>
+				{/* Recent Orders */}
+				<div className="space-y-6">
+					<h3 className="text-lg font-semibold text-gray-900 mb-4">
+						Recent Orders
+					</h3>
+					<CustomTable
+						columns={columns}
+						tableRow={filteredOrders}
+						currentPage={currentPage}
+						setCurrentPage={setCurrentPage}
+					/>
 				</div>
 			</div>
 		</AdminLayout>
