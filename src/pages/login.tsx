@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
@@ -8,18 +8,21 @@ import { Eye, EyeOff, Leaf, Mail, Lock, AlertCircle } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import {
 	clearError,
-	loginFailure,
-	loginStart,
-	loginSuccess,
+	// loginFailure,
+	// loginStart,
+	// loginSuccess,
 } from "@/_redux/reducers/auth.reducer";
-import { authAPI } from "@/_utils/auth";
 import { LoginFormData, loginSchema } from "@/_validations/auth";
 import Image from "next/image";
+import { loginAsync } from "@/_redux/actions/auth.action";
+import { logger } from "@/_utils";
 
 const LoginPage: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
-	const { isLoading, error } = useAppSelector((state) => state.auth);
+	const { isLoading, error, user, isAuthenticated } = useAppSelector(
+		(state) => state.auth
+	);
 	const [showPassword, setShowPassword] = useState(false);
 
 	const {
@@ -30,28 +33,29 @@ const LoginPage: React.FC = () => {
 		resolver: zodResolver(loginSchema),
 	});
 
-	React.useEffect(() => {
+	useEffect(() => {
 		dispatch(clearError());
-	}, [dispatch]);
+	}, []);
 
 	const onSubmit = async (data: LoginFormData) => {
-		dispatch(loginStart());
 		try {
-			const user = await authAPI.login(data.email, data.password);
-			dispatch(loginSuccess(user));
+			dispatch(loginAsync(data));
+		} catch (err: any) {
+			logger.log({ logginError: err });
+		}
+	};
 
-			// Redirect to home or previous page
+	useEffect(() => {
+		if (isAuthenticated) {
 			const redirect = router.query.redirect as string;
-
-			if (user?.role === "admin") {
+			if (user?.profileType === "STAFF") {
 				router.push(redirect || "/admin/dashboard");
 			} else {
 				router.push(redirect || "/");
 			}
-		} catch (err: any) {
-			dispatch(loginFailure(err.message));
 		}
-	};
+		// Redirect to home or previous page
+	}, [isAuthenticated]);
 
 	return (
 		<div className="min-h-screen bg-green-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

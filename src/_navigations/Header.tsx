@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, User, LogOut } from "lucide-react";
@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useRouter } from "next/router";
 import { logout } from "@/_redux/reducers/auth.reducer";
 import { getPageNames } from "./routes";
+import { getBio } from "@/_redux/actions/user.action";
 
 const Header: React.FC = () => {
 	const router = useRouter();
@@ -16,9 +17,14 @@ const Header: React.FC = () => {
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 	// const itemCount = useAppSelector((state) => state.cart.itemCount);
 	const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+	const { bio } = useAppSelector((state) => state.user);
 	// const wishlistCount = useAppSelector(
 	// 	(state) => state.wishlist.wishlistItemCount
 	// );
+
+	useEffect(() => {
+		dispatch(getBio());
+	}, []);
 
 	const handleLogout = () => {
 		dispatch(logout());
@@ -52,7 +58,8 @@ const Header: React.FC = () => {
 								>
 									<User className="h-6 w-6" />
 									<span className="hidden sm:block text-sm font-medium">
-										{user.firstName} {user.lastName} | {user.role}
+										{user.firstName} {user.lastName} |{" "}
+										{user.profileType}
 									</span>
 								</button>
 

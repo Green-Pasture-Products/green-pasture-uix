@@ -81,13 +81,22 @@ export interface IpInfo {
 }
 
 export interface User {
-	id: string;
+	id: number;
 	email: string;
 	firstName: string;
 	lastName: string;
 	role?: string;
 	isVerified: boolean;
 	createdAt: string;
+
+	createdBy: string;
+	gender: string;
+	phoneNumber: string;
+	profileStatus: string;
+	profileType: string;
+	status: string;
+	updatedAt: string;
+	updatedBy: string;
 }
 
 export interface AuthState {
@@ -95,6 +104,11 @@ export interface AuthState {
 	isAuthenticated: boolean;
 	isLoading: boolean;
 	error: string | null;
+}
+
+export interface BioProp {
+	isLoading: boolean;
+	bio: User | null;
 }
 
 export interface CartState {

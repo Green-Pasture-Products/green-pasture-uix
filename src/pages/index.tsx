@@ -1,11 +1,11 @@
-import React, { useEffect } from "react";
-import Link from "next/link";
 import { Leaf, Truck, Shield, Award } from "lucide-react";
+import React, { useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { productsAction } from "@/_redux/actions";
-import { logger } from "@/_utils";
 import Products from "@/_components/Products";
-import Image from "next/image";
 import Layout from "@/_components/Layout";
 
 const featuredSection = [
@@ -34,7 +34,6 @@ const featuredSection = [
 const HomePage: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const { products } = useAppSelector((state) => state.product);
-	logger.log({ products });
 	const featuredProducts = products?.slice(0, 4);
 
 	useEffect(() => {

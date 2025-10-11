@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -8,6 +8,7 @@ import { ShoppingCart, Search, User, Heart, LogOut } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useRouter } from "next/router";
 import { logout } from "@/_redux/reducers/auth.reducer";
+import { getBio } from "@/_redux/actions/user.action";
 
 interface NavLink {
 	href: string;
@@ -27,10 +28,15 @@ const Navbar: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 	const itemCount = useAppSelector((state) => state.cart.itemCount);
-	const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+	const { isAuthenticated } = useAppSelector((state) => state.auth);
+	const { bio } = useAppSelector((state) => state.user);
 	const wishlistCount = useAppSelector(
 		(state) => state.wishlist.wishlistItemCount
 	);
+
+	useEffect(() => {
+		dispatch(getBio());
+	}, []);
 
 	const handleLogout = () => {
 		dispatch(logout());
@@ -101,7 +107,7 @@ const Navbar: React.FC = () => {
 								</span>
 							)}
 						</Link>
-						{isAuthenticated && user ? (
+						{isAuthenticated && bio ? (
 							<div className="relative">
 								<button
 									onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -109,18 +115,18 @@ const Navbar: React.FC = () => {
 								>
 									<User className="h-6 w-6" />
 									<span className="hidden sm:block text-sm font-medium">
-										{user.firstName}
+										{bio.firstName}
 									</span>
 								</button>
 
 								{isUserMenuOpen && (
 									<div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-										<div className="px-4 py-2 border-b border-gray-100">
+										<div className="break-all px-4 py-2 border-b border-gray-100">
 											<p className="text-sm font-medium text-gray-900">
-												{user.firstName} {user.lastName}
+												{bio.firstName} {bio.lastName}
 											</p>
 											<p className="text-sm text-gray-500">
-												{user.email}
+												{bio.email}
 											</p>
 										</div>
 										<Link
@@ -130,7 +136,7 @@ const Navbar: React.FC = () => {
 										>
 											Profile
 										</Link>
-										{user?.role === "admin" && (
+										{bio?.profileType === "admin" && (
 											<Link
 												href="/admin/orders"
 												className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

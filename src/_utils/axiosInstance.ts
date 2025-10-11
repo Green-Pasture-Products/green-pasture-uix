@@ -1,5 +1,6 @@
-import { appConstants } from "@/_redux/constants";
+import { appConstants, authConstants } from "@/_redux/constants";
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import { getObjectFromStorage } from "./helpers";
 
 let cachedIpInfo: any = null;
 
@@ -35,15 +36,27 @@ axiosInstance.interceptors.request.use(
 	async (
 		config: InternalAxiosRequestConfig
 	): Promise<InternalAxiosRequestConfig> => {
-		const ipInfo = await getIpInfo();
+		try {
+			const ipInfo = await getIpInfo();
 
-		if (config.method?.toLowerCase() === "get") {
-			config.params = { ...config.params, country: ipInfo?.country };
-		} else {
-			config.data = { ...(config.data || {}), country: ipInfo?.country };
+			if (config.method?.toLowerCase() === "get") {
+				config.params = { ...config.params, country: ipInfo?.country };
+			} else {
+				config.data = { ...(config.data || {}), country: ipInfo?.country };
+			}
+
+			// 🔒 Add auth token if available
+			// const user = getObjectFromStorage(authConstants.USER_KEY);
+			// const token = user?.token;
+			// if (token) {
+			// 	config.headers.Authorization = `Bearer ${token}`;
+			// }
+
+			return config;
+		} catch (error) {
+			console.warn("Failed to get IP info:", error);
+			return config;
 		}
-
-		return config;
 	},
 	(error) => Promise.reject(error)
 );

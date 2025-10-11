@@ -1,3 +1,4 @@
+import localforage from "localforage";
 import { usePathname } from "next/navigation";
 
 export const generateUUID = (): string => {
@@ -109,4 +110,59 @@ export const useIsAuthRoute = () => {
 	const checker = (route: string) => routes.indexOf(route) !== -1;
 
 	return checker(pathname);
+};
+
+export interface StorageObject {
+	[key: string]: unknown;
+}
+
+export const setObjectInStorage = async (
+	key: string,
+	object: StorageObject | boolean
+): Promise<boolean> => {
+	try {
+		await localforage.setItem(key, object);
+		return true;
+	} catch (error) {
+		throw error;
+	}
+};
+
+interface StoredObject {
+	// Define the structure of the object you expect to retrieve from storage
+	token?: string;
+	[key: string]: unknown;
+}
+
+export const getObjectFromStorage = async (
+	key: string
+): Promise<StoredObject | null> => {
+	try {
+		const object = await localforage.getItem<StoredObject>(key);
+
+		if (!object) {
+			return null;
+		}
+
+		return object;
+	} catch (error) {
+		throw error;
+	}
+};
+
+export const clearObjectFromStorage = async (key: string): Promise<boolean> => {
+	try {
+		await localforage.removeItem(key);
+		return true;
+	} catch (error) {
+		throw error;
+	}
+};
+
+export const capitalizeFirstLetter = (string: string): string => {
+	if (typeof string === "string" && string.length > 0) {
+		return string[0].toUpperCase() + string.slice(1).toLowerCase();
+	}
+
+	return "";
 };
