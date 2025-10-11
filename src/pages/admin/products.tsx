@@ -63,6 +63,10 @@ const AdminProducts: React.FC = () => {
 
 	const columns: Column<Product>[] = [
 		{
+			key: "id",
+			header: "Product ID",
+		},
+		{
 			key: "name",
 			header: "Name",
 			render: (value: string | number, row: Product) => {
@@ -85,20 +89,21 @@ const AdminProducts: React.FC = () => {
 		{
 			key: "category",
 			header: "Category",
-			// render: (value: string | number, row: Product) => {
-			// 	return <div className="">-</div>;
-			// },
+		},
+		{
+			key: "quantity",
+			header: "Quantity",
 		},
 		{
 			key: "price",
 			header: "Price",
 			render: (value: string | number, row: Product) => {
 				return (
-					<div className="">
-						${row.price.toFixed(2)}
+					<div className="flex flex-col">
+						₦{row.price.toLocaleString()}
 						{row.originalPrice && (
-							<span className="ml-2 text-xs text-gray-500 line-through">
-								${row.originalPrice.toFixed(2)}
+							<span className="ml-2 text-xs text-red-300 line-through">
+								₦{row.originalPrice.toLocaleString()}
 							</span>
 						)}
 					</div>

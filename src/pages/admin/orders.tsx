@@ -66,11 +66,41 @@ const AdminOrders: React.FC = () => {
 	const columns: Column<Order>[] = [
 		{
 			key: "id",
-			header: "ID",
+			header: "Order ID",
 			render: (value: string | number, row: Order) => {
 				return (
 					<div className="text-sm font-medium text-gray-900">
 						#{row.id}
+					</div>
+				);
+			},
+		},
+		{
+			key: "items",
+			header: "Product",
+			render: (value: string | number, row: Order) => {
+				return (
+					<div className="text-sm font-medium text-gray-900 space-y-2">
+						{row.items?.map((item) => (
+							<div key={item.id} className="flex items-center">
+								<img
+									className="h-10 w-10 rounded-md object-cover"
+									src={item.image}
+									alt={item.name}
+								/>
+								<div className="ml-4">
+									<div className="text-sm font-medium text-gray-900">
+										{item.name}
+									</div>
+									<span className="font-normal">
+										₦{item.price.toLocaleString()}
+									</span>{" "}
+									<span className="font-normal">
+										Qty: ({item.quantity})
+									</span>
+								</div>
+							</div>
+						))}
 					</div>
 				);
 			},
@@ -104,7 +134,7 @@ const AdminOrders: React.FC = () => {
 		},
 		{
 			key: "total",
-			header: "Total",
+			header: "Amount",
 			render: (value: string | number, row: Order) => {
 				return <span>${row.total.toFixed(2)}</span>;
 			},

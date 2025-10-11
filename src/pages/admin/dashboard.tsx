@@ -13,7 +13,7 @@ import {
 import AdminLayout from "@/_components/AdminLayout";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { productsAction } from "@/_redux/actions";
-import { Order } from "@/types";
+import { Customer, Order } from "@/types";
 import { Column, CustomTable } from "@/_components/CustomTable";
 import { updateOrderStatus } from "@/_redux/reducers/admin.reducer";
 
@@ -25,6 +25,40 @@ const AdminDashboard: React.FC = () => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [searchTerm, setSearchTerm] = useState("");
 	const recentOrders = orders?.slice(0, 5);
+
+	// Extract unique customers from orders
+	const customers = orders?.reduce((acc: any[], order: Order) => {
+		const existingCustomer = acc.find(
+			(c) => c.email === order.customer.email
+		);
+		if (!existingCustomer) {
+			acc.push({
+				...order.customer,
+				totalOrders: 1,
+				totalSpent: order.total,
+				lastOrderDate: order.createdAt,
+				address: order.shippingAddress,
+			});
+		} else {
+			existingCustomer.totalOrders += 1;
+			existingCustomer.totalSpent += order.total;
+			if (
+				new Date(order.createdAt) > new Date(existingCustomer.lastOrderDate)
+			) {
+				existingCustomer.lastOrderDate = order.createdAt;
+			}
+		}
+		return acc;
+	}, []);
+
+	const filteredCustomers = customers?.filter((customer) => {
+		const searchLower = searchTerm.toLowerCase();
+		return (
+			customer.firstName.toLowerCase().includes(searchLower) ||
+			customer.lastName.toLowerCase().includes(searchLower) ||
+			customer.email.toLowerCase().includes(searchLower)
+		);
+	});
 
 	useEffect(() => {
 		dispatch(productsAction.fetchAllProducts());
@@ -84,6 +118,36 @@ const AdminDashboard: React.FC = () => {
 				return (
 					<div className="text-sm font-medium text-gray-900">
 						#{row.id}
+					</div>
+				);
+			},
+		},
+		{
+			key: "items",
+			header: "Product",
+			render: (value: string | number, row: Order) => {
+				return (
+					<div className="text-sm font-medium text-gray-900 space-y-2">
+						{row.items?.map((item) => (
+							<div key={item.id} className="flex items-center">
+								<img
+									className="h-10 w-10 rounded-md object-cover"
+									src={item.image}
+									alt={item.name}
+								/>
+								<div className="ml-4">
+									<div className="text-sm font-medium text-gray-900">
+										{item.name}
+									</div>
+									<span className="font-normal">
+										₦{item.price.toLocaleString()}
+									</span>{" "}
+									<span className="font-normal">
+										Qty: ({item.quantity})
+									</span>
+								</div>
+							</div>
+						))}
 					</div>
 				);
 			},
@@ -155,6 +219,68 @@ const AdminDashboard: React.FC = () => {
 							<Eye className="h-4 w-4" />
 						</button>
 					</div>
+				);
+			},
+		},
+	];
+
+	const topBuyerColumns: Column<Customer>[] = [
+		{
+			key: "firstName",
+			header: "Customer Name",
+			render: (value: string | number, row: Customer) => {
+				return (
+					<div>
+						<div className="text-sm font-medium text-gray-900">
+							{row.firstName} {row.lastName}
+						</div>
+						<div className="text-sm text-gray-500">{row.email}</div>
+					</div>
+				);
+			},
+		},
+		{
+			key: "email",
+			header: "Email Address",
+		},
+		{
+			key: "phone",
+			header: "Phone Number",
+		},
+		{
+			key: "totalSpent",
+			header: "Total Spent",
+			render: (value: string | number, row: Customer) => {
+				return <span>${row.totalSpent}</span>;
+			},
+		},
+		{
+			key: "address",
+			header: "Address",
+			render: (value: string | number, row: Customer) => {
+				return (
+					<span>
+						{row.address?.street} {row.address?.city} {row.address?.state}{" "}
+						{row.address?.zipCode} {row.address?.country}
+					</span>
+				);
+			},
+		},
+		{
+			key: "lastOrderDate",
+			header: "Last Order Date",
+			render: (value: string | number, row: Customer) => {
+				return <span>{new Date(value).toLocaleDateString()}</span>;
+			},
+		},
+		{
+			key: "totalOrders",
+			header: "Total Orders",
+			render: (value: string | number, row: Customer) => {
+				return (
+					<span className="font-medium text-gray-900">
+						{row.totalOrders}
+					</span>
 				);
 			},
 		},
@@ -358,17 +484,32 @@ const AdminDashboard: React.FC = () => {
 						</div>
 					</div>
 				</div>
-				{/* Recent Orders */}
-				<div className="space-y-6">
-					<h3 className="text-lg font-semibold text-gray-900 mb-4">
-						Recent Orders
-					</h3>
-					<CustomTable
-						columns={columns}
-						tableRow={filteredOrders}
-						currentPage={currentPage}
-						setCurrentPage={setCurrentPage}
-					/>
+
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+					{/* Top Buyers */}
+					<div className="space-y-6">
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">
+							Top Buyers
+						</h3>
+						<CustomTable
+							columns={topBuyerColumns}
+							tableRow={filteredCustomers}
+							currentPage={currentPage}
+							setCurrentPage={setCurrentPage}
+						/>
+					</div>
+					{/* Recent Orders */}
+					<div className="space-y-6">
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">
+							Recent Orders
+						</h3>
+						<CustomTable
+							columns={columns}
+							tableRow={filteredOrders}
+							currentPage={currentPage}
+							setCurrentPage={setCurrentPage}
+						/>
+					</div>
 				</div>
 			</div>
 		</AdminLayout>
