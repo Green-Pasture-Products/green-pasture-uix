@@ -4,11 +4,10 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, Search, User, Heart, LogOut } from "lucide-react";
+import { ShoppingCart, Search, User, Heart } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { useRouter } from "next/router";
-import { logout } from "@/_redux/reducers/auth.reducer";
-import { getBio } from "@/_redux/actions/user.action";
+import { LogoutButton } from "@/_components/LogoutButton";
+import { getCurrentUserAsync } from "@/_redux/actions/auth.action";
 
 interface NavLink {
 	href: string;
@@ -23,25 +22,18 @@ const navLinks: NavLink[] = [
 ];
 
 const Navbar: React.FC = () => {
-	const router = useRouter();
 	const pathname = usePathname();
 	const dispatch = useAppDispatch();
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 	const itemCount = useAppSelector((state) => state.cart.itemCount);
-	const { isAuthenticated } = useAppSelector((state) => state.auth);
-	const { bio } = useAppSelector((state) => state.user);
+	const { user: bio, isAuthenticated } = useAppSelector((state) => state.auth);
 	const wishlistCount = useAppSelector(
 		(state) => state.wishlist.wishlistItemCount
 	);
 
 	useEffect(() => {
-		dispatch(getBio());
-	}, []);
-
-	const handleLogout = () => {
-		dispatch(logout());
-		router.push("/");
-	};
+		dispatch(getCurrentUserAsync());
+	}, [dispatch]);
 
 	const isActive = (path: string) =>
 		pathname === path ? "text-green-600" : "text-gray-700";
@@ -129,14 +121,14 @@ const Navbar: React.FC = () => {
 												{bio.email}
 											</p>
 										</div>
-										<Link
+										{/* <Link
 											href="/profile"
 											className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 											onClick={() => setIsUserMenuOpen(false)}
 										>
 											Profile
-										</Link>
-										{bio?.profileType === "admin" && (
+										</Link> */}
+										{bio?.profileType === "STAFF" && (
 											<Link
 												href="/admin/orders"
 												className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -145,16 +137,12 @@ const Navbar: React.FC = () => {
 												Orders
 											</Link>
 										)}
-										<button
+										<LogoutButton
 											onClick={() => {
-												handleLogout();
 												setIsUserMenuOpen(false);
 											}}
 											className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-										>
-											<LogOut className="h-4 w-4 inline mr-2" />
-											Sign out
-										</button>
+										/>
 									</div>
 								)}
 							</div>

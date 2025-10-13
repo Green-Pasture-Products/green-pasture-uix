@@ -7,16 +7,31 @@ import { LayoutProps } from "@/types/client/layout";
 import Sidebar from "../_navigations/Sidebar";
 import Header from "../_navigations/Header";
 import { usePathname } from "next/navigation";
+import { useAppSelector } from "@/_redux/store";
+import { useMultiTabLogoutSync } from "@/_utils/hooks";
 
-const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
+const AdminLayout = ({ children }: LayoutProps) => {
 	const pathnaame = usePathname();
+	// Enable multi-tab logout sync
+	useMultiTabLogoutSync();
+
+	const { isAuthenticated } = useAppSelector((state) => state.auth);
 	const lastSegment = pathnaame.split("/").filter(Boolean).pop() || "";
 
 	// Capitalize first letter
 	const page_name = lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
 
+	if (!isAuthenticated) {
+		return (
+			<div className="min-h-screen flex items-center justify-center">
+				Please log in
+			</div>
+		);
+	}
+
 	return (
 		<>
+			{/* <ProtectedRoute allowedRoles={["admin", "superadmin"]}> */}
 			<Head>
 				<title className="capitalize">
 					{`${page_name} Page` || "Home"} | Green Patures Organics | Living
@@ -95,6 +110,7 @@ const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 					<main className="p-6">{children}</main>
 				</div>
 			</div>
+			{/* </ProtectedRoute> */}
 		</>
 	);
 };

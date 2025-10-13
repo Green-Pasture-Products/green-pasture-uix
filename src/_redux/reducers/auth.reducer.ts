@@ -1,8 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AuthState, User } from "@/types";
-import { loginAsync, signupAsync } from "../actions/auth.action";
-import { authConstants } from "../constants";
-import { clearObjectFromStorage, logger, setObjectInStorage } from "@/_utils";
+import { AuthState } from "@/types";
+import {
+	getCurrentUserAsync,
+	loginAsync,
+	logoutAsync,
+	signupAsync,
+} from "../actions/auth.action";
 
 const initialState: AuthState = {
 	user: null,
@@ -15,17 +18,15 @@ const authSlice = createSlice({
 	name: "auth",
 	initialState,
 	reducers: {
-		logout: (state) => {
-			state.user = null;
-			state.isAuthenticated = false;
-			state.error = null;
-			clearObjectFromStorage(authConstants.USER_KEY);
-		},
 		clearError: (state) => {
 			state.error = null;
 		},
 		setLoading: (state, action: PayloadAction<boolean>) => {
 			state.isLoading = action.payload;
+		},
+		getCurrentUser: (state) => {
+			state.isLoading = false;
+			state.user;
 		},
 	},
 	extraReducers: (builder) => {
@@ -40,13 +41,53 @@ const authSlice = createSlice({
 				state.isAuthenticated = true;
 				state.error = null;
 				// save token for future API calls
-				setObjectInStorage(authConstants.USER_KEY, {
-					user: action.payload?.data?.profileInfo,
-					accessToken: action.payload?.data?.accessToken,
-					refreshToken: action.payload?.data?.refreshToken,
-				});
+				// setObjectInStorage(authConstants.USER_KEY, {
+				// 	user: action.payload?.data?.profileInfo,
+				// 	accessToken: action.payload?.data?.accessToken,
+				// 	refreshToken: action.payload?.data?.refreshToken,
+				// });
 			})
 			.addCase(loginAsync.rejected, (state, action) => {
+				state.isLoading = false;
+				state.error = action.payload as string;
+				state.isAuthenticated = false;
+			});
+
+		builder
+			.addCase(logoutAsync.pending, (state) => {
+				state.isLoading = true;
+				state.error = null;
+			})
+			.addCase(
+				logoutAsync.fulfilled,
+				(state, action: PayloadAction<any>) => {
+					state.isLoading = false;
+					state.user = null;
+					state.isAuthenticated = false;
+					state.error = null;
+				}
+			)
+			.addCase(logoutAsync.rejected, (state, action) => {
+				state.isLoading = false;
+				state.error = action.payload as string;
+				state.isAuthenticated = false;
+			});
+
+		builder
+			.addCase(getCurrentUserAsync.pending, (state) => {
+				state.isLoading = true;
+				state.error = null;
+			})
+			.addCase(
+				getCurrentUserAsync.fulfilled,
+				(state, action: PayloadAction<any>) => {
+					state.isLoading = false;
+					state.user = action.payload?.data?.profileInfo;
+					state.isAuthenticated = true;
+					state.error = null;
+				}
+			)
+			.addCase(getCurrentUserAsync.rejected, (state, action) => {
 				state.isLoading = false;
 				state.error = action.payload as string;
 				state.isAuthenticated = false;
@@ -68,5 +109,5 @@ const authSlice = createSlice({
 	},
 });
 
-export const { logout, clearError, setLoading } = authSlice.actions;
+export const { clearError, setLoading } = authSlice.actions;
 export default authSlice.reducer;

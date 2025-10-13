@@ -106,9 +106,9 @@ export interface AuthState {
 	error: string | null;
 }
 
-export interface BioProp {
+export interface UsersProp {
 	isLoading: boolean;
-	bio: User | null;
+	staff: User | null;
 }
 
 export interface CartState {

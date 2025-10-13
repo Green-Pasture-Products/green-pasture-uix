@@ -1,10 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { getBio } from "../actions/user.action";
-import { BioProp, User } from "@/types";
+import { getAllStaff } from "../actions/user.action";
+import { UsersProp, User } from "@/types";
 
-const initialState: BioProp = {
+const initialState: UsersProp = {
 	isLoading: false,
-	bio: null,
+	staff: null,
 };
 
 const usersSlice = createSlice({
@@ -17,17 +17,17 @@ const usersSlice = createSlice({
 	},
 	extraReducers: (builder) => {
 		builder
-			.addCase(getBio.pending, (state) => {
+			.addCase(getAllStaff.pending, (state) => {
 				state.isLoading = true;
 			})
 			.addCase(
-				getBio.fulfilled,
+				getAllStaff.fulfilled,
 				(state, action: PayloadAction<User | null>) => {
-					state.bio = action.payload;
+					state.staff = action.payload;
 					state.isLoading = false;
 				}
 			)
-			.addCase(getBio.rejected, (state) => {
+			.addCase(getAllStaff.rejected, (state) => {
 				state.isLoading = false;
 			});
 	},

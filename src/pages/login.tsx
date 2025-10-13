@@ -16,6 +16,8 @@ import { LoginFormData, loginSchema } from "@/_validations/auth";
 import Image from "next/image";
 import { loginAsync } from "@/_redux/actions/auth.action";
 import { logger } from "@/_utils";
+import Spinner from "@/_components/Spinner";
+import toast from "react-hot-toast";
 
 const LoginPage: React.FC = () => {
 	const router = useRouter();
@@ -34,16 +36,11 @@ const LoginPage: React.FC = () => {
 	});
 
 	useEffect(() => {
-		dispatch(clearError());
-	}, []);
-
-	const onSubmit = async (data: LoginFormData) => {
-		try {
-			dispatch(loginAsync(data));
-		} catch (err: any) {
-			logger.log({ logginError: err });
+		if (error) {
+			toast.error(error);
+			dispatch(clearError());
 		}
-	};
+	}, [error, dispatch]);
 
 	useEffect(() => {
 		if (isAuthenticated) {
@@ -56,6 +53,19 @@ const LoginPage: React.FC = () => {
 		}
 		// Redirect to home or previous page
 	}, [isAuthenticated]);
+
+	const onSubmit = async (data: LoginFormData) => {
+		try {
+			const result = await dispatch(loginAsync(data)); // ✅ Makes API call
+
+			if (loginAsync.fulfilled.match(result)) {
+				toast.success("Login successful!");
+				// Redirect happens in useEffect above
+			}
+		} catch (err: any) {
+			logger.log({ logginError: err });
+		}
+	};
 
 	return (
 		<div className="min-h-screen bg-green-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -202,14 +212,7 @@ const LoginPage: React.FC = () => {
 							disabled={isLoading}
 							className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
 						>
-							{isLoading ? (
-								<div className="flex items-center">
-									<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-									Signing in...
-								</div>
-							) : (
-								"Sign in"
-							)}
+							{isLoading ? <Spinner text="Signing in..." /> : "Sign in"}
 						</button>
 					</div>
 

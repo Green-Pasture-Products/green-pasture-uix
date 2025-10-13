@@ -19,7 +19,10 @@ import { appConstants } from "./constants";
 const persistConfig = {
 	key: `${appConstants.ROOT_STORAGE}`,
 	storage,
-	// whitelist: ["product", "wishlist", "cart", "search", "auth", "user"], // persist only this reducer
+	// ✅ CRITICAL: Exclude auth and user from persistence - cookies handle this
+	blacklist: ["auth", "user"],
+	// Only persist non-sensitive data like UI preferences, cart, etc.
+	whitelist: ["product", "wishlist", "cart", "search"],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -30,7 +33,6 @@ export const store = configureStore({
 		getDefaultMiddleware({
 			serializableCheck: {
 				ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-				// ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
 			},
 		}),
 });
