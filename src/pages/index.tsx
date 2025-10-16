@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { productsAction } from "@/_redux/actions";
+// import { productsAction } from "@/_redux/actions";
 import Products from "@/_components/Products";
 import Layout from "@/_components/Layout";
+import { productsAction } from "@/_redux/actions/products.action";
 
 const featuredSection = [
 	{

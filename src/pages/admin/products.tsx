@@ -7,9 +7,10 @@ import AddProduct from "@/_components/Modals/AddProduct";
 import { selectProduct } from "@/_redux/reducers/admin.reducer";
 import { Column, CustomTable } from "@/_components/CustomTable";
 import { Product } from "@/types";
-import { productsAction } from "@/_redux/actions";
+// import { productsAction } from "@/_redux/actions";
 import SearchBar from "@/_components/SearchBar";
 import { filterAndSortProducts, logger } from "@/_utils";
+import { productsAction } from "@/_redux/actions/products.action";
 
 interface ActionDropDownProps {
 	row: Product;

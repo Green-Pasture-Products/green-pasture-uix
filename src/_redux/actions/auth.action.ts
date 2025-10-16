@@ -42,9 +42,6 @@ export const loginAsync = createAsyncThunk(
 			const response = await axiosInstance.post(`auth/login`, user);
 			return response.data;
 		} catch (error: any) {
-			// const message =
-			// 	error.response?.data?.message || error.message || "Login failed";
-			// return rejectWithValue(message);
 			const message = handleApiError(error);
 			toast.error(message);
 			return rejectWithValue(message);
@@ -59,9 +56,6 @@ export const logoutAsync = createAsyncThunk(
 			const response = await axiosInstance.post(`auth/logout`);
 			return response.data;
 		} catch (error: any) {
-			// const message =
-			// 	error.response?.data?.message || error.message || "Login failed";
-			// return rejectWithValue(message);
 			const message = handleApiError(error);
 			toast.error(message);
 			return rejectWithValue(message);

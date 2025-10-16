@@ -12,10 +12,11 @@ import {
 
 import AdminLayout from "@/_components/AdminLayout";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { productsAction } from "@/_redux/actions";
+// import { productsAction } from "@/_redux/actions";
 import { Customer, Order } from "@/types";
 import { Column, CustomTable } from "@/_components/CustomTable";
 import { updateOrderStatus } from "@/_redux/reducers/admin.reducer";
+import { productsAction } from "@/_redux/actions/products.action";
 
 const AdminDashboard: React.FC = () => {
 	const dispatch = useAppDispatch();

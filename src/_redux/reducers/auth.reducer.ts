@@ -1,11 +1,14 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AuthState } from "@/types";
-import {
-	getCurrentUserAsync,
-	loginAsync,
-	logoutAsync,
-	signupAsync,
-} from "../actions/auth.action";
+// import {
+// 	getCurrentUserAsync,
+// 	loginAsync,
+// 	logoutAsync,
+// 	signupAsync,
+// } from "../actions/auth.action";
+import { handleApiError } from "@/_utils";
+import axiosInstance from "@/_utils/axiosInstance";
+import toast from "react-hot-toast";
 
 const initialState: AuthState = {
 	user: null,
@@ -13,6 +16,79 @@ const initialState: AuthState = {
 	isLoading: false,
 	error: null,
 };
+
+interface Address {
+	latitude: string;
+	longitude: string;
+	houseAddress: string;
+	state: string;
+	city: string;
+	postalCode: string;
+}
+
+interface User {
+	firstName: string;
+	lastName: string;
+	email: string;
+	password: string;
+	phoneNumber?: string;
+	role?: "CLIENT" | "ADMIN" | "OTHER";
+	address?: Address;
+}
+
+const signupAsync = createAsyncThunk(
+	"auth/signupAsync",
+	async (user: User, { rejectWithValue }) => {
+		try {
+			const response = await axiosInstance.post(`auth/signup`, user);
+			return response.data;
+		} catch (error: any) {
+			const message =
+				error.response?.data?.message || error.message || "Signup failed";
+			return rejectWithValue(message);
+		}
+	}
+);
+
+const loginAsync = createAsyncThunk(
+	"auth/loginAsync",
+	async (user: { email: string; password: string }, { rejectWithValue }) => {
+		try {
+			const response = await axiosInstance.post(`auth/login`, user);
+			return response.data;
+		} catch (error: any) {
+			const message = handleApiError(error);
+			toast.error(message);
+			return rejectWithValue(message);
+		}
+	}
+);
+
+const logoutAsync = createAsyncThunk(
+	"auth/logoutAsync",
+	async (data, { rejectWithValue }) => {
+		try {
+			const response = await axiosInstance.post(`auth/logout`);
+			return response.data;
+		} catch (error: any) {
+			const message = handleApiError(error);
+			toast.error(message);
+			return rejectWithValue(message);
+		}
+	}
+);
+
+const getCurrentUserAsync = createAsyncThunk(
+	"auth/getCurrentUserAsync",
+	async (_, { rejectWithValue }) => {
+		try {
+			const response = await axiosInstance.get("auth/me");
+			return response.data;
+		} catch (error: any) {
+			return rejectWithValue("Failed to get user");
+		}
+	}
+);
 
 const authSlice = createSlice({
 	name: "auth",
@@ -23,10 +99,6 @@ const authSlice = createSlice({
 		},
 		setLoading: (state, action: PayloadAction<boolean>) => {
 			state.isLoading = action.payload;
-		},
-		getCurrentUser: (state) => {
-			state.isLoading = false;
-			state.user;
 		},
 	},
 	extraReducers: (builder) => {
@@ -40,12 +112,6 @@ const authSlice = createSlice({
 				state.user = action.payload?.data?.profileInfo;
 				state.isAuthenticated = true;
 				state.error = null;
-				// save token for future API calls
-				// setObjectInStorage(authConstants.USER_KEY, {
-				// 	user: action.payload?.data?.profileInfo,
-				// 	accessToken: action.payload?.data?.accessToken,
-				// 	refreshToken: action.payload?.data?.refreshToken,
-				// });
 			})
 			.addCase(loginAsync.rejected, (state, action) => {
 				state.isLoading = false;

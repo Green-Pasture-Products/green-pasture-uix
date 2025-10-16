@@ -15,7 +15,8 @@ import { filterAndSortProducts } from "@/_utils";
 import ProductCard from "@/_components/ProductCard";
 import SearchBar from "@/_components/SearchBar";
 import { usePathname } from "next/navigation";
-import { productsAction } from "@/_redux/actions";
+import { productsAction } from "@/_redux/actions/products.action";
+// import { productsAction } from "@/_redux/actions";
 
 const FilteredProducts: React.FC = () => {
 	const router = useRouter();

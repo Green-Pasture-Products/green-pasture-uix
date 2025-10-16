@@ -8,10 +8,13 @@ import axios, {
 import { logger } from "./logger";
 import { store } from "@/_redux/store";
 import toast from "react-hot-toast";
-import { logoutAsync } from "@/_redux/actions/auth.action";
+// import { logoutAsync } from "@/_redux/actions/auth.action";
 
 // This should return empty (HttpOnly protection working)
-logger.log(document.cookie);
+if (typeof window !== "undefined") {
+	// This should return empty (HttpOnly protection working)
+	logger.log({ documentCookie: document.cookie });
+}
 
 // Cache IP info to avoid repeated API calls
 let cachedIpInfo: any = null;
@@ -212,7 +215,13 @@ axiosInstance.interceptors.response.use(
 				});
 
 				// Dispatch logout action
-				store.dispatch(logoutAsync());
+				// store.dispatch(logoutAsync());
+				// store.dispatch({
+				// 	type: "auth/logoutAsync",
+				// });
+				import("@/_redux/actions/auth.action").then(({ logoutAsync }) => {
+					store.dispatch(logoutAsync() as any);
+				});
 
 				// Show error message to user
 				toast.error("Session expired. Please login again.");

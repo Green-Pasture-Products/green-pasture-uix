@@ -1,7 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { productsAction } from "../actions";
+// import { productsAction } from "../actions";
 import { Product, ProductsState } from "@/types";
 import { categories } from "../constants/categories.constant";
+import { productsAction } from "../actions/products.action";
 
 const initialState: ProductsState = {
 	isFetchingAllProducts: false,

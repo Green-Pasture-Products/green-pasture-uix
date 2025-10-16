@@ -1,16 +1,18 @@
 // LIBRARY COMPONENTS
 import Head from "next/head";
-import React from "react";
+import React, { useEffect } from "react";
 
 // CUSTOM COMPONENTS
 import { LayoutProps } from "@/types/client/layout";
 import Sidebar from "../_navigations/Sidebar";
 import Header from "../_navigations/Header";
 import { usePathname } from "next/navigation";
-import { useAppSelector } from "@/_redux/store";
+import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useMultiTabLogoutSync } from "@/_utils/hooks";
+import { logoutAsync } from "@/_redux/actions/auth.action";
 
 const AdminLayout = ({ children }: LayoutProps) => {
+	const dispatch = useAppDispatch();
 	const pathnaame = usePathname();
 	// Enable multi-tab logout sync
 	useMultiTabLogoutSync();
@@ -21,13 +23,11 @@ const AdminLayout = ({ children }: LayoutProps) => {
 	// Capitalize first letter
 	const page_name = lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
 
-	if (!isAuthenticated) {
-		return (
-			<div className="min-h-screen flex items-center justify-center">
-				Please log in
-			</div>
-		);
-	}
+	useEffect(() => {
+		if (!isAuthenticated) {
+			dispatch(logoutAsync());
+		}
+	}, [isAuthenticated]);
 
 	return (
 		<>

@@ -6,18 +6,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Leaf, Mail, Lock, AlertCircle } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import {
-	clearError,
-	// loginFailure,
-	// loginStart,
-	// loginSuccess,
-} from "@/_redux/reducers/auth.reducer";
+import { clearError } from "@/_redux/reducers/auth.reducer";
 import { LoginFormData, loginSchema } from "@/_validations/auth";
 import Image from "next/image";
-import { loginAsync } from "@/_redux/actions/auth.action";
 import { logger } from "@/_utils";
 import Spinner from "@/_components/Spinner";
 import toast from "react-hot-toast";
+import { loginAsync } from "@/_redux/actions/auth.action";
+// import { authActions } from "@/_redux/actions/auth.action";
+// import { authActions } from "@/_redux/actions";
 
 const LoginPage: React.FC = () => {
 	const router = useRouter();
