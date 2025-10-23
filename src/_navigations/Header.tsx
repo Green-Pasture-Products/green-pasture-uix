@@ -69,7 +69,7 @@ const Header: React.FC = () => {
 											<p className="text-sm font-medium text-gray-900">
 												{user.firstName} {user.lastName}
 											</p>
-											<p className="text-sm text-gray-500">
+											<p className="text-sm text-gray-500 break-all">
 												{user.email}
 											</p>
 										</div>
