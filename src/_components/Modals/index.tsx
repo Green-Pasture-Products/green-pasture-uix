@@ -46,7 +46,7 @@ export default function Modal({
 			onClick={onClose}
 		>
 			<div
-				className={`relative w-full ${sizeClasses[size]} bg-white rounded-lg shadow-xl transform transition-all`} // top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white
+				className={`relative w-full ${sizeClasses[size]} h-full max-h-2xl overflow-y-auto bg-white rounded-lg shadow-xl transform transition-all`} // top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white
 				onClick={(e) => e.stopPropagation()}
 			>
 				{title && (

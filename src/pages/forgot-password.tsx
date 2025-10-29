@@ -12,6 +12,7 @@ import {
 import { authAPI } from "@/_utils/auth";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import Image from "next/image";
+import { logger } from "@/_utils";
 
 const ForgotPasswordPage: React.FC = () => {
 	const dispatch = useAppDispatch();
@@ -41,7 +42,7 @@ const ForgotPasswordPage: React.FC = () => {
 			setEmailSent(true);
 		} catch (err: any) {
 			// Handle error through Redux if needed
-			console.error(err.message);
+			logger.error(err.message);
 		} finally {
 			dispatch(setLoading(false));
 		}

@@ -48,6 +48,11 @@ export const sidebarNavigation = [
 		icon: Package,
 	},
 	{
+		name: "Categories",
+		href: "/admin/categories",
+		icon: Package,
+	},
+	{
 		name: "Orders",
 		href: "/admin/orders",
 		icon: ShoppingCart,

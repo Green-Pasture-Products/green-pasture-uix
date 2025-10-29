@@ -4,9 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { productsAction } from "@/_redux/actions";
+// import { fetchAllProducts } from "@/_redux/actions";
 import Products from "@/_components/Products";
 import Layout from "@/_components/Layout";
+import { logger } from "@/_utils";
+import { mockProducts } from "@/_redux/mockData";
 
 const featuredSection = [
 	{
@@ -32,12 +34,14 @@ const featuredSection = [
 ];
 
 const HomePage: React.FC = () => {
-	const dispatch = useAppDispatch();
-	const { products } = useAppSelector((state) => state.product);
-	const featuredProducts = products?.slice(0, 4);
+	// const dispatch = useAppDispatch();
+	// const { products } = useAppSelector((state) => state.product);
+	const featuredProducts = mockProducts?.slice(0, 4);
+
+	// logger.log({ fetchAllProducts });
 
 	useEffect(() => {
-		dispatch(productsAction.fetchAllProducts());
+		// dispatch(fetchAllProducts());
 	}, []);
 
 	return (
@@ -173,7 +177,7 @@ const HomePage: React.FC = () => {
 						</div>
 					)}
 
-					{products?.length > 4 && (
+					{mockProducts?.length > 4 && (
 						<div className="text-center">
 							<Link
 								href="/products"

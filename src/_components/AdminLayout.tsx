@@ -8,7 +8,7 @@ import Sidebar from "../_navigations/Sidebar";
 import Header from "../_navigations/Header";
 import { usePathname } from "next/navigation";
 
-const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
+const AdminLayout = ({ children, isLoading }: LayoutProps) => {
 	const pathnaame = usePathname();
 	const lastSegment = pathnaame.split("/").filter(Boolean).pop() || "";
 
@@ -92,7 +92,15 @@ const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 				<Sidebar />
 				<div className="flex-1 w-full">
 					<Header />
-					<main className="p-6">{children}</main>
+					<main
+						className={`p-6 ${
+							isLoading
+								? "h-full w-[100% - 72px] flex items-center justify-center"
+								: ""
+						}`}
+					>
+						{children}
+					</main>
 				</div>
 			</div>
 		</>

@@ -131,6 +131,8 @@ export const setObjectInStorage = async (
 interface StoredObject {
 	// Define the structure of the object you expect to retrieve from storage
 	token?: string;
+	email?: string;
+	password?: string;
 	[key: string]: unknown;
 }
 

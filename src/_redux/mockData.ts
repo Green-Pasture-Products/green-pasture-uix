@@ -1,4 +1,4 @@
-import { generateUUID } from "@/_utils";
+import { generateUUID } from "@/_utils/helpers";
 import { Order, Product } from "@/types";
 
 export const mockProducts: Product[] = [

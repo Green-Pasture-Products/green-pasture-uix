@@ -29,6 +29,7 @@ import Image from "next/image";
 import Layout from "@/_components/Layout";
 import { useCartOperations } from "@/_hooks/useCart";
 import { CartItemSkeleton } from "@/_skeletonLoading/CartItemSkeleton";
+import { logger } from "@/_utils";
 // import {
 // 	addToWishlist,
 // 	removeFromWishlist,
@@ -91,7 +92,7 @@ const CartPage: React.FC = () => {
 			await dispatch(clearCart());
 			setShowClearConfirm(false);
 		} catch (error) {
-			console.error("Failed to clear cart:", error);
+			logger.error("Failed to clear cart:", error);
 		} finally {
 			setIsClearing(false);
 		}

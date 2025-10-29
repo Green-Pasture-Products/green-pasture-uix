@@ -7,7 +7,7 @@ import AddProduct from "@/_components/Modals/AddProduct";
 import { selectProduct } from "@/_redux/reducers/admin.reducer";
 import { Column, CustomTable } from "@/_components/CustomTable";
 import { Product } from "@/types";
-import { productsAction } from "@/_redux/actions";
+import { fetchAllProducts } from "@/_redux/actions";
 import SearchBar from "@/_components/SearchBar";
 import { filterAndSortProducts, logger } from "@/_utils";
 
@@ -22,7 +22,7 @@ const AdminProducts: React.FC = () => {
 	const [currentPage, setCurrentPage] = useState(1);
 
 	useEffect(() => {
-		dispatch(productsAction.fetchAllProducts());
+		dispatch(fetchAllProducts());
 	}, []);
 
 	const filteredProducts = filterAndSortProducts(products, query, filters);

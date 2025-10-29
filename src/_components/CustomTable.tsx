@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Pagination } from "./Pagination";
+import Loader from "./Loader";
 
 export type Column<T> = {
 	key: keyof T;
@@ -28,7 +29,7 @@ export function CustomTable<T extends Record<string, any>>({
 	const totalPages = Math.ceil(tableRow?.length / itemsPerPage);
 	const startIndex = (currentPage - 1) * itemsPerPage;
 	const endIndex = startIndex + itemsPerPage;
-	const currentData = tableRow.slice(startIndex, endIndex);
+	const currentData = tableRow?.slice(startIndex, endIndex);
 
 	// Reset to page 1 when items per page changes
 	const handleItemsPerPageChange = (newItemsPerPage: number) => {
@@ -36,13 +37,9 @@ export function CustomTable<T extends Record<string, any>>({
 		setCurrentPage(1);
 	};
 
-	if (isLoading) {
-		return (
-			<div className="flex items-center justify-center h-64">
-				<div className="w-8 h-8 border-4 border-[#B28309] border-t-transparent rounded-full animate-spin"></div>
-			</div>
-		);
-	}
+	// if (isLoading) {
+	// 	return <Loader />;
+	// }
 
 	return (
 		<>

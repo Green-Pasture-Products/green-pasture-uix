@@ -162,6 +162,25 @@ const AddProduct: React.FC<{
 							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
 						/>
 					</div>
+					<div>
+						<label className="block text-sm font-medium text-gray-700 mb-1">
+							Quantity
+						</label>
+						<input
+							type="number"
+							step="1"
+							value={formData.quantity}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									quantity: e.target.value
+										? parseFloat(e.target.value)
+										: 0,
+								})
+							}
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+						/>
+					</div>
 					<div className="flex items-center space-x-6">
 						<label className="flex items-center">
 							<input
@@ -177,20 +196,6 @@ const AddProduct: React.FC<{
 							/>
 							In Stock
 						</label>
-						{/* <label className="flex items-center">
-							<input
-								type="checkbox"
-								checked={formData.organic}
-								onChange={(e) =>
-									setFormData({
-										...formData,
-										organic: e.target.checked,
-									})
-								}
-								className="mr-2"
-							/>
-							Organic
-						</label> */}
 					</div>
 					<div className="flex justify-end space-x-3 pt-4">
 						<button

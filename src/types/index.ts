@@ -12,6 +12,27 @@ export interface Product {
 	reviews: number;
 }
 
+export interface Category {
+	id?: string;
+	name: string;
+	description: string;
+	slug?: string;
+	image?: string;
+	parentId?: string | null;
+	isActive?: boolean;
+	productCount?: number;
+	createdAt?: string;
+	updatedAt?: string;
+}
+
+export interface CategoryState {
+	category: Category | null;
+	categories: Category[];
+	pagination: null;
+	isLoading: boolean;
+	error: string | null;
+}
+
 export interface ProductsState {
 	isFetchingAllProducts: boolean;
 	isFetchingProduct: boolean;
@@ -104,6 +125,8 @@ export interface AuthState {
 	isAuthenticated: boolean;
 	isLoading: boolean;
 	error: string | null;
+	accessToken: string;
+	refreshToken: string;
 }
 
 export interface BioProp {
@@ -171,4 +194,9 @@ export interface StatusModalProps {
 	message: string;
 	autoClose?: boolean;
 	autoCloseDelay?: number;
+}
+
+export interface PageParams {
+	page?: number;
+	limit?: number;
 }

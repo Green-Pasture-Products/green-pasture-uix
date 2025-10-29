@@ -1,4 +1,5 @@
 import { appConstants } from "@/_redux/constants";
+import { logger } from "@/_utils";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { IPinfoWrapper, IPinfo } from "node-ipinfo";
 
@@ -25,7 +26,7 @@ export default async function handler(
 
 		res.status(200).json(data);
 	} catch (error) {
-		console.error("IPInfo Error:", error);
+		logger.error("IPInfo Error:", error);
 		res.status(500).json({ error: "Failed to fetch IP info" });
 	}
 }

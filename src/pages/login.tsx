@@ -1,29 +1,32 @@
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import { useForm } from "react-hook-form";
+import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Leaf, Mail, Lock, AlertCircle } from "lucide-react";
-
-import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import {
-	clearError,
-	// loginFailure,
-	// loginStart,
-	// loginSuccess,
-} from "@/_redux/reducers/auth.reducer";
-import { LoginFormData, loginSchema } from "@/_validations/auth";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useRouter } from "next/router";
 import Image from "next/image";
+import Link from "next/link";
+
+import { LoginFormData, loginSchema } from "@/_validations/auth";
+import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import { clearError } from "@/_redux/reducers/auth.reducer";
 import { loginAsync } from "@/_redux/actions/auth.action";
-import { logger } from "@/_utils";
+import { authConstants } from "@/_redux/constants";
+import { getObjectFromStorage, logger, setObjectInStorage } from "@/_utils";
+import Loader from "@/_components/Loader";
+
+interface StoredCred {
+	email?: string;
+	password?: string;
+}
 
 const LoginPage: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
+	const [showPassword, setShowPassword] = useState(false);
+	const [storedCred, setStoredCred] = useState<StoredCred | null>(null);
 	const { isLoading, error, user, isAuthenticated } = useAppSelector(
 		(state) => state.auth
 	);
-	const [showPassword, setShowPassword] = useState(false);
 
 	const {
 		register,
@@ -37,8 +40,23 @@ const LoginPage: React.FC = () => {
 		dispatch(clearError());
 	}, []);
 
+	useEffect(() => {
+		(async () => {
+			const { email, password } =
+				(await getObjectFromStorage(authConstants.USER_CRED)) || {};
+			setStoredCred({ email, password });
+		})();
+	}, []);
+
 	const onSubmit = async (data: LoginFormData) => {
+		logger.log({ userCred: data });
 		try {
+			if (data?.remember) {
+				setObjectInStorage(authConstants.USER_CRED, {
+					email: data.email,
+					password: data.password,
+				});
+			}
 			dispatch(loginAsync(data));
 		} catch (err: any) {
 			logger.log({ logginError: err });
@@ -123,6 +141,7 @@ const LoginPage: React.FC = () => {
 									autoComplete="email"
 									className="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10"
 									placeholder="Enter your email"
+									value={storedCred?.email}
 								/>
 							</div>
 							{errors.email && (
@@ -149,6 +168,7 @@ const LoginPage: React.FC = () => {
 									autoComplete="current-password"
 									className="appearance-none block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10"
 									placeholder="Enter your password"
+									value={storedCred?.password}
 								/>
 								<button
 									type="button"
@@ -174,7 +194,7 @@ const LoginPage: React.FC = () => {
 						<div className="flex items-center">
 							<input
 								id="remember-me"
-								name="remember-me"
+								name="remember"
 								type="checkbox"
 								className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
 							/>
@@ -202,14 +222,7 @@ const LoginPage: React.FC = () => {
 							disabled={isLoading}
 							className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
 						>
-							{isLoading ? (
-								<div className="flex items-center">
-									<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-									Signing in...
-								</div>
-							) : (
-								"Sign in"
-							)}
+							{isLoading ? <Loader text="Signing in..." /> : "Sign in"}
 						</button>
 					</div>
 

@@ -15,7 +15,7 @@ import { filterAndSortProducts } from "@/_utils";
 import ProductCard from "@/_components/ProductCard";
 import SearchBar from "@/_components/SearchBar";
 import { usePathname } from "next/navigation";
-import { productsAction } from "@/_redux/actions";
+import { fetchAllProducts } from "@/_redux/actions";
 
 const FilteredProducts: React.FC = () => {
 	const router = useRouter();
@@ -31,7 +31,7 @@ const FilteredProducts: React.FC = () => {
 	const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
 
 	useEffect(() => {
-		dispatch(productsAction.fetchAllProducts());
+		dispatch(fetchAllProducts());
 	}, []);
 
 	useEffect(() => {

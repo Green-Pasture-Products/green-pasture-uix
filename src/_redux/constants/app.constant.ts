@@ -21,4 +21,8 @@ export const appConstants = {
 	FREE_SHIPPING_THRESHOLD: 50000 as const,
 
 	SHIPPING_FEE: 10000 as const,
+
+	// default pagination for table GET requests
+	LIMIT: 10,
+	PAGE: 1,
 };

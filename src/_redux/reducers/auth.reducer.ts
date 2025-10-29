@@ -1,14 +1,25 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AuthState, User } from "@/types";
-import { loginAsync, signupAsync } from "../actions/auth.action";
+import { AuthState } from "@/types";
+import { loginAsync, logoutAsync, signupAsync } from "../actions/auth.action";
 import { authConstants } from "../constants";
-import { clearObjectFromStorage, logger, setObjectInStorage } from "@/_utils";
+import { clearObjectFromStorage, setObjectInStorage } from "@/_utils";
+import {
+	removeAccessExpiryCookie,
+	removeAccessToken,
+	removeRefreshToken,
+	setAccessToken,
+	setRefreshToken,
+	// setBearerCookie,
+} from "@/_utils/storage";
+import { persistor } from "../store";
 
 const initialState: AuthState = {
 	user: null,
 	isAuthenticated: false,
 	isLoading: false,
 	error: null,
+	accessToken: "",
+	refreshToken: "",
 };
 
 const authSlice = createSlice({
@@ -19,6 +30,9 @@ const authSlice = createSlice({
 			state.user = null;
 			state.isAuthenticated = false;
 			state.error = null;
+			removeAccessExpiryCookie();
+			removeAccessToken();
+			removeRefreshToken();
 			clearObjectFromStorage(authConstants.USER_KEY);
 		},
 		clearError: (state) => {
@@ -39,14 +53,29 @@ const authSlice = createSlice({
 				state.user = action.payload?.data?.profileInfo;
 				state.isAuthenticated = true;
 				state.error = null;
-				// save token for future API calls
-				setObjectInStorage(authConstants.USER_KEY, {
-					user: action.payload?.data?.profileInfo,
-					accessToken: action.payload?.data?.accessToken,
-					refreshToken: action.payload?.data?.refreshToken,
-				});
+				setAccessToken(action.payload?.data?.accessToken);
+				setRefreshToken(action.payload?.data?.refreshToken);
+				setObjectInStorage(
+					authConstants.USER_KEY,
+					action.payload?.data?.profileInfo
+				);
 			})
 			.addCase(loginAsync.rejected, (state, action) => {
+				state.isLoading = false;
+				state.error = action.payload as string;
+				state.isAuthenticated = false;
+			});
+
+		builder
+			.addCase(logoutAsync.pending, (state) => {
+				state.isLoading = true;
+				state.error = null;
+			})
+			.addCase(logoutAsync.fulfilled, (state) => {
+				state.isLoading = false;
+				state.error = null;
+			})
+			.addCase(logoutAsync.rejected, (state, action) => {
 				state.isLoading = false;
 				state.error = action.payload as string;
 				state.isAuthenticated = false;
@@ -57,10 +86,19 @@ const authSlice = createSlice({
 				state.isLoading = true;
 				state.error = null;
 			})
-			.addCase(signupAsync.fulfilled, (state) => {
-				state.isLoading = false;
-				state.error = null;
-			})
+			.addCase(
+				signupAsync.fulfilled,
+				(state, action: PayloadAction<any>) => {
+					state.isLoading = false;
+					state.error = null;
+					if (action.payload?.data?.accessToken) {
+						state.accessToken = action.payload.data.accessToken;
+						state.refreshToken = action.payload.data.refreshToken;
+						state.user = action.payload.data.profileInfo;
+						state.isAuthenticated = true;
+					}
+				}
+			)
 			.addCase(signupAsync.rejected, (state, action) => {
 				state.isLoading = false;
 				state.error = action.payload as string;

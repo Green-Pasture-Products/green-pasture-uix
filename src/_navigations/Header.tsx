@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, User, LogOut } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import { persistor, useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useRouter } from "next/router";
 import { logout } from "@/_redux/reducers/auth.reducer";
 import { getPageNames } from "./routes";
@@ -17,7 +17,6 @@ const Header: React.FC = () => {
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 	// const itemCount = useAppSelector((state) => state.cart.itemCount);
 	const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-	const { bio } = useAppSelector((state) => state.user);
 	// const wishlistCount = useAppSelector(
 	// 	(state) => state.wishlist.wishlistItemCount
 	// );
@@ -26,9 +25,10 @@ const Header: React.FC = () => {
 		dispatch(getBio());
 	}, []);
 
-	const handleLogout = () => {
+	const handleLogout = async () => {
 		dispatch(logout());
-		router.push("/");
+		await persistor.purge();
+		router.push("/login");
 	};
 
 	const isActive = (path: string) =>

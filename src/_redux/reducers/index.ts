@@ -6,6 +6,7 @@ import userReducer from "./users.reducer";
 import productReducer from "./products.reducer";
 import wishlistReducer from "./wishlist.reducer";
 import searchReducer from "./search.reducer";
+import categoryReducer from "./category.reducer";
 
 const rootReducer = combineReducers({
 	auth: authReducer,
@@ -15,6 +16,7 @@ const rootReducer = combineReducers({
 	product: productReducer,
 	wishlist: wishlistReducer,
 	search: searchReducer,
+	category: categoryReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

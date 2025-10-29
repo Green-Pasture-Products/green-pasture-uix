@@ -5,10 +5,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ShoppingCart, Search, User, Heart, LogOut } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import { persistor, useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useRouter } from "next/router";
-import { logout } from "@/_redux/reducers/auth.reducer";
 import { getBio } from "@/_redux/actions/user.action";
+import { logout } from "@/_redux/reducers/auth.reducer";
 
 interface NavLink {
 	href: string;
@@ -38,9 +38,10 @@ const Navbar: React.FC = () => {
 		dispatch(getBio());
 	}, []);
 
-	const handleLogout = () => {
+	const handleLogout = async () => {
 		dispatch(logout());
-		router.push("/");
+		await persistor.purge();
+		router.push("/login");
 	};
 
 	const isActive = (path: string) =>

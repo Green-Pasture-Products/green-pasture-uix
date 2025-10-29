@@ -1,7 +1,6 @@
 // LIBRARY COMPONENTS
 import { configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
-import storage from "redux-persist/lib/storage";
 import {
 	FLUSH,
 	REHYDRATE,
@@ -15,11 +14,14 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 // CUSTOM COMPONENTS
 import rootReducer from "./reducers";
 import { appConstants } from "./constants";
+import storage, { encryptionTransform } from "@/_utils/storage";
 
 const persistConfig = {
 	key: `${appConstants.ROOT_STORAGE}`,
 	storage,
-	// whitelist: ["product", "wishlist", "cart", "search", "auth", "user"], // persist only this reducer
+	whitelist: ["auth"],
+	// whitelist: ["product", "wishlist", "cart", "search", "user"],
+	// transforms: [encryptionTransform], // encryption layer
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -30,7 +32,6 @@ export const store = configureStore({
 		getDefaultMiddleware({
 			serializableCheck: {
 				ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-				// ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
 			},
 		}),
 });

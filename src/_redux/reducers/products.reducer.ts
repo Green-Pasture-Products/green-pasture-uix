@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { productsAction } from "../actions";
+import { fetchAllProducts } from "../actions";
 import { Product, ProductsState } from "@/types";
 import { categories } from "../constants/categories.constant";
 
@@ -24,22 +24,22 @@ const productsSlice = createSlice({
 			state.searchTerm = action.payload;
 		},
 	},
-	extraReducers: (builder) => {
-		builder
-			.addCase(productsAction.fetchAllProducts.pending, (state) => {
-				state.isFetchingAllProducts = true;
-			})
-			.addCase(
-				productsAction.fetchAllProducts.fulfilled,
-				(state, action: PayloadAction<Product[]>) => {
-					state.products = action.payload;
-					state.isFetchingAllProducts = false;
-				}
-			)
-			.addCase(productsAction.fetchAllProducts.rejected, (state) => {
-				state.isFetchingAllProducts = false;
-			});
-	},
+	// extraReducers: (builder) => {
+	// 	builder
+	// 		.addCase(fetchAllProducts.pending, (state) => {
+	// 			state.isFetchingAllProducts = true;
+	// 		})
+	// 		.addCase(
+	// 			fetchAllProducts.fulfilled,
+	// 			(state, action: PayloadAction<Product[]>) => {
+	// 				state.products = action.payload ?? [];
+	// 				state.isFetchingAllProducts = false;
+	// 			}
+	// 		)
+	// 		.addCase(fetchAllProducts.rejected, (state) => {
+	// 			state.isFetchingAllProducts = false;
+	// 		});
+	// },
 });
 
 export const { setSelectedCategory, setSearchTerm } = productsSlice.actions;

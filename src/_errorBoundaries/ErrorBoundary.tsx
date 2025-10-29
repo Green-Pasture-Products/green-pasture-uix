@@ -1,3 +1,4 @@
+import { logger } from "@/_utils";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import React from "react";
 
@@ -22,7 +23,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 	}
 
 	componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-		console.error("Error caught by boundary:", error, errorInfo);
+		logger.error("Error caught by boundary:", error, errorInfo);
 	}
 
 	render() {

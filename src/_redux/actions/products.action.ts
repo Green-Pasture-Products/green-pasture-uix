@@ -1,23 +1,40 @@
 import { Product } from "@/types";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { mockProducts } from "../mockData";
+import axiosInstance from "@/_utils/axiosInstance";
+import { appConstants } from "../constants";
 
-const fetchAllProducts = createAsyncThunk<Product[]>(
+export const fetchAllProducts = createAsyncThunk<Product[]>(
 	"product/fetchAll",
-	async () => {
-		// const response = await fetch(`${appConstants.API_BASE_URL}`);
-		// const response = await fetch("https://dummyjson.com/products");
-		// const res = await response.json();
-		// return res.products;
-		return await mockProducts;
+	async (_, { rejectWithValue }) => {
+		try {
+			// const response = await axiosInstance.post(
+			// 	`${appConstants.API_BASE_URL}items`,
+			// 	product
+			// );
+			// return response.data;
+			return await mockProducts;
+		} catch (error: any) {
+			const message =
+				error.response?.data?.message || error.message || "Signup failed";
+			return rejectWithValue(message);
+		}
 	}
 );
 
-// export const createUser = async (userData: any) => {
-// 	const response = await axiosInstance.post("/users", userData);
-// 	return response.data;
-// };
-
-export const productsAction = {
-	fetchAllProducts,
-};
+export const addProductAsync = createAsyncThunk(
+	"auth/addProductAsync",
+	async (product: Product, { rejectWithValue }) => {
+		try {
+			const response = await axiosInstance.post(
+				`${appConstants.API_BASE_URL}items`,
+				product
+			);
+			return response.data;
+		} catch (error: any) {
+			const message =
+				error.response?.data?.message || error.message || "Signup failed";
+			return rejectWithValue(message);
+		}
+	}
+);

@@ -1,27 +1,23 @@
-// _utils/axiosInstance.ts
-import { appConstants } from "@/_redux/constants";
-import axios, {
-	AxiosInstance,
-	InternalAxiosRequestConfig,
-	AxiosError,
-} from "axios";
-import { secureTokenStorage } from "./secureStorage";
+import axios from "axios";
+import { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from "axios";
+import {
+	getAccessToken,
+	// getAccessToken,
+	getBearerCookie,
+	getRefreshToken,
+	removeAccessExpiryCookie,
+	removeAccessToken,
+	// removeBearerCookie,
+	removeRefreshToken,
+	setAccessToken,
+	setRefreshToken,
+} from "./storage";
 import { logger } from "./logger";
+import { appConstants } from "@/_redux/constants";
+import { store } from "@/_redux/store";
+import { logout } from "@/_redux/reducers/auth.reducer";
 
 let cachedIpInfo: any = null;
-// ✅ CHANGE 2: Add refresh management variables
-let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
-
-// ✅ CHANGE 3: Add helper functions for refresh queue
-const onRefreshed = (token: string) => {
-	refreshSubscribers.forEach((callback) => callback(token));
-	refreshSubscribers = [];
-};
-
-const addRefreshSubscriber = (callback: (token: string) => void) => {
-	refreshSubscribers.push(callback);
-};
 
 // Fetch IP info only once and cache it (UNCHANGED)
 async function getIpInfo(): Promise<any> {
@@ -37,132 +33,105 @@ async function getIpInfo(): Promise<any> {
 
 		return cachedIpInfo;
 	} catch (error) {
-		console.error("IPInfo fetch error:", error);
+		logger.error("IPInfo fetch error:", error);
 		return null;
 	}
 }
 
-// Create Axios instance (UNCHANGED)
-const axiosInstance: AxiosInstance = axios.create({
+// Create Axios instance
+const axiosInstance = axios.create({
 	baseURL: appConstants.API_BASE_URL,
 	headers: {
 		"Content-Type": "application/json",
 	},
-	// withCredentials: true,
 });
 
-// ✅ CHANGE 4: Update request interceptor
+// list of URL substrings (or full paths) for which you NEVER want to auto-redirect
+const NO_REDIRECT_PATHS = [
+	"/login",
+	"/setup-password",
+	"/forgot-password",
+	"/sign-up",
+	"view-email",
+	"verify-email",
+];
+
 axiosInstance.interceptors.request.use(
 	async (
 		config: InternalAxiosRequestConfig
 	): Promise<InternalAxiosRequestConfig> => {
 		try {
 			const ipInfo = await getIpInfo();
+			const accessToken = await getAccessToken();
 
 			config.params = { ...config.params, country: ipInfo?.country };
-			// if (config.method?.toLowerCase() === "get") {
-			// } else {
-			// 	config.data = { ...(config.data || {}), country: ipInfo?.country };
-			// }
 
-			// ✅ CHANGED: Get token from encrypted storage
-			const tokenData = secureTokenStorage.getTokens();
-			const token = tokenData?.accessToken;
-
-			if (token && !config.headers.Authorization) {
-				config.headers.Authorization = `Bearer ${token}`;
+			if (accessToken) {
+				config.headers.Authorization = `Bearer ${accessToken}`;
 			}
 
 			return config;
 		} catch (error) {
-			console.warn("Failed to get IP info:", error);
+			logger.warn("Failed to get IP info:", error);
 			return config;
 		}
 	},
-	(error) => Promise.reject(error)
+	(error: AxiosError) => {
+		return Promise.reject(error);
+	}
 );
 
-// ✅ CHANGE 5: Update response interceptor with token refresh
 axiosInstance.interceptors.response.use(
-	(response) => response,
-	async (error: AxiosError) => {
-		const originalRequest: any = error.config;
+	(response) => {
+		return response;
+	},
+	async (error) => {
+		const status = error.response?.status;
+		const currentPath = window.location.pathname;
 
-		// Handle 401 errors (token expired)
-		if (error.response?.status === 401 && !originalRequest._retry) {
-			// If already refreshing, queue this request
-			if (isRefreshing) {
-				return new Promise((resolve) => {
-					addRefreshSubscriber((token: string) => {
-						if (originalRequest.headers) {
-							originalRequest.headers.Authorization = `Bearer ${token}`;
-						}
-						resolve(axiosInstance(originalRequest));
-					});
-				});
-			}
+		const isExcludedPath = NO_REDIRECT_PATHS.some((path) =>
+			currentPath.includes(path)
+		);
 
+		const originalRequest = error.config;
+
+		// If access token expired
+		if (status === 401 && !originalRequest._retry && !isExcludedPath) {
 			originalRequest._retry = true;
-			isRefreshing = true;
 
 			try {
-				// ✅ CHANGED: Get refresh token from encrypted storage
-				const tokenData = secureTokenStorage.getTokens();
-				const refreshToken = tokenData?.refreshToken;
+				const refreshToken = await getRefreshToken();
 
-				if (!refreshToken) {
-					throw new Error("No refresh token available");
-				}
-
-				// Call refresh endpoint
-				const response = await axios.post(
+				const { data } = await axios.post(
 					`${appConstants.API_BASE_URL}auth/refresh`,
-					{ refreshToken },
-					{ withCredentials: true }
+					{
+						refreshToken: `Bearer ${refreshToken}`,
+						// userId: user?.id,
+						// email: user?.email,
+					}
 				);
 
-				const { accessToken, refreshToken: newRefreshToken } =
-					response.data.data;
+				logger.log({
+					accessToken: data?.accessToken,
+					refreshToken: data?.refreshToken,
+				});
 
-				// ✅ CHANGED: Update tokens in encrypted storage
-				secureTokenStorage.setTokens(
-					accessToken,
-					newRefreshToken || refreshToken,
-					tokenData?.user
-				);
+				// Save new access & refresh tokens
+				setAccessToken(data?.accessToken);
+				setRefreshToken(data?.refreshToken);
 
-				// Update the failed request with new token
-				if (originalRequest.headers) {
-					originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-				}
-
-				// Notify all queued requests
-				onRefreshed(accessToken);
-				isRefreshing = false;
-
-				// Retry the original request
+				// Retry the original request with the new token
+				originalRequest.headers.Authorization = `Bearer ${data?.accessToken}`;
 				return axiosInstance(originalRequest);
-			} catch (refreshError) {
-				isRefreshing = false;
-
-				// ✅ CHANGED: Clear tokens from encrypted storage
-				secureTokenStorage.clearTokens();
-
-				// Dispatch logout action
-				const { logout } = await import("@/_redux/reducers/auth.reducer");
-				const { store } = await import("@/_redux/store");
+			} catch (err) {
+				// Refresh token invalid — force logout
+				logger.error("Token refresh failed", err);
 				store.dispatch(logout());
-
-				// Redirect to login
-				if (typeof window !== "undefined") {
-					window.location.href = "/login";
-				}
-
-				return Promise.reject(refreshError);
+				window.location.href = "/";
+				return Promise.reject(error);
 			}
 		}
 
-		console.error("API Error:", error.response || error.message);
 		return Promise.reject(error);
 	}
 );
