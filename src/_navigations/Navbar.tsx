@@ -1,14 +1,14 @@
 "use client";
 
+import { ShoppingCart, Search, User, Heart } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, Search, User, Heart, LogOut } from "lucide-react";
-import { persistor, useAppDispatch, useAppSelector } from "@/_redux/store";
-import { useRouter } from "next/router";
+import Image from "next/image";
+import Link from "next/link";
+
+import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import LogoutButton from "@/_components/ui/LogoutButton";
 import { getBio } from "@/_redux/actions/user.action";
-import { logout } from "@/_redux/reducers/auth.reducer";
 
 interface NavLink {
 	href: string;
@@ -23,7 +23,6 @@ const navLinks: NavLink[] = [
 ];
 
 const Navbar: React.FC = () => {
-	const router = useRouter();
 	const pathname = usePathname();
 	const dispatch = useAppDispatch();
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -37,12 +36,6 @@ const Navbar: React.FC = () => {
 	useEffect(() => {
 		dispatch(getBio());
 	}, []);
-
-	const handleLogout = async () => {
-		dispatch(logout());
-		await persistor.purge();
-		router.push("/login");
-	};
 
 	const isActive = (path: string) =>
 		pathname === path ? "text-green-600" : "text-gray-700";
@@ -146,16 +139,9 @@ const Navbar: React.FC = () => {
 												Orders
 											</Link>
 										)}
-										<button
-											onClick={() => {
-												handleLogout();
-												setIsUserMenuOpen(false);
-											}}
-											className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-										>
-											<LogOut className="h-4 w-4 inline mr-2" />
-											Sign out
-										</button>
+										<LogoutButton
+											onClick={() => setIsUserMenuOpen(false)}
+										/>
 									</div>
 								)}
 							</div>
@@ -181,12 +167,6 @@ const Navbar: React.FC = () => {
 										</div>
 									)}
 								</div>
-								{/* <Link
-								href="/login"
-								className="text-gray-700 hover:text-green-600 transition-colors"
-							>
-								<User className="h-6 w-6" />
-							</Link> */}
 							</>
 						)}
 						<Link

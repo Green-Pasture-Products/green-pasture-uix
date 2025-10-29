@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 import { useAppDispatch } from "@/_redux/store";
 import { Product } from "@/types";
-import Modal from ".";
+import CustomModal from ".";
 
 const AddProduct: React.FC<{
 	product?: Product;
@@ -53,7 +53,7 @@ const AddProduct: React.FC<{
 				{children}
 			</button>
 
-			<Modal
+			<CustomModal
 				isOpen={isOpen}
 				onClose={() => setIsOpen(false)}
 				title={product ? "Edit Product" : "Add New Product"}
@@ -213,7 +213,7 @@ const AddProduct: React.FC<{
 						</button>
 					</div>
 				</form>
-			</Modal>
+			</CustomModal>
 		</>
 	);
 };

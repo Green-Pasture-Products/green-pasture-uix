@@ -7,12 +7,7 @@ export const createCategoryAsync = createAsyncThunk(
 	"auth/createCategoryAsync",
 	async (category: Category, { rejectWithValue }) => {
 		try {
-			const response = await axiosInstance.post(`products`, category, {
-				// headers: {
-				// 	Authorization: getBearerCookie(),
-				// 	accessToken: getAccessToken(),
-				// },
-			});
+			const response = await axiosInstance.post(`products`, category);
 			return response.data;
 		} catch (error: any) {
 			const message =

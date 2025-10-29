@@ -24,6 +24,16 @@ export default async function handler(
 		// Fetch IP info
 		const data: IPinfo = await ipinfoWrapper.lookupIp(ip);
 
+		// Handle local development (bogon IPs)
+		if (data.bogon && process.env.NODE_ENV === "development") {
+			return res.status(200).json({
+				...data,
+				country: "NG", // Default for development
+				city: "Isolo",
+				region: "Lagos State",
+			} as IPinfo);
+		}
+
 		res.status(200).json(data);
 	} catch (error) {
 		logger.error("IPInfo Error:", error);

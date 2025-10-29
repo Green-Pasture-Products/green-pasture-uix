@@ -30,10 +30,6 @@ const authSlice = createSlice({
 			state.user = null;
 			state.isAuthenticated = false;
 			state.error = null;
-			removeAccessExpiryCookie();
-			removeAccessToken();
-			removeRefreshToken();
-			clearObjectFromStorage(authConstants.USER_KEY);
 		},
 		clearError: (state) => {
 			state.error = null;

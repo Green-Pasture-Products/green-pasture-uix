@@ -1,14 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { fetchAllProducts } from "../actions";
 import { Product, ProductsState } from "@/types";
-import { categories } from "../constants/categories.constant";
 
 const initialState: ProductsState = {
 	isFetchingAllProducts: false,
 	isFetchingProduct: false,
 	products: [],
 	product: null,
-	categories: categories.ALL_CATEGORIES,
+	// categories: categories.ALL_CATEGORIES,
 	selectedCategory: "All",
 	searchTerm: "",
 };

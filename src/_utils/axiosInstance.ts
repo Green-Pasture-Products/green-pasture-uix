@@ -1,21 +1,20 @@
 import axios from "axios";
-import { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from "axios";
+import { InternalAxiosRequestConfig, AxiosError } from "axios";
+
 import {
 	getAccessToken,
-	// getAccessToken,
-	getBearerCookie,
 	getRefreshToken,
 	removeAccessExpiryCookie,
 	removeAccessToken,
-	// removeBearerCookie,
 	removeRefreshToken,
 	setAccessToken,
 	setRefreshToken,
 } from "./storage";
-import { logger } from "./logger";
-import { appConstants } from "@/_redux/constants";
-import { store } from "@/_redux/store";
 import { logout } from "@/_redux/reducers/auth.reducer";
+import { appConstants, authConstants } from "@/_redux/constants";
+import { store } from "@/_redux/store";
+import { logger } from "./logger";
+import { clearObjectFromStorage } from "./helpers";
 
 let cachedIpInfo: any = null;
 
@@ -126,8 +125,14 @@ axiosInstance.interceptors.response.use(
 			} catch (err) {
 				// Refresh token invalid — force logout
 				logger.error("Token refresh failed", err);
+
 				store.dispatch(logout());
-				window.location.href = "/";
+				removeAccessExpiryCookie();
+				removeAccessToken();
+				removeRefreshToken();
+				clearObjectFromStorage(authConstants.USER_KEY);
+
+				window.location.href = "/login";
 				return Promise.reject(error);
 			}
 		}

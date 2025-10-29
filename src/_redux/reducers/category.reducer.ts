@@ -4,6 +4,8 @@ import {
 	getAllCategoriesAsync,
 } from "../actions/category.action";
 import { CategoryState } from "@/types";
+import { categoryConstants } from "../constants/categories.constant";
+import { AppEmitter } from "@/_utils";
 
 const initialState: CategoryState = {
 	category: null,
@@ -29,6 +31,10 @@ const categorySlice = createSlice({
 					state.isLoading = false;
 					state.category = action.payload?.data;
 					state.error = null;
+					AppEmitter.emit(
+						categoryConstants.CREATE_CATEGORY_SUCCESS,
+						action.payload?.data
+					);
 				}
 			)
 			.addCase(createCategoryAsync.rejected, (state, action) => {

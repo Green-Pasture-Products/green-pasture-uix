@@ -1,38 +1,24 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Search, User, LogOut } from "lucide-react";
-import { persistor, useAppDispatch, useAppSelector } from "@/_redux/store";
-import { useRouter } from "next/router";
-import { logout } from "@/_redux/reducers/auth.reducer";
-import { getPageNames } from "./routes";
+import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+
+import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import LogoutButton from "@/_components/ui/LogoutButton";
 import { getBio } from "@/_redux/actions/user.action";
+import { getPageNames } from "./routes";
 
 const Header: React.FC = () => {
-	const router = useRouter();
 	const pathname = usePathname();
 	const dispatch = useAppDispatch();
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-	// const itemCount = useAppSelector((state) => state.cart.itemCount);
 	const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-	// const wishlistCount = useAppSelector(
-	// 	(state) => state.wishlist.wishlistItemCount
-	// );
 
 	useEffect(() => {
 		dispatch(getBio());
 	}, []);
-
-	const handleLogout = async () => {
-		dispatch(logout());
-		await persistor.purge();
-		router.push("/login");
-	};
-
-	const isActive = (path: string) =>
-		pathname === path ? "text-green-600" : "text-gray-700";
 
 	return (
 		<header className="bg-white shadow-sm border-b border-green-100 sticky top-0 right-0 z-[901]">
@@ -42,14 +28,7 @@ const Header: React.FC = () => {
 						{getPageNames(pathname)}
 					</h3>
 					<div className={`flex items-center space-x-4 ms-auto`}>
-						{/* <Link
-							href="/search"
-							className={`${isActive(
-								"/search"
-							)} text-gray-700 hover:text-green-600 transition-colors`}
-						> */}
 						<Search className="h-6 w-6" />
-						{/* </Link> */}
 						{isAuthenticated && user ? (
 							<div className="relative">
 								<button
@@ -87,16 +66,9 @@ const Header: React.FC = () => {
 										>
 											Settings
 										</Link>
-										<button
-											onClick={() => {
-												handleLogout();
-												setIsUserMenuOpen(false);
-											}}
-											className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-										>
-											<LogOut className="h-4 w-4 inline mr-2" />
-											Sign out
-										</button>
+										<LogoutButton
+											onClick={() => setIsUserMenuOpen(false)}
+										/>
 									</div>
 								)}
 							</div>

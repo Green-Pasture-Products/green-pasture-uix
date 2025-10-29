@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 
 interface ModalProps {
 	isOpen: boolean;
@@ -8,14 +8,14 @@ interface ModalProps {
 	size?: "sm" | "md" | "lg" | "xl";
 }
 
-export default function Modal({
+export default function CustomModal({
 	isOpen,
 	onClose,
 	title,
 	children,
 	size = "md",
 }: ModalProps) {
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const handleEscape = (e: KeyboardEvent) => {
 			if (e.key === "Escape") onClose();
 		};
@@ -42,11 +42,11 @@ export default function Modal({
 
 	return (
 		<div
-			className="fixed inset-0 z-[901] flex items-center justify-center p-4 bg-black bg-opacity-50"
+			className="fixed inset-0 z-[901] flex items-center justify-center p-4 bg-black/70 bg-opacity-75 backdrop-blur-md"
 			onClick={onClose}
 		>
 			<div
-				className={`relative w-full ${sizeClasses[size]} h-full max-h-2xl overflow-y-auto bg-white rounded-lg shadow-xl transform transition-all`} // top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white
+				className={`relative w-full ${sizeClasses[size]} h-fit max-h-2xl overflow-y-auto bg-white rounded-lg shadow-xl transform transition-all`} // top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white
 				onClick={(e) => e.stopPropagation()}
 			>
 				{title && (

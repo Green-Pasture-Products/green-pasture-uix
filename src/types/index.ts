@@ -38,7 +38,7 @@ export interface ProductsState {
 	isFetchingProduct: boolean;
 	products: Product[];
 	product: Product | null;
-	categories: string[];
+	// categories: string[];
 	selectedCategory: string;
 	searchTerm: string;
 }

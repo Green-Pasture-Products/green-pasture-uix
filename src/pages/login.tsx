@@ -49,7 +49,6 @@ const LoginPage: React.FC = () => {
 	}, []);
 
 	const onSubmit = async (data: LoginFormData) => {
-		logger.log({ userCred: data });
 		try {
 			if (data?.remember) {
 				setObjectInStorage(authConstants.USER_CRED, {
@@ -57,7 +56,7 @@ const LoginPage: React.FC = () => {
 					password: data.password,
 				});
 			}
-			dispatch(loginAsync(data));
+			dispatch(loginAsync({ email: data.email, password: data.password }));
 		} catch (err: any) {
 			logger.log({ logginError: err });
 		}
@@ -193,8 +192,8 @@ const LoginPage: React.FC = () => {
 					<div className="flex items-center justify-between">
 						<div className="flex items-center">
 							<input
+								{...register("remember")}
 								id="remember-me"
-								name="remember"
 								type="checkbox"
 								className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
 							/>

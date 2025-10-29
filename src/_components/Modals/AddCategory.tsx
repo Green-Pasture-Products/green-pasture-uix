@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 
-import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { Category, Product } from "@/types";
-import Modal from ".";
+import { categoryConstants } from "@/_redux/constants/categories.constant";
 import { createCategoryAsync } from "@/_redux/actions/category.action";
+import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import { AppEmitter, logger } from "@/_utils";
+import { Category, Product } from "@/types";
+import CustomModal from ".";
 
 const AddCategory: React.FC<{
 	category?: Product;
@@ -13,29 +15,22 @@ const AddCategory: React.FC<{
 }> = ({ category, children, className, title }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const dispatch = useAppDispatch();
-	const categories = useAppSelector((state) => state.category.categories);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [isModalOpen, setIsModalOpen] = useState(false);
+	const { categories } = useAppSelector((state) => state.category);
 	const [editingCategory, setEditingCategory] = useState<Category | null>(
 		null
 	);
 	const [formData, setFormData] = useState({
 		name: "",
 		description: "",
-		// slug: "",
-		// image: "",
-		// parentId: null as string | null,
-		// isActive: true,
-		// productCount: 0,
 	});
 
 	const handleCloseModal = () => {
-		setIsModalOpen(false);
 		setEditingCategory(null);
 	};
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = (e: any) => {
 		e.preventDefault();
+		logger.log({ e });
 
 		// if (editingCategory) {
 		// 	dispatch(
@@ -47,19 +42,26 @@ const AddCategory: React.FC<{
 		// } else {
 		dispatch(createCategoryAsync(formData));
 		// }
-
-		handleCloseModal();
 	};
+
+	useLayoutEffect(() => {
+		const listener = AppEmitter.addListener(
+			categoryConstants.CREATE_CATEGORY_SUCCESS,
+			(evt: Event) => {
+				const newCategory = evt as CustomEvent;
+
+				if (newCategory) {
+					// setIsOpen(false);
+				}
+			}
+		);
+
+		return () => listener.remove();
+	}, []);
 
 	const handleClick = () => {
 		setIsOpen(true);
 	};
-
-	// const handleDelete = (id: string) => {
-	// 	if (window.confirm("Are you sure you want to delete this category?")) {
-	// 		dispatch(deleteCategory(id));
-	// 	}
-	// };
 
 	return (
 		<>
@@ -67,7 +69,7 @@ const AddCategory: React.FC<{
 				{children}
 			</button>
 
-			<Modal
+			<CustomModal
 				isOpen={isOpen}
 				onClose={() => setIsOpen(false)}
 				title={category ? "Edit Category" : "Add New Category"}
@@ -94,27 +96,11 @@ const AddCategory: React.FC<{
 						/>
 					</div>
 
-					{/* <div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Slug *
-						</label>
-						<input
-							type="text"
-							required
-							value={formData.slug}
-							onChange={(e) =>
-								setFormData({ ...formData, slug: e.target.value })
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-						/>
-					</div> */}
-
 					<div>
 						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Description *
+							Description
 						</label>
 						<textarea
-							required
 							value={formData.description}
 							name="description"
 							onChange={(e) =>
@@ -127,35 +113,6 @@ const AddCategory: React.FC<{
 							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
 						/>
 					</div>
-
-					{/* <div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Image URL
-						</label>
-						<input
-							type="text"
-							value={formData.image}
-							onChange={(e) =>
-								setFormData({ ...formData, image: e.target.value })
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-						/>
-					</div> */}
-
-					{/* <div className="flex items-center">
-						<input
-							type="checkbox"
-							id="isActive"
-							checked={formData.isActive}
-							onChange={(e) =>
-								setFormData({ ...formData, isActive: e.target.checked })
-							}
-							className="mr-2"
-						/>
-						<label htmlFor="isActive" className="text-sm text-gray-700">
-							Active
-						</label>
-					</div> */}
 
 					<div className="flex space-x-3 pt-4">
 						<button
@@ -173,7 +130,7 @@ const AddCategory: React.FC<{
 						</button>
 					</div>
 				</form>
-			</Modal>
+			</CustomModal>
 		</>
 	);
 };
