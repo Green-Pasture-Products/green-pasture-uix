@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import {
+	Plus,
+	Edit,
+	Trash2,
+	Eye,
+	DotIcon,
+	EllipsisVertical,
+} from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
@@ -10,9 +17,13 @@ import { Category, CategoryState, Product } from "@/types";
 import { fetchAllProducts } from "@/_redux/actions";
 import SearchBar from "@/_components/SearchBar";
 import { logger } from "@/_utils";
-import { getAllCategoriesAsync } from "@/_redux/actions/category.action";
+import {
+	deleteCategoryAsync,
+	getAllCategoriesAsync,
+} from "@/_redux/actions/category.action";
 import AddCategory from "@/_components/Modals/AddCategory";
 import Loader from "@/_components/Loader";
+import DeleteModal from "@/_components/Modals/DeleteDialogue";
 
 interface ActionDropDownProps {
 	row: Category;
@@ -20,13 +31,10 @@ interface ActionDropDownProps {
 
 const AdminCategories: React.FC = () => {
 	const dispatch = useAppDispatch();
-	const { categories, isLoading, pagination } = useAppSelector(
-		(state) => state.category
-	);
+	const { categories, isLoading } = useAppSelector((state) => state.category);
 	// const { query, filters } = useAppSelector((state) => state.search);
 	const [currentPage, setCurrentPage] = useState(1);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [isModalOpen, setIsModalOpen] = useState(false);
+	// const [searchTerm, setSearchTerm] = useState("");
 
 	// const filteredCategories =
 	// 	categories &&
@@ -44,39 +52,43 @@ const AdminCategories: React.FC = () => {
 
 	logger.log({ categories });
 
-	// const ActionDropDown: React.FC<ActionDropDownProps> = (props) => {
-	// 	const handleDelete = (productId: string) => {
-	// 		if (window.confirm("Are you sure you want to delete this product?")) {
-	// 			// dispatch(removeProduct(productId));
-	// 		}
-	// 	};
+	const ActionDropDown: React.FC<ActionDropDownProps> = (props) => {
+		const [dropdownOpen, setDropdownOpen] = useState(false);
 
-	// 	return (
-	// 		<div className="flex items-center justify-end space-x-2">
-	// 			<button
-	// 				onClick={() => dispatch(selectProduct(props?.row))}
-	// 				className="text-blue-600 hover:text-blue-900 p-1 rounded"
-	// 				title="View"
-	// 			>
-	// 				<Eye className="h-4 w-4" />
-	// 			</button>
-	// 			<AddProduct
-	// 				product={props?.row}
-	// 				title="edit product"
-	// 				className="text-green-600 hover:text-green-900 p-1 rounded"
-	// 			>
-	// 				<Edit className="h-4 w-4" />
-	// 			</AddProduct>
-	// 			<button
-	// 				onClick={() => handleDelete(props?.row.id)}
-	// 				className="text-red-600 hover:text-red-900 p-1 rounded"
-	// 				title="Delete"
-	// 			>
-	// 				<Trash2 className="h-4 w-4" />
-	// 			</button>
-	// 		</div>
-	// 	);
-	// };
+		const handleConfirmDelete = () => {
+			if (props?.row?.id) dispatch(deleteCategoryAsync(props?.row?.id));
+		};
+
+		return (
+			<>
+				<button
+					onClick={() => setDropdownOpen((prevState) => !prevState)}
+					className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-colors cursor-pointer"
+				>
+					<EllipsisVertical />
+				</button>
+
+				{dropdownOpen && (
+					<div className="absolute right-0 w-fit bg-white rounded-md shadow-lg py-1 z-50">
+						<AddCategory
+							category={props?.row}
+							title="edit category"
+							className="text-green-600 hover:text-green-900"
+						>
+							<Edit className="h-4 w-4 mr-1" /> Update
+						</AddCategory>
+						<DeleteModal
+							className="text-red-600 hover:text-red-900"
+							onDeleteAction={handleConfirmDelete}
+							isLoading={isLoading}
+						>
+							<Trash2 className="h-4 w-4 mr-1" /> Delete
+						</DeleteModal>
+					</div>
+				)}
+			</>
+		);
+	};
 
 	const columns: Column<Category>[] = [
 		{
@@ -94,9 +106,9 @@ const AdminCategories: React.FC = () => {
 		{
 			key: "id",
 			header: "#",
-			// render: (value: string | number, row: Category) => (
-			// 	<ActionDropDown row={row} />
-			// ),
+			render: (value: string | number, row: Category) => (
+				<ActionDropDown row={row} />
+			),
 		},
 	];
 

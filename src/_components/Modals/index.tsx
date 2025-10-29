@@ -42,11 +42,11 @@ export default function CustomModal({
 
 	return (
 		<div
-			className="fixed inset-0 z-[901] flex items-center justify-center p-4 bg-black/70 bg-opacity-75 backdrop-blur-md"
+			className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/70 bg-opacity-75 backdrop-blur-md"
 			onClick={onClose}
 		>
 			<div
-				className={`relative w-full ${sizeClasses[size]} h-fit max-h-2xl overflow-y-auto bg-white rounded-lg shadow-xl transform transition-all`} // top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white
+				className={`relative w-full ${sizeClasses[size]} h-fit max-h-2xl overflow-y-auto overflow-x-hidden bg-white rounded-lg shadow-xl transform transition-all`} // top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white
 				onClick={(e) => e.stopPropagation()}
 			>
 				{title && (

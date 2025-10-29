@@ -1,14 +1,17 @@
 import React, { useLayoutEffect, useState } from "react";
 
 import { categoryConstants } from "@/_redux/constants/categories.constant";
-import { createCategoryAsync } from "@/_redux/actions/category.action";
+import {
+	createCategoryAsync,
+	updateCategoryAsync,
+} from "@/_redux/actions/category.action";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { AppEmitter, logger } from "@/_utils";
 import { Category, Product } from "@/types";
 import CustomModal from ".";
 
 const AddCategory: React.FC<{
-	category?: Product;
+	category?: Category;
 	children: React.ReactNode;
 	className: string;
 	title: string;
@@ -20,8 +23,8 @@ const AddCategory: React.FC<{
 		null
 	);
 	const [formData, setFormData] = useState({
-		name: "",
-		description: "",
+		name: category?.name ?? "",
+		description: category?.description ?? "",
 	});
 
 	const handleCloseModal = () => {
@@ -30,18 +33,17 @@ const AddCategory: React.FC<{
 
 	const handleSubmit = (e: any) => {
 		e.preventDefault();
-		logger.log({ e });
 
-		// if (editingCategory) {
-		// 	dispatch(
-		// 		updateCategory({
-		// 			...editingCategory,
-		// 			...formData,
-		// 		})
-		// 	);
-		// } else {
-		dispatch(createCategoryAsync(formData));
-		// }
+		if (category) {
+			dispatch(
+				updateCategoryAsync({
+					...formData,
+					id: category?.id,
+				})
+			);
+		} else {
+			dispatch(createCategoryAsync(formData));
+		}
 	};
 
 	useLayoutEffect(() => {
@@ -65,7 +67,11 @@ const AddCategory: React.FC<{
 
 	return (
 		<>
-			<button title={title} onClick={handleClick} className={className}>
+			<button
+				title={title}
+				onClick={handleClick}
+				className={`px-3 py-1 text-sm rounded flex items-center space-x-1 cursor-pointer ${className}`}
+			>
 				{children}
 			</button>
 

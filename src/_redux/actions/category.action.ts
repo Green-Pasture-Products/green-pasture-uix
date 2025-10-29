@@ -11,7 +11,45 @@ export const createCategoryAsync = createAsyncThunk(
 			return response.data;
 		} catch (error: any) {
 			const message =
-				error.response?.data?.message || error.message || "Signup failed";
+				error.response?.data?.message ||
+				error.message ||
+				"createCategory failed";
+			return rejectWithValue(message);
+		}
+	}
+);
+
+export const updateCategoryAsync = createAsyncThunk(
+	"auth/updateCategoryAsync",
+	async (category: Category, { rejectWithValue }) => {
+		try {
+			const response = await axiosInstance.patch(
+				`products/${category?.id}`,
+				{ name: category?.name, description: category?.description }
+			);
+			return response.data;
+		} catch (error: any) {
+			const message =
+				error.response?.data?.message ||
+				error.message ||
+				"updateCategory failed";
+			return rejectWithValue(message);
+		}
+	}
+);
+
+export const deleteCategoryAsync = createAsyncThunk(
+	"auth/deleteCategoryAsync",
+	async (categoryId: number, { rejectWithValue }) => {
+		try {
+			const response = await axiosInstance.delete(`products/${categoryId}`);
+			// return response.data;
+			return categoryId;
+		} catch (error: any) {
+			const message =
+				error.response?.data?.message ||
+				error.message ||
+				"deleteCategory failed";
 			return rejectWithValue(message);
 		}
 	}
@@ -30,7 +68,9 @@ export const getAllCategoriesAsync = createAsyncThunk(
 			return response.data;
 		} catch (error: any) {
 			const message =
-				error.response?.data?.message || error.message || "Signup failed";
+				error.response?.data?.message ||
+				error.message ||
+				"getAllCategories failed";
 			return rejectWithValue(message);
 		}
 	}
