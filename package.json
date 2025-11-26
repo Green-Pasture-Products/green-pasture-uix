@@ -6,6 +6,7 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
+		"export": "next export",
 		"typescript": "openapi-typescript https://api.swagger.json --output ./types/api/green-pastures.ts",
 		"lint": "next lint"
 	},
