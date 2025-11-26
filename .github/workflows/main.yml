@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest    # must be Windows for WebDeploy
 
     steps:
       - name: Checkout repository
@@ -21,10 +21,7 @@ jobs:
         run: npm install
 
       - name: Build Next.js
-        run: |
-          npm run build
-          # optional for static export
-          # npm run export
+        run: npm run build
 
       - name: Deploy via WebDeploy
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
@@ -33,6 +30,6 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          port: 8172
-          server-dir: /wwwroot/      # MonsterASP root folder
-          local-dir: .next/          # or out/ if static export
+          source-path: .next        # Next.js build folder
+          target-path: /wwwroot     # server folder
+          target-delete: true       # delete old files before deploying
