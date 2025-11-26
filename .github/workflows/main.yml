@@ -1,43 +1,33 @@
-name: Build and Deploy React App to MonsterASP
+name: Deploy via FTP
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  build:
-    runs-on: windows-latest
+  deploy:
+    runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Setup Node for React
-      - name: Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'   # or 20 if your project supports it
+          node-version: 18
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: npm install
 
-      # 4️⃣ Build React app
-      - name: Build React app
+      - name: Build Next.js
         run: npm run build
 
-      # 5️⃣ Deploy to MonsterASP via FTP
-      - name: Deploy to MonsterASP via FTP
+      - name: Deploy to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USER }}
+          username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./build/        # React build output
-          server-dir: /wwwroot/      # MonsterASP site root
-          protocol: ftp
-          port: 21
-          passive: true
-          git-ftp-args: --all --delete   # clean & upload
+          server-dir: /public_html/
+          local-dir: .next/    # ✅ Correct Next.js build folder
