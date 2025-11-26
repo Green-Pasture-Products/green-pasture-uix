@@ -1,4 +1,4 @@
-name: Deploy Next.js Static Site
+name: Deploy Next.js via WebDeploy
 
 on:
   push:
@@ -6,23 +6,36 @@ on:
 
 jobs:
   deploy:
-    runs-on: windows-latest
+    runs-on: windows-latest    # Must be Windows for WebDeploy
 
     steps:
+      # 1️⃣ Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2️⃣ Setup Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: npm install
 
-      - name: Build Next.js (static export)
-        run: npm run build  # ✅ no `export` anymore
+      # 4️⃣ Build Next.js (production build)
+      - name: Build Next.js
+        run: |
+          npm run build
 
+      # 5️⃣ Export static site
+      - name: Export Next.js static site
+        run: |
+          npm run build
+          # Next.js 15 uses output: 'export' in next.config.js, no need for next export
+          # Output will be in 'out/' folder
+
+      # 6️⃣ Deploy via WebDeploy
       - name: Deploy via WebDeploy
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
@@ -30,6 +43,6 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          source-path: out        # ✅ static export folder
-          target-path: /wwwroot
-          target-delete: true
+          source-path: out/       # ✅ Deploy the exported static folder
+          target-path: /          # ✅ Root of your site (wwwroot)
+          target-delete: true     # Delete old files before deploying
