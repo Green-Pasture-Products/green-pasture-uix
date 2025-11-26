@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
 	},
 	images: {
 		domains: ["images.unsplash.com", "unsplash.com"],
+		    unoptimized: true
 	},
 	webpack(config, { dev }) {
 		if (!dev && config.optimization?.minimizer) {
