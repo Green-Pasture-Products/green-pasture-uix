@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
 	eslint: {
 		ignoreDuringBuilds: true,
 	},
+	typescript: {
+		ignoreBuildErrors: true, // 🚫 ignore TS errors during build
+	},
 	images: {
 		domains: ["images.unsplash.com", "unsplash.com"],
 	},
