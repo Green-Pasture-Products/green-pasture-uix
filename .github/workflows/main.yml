@@ -1,4 +1,4 @@
-name: Deploy Next.js via WebDeploy
+name: Deploy Next.js to MonsterASP.NET
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: windows-latest    # must be Windows for WebDeploy
+    runs-on: windows-latest  # Must be Windows if using WebDeploy
 
     steps:
       - name: Checkout repository
@@ -20,8 +20,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Next.js
-        run: npm run build
+      - name: Build & Export Next.js
+        run: |
+          npm run build
+          npm run export
 
       - name: Deploy via WebDeploy
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
@@ -30,6 +32,6 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          source-path: .next        # Next.js build folder
-          target-path: /wwwroot     # server folder
-          target-delete: true       # delete old files before deploying
+          source-path: out        # ✅ Use Next.js exported folder
+          target-path: /wwwroot   # MonsterASP.NET root folder
+          target-delete: true
