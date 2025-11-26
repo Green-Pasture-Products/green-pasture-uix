@@ -1,4 +1,4 @@
-name: Deploy via FTP
+name: Deploy Next.js via WebDeploy
 
 on:
   push:
@@ -21,13 +21,18 @@ jobs:
         run: npm install
 
       - name: Build Next.js
-        run: npm run build
+        run: |
+          npm run build
+          # optional for static export
+          # npm run export
 
-      - name: Deploy to FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Deploy via WebDeploy
+        uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /public_html/
-          local-dir: .next/    # ✅ Correct Next.js build folder
+          website-name: ${{ secrets.WEBSITE_NAME }}
+          server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
+          server-username: ${{ secrets.SERVER_USERNAME }}
+          server-password: ${{ secrets.SERVER_PASSWORD }}
+          port: 8172
+          server-dir: /wwwroot/      # MonsterASP root folder
+          local-dir: .next/          # or out/ if static export
