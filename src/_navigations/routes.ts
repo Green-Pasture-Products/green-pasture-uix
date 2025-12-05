@@ -11,6 +11,10 @@ export const getPageNames = (link: string) => {
 	switch (link) {
 		case "/admin/dashboard":
 			return "dashboard";
+		case "/admin/category":
+			return "categories";
+		case "/admin/category/[id]":
+			return "category";
 		case "/admin/products":
 			return "products";
 		case "/admin/product/[id]":
@@ -41,6 +45,11 @@ export const sidebarNavigation = [
 		name: "Dashboard",
 		href: "/admin/dashboard",
 		icon: LayoutDashboard,
+	},
+	{
+		name: "Category",
+		href: "/admin/analytics",
+		icon: Package,
 	},
 	{
 		name: "Products",

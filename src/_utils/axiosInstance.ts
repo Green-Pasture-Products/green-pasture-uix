@@ -48,6 +48,7 @@ const axiosInstance: AxiosInstance = axios.create({
 	headers: {
 		"Content-Type": "application/json",
 	},
+	timeout: 5000
 	// withCredentials: true,
 });
 
@@ -57,9 +58,9 @@ axiosInstance.interceptors.request.use(
 		config: InternalAxiosRequestConfig
 	): Promise<InternalAxiosRequestConfig> => {
 		try {
-			const ipInfo = await getIpInfo();
+			//const ipInfo = await getIpInfo();
 
-			config.params = { ...config.params, country: ipInfo?.country };
+			//config.params = { ...config.params, country: ipInfo?.country };
 			// if (config.method?.toLowerCase() === "get") {
 			// } else {
 			// 	config.data = { ...(config.data || {}), country: ipInfo?.country };

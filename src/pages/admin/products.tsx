@@ -62,10 +62,7 @@ const AdminProducts: React.FC = () => {
 	};
 
 	const columns: Column<Product>[] = [
-		{
-			key: "id",
-			header: "Product ID",
-		},
+		
 		{
 			key: "name",
 			header: "Name",
@@ -140,7 +137,7 @@ const AdminProducts: React.FC = () => {
 		},
 		{
 			key: "id",
-			header: "#",
+			header: "Actions",
 			render: (value: string | number, row: Product) => (
 				<ActionDropDown row={row} />
 			),

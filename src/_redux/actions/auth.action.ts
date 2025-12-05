@@ -1,5 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { appConstants } from "../constants";
+import axios from "axios";
 import axiosInstance from "@/_utils/axiosInstance";
 
 interface Address {
@@ -29,8 +30,10 @@ export const signupAsync = createAsyncThunk(
 				`${appConstants.API_BASE_URL}auth/signup`,
 				user
 			);
+			console.log(response.data);
 			return response.data;
 		} catch (error: any) {
+			console.log(error);
 			const message =
 				error.response?.data?.message || error.message || "Signup failed";
 			return rejectWithValue(message);
@@ -42,14 +45,21 @@ export const loginAsync = createAsyncThunk(
 	"auth/loginAsync",
 	async (user: { email: string; password: string }, { rejectWithValue }) => {
 		try {
+			// console.log("Login payload:", user);
 			const response = await axiosInstance.post(
 				`${appConstants.API_BASE_URL}auth/login`,
 				user
 			);
 			return response.data;
 		} catch (error: any) {
-			const message =
-				error.response?.data?.message || error.message || "Login failed";
+      let message = "Login failed. Please check your internet connection or try again later.";
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data?.message) {
+          message = error.response.data.message;
+        } else if (error.code === "ECONNABORTED") {  //backend not responding
+          message = "Please try again later.";
+        }
+      }
 			return rejectWithValue(message);
 		}
 	}

@@ -8,6 +8,7 @@ import { Eye, EyeOff, Leaf, Mail, Lock, AlertCircle } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import {
 	clearError,
+	setLoading,
 	// loginFailure,
 	// loginStart,
 	// loginSuccess,
@@ -35,11 +36,12 @@ const LoginPage: React.FC = () => {
 
 	useEffect(() => {
 		dispatch(clearError());
-	}, []);
+		dispatch(setLoading(false));
+	}, [dispatch]);
 
 	const onSubmit = async (data: LoginFormData) => {
 		try {
-			dispatch(loginAsync(data));
+			await dispatch(loginAsync(data)).unwrap();
 		} catch (err: any) {
 			logger.log({ logginError: err });
 		}
