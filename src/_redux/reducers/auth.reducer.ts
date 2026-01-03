@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AuthState, User } from "@/types";
 import { loginAsync, signupAsync } from "../actions/auth.action";
 import { authConstants } from "../constants";
-import { clearObjectFromStorage, logger, setObjectInStorage } from "@/_utils";
+import {secureTokenStorage } from "@/_utils/secureStorage";
 
 const initialState: AuthState = {
 	user: null,
@@ -20,7 +20,8 @@ const authSlice = createSlice({
 			state.isAuthenticated = false;
 			state.error = null;
 			state.isLoading = false;
-			clearObjectFromStorage(authConstants.USER_KEY);
+			//clearObjectFromStorage(authConstants.USER_KEY);
+			secureTokenStorage.clearTokens();
 		},
 		clearError: (state) => {
 			state.error = null;
@@ -40,12 +41,11 @@ const authSlice = createSlice({
 				state.user = action.payload?.data?.profileInfo;
 				state.isAuthenticated = true;
 				state.error = null;
-				// save token for future API calls
-				setObjectInStorage(authConstants.USER_KEY, {
-					user: action.payload?.data?.profileInfo,
-					accessToken: action.payload?.data?.accessToken,
-					refreshToken: action.payload?.data?.refreshToken,
-				});
+				secureTokenStorage.setTokens(
+				action.payload.data.accessToken,
+				action.payload.data.refreshToken,
+				action.payload.data.profileInfo
+				);
 			})
 			.addCase(loginAsync.rejected, (state, action) => {
 				state.isLoading = false;

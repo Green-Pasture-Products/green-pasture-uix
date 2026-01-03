@@ -26,7 +26,7 @@ export const signupAsync = createAsyncThunk(
 	"auth/signupAsync",
 	async (user: User, { rejectWithValue }) => {
 		try {
-			const response = await axiosInstance.post(
+			const response = await axios.post(   //Use axiosInstance ONLY for protected APIs
 				`${appConstants.API_BASE_URL}auth/signup`,
 				user
 			);
@@ -46,7 +46,7 @@ export const loginAsync = createAsyncThunk(
 	async (user: { email: string; password: string }, { rejectWithValue }) => {
 		try {
 			// console.log("Login payload:", user);
-			const response = await axiosInstance.post(
+			const response = await axios.post( //Use axiosInstance ONLY for protected APIs
 				`${appConstants.API_BASE_URL}auth/login`,
 				user
 			);

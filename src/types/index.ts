@@ -1,8 +1,26 @@
 export interface ProductCategory{
-id: string;
+id: number;
 name: string;
-description:string;
+description:string
 }
+
+export interface PaginatedProducts {
+  items: ProductCategory[];
+  meta: {
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalPages: number;
+    currentPage: number;
+  };
+}
+
+export interface UpdateCategoryPayload {
+  id: number | null ;
+  name: string;
+  description: string;
+}
+
 
 export interface Product {
 	id: string;
@@ -16,6 +34,20 @@ export interface Product {
 	inStock: boolean;
 	rating: number;
 	reviews: number;
+}
+
+export interface CategoriesState {
+  isFetchingAllCategories: boolean;
+  isFetchingCategory: boolean;
+  isCreatingCategory: boolean;
+  isUpdatingCategory: boolean;
+  isDeletingCategory:boolean;
+  productCategories: ProductCategory[];
+  pagination?: PaginatedProducts["meta"];
+  categories?: string[];
+  selectedCategory?: string;
+  searchTerm: string;
+  error: string | null;
 }
 
 export interface ProductsState {
@@ -164,6 +196,7 @@ export interface AdminState {
 	orders: Order[];
 	customers: any[];
 	selectedProduct: Product | null;
+	selectedCategory: ProductCategory | null;
 	selectedOrder: Order | null;
 }
 

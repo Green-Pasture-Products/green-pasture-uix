@@ -5,6 +5,7 @@ import {
 	Settings,
 	ShoppingCart,
 	Users,
+	ShoppingBasket
 } from "lucide-react";
 
 export const getPageNames = (link: string) => {
@@ -48,8 +49,8 @@ export const sidebarNavigation = [
 	},
 	{
 		name: "Category",
-		href: "/admin/analytics",
-		icon: Package,
+		href: "/admin/categories",
+		icon: ShoppingBasket,
 	},
 	{
 		name: "Products",

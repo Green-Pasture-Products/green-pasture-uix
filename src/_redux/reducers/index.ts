@@ -4,8 +4,10 @@ import adminReducer from "./admin.reducer";
 import cartReducer from "./cart.reducer";
 import userReducer from "./users.reducer";
 import productReducer from "./products.reducer";
+import categoryReducer from "./category.reducers";
 import wishlistReducer from "./wishlist.reducer";
 import searchReducer from "./search.reducer";
+import { categories } from "../constants/categories.constant";
 
 const rootReducer = combineReducers({
 	auth: authReducer,
@@ -13,6 +15,7 @@ const rootReducer = combineReducers({
 	cart: cartReducer,
 	user: userReducer,
 	product: productReducer,
+	category:categoryReducer,
 	wishlist: wishlistReducer,
 	search: searchReducer,
 });

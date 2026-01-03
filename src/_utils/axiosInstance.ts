@@ -68,6 +68,7 @@ axiosInstance.interceptors.request.use(
 
 			// ✅ CHANGED: Get token from encrypted storage
 			const tokenData = secureTokenStorage.getTokens();
+			console.log("Axios token:", tokenData?.accessToken);
 			const token = tokenData?.accessToken;
 
 			if (token && !config.headers.Authorization) {
@@ -138,8 +139,10 @@ axiosInstance.interceptors.response.use(
 				}
 
 				// Notify all queued requests
-				onRefreshed(accessToken);
+				//onRefreshed(accessToken);
 				isRefreshing = false;
+				onRefreshed(accessToken);
+
 
 				// Retry the original request
 				return axiosInstance(originalRequest);

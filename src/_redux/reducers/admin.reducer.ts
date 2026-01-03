@@ -1,4 +1,4 @@
-import { AdminState, AdminStats, AdminUser, Order, Product } from "@/types";
+import { AdminState, AdminStats, AdminUser, Order, Product, ProductCategory } from "@/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { mockOrders } from "../mockData";
 
@@ -54,6 +54,9 @@ const adminSlice = createSlice({
 		selectProduct: (state, action: PayloadAction<Product>) => {
 			state.selectedProduct = action.payload;
 		},
+		selectCategory: (state, action: PayloadAction<ProductCategory>) => {
+			state.selectedCategory = action.payload;
+		},
 		selectOrder: (state, action: PayloadAction<Order>) => {
 			state.selectedOrder = action.payload;
 		},
@@ -68,6 +71,7 @@ export const {
 	logout,
 	updateOrderStatus,
 	selectProduct,
+	selectCategory,
 	selectOrder,
 	updateStats,
 } = adminSlice.actions;
