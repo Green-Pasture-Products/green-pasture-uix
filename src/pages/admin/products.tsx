@@ -10,6 +10,7 @@ import { Product } from "@/types";
 import { productsAction } from "@/_redux/actions";
 import SearchBar from "@/_components/SearchBar";
 import { filterAndSortProducts, logger } from "@/_utils";
+import ViewProduct from "@/_components/Modals/ViewProduct";
 
 interface ActionDropDownProps {
 	row: Product;
@@ -20,6 +21,8 @@ const AdminProducts: React.FC = () => {
 	const products = useAppSelector((state) => state.product.products);
 	const { query, filters } = useAppSelector((state) => state.search);
 	const [currentPage, setCurrentPage] = useState(1);
+	const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+	const [isViewOpen, setIsViewOpen] = useState(false);
 
 	useEffect(() => {
 		dispatch(productsAction.fetchAllProducts());
@@ -36,13 +39,22 @@ const AdminProducts: React.FC = () => {
 
 		return (
 			<div className="flex items-center justify-end space-x-2">
-				<button
-					onClick={() => dispatch(selectProduct(props?.row))}
+									
+				<ViewProduct
+					onClick={() => {
+						setSelectedProduct(props?.row);
+						setIsViewOpen(true);
+						dispatch(selectProduct(props?.row));
+					}}
 					className="text-blue-600 hover:text-blue-900 p-1 rounded"
 					title="View"
+					product={selectedProduct}
+					isOpen={isViewOpen}
+					onClose={() => setIsViewOpen(false)}
 				>
 					<Eye className="h-4 w-4" />
-				</button>
+				</ViewProduct>
+				
 				<AddProduct
 					product={props?.row}
 					title="edit product"
@@ -171,6 +183,7 @@ const AdminProducts: React.FC = () => {
 					setCurrentPage={setCurrentPage}
 				/>
 			</div>
+			
 		</AdminLayout>
 	);
 };

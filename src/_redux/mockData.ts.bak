@@ -8,7 +8,7 @@ export const mockProducts: Product[] = [
 		price: 35000,
 		originalPrice: 40000,
 		// image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394453/green_pastures/BrainSuper.png",
+		image: "/images/BrainSuper.png",
 		category: "Fruits",
 		description:
 			"Executive and Cognitive Function | Manage Memory Loss | Mental Wellness",
@@ -23,7 +23,7 @@ export const mockProducts: Product[] = [
 		price: 30000,
 		originalPrice: 35000,
 		// image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394454/green_pastures/GUTBrainSuperfood.png",
+		image: "/images/GUTBrainSuperfood.png",
 		category: "Vegetables",
 		description:
 			"Improves Gut health | It supports good sleep | Increases organic probiotics | Mental Wellness",
@@ -38,7 +38,7 @@ export const mockProducts: Product[] = [
 		price: 20000,
 		originalPrice: 25000,
 		// image: "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/smoothie-removebg.png",
+		image: "/images/smoothie-removebg.png",
 		category: "Fruits",
 		description:
 			"Immune Booster | Heart, Liver and Kidney Health | Enhance Digestion",
@@ -53,7 +53,7 @@ export const mockProducts: Product[] = [
 		price: 20000,
 		originalPrice: 24000,
 		// image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/capsule-removebg.png",
+		image: "/images/capsule-removebg.png",
 		category: "Grains",
 		description:
 			"Libido Enhancer, Increased Testosterone, Stress Management, For Erectile Dysfunction, Improved Sperm Quality",
@@ -68,7 +68,7 @@ export const mockProducts: Product[] = [
 		price: 10000,
 		originalPrice: 12500,
 		// image: "https://images.unsplash.com/photo-1582515073490-39981397c445?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/gorontula-removebg.png",
+		image: "/images/gorontula-removebg.png",
 		category: "Vegetables",
 		description: "Enhances reproductive health and boosts immunity naturally",
 		quantity: 0,
@@ -82,7 +82,7 @@ export const mockProducts: Product[] = [
 		price: 24000,
 		originalPrice: 30000,
 		// image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/purple-super-food-preview.png",
+		image: "/images/purple-super-food-preview.png",
 		category: "Pantry",
 		description:
 			"Prevents/Fights Cancer | Reduce Heart Disease Risk | Boost Brain Health | Packed with Antioxidant | Radiant Skin | Pre/Post Workout + Many More",
@@ -97,7 +97,7 @@ export const mockProducts: Product[] = [
 		price: 2500,
 		// originalPrice: 25000,
 		// image: "https://unsplash.com/photos/a-pile-of-broccoli-sitting-on-top-of-a-white-table-t6DpKVQdLYQ?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/dates-powder-preview.png",
+		image: "/images/dates-powder-preview.png",
 		category: "Vegetables",
 		description:
 			"Promotes Healthy Pregnancy | Supports Eye Health | Boosts Energy | Aids Digestion | Supports Heart Health | Strengthens Bones | Improves Brain Function | Regulates Blood Sugar",
@@ -112,7 +112,7 @@ export const mockProducts: Product[] = [
 		price: 2000,
 		// originalPrice: 25000,
 		// image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/tigernuts-powder-preview.png",
+		image: "/images/tigernuts-powder-preview.png",
 		category: "Fruits",
 		description:
 			"Promotes Healthy Skin | Rich in Fiber | Boosts Energy | Supports Heart Health | Regulates Blood Sugar | Good for Weight Management | Dairy-Free & Nut-Free",
@@ -127,7 +127,7 @@ export const mockProducts: Product[] = [
 		price: 35000,
 		originalPrice: 40000,
 		// image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394453/green_pastures/BrainSuper.png",
+		image: "/images/BrainSuper.png",
 		category: "Fruits",
 		description:
 			"Executive and Cognitive Function | Manage Memory Loss | Mental Wellness",
@@ -142,7 +142,7 @@ export const mockProducts: Product[] = [
 		price: 30000,
 		originalPrice: 35000,
 		// image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394454/green_pastures/GUTBrainSuperfood.png",
+		image: "/images/GUTBrainSuperfood.png",
 		category: "Vegetables",
 		description:
 			"Improves Gut health | It supports good sleep | Increases organic probiotics | Mental Wellness",
@@ -157,7 +157,7 @@ export const mockProducts: Product[] = [
 		price: 20000,
 		originalPrice: 25000,
 		// image: "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/smoothie-removebg.png",
+		image: "/images/smoothie-removebg.png",
 		category: "Fruits",
 		description:
 			"Immune Booster | Heart, Liver and Kidney Health | Enhance Digestion",
@@ -172,7 +172,7 @@ export const mockProducts: Product[] = [
 		price: 20000,
 		originalPrice: 24000,
 		// image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/capsule-removebg.png",
+		image: "/images/capsule-removebg.png",
 		category: "Grains",
 		description:
 			"Libido Enhancer, Increased Testosterone, Stress Management, For Erectile Dysfunction, Improved Sperm Quality",
@@ -187,7 +187,7 @@ export const mockProducts: Product[] = [
 		price: 10000,
 		originalPrice: 12500,
 		// image: "https://images.unsplash.com/photo-1582515073490-39981397c445?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/gorontula-removebg.png",
+		image: "/images/gorontula-removebg.png",
 		category: "Vegetables",
 		description: "Enhances reproductive health and boosts immunity naturally",
 		quantity: 0,
@@ -201,7 +201,7 @@ export const mockProducts: Product[] = [
 		price: 24000,
 		originalPrice: 30000,
 		// image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/purple-super-food-preview.png",
+		image: "/images/purple-super-food-preview.png",
 		category: "Pantry",
 		description:
 			"Prevents/Fights Cancer | Reduce Heart Disease Risk | Boost Brain Health | Packed with Antioxidant | Radiant Skin | Pre/Post Workout + Many More",
@@ -216,7 +216,7 @@ export const mockProducts: Product[] = [
 		price: 2500,
 		// originalPrice: 25000,
 		// image: "https://unsplash.com/photos/a-pile-of-broccoli-sitting-on-top-of-a-white-table-t6DpKVQdLYQ?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/dates-powder-preview.png",
+		image: "/images/dates-powder-preview.png",
 		category: "Vegetables",
 		description:
 			"Promotes Healthy Pregnancy | Supports Eye Health | Boosts Energy | Aids Digestion | Supports Heart Health | Strengthens Bones | Improves Brain Function | Regulates Blood Sugar",
@@ -231,7 +231,7 @@ export const mockProducts: Product[] = [
 		price: 2000,
 		// originalPrice: 25000,
 		// image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/tigernuts-powder-preview.png",
+		image: "/images/tigernuts-powder-preview.png",
 		category: "Fruits",
 		description:
 			"Promotes Healthy Skin | Rich in Fiber | Boosts Energy | Supports Heart Health | Regulates Blood Sugar | Good for Weight Management | Dairy-Free & Nut-Free",
@@ -246,7 +246,7 @@ export const mockProducts: Product[] = [
 		price: 35000,
 		originalPrice: 40000,
 		// image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394453/green_pastures/BrainSuper.png",
+		image: "/images/BrainSuper.png",
 		category: "Fruits",
 		description:
 			"Executive and Cognitive Function | Manage Memory Loss | Mental Wellness",
@@ -261,7 +261,7 @@ export const mockProducts: Product[] = [
 		price: 30000,
 		originalPrice: 35000,
 		// image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394454/green_pastures/GUTBrainSuperfood.png",
+		image: "/images/GUTBrainSuperfood.png",
 		category: "Vegetables",
 		description:
 			"Improves Gut health | It supports good sleep | Increases organic probiotics | Mental Wellness",
@@ -276,7 +276,7 @@ export const mockProducts: Product[] = [
 		price: 20000,
 		originalPrice: 25000,
 		// image: "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/smoothie-removebg.png",
+		image: "/images/smoothie-removebg.png",
 		category: "Fruits",
 		description:
 			"Immune Booster | Heart, Liver and Kidney Health | Enhance Digestion",
@@ -291,7 +291,7 @@ export const mockProducts: Product[] = [
 		price: 20000,
 		originalPrice: 24000,
 		// image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/capsule-removebg.png",
+		image: "/images/capsule-removebg.png",
 		category: "Grains",
 		description:
 			"Libido Enhancer, Increased Testosterone, Stress Management, For Erectile Dysfunction, Improved Sperm Quality",
@@ -306,7 +306,7 @@ export const mockProducts: Product[] = [
 		price: 10000,
 		originalPrice: 12500,
 		// image: "https://images.unsplash.com/photo-1582515073490-39981397c445?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/gorontula-removebg.png",
+		image: "/images/gorontula-removebg.png",
 		category: "Vegetables",
 		description: "Enhances reproductive health and boosts immunity naturally",
 		quantity: 0,
@@ -320,7 +320,7 @@ export const mockProducts: Product[] = [
 		price: 24000,
 		originalPrice: 30000,
 		// image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/purple-super-food-preview.png",
+		image: "/images/purple-super-food-preview.png",
 		category: "Pantry",
 		description:
 			"Prevents/Fights Cancer | Reduce Heart Disease Risk | Boost Brain Health | Packed with Antioxidant | Radiant Skin | Pre/Post Workout + Many More",
@@ -335,7 +335,7 @@ export const mockProducts: Product[] = [
 		price: 2500,
 		// originalPrice: 25000,
 		// image: "https://unsplash.com/photos/a-pile-of-broccoli-sitting-on-top-of-a-white-table-t6DpKVQdLYQ?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/dates-powder-preview.png",
+		image: "/images/dates-powder-preview.png",
 		category: "Vegetables",
 		description:
 			"Promotes Healthy Pregnancy | Supports Eye Health | Boosts Energy | Aids Digestion | Supports Heart Health | Strengthens Bones | Improves Brain Function | Regulates Blood Sugar",
@@ -350,7 +350,7 @@ export const mockProducts: Product[] = [
 		price: 2000,
 		// originalPrice: 25000,
 		// image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/tigernuts-powder-preview.png",
+		image: "/images/tigernuts-powder-preview.png",
 		category: "Fruits",
 		description:
 			"Promotes Healthy Skin | Rich in Fiber | Boosts Energy | Supports Heart Health | Regulates Blood Sugar | Good for Weight Management | Dairy-Free & Nut-Free",
@@ -365,7 +365,7 @@ export const mockProducts: Product[] = [
 		price: 35000,
 		originalPrice: 40000,
 		// image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394453/green_pastures/BrainSuper.png",
+		image: "/images/BrainSuper.png",
 		category: "Fruits",
 		description:
 			"Executive and Cognitive Function | Manage Memory Loss | Mental Wellness",
@@ -380,7 +380,7 @@ export const mockProducts: Product[] = [
 		price: 30000,
 		originalPrice: 35000,
 		// image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394454/green_pastures/GUTBrainSuperfood.png",
+		image: "/images/GUTBrainSuperfood.png",
 		category: "Vegetables",
 		description:
 			"Improves Gut health | It supports good sleep | Increases organic probiotics | Mental Wellness",
@@ -395,7 +395,7 @@ export const mockProducts: Product[] = [
 		price: 20000,
 		originalPrice: 25000,
 		// image: "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/smoothie-removebg.png",
+		image: "/images/smoothie-removebg.png",
 		category: "Fruits",
 		description:
 			"Immune Booster | Heart, Liver and Kidney Health | Enhance Digestion",
@@ -410,7 +410,7 @@ export const mockProducts: Product[] = [
 		price: 20000,
 		originalPrice: 24000,
 		// image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/capsule-removebg.png",
+		image: "/images/capsule-removebg.png",
 		category: "Grains",
 		description:
 			"Libido Enhancer, Increased Testosterone, Stress Management, For Erectile Dysfunction, Improved Sperm Quality",
@@ -425,7 +425,7 @@ export const mockProducts: Product[] = [
 		price: 10000,
 		originalPrice: 12500,
 		// image: "https://images.unsplash.com/photo-1582515073490-39981397c445?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/gorontula-removebg.png",
+		image: "/images/gorontula-removebg.png",
 		category: "Vegetables",
 		description: "Enhances reproductive health and boosts immunity naturally",
 		quantity: 0,
@@ -439,7 +439,7 @@ export const mockProducts: Product[] = [
 		price: 24000,
 		originalPrice: 30000,
 		// image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/purple-super-food-preview.png",
+		image: "/images/purple-super-food-preview.png",
 		category: "Pantry",
 		description:
 			"Prevents/Fights Cancer | Reduce Heart Disease Risk | Boost Brain Health | Packed with Antioxidant | Radiant Skin | Pre/Post Workout + Many More",
@@ -454,7 +454,7 @@ export const mockProducts: Product[] = [
 		price: 2500,
 		// originalPrice: 25000,
 		// image: "https://unsplash.com/photos/a-pile-of-broccoli-sitting-on-top-of-a-white-table-t6DpKVQdLYQ?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/dates-powder-preview.png",
+		image: "/images/dates-powder-preview.png",
 		category: "Vegetables",
 		description:
 			"Promotes Healthy Pregnancy | Supports Eye Health | Boosts Energy | Aids Digestion | Supports Heart Health | Strengthens Bones | Improves Brain Function | Regulates Blood Sugar",
@@ -469,7 +469,7 @@ export const mockProducts: Product[] = [
 		price: 2000,
 		// originalPrice: 25000,
 		// image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400&h=400&fit=crop",
-		image: "https://res.cloudinary.com/dn9lc36q6/image/upload/v1770394450/green_pastures/tigernuts-powder-preview.png",
+		image: "/images/tigernuts-powder-preview.png",
 		category: "Fruits",
 		description:
 			"Promotes Healthy Skin | Rich in Fiber | Boosts Energy | Supports Heart Health | Regulates Blood Sugar | Good for Weight Management | Dairy-Free & Nut-Free",

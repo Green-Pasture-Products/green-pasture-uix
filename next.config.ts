@@ -3,8 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
 	/* config options here */
 	reactStrictMode: true,
-	output: "export",
-		// 🚫 Disable ESLint during production build
+	// output: "export", // ✅ Disabled to enable API routes
+	// 🚫 Disable ESLint during production build
 	eslint: {
 		ignoreDuringBuilds: true,
 	},
@@ -12,8 +12,7 @@ const nextConfig: NextConfig = {
 		ignoreBuildErrors: true, // 🚫 ignore TS errors during build
 	},
 	images: {
-		domains: ["images.unsplash.com", "unsplash.com"],
-		    unoptimized: true
+		domains: ["images.unsplash.com", "unsplash.com", "res.cloudinary.com"],
 	},
 	webpack(config, { dev }) {
 		if (!dev && config.optimization?.minimizer) {

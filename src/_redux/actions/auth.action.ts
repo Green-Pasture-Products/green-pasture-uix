@@ -45,11 +45,12 @@ export const loginAsync = createAsyncThunk(
 	"auth/loginAsync",
 	async (user: { email: string; password: string }, { rejectWithValue }) => {
 		try {
-			// console.log("Login payload:", user);
+			console.log("Login payload:", user);
 			const response = await axios.post( //Use axiosInstance ONLY for protected APIs
 				`${appConstants.API_BASE_URL}auth/login`,
 				user
 			);
+			console.log("Login response data:", response.data);
 			return response.data;
 		} catch (error: any) {
       let message = "Login failed. Please check your internet connection or try again later.";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { MouseEvent, useState } from "react";
-import Image from "next/image";
+import { CldImage } from "next-cloudinary";
 import { Star, ShoppingCart, Heart, XCircle, Trash2 } from "lucide-react";
 import { Product } from "../types";
 import toast from "react-hot-toast";
@@ -62,13 +62,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 			{/* Product Image */}
 			<Link href={`/product/${product?.id}`}>
 				<div className="relative w-full aspect-square bg-[#f6f6f6]">
-					<Image
+					<CldImage
 						src={product?.image}
 						alt={product.name}
 						fill
 						sizes="(max-width: 768px) 100vw, 33vw"
-						priority={false}
 						className="object-cover"
+						quality="auto"
+						dpr="auto"
 					/>
 					{!product?.inStock && (
 						<span className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow">
