@@ -27,6 +27,7 @@ const initialState: AdminState = {
 	orders: mockOrders,
 	customers: [],
 	selectedProduct: null,
+	selectedCategory: null,
 	selectedOrder: null,
 };
 
@@ -51,13 +52,13 @@ const adminSlice = createSlice({
 				order.status = action.payload.status;
 			}
 		},
-		selectProduct: (state, action: PayloadAction<Product>) => {
+		selectProduct: (state, action: PayloadAction<Product | null>) => {
 			state.selectedProduct = action.payload;
 		},
-		selectCategory: (state, action: PayloadAction<ProductCategory>) => {
+		selectCategory: (state, action: PayloadAction<ProductCategory | null>) => {
 			state.selectedCategory = action.payload;
 		},
-		selectOrder: (state, action: PayloadAction<Order>) => {
+		selectOrder: (state, action: PayloadAction<Order | null>) => {
 			state.selectedOrder = action.payload;
 		},
 		updateStats: (state, action: PayloadAction<Partial<AdminStats>>) => {

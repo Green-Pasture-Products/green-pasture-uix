@@ -1,7 +1,7 @@
 export const appConstants = {
 	API_BASE_URL:
 		process.env.NEXT_PUBLIC_API_BASE_URL ||
-		`http://localhost:3080/api/v1/`,
+		`https://green-pasture-api.onrender.com/api/v1/`, 
 
 	IPINFO_TOKEN: process.env.IPINFO_TOKEN || `81a1cbe5574c88`,
 
