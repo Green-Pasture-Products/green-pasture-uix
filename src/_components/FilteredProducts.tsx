@@ -1,11 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { motion, AnimatePresence } from "framer-motion";
 import {
 	Search as SearchIcon,
-	Filter,
 	Grid,
 	List,
 	SlidersHorizontal,
+	X,
+	Package,
+	Star,
 } from "lucide-react";
 
 import { resetFilters, setSearchQuery } from "@/_redux/reducers/search.reducer";
@@ -17,22 +20,41 @@ import SearchBar from "@/_components/SearchBar";
 import { usePathname } from "next/navigation";
 import { productsAction } from "@/_redux/actions";
 
+const gridContainerVariants = {
+	hidden: {},
+	visible: {
+		transition: { staggerChildren: 0.06 },
+	},
+};
+
+const gridItemVariants = {
+	hidden: { opacity: 0, y: 20, scale: 0.95 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+	},
+};
+
 const FilteredProducts: React.FC = () => {
 	const router = useRouter();
 	const { q } = router.query;
-	const pathanme = usePathname();
+	const pathname = usePathname();
 	const dispatch = useAppDispatch();
-	const isSearchPage = pathanme.includes("/search");
+	const isSearchPage = pathname.includes("/search");
 
 	const { query, filters } = useAppSelector((state) => state.search);
-	const products = useAppSelector((state) => state.product.products);
+	const { products, isFetchingAllProducts } = useAppSelector(
+		(state) => state.product
+	);
 
-	const [showFilters, setShowFilters] = React.useState(false);
-	const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
+	const [showFilters, setShowFilters] = useState(false);
+	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
 	useEffect(() => {
 		dispatch(productsAction.fetchAllProducts());
-	}, []);
+	}, [dispatch]);
 
 	useEffect(() => {
 		if (!isSearchPage) {
@@ -40,180 +62,343 @@ const FilteredProducts: React.FC = () => {
 		} else if (q && typeof q === "string" && q !== query) {
 			dispatch(setSearchQuery(q));
 		}
-	}, [q, query, dispatch]);
+	}, [q, query, dispatch, isSearchPage]);
 
 	const filteredProducts = filterAndSortProducts(products, query, filters);
 
 	const handleSearch = (searchQuery: string) => {
-		router.push(`/search?q=${encodeURIComponent(searchQuery)}`, undefined, {
-			shallow: true,
-		});
+		router.push(
+			`/search?q=${encodeURIComponent(searchQuery)}`,
+			undefined,
+			{ shallow: true }
+		);
 	};
 
 	return (
-		<div className="container page-wrapper mx-auto px-4 py-8">
+		<div className="container page-wrapper mx-auto px-4 py-8 md:py-12">
+			{/* Header */}
 			<div className="mb-8">
 				{isSearchPage && (
-					<div className="max-w-2xl mx-auto mb-6">
+					<div className="max-w-2xl mx-auto mb-8">
 						<SearchBar onSearch={handleSearch} autoFocus />
 					</div>
 				)}
 
-				<div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-					<div className="">
-						{isSearchPage ? (
-							<h1 className="text-2xl font-bold text-gray-800">
-								{query
-									? `Search Results for "${query}"`
-									: "Search Products"}
-							</h1>
-						) : (
-							<h1 className="text-2xl font-bold text-gray-800">
-								All Products
-							</h1>
-						)}
-						{isSearchPage && (
-							<p className="text-gray-600 mt-1">
-								{filteredProducts?.length}{" "}
-								{filteredProducts?.length === 1
-									? "product"
-									: "products"}{" "}
-								found
-							</p>
-						)}
+				<div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+					<div>
+						<h1
+							className="text-2xl md:text-3xl font-bold"
+							style={{ color: "var(--text-primary)" }}
+						>
+							{isSearchPage
+								? query
+									? `Results for "${query}"`
+									: "Search Products"
+								: "All Products"}
+						</h1>
+						<p
+							className="text-sm mt-1"
+							style={{ color: "var(--text-hint)" }}
+						>
+							{isFetchingAllProducts
+								? "Loading..."
+								: `${filteredProducts?.length ?? 0} product${(filteredProducts?.length ?? 0) !== 1 ? "s" : ""} found`}
+						</p>
 					</div>
 
-					<div className="flex items-center space-x-4 mt-4 md:mt-0">
-						<div className="flex items-center bg-gray-100 rounded-md p-1">
-							<button
-								onClick={() => setViewMode("grid")}
-								className={`p-2 rounded ${
-									viewMode === "grid" ? "bg-white shadow-sm" : ""
-								}`}
-							>
-								<Grid className="h-4 w-4" />
-							</button>
-							<button
-								onClick={() => setViewMode("list")}
-								className={`p-2 rounded ${
-									viewMode === "list" ? "bg-white shadow-sm" : ""
-								}`}
-							>
-								<List className="h-4 w-4" />
-							</button>
+					<div className="flex items-center gap-2">
+						{/* View toggle */}
+						<div
+							className="flex items-center rounded-lg p-0.5"
+							style={{ background: "var(--surface-medium)" }}
+						>
+							{[
+								{ mode: "grid" as const, icon: Grid },
+								{ mode: "list" as const, icon: List },
+							].map(({ mode, icon: Icon }) => (
+								<button
+									key={mode}
+									onClick={() => setViewMode(mode)}
+									className="p-2 rounded-md transition-all cursor-pointer"
+									style={{
+										background:
+											viewMode === mode
+												? "var(--surface-paper)"
+												: "transparent",
+										color:
+											viewMode === mode
+												? "var(--text-primary)"
+												: "var(--text-hint)",
+										boxShadow:
+											viewMode === mode
+												? "var(--shadow-sm)"
+												: "none",
+									}}
+								>
+									<Icon className="h-4 w-4" />
+								</button>
+							))}
 						</div>
 
+						{/* Mobile filter toggle */}
 						<button
 							onClick={() => setShowFilters(!showFilters)}
-							className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 lg:hidden"
+							className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+							style={{
+								border: "1px solid var(--border-medium)",
+								color: showFilters
+									? "var(--color-primary)"
+									: "var(--text-secondary)",
+								background: showFilters
+									? "rgba(22,163,74,0.06)"
+									: "transparent",
+							}}
 						>
-							<SlidersHorizontal className="h-4 w-4" />
-							<span>Filters</span>
+							{showFilters ? (
+								<X className="h-3.5 w-3.5" />
+							) : (
+								<SlidersHorizontal className="h-3.5 w-3.5" />
+							)}
+							Filters
 						</button>
 					</div>
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+			{/* Content */}
+			<div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+				{/* Filters Sidebar */}
 				<div
-					className={`lg:col-span-1 ${
-						showFilters ? "block" : "hidden lg:block"
-					}`}
+					className={`lg:col-span-1 ${showFilters ? "block" : "hidden lg:block"}`}
 				>
-					<SearchFiltersComponent />
+					<div
+						className="rounded-xl p-5 sticky top-24"
+						style={{
+							background: "var(--surface-paper)",
+							border: "1px solid var(--border-light)",
+							boxShadow: "var(--shadow-sm)",
+						}}
+					>
+						<SearchFiltersComponent />
+					</div>
 				</div>
 
+				{/* Products */}
 				<div className="lg:col-span-3">
-					{filteredProducts?.length === 0 ? (
-						<div className="text-center py-16">
-							<SearchIcon className="h-24 w-24 text-gray-300 mx-auto mb-6" />
-							<h2 className="text-2xl font-bold text-gray-800 mb-4">
-								No products found
-							</h2>
-							<p className="text-gray-600 mb-8">
-								Try adjusting your search terms or filters to find what
-								you're looking for.
-							</p>
-							<button
-								onClick={() => {
-									dispatch(setSearchQuery(""));
-									router.push("/products");
-								}}
-								className="bg-green-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-green-700 transition-colors"
-							>
-								Browse All Products
-							</button>
+					{isFetchingAllProducts ? (
+						<div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+							{[...Array(6)].map((_, i) => (
+								<div
+									key={i}
+									className="rounded-xl overflow-hidden animate-pulse"
+									style={{
+										background: "var(--surface-paper)",
+										border: "1px solid var(--border-light)",
+									}}
+								>
+									<div
+										className="aspect-[4/3]"
+										style={{
+											background:
+												"var(--surface-medium)",
+										}}
+									/>
+									<div className="p-4 space-y-3">
+										<div
+											className="h-4 rounded-full w-3/4"
+											style={{
+												background:
+													"var(--surface-medium)",
+											}}
+										/>
+										<div
+											className="h-3 rounded-full w-1/2"
+											style={{
+												background:
+													"var(--surface-medium)",
+											}}
+										/>
+										<div
+											className="h-5 rounded-full w-1/3"
+											style={{
+												background:
+													"var(--surface-medium)",
+											}}
+										/>
+										<div
+											className="h-9 rounded-lg"
+											style={{
+												background:
+													"var(--surface-medium)",
+											}}
+										/>
+									</div>
+								</div>
+							))}
 						</div>
-					) : (
+					) : filteredProducts?.length === 0 ? (
 						<div
-							className={`${
-								viewMode === "grid"
-									? "grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8"
-									: "space-y-4"
-							}`}
+							className="rounded-xl py-20 flex flex-col items-center justify-center text-center"
+							style={{
+								background: "var(--surface-paper)",
+								border: "1px solid var(--border-light)",
+							}}
 						>
-							{(filteredProducts || products)?.map((product) =>
-								viewMode === "grid" ? (
-									<ProductCard key={product.id} product={product} />
-								) : (
+							<Package
+								className="h-16 w-16 mb-4"
+								style={{ color: "var(--text-disabled)" }}
+							/>
+							<h3
+								className="text-lg font-semibold mb-1"
+								style={{ color: "var(--text-primary)" }}
+							>
+								No products found
+							</h3>
+							<p
+								className="text-sm max-w-sm"
+								style={{ color: "var(--text-hint)" }}
+							>
+								Try adjusting your filters or search terms
+							</p>
+						</div>
+					) : viewMode === "grid" ? (
+						<motion.div
+							className="grid grid-cols-2 lg:grid-cols-3 gap-4"
+							variants={gridContainerVariants}
+							initial="hidden"
+							animate="visible"
+							key="grid"
+						>
+							<AnimatePresence>
+								{filteredProducts?.map((product) => (
+									<motion.div
+										key={product.id}
+										variants={gridItemVariants}
+										layout
+									>
+										<ProductCard product={product} />
+									</motion.div>
+								))}
+							</AnimatePresence>
+						</motion.div>
+					) : (
+						<motion.div
+							className="space-y-3"
+							variants={gridContainerVariants}
+							initial="hidden"
+							animate="visible"
+							key="list"
+						>
+							{filteredProducts?.map((product, i) => {
+								const p = product as any;
+								const imageUrl =
+									p.photos?.[0]?.url || p.image || "";
+								const price = Number(p.price || 0);
+								const rating =
+									p.ratingStats?.average ??
+									p.rating ??
+									0;
+								const reviewCount =
+									p.ratingStats?.count ??
+									p.reviews ??
+									0;
+								return (
 									<div
 										key={product.id}
-										className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+										onClick={() =>
+											router.push(
+												`/product/${product.id}`
+											)
+										}
+										className="flex items-center gap-4 p-4 rounded-xl transition-all cursor-pointer animate-row-enter"
+										style={{
+											background:
+												"var(--surface-paper)",
+											border: "1px solid var(--border-light)",
+											animationDelay: `${i * 30}ms`,
+										}}
+										onMouseEnter={(e) => {
+											e.currentTarget.style.boxShadow =
+												"var(--shadow-md)";
+											e.currentTarget.style.transform =
+												"translateY(-1px)";
+										}}
+										onMouseLeave={(e) => {
+											e.currentTarget.style.boxShadow =
+												"none";
+											e.currentTarget.style.transform =
+												"none";
+										}}
 									>
-										<div className="flex items-center space-x-4">
+										{imageUrl ? (
 											<img
-												src={product.image}
+												src={imageUrl}
 												alt={product.name}
-												className="w-20 h-20 object-cover rounded-md"
+												className="w-20 h-20 rounded-lg object-cover shrink-0"
+												style={{
+													border: "1px solid var(--border-light)",
+												}}
 											/>
-											<div className="flex-1">
-												<h3 className="font-semibold text-lg text-gray-800 mb-1">
-													{product.name}
-												</h3>
-												<p className="text-gray-600 text-sm mb-2">
-													{product.description}
-												</p>
-												<div className="flex items-center space-x-4">
-													<span className="text-xl font-bold text-green-600">
-														₦{product.price}
+										) : (
+											<div
+												className="w-20 h-20 rounded-lg flex items-center justify-center text-xl font-bold shrink-0"
+												style={{
+													background:
+														"var(--surface-medium)",
+													color: "var(--text-disabled)",
+												}}
+											>
+												{product.name
+													?.charAt(0)
+													?.toUpperCase()}
+											</div>
+										)}
+										<div className="flex-1 min-w-0">
+											<h3
+												className="font-semibold text-sm truncate"
+												style={{
+													color: "var(--text-primary)",
+												}}
+											>
+												{product.name}
+											</h3>
+											<p
+												className="text-xs mt-0.5 line-clamp-1"
+												style={{
+													color: "var(--text-hint)",
+												}}
+											>
+												{product.description}
+											</p>
+											<div className="flex items-center gap-3 mt-2">
+												<span
+													className="text-sm font-bold"
+													style={{
+														color: "var(--color-primary)",
+													}}
+												>
+													₦{price.toLocaleString()}
+												</span>
+												<div className="flex items-center gap-0.5">
+													<Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+													<span
+														className="text-[0.65rem]"
+														style={{
+															color: "var(--text-hint)",
+														}}
+													>
+														{Number(
+															rating
+														).toFixed(1)}{" "}
+														({reviewCount})
 													</span>
-													<div className="flex items-center space-x-1">
-														<div className="flex items-center">
-															{[...Array(5)].map((_, i) => (
-																<span
-																	key={i}
-																	className={`text-sm ${
-																		i <
-																		Math.floor(product.rating)
-																			? "text-yellow-400"
-																			: "text-gray-300"
-																	}`}
-																>
-																	★
-																</span>
-															))}
-														</div>
-														<span className="text-sm text-gray-500">
-															({product.reviews})
-														</span>
-													</div>
-													{/* {product.organic && (
-                                          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
-                                             Organic
-                                          </span>
-                                       )} */}
-													{!product.inStock && (
-														<span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
-															Out of Stock
-														</span>
-													)}
 												</div>
 											</div>
 										</div>
 									</div>
-								)
-							)}
-						</div>
+								);
+							})}
+						</motion.div>
 					)}
 				</div>
 			</div>

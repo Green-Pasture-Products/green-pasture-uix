@@ -1,6 +1,8 @@
+"use client";
+
 // LIBRARY COMPONENTS
 import Head from "next/head";
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 // CUSTOM COMPONENTS
 import { LayoutProps } from "@/types/client/layout";
@@ -9,20 +11,43 @@ import Header from "../_navigations/Header";
 import { usePathname } from "next/navigation";
 
 const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
-	const pathnaame = usePathname();
-	const lastSegment = pathnaame.split("/").filter(Boolean).pop() || "";
+	const pathname = usePathname();
+	const lastSegment = pathname.split("/").filter(Boolean).pop() || "";
+	const page_name =
+		lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
 
-	// Capitalize first letter
-	const page_name = lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
+	const [isCollapsed, setIsCollapsed] = useState(false);
+	const [isMobile, setIsMobile] = useState(false);
+
+	// Auto-collapse on mobile
+	useEffect(() => {
+		const checkMobile = () => {
+			const mobile = window.innerWidth < 1024;
+			setIsMobile(mobile);
+			if (mobile) {
+				setIsCollapsed(true);
+			}
+		};
+		checkMobile();
+		window.addEventListener("resize", checkMobile);
+		return () => window.removeEventListener("resize", checkMobile);
+	}, []);
+
+	const toggleCollapse = useCallback(() => {
+		setIsCollapsed((prev) => !prev);
+	}, []);
+
+	const collapse = useCallback(() => {
+		setIsCollapsed(true);
+	}, []);
 
 	return (
 		<>
 			<Head>
 				<title className="capitalize">
-					{`${page_name} Page` || "Home"} | Green Patures Organics | Living
-					Healthy
+					{`${page_name} Page` || "Home"} | Green Pastures Organics |
+					Living Healthy
 				</title>
-				{/* <meta charset="UTF-8" /> */}
 				<meta
 					name="viewport"
 					content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
@@ -54,9 +79,11 @@ const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 					content="https://greenpastures.vercel.app"
 				/>
 				<meta property="og:site_name" content="Green Pastures" />
-
-				{/* <!-- Favicon and icons --> */}
-				<link rel="icon" href="./icons/favicon.ico" type="image/x-icon" />
+				<link
+					rel="icon"
+					href="./icons/favicon.ico"
+					type="image/x-icon"
+				/>
 				<link
 					rel="icon"
 					href="./icons/favicon-16x16.png"
@@ -88,11 +115,35 @@ const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 			</Head>
 
-			<div className="pl-64 min-h-screen  bg-green-50 flex relative">
-				<Sidebar />
-				<div className="flex-1 w-full">
-					<Header />
-					<main className="p-6">{children}</main>
+			<div className="flex h-screen overflow-hidden bg-[#fafafa] dark:bg-[#0e0e1a] transition-colors duration-300">
+				{/* Mobile backdrop overlay */}
+				{!isCollapsed && isMobile && (
+					<div
+						className="fixed inset-0 bg-black/40 z-40 transition-opacity duration-300"
+						onClick={collapse}
+					/>
+				)}
+
+				{/* Sidebar */}
+				<aside
+					className={`fixed lg:static z-50 h-full transition-all duration-300 ease-in-out ${
+						isCollapsed
+							? "w-0 lg:w-20 overflow-hidden"
+							: "w-64"
+					}`}
+				>
+					<Sidebar
+						isCollapsed={isCollapsed && !isMobile}
+						onToggle={toggleCollapse}
+					/>
+				</aside>
+
+				{/* Main content area */}
+				<div className="flex-1 flex flex-col overflow-hidden transition-all duration-300">
+					<Header onMenuClick={toggleCollapse} />
+					<main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 animate-page-enter">
+						{children}
+					</main>
 				</div>
 			</div>
 		</>

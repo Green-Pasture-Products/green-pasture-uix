@@ -4,12 +4,11 @@ const nextConfig: NextConfig = {
 	/* config options here */
 	reactStrictMode: true,
 	output: "export",
-		// 🚫 Disable ESLint during production build
 	eslint: {
-		ignoreDuringBuilds: true,
+		ignoreDuringBuilds: false,
 	},
 	typescript: {
-		ignoreBuildErrors: true, // 🚫 ignore TS errors during build
+		ignoreBuildErrors: false,
 	},
 	images: {
 		domains: ["images.unsplash.com", "unsplash.com"],

@@ -1,137 +1,141 @@
-import React, { useState } from "react";
-import { Search, Mail, Phone, MapPin, Calendar } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/router";
+import withAdminAuth from "@/_components/withAdminAuth";
 
-import { Customer, Order } from "@/types";
-import { useAppSelector } from "@/_redux/store";
+import { BackendCustomer } from "@/types";
+import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import { adminAction } from "@/_redux/actions/admin.action";
 import AdminLayout from "@/_components/AdminLayout";
-import { Column, CustomTable } from "@/_components/CustomTable";
+import { DataTable, Column, FilterDef } from "@/_UI/DataTable";
+import ActionMenu from "@/_UI/ActionMenu";
+import Badge from "@/_UI/Badge";
+
+const VIEW_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+);
+
+const CUSTOMER_STATUS_FILTERS: FilterDef[] = [
+	{
+		key: "filter",
+		label: "Status",
+		options: [
+			{ value: "A", label: "Active" },
+			{ value: "I", label: "Inactive" },
+		],
+	},
+];
 
 const AdminCustomers: React.FC = () => {
-	const { orders } = useAppSelector((state) => state.admin);
+	const router = useRouter();
+	const dispatch = useAppDispatch();
+	const { customers, customersLoading, customersPagination } = useAppSelector((state) => state.admin);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [searchTerm, setSearchTerm] = useState("");
+	const [filterValues, setFilterValues] = useState<Record<string, string>>({});
 
-	// Extract unique customers from orders
-	const customers = orders?.reduce((acc: any[], order: Order) => {
-		const existingCustomer = acc.find(
-			(c) => c.email === order.customer.email
-		);
-		if (!existingCustomer) {
-			acc.push({
-				...order.customer,
-				totalOrders: 1,
-				totalSpent: order.total,
-				lastOrderDate: order.createdAt,
-				address: order.shippingAddress,
-			});
-		} else {
-			existingCustomer.totalOrders += 1;
-			existingCustomer.totalSpent += order.total;
-			if (
-				new Date(order.createdAt) > new Date(existingCustomer.lastOrderDate)
-			) {
-				existingCustomer.lastOrderDate = order.createdAt;
-			}
-		}
-		return acc;
+	useEffect(() => {
+		dispatch(adminAction.fetchCustomersAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm]);
+
+	const handleSearch = useCallback((query: string) => {
+		setSearchTerm(query);
+		setCurrentPage(1);
 	}, []);
 
-	const filteredCustomers = customers?.filter((customer) => {
-		const searchLower = searchTerm.toLowerCase();
-		return (
-			customer.firstName.toLowerCase().includes(searchLower) ||
-			customer.lastName.toLowerCase().includes(searchLower) ||
-			customer.email.toLowerCase().includes(searchLower)
-		);
+	const handleFilterChange = useCallback((key: string, value: string) => {
+		setFilterValues((prev) => ({ ...prev, [key]: value }));
+	}, []);
+
+	const handlePageChange = useCallback((page: number) => {
+		setCurrentPage(page);
+	}, []);
+
+	const filteredCustomers = customers?.filter((customer: any) => {
+		const statusFilter = filterValues.filter;
+		if (!statusFilter) return true;
+		if (statusFilter === "A") return customer.status === "ACTIVE";
+		if (statusFilter === "I") return customer.status !== "ACTIVE";
+		return true;
 	});
 
-	const columns: Column<Customer>[] = [
+	const columns: Column<BackendCustomer>[] = [
 		{
-			key: "firstName",
-			header: "Customer Name",
-			render: (value: string | number, row: Customer) => {
-				return (
-					<div>
-						<div className="text-sm font-medium text-gray-900">
-							{row.firstName} {row.lastName}
-						</div>
-						<div className="text-sm text-gray-500">{row.email}</div>
+			key: "profile",
+			header: "Name",
+			render: (_value: any, row: BackendCustomer) => (
+				<div>
+					<div className="text-sm font-medium text-on-surface dark:text-white">
+						{row.profile?.firstName} {row.profile?.lastName}
 					</div>
-				);
-			},
+				</div>
+			),
 		},
 		{
-			key: "email",
-			header: "Email Address",
+			key: "profile",
+			header: "Email",
+			render: (_value: any, row: BackendCustomer) => (
+				<span className="text-sm text-gray-600 dark:text-gray-300">{row.profile?.email}</span>
+			),
 		},
 		{
-			key: "phone",
-			header: "Phone Number",
+			key: "profile",
+			header: "Phone",
+			render: (_value: any, row: BackendCustomer) => (
+				<span className="text-sm text-gray-600 dark:text-gray-300">{row.profile?.phoneNumber ?? "N/A"}</span>
+			),
 		},
 		{
-			key: "totalSpent",
-			header: "Total Spent",
-			render: (value: string | number, row: Customer) => {
-				return <span>${row.totalSpent}</span>;
-			},
+			key: "status",
+			header: "Status",
+			render: (value: any) => (
+				<Badge variant={String(value) === "ACTIVE" ? "success" : "neutral"} dot>
+					{String(value)}
+				</Badge>
+			),
 		},
 		{
-			key: "address",
-			header: "Address",
-			render: (value: string | number, row: Customer) => {
-				return (
-					<span>
-						{row.address?.street} {row.address?.city} {row.address?.state}{" "}
-						{row.address?.zipCode} {row.address?.country}
-					</span>
-				);
-			},
+			key: "createdAt",
+			header: "Joined",
+			render: (value: any) => (
+				<span className="text-sm text-gray-500 dark:text-gray-400">
+					{new Date(value).toLocaleDateString()}
+				</span>
+			),
 		},
 		{
-			key: "lastOrderDate",
-			header: "Last Order Date",
-			render: (value: string | number, row: Customer) => {
-				return <span>{new Date(value).toLocaleDateString()}</span>;
-			},
-		},
-		{
-			key: "totalOrders",
-			header: "Total Orders",
-			render: (value: string | number, row: Customer) => {
-				return (
-					<span className="font-medium text-gray-900">
-						{row.totalOrders}
-					</span>
-				);
-			},
+			key: "id",
+			header: "",
+			width: "50px",
+			align: "center" as const,
+			render: (_: any, row: any) => (
+				<ActionMenu items={[
+					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/customer/${row.id}`) },
+				]} />
+			),
 		},
 	];
 
 	return (
 		<AdminLayout>
-			<div className="space-y-6">
-				<div className="max-w-3xl">
-					<div className="relative">
-						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-						<input
-							type="text"
-							placeholder="Search customers..."
-							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
-							className="vw-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
-						/>
-					</div>
-				</div>
-
-				<CustomTable
+			<div className="animate-page-enter space-y-6">
+				{/* Customers Table */}
+				<DataTable
 					columns={columns}
-					tableRow={filteredCustomers}
-					currentPage={currentPage}
-					setCurrentPage={setCurrentPage}
+					data={filteredCustomers ?? []}
+					isLoading={customersLoading}
+					onSearch={handleSearch}
+					searchPlaceholder="Search customers..."
+					filters={CUSTOMER_STATUS_FILTERS}
+					filterValues={filterValues}
+					onFilterChange={handleFilterChange}
+					pagination={customersPagination ?? undefined}
+					onPageChange={handlePageChange}
+					onRowClick={(row) => router.push(`/admin/customer/${row.id}`)}
+					emptyMessage="No customers found"
 				/>
 			</div>
 		</AdminLayout>
 	);
 };
 
-export default AdminCustomers;
+export default withAdminAuth(AdminCustomers);

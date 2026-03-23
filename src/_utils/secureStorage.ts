@@ -60,16 +60,27 @@ export const decryptData = (encryptedData: string): any => {
 	try {
 		const key = getEncryptionKey();
 		const decrypted = CryptoJS.AES.decrypt(encryptedData, key);
-		const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
+
+		// Guard against malformed UTF-8 — check word array has content
+		if (!decrypted || decrypted.sigBytes <= 0) {
+			return null;
+		}
+
+		let jsonString: string;
+		try {
+			jsonString = decrypted.toString(CryptoJS.enc.Utf8);
+		} catch {
+			// Malformed UTF-8 — encryption key changed or data corrupted
+			return null;
+		}
 
 		if (!jsonString) {
-			throw new Error("Decryption resulted in empty string");
+			return null;
 		}
 
 		return JSON.parse(jsonString);
-	} catch (error) {
-		console.error("Decryption error:", error);
-		// If decryption fails, clear the corrupted data
+	} catch {
+		// If decryption fails for any reason, return null silently
 		return null;
 	}
 };

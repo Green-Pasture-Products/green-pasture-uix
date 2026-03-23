@@ -1,6 +1,15 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AuthState, User } from "@/types";
-import { loginAsync, signupAsync } from "../actions/auth.action";
+import {
+	loginAsync,
+	signupAsync,
+	logoutAsync,
+	forgotPasswordAsync,
+	resetPasswordAsync,
+	verifyAccountAsync,
+	resendOtpAsync,
+	googleOAuthSigninAsync,
+} from "../actions/auth.action";
 import { authConstants } from "../constants";
 import {secureTokenStorage } from "@/_utils/secureStorage";
 
@@ -65,6 +74,87 @@ const authSlice = createSlice({
 			.addCase(signupAsync.rejected, (state, action) => {
 				state.isLoading = false;
 				state.error = action.payload as string;
+			});
+
+		builder.addCase(logoutAsync.fulfilled, (state) => {
+			state.user = null;
+			state.isAuthenticated = false;
+			state.isLoading = false;
+			state.error = null;
+		});
+
+		builder
+			.addCase(forgotPasswordAsync.pending, (state) => {
+				state.isLoading = true;
+				state.error = null;
+			})
+			.addCase(forgotPasswordAsync.fulfilled, (state) => {
+				state.isLoading = false;
+			})
+			.addCase(forgotPasswordAsync.rejected, (state, action) => {
+				state.isLoading = false;
+				state.error = action.payload as string;
+			});
+
+		builder
+			.addCase(resetPasswordAsync.pending, (state) => {
+				state.isLoading = true;
+				state.error = null;
+			})
+			.addCase(resetPasswordAsync.fulfilled, (state) => {
+				state.isLoading = false;
+			})
+			.addCase(resetPasswordAsync.rejected, (state, action) => {
+				state.isLoading = false;
+				state.error = action.payload as string;
+			});
+
+		builder
+			.addCase(verifyAccountAsync.pending, (state) => {
+				state.isLoading = true;
+				state.error = null;
+			})
+			.addCase(verifyAccountAsync.fulfilled, (state) => {
+				state.isLoading = false;
+			})
+			.addCase(verifyAccountAsync.rejected, (state, action) => {
+				state.isLoading = false;
+				state.error = action.payload as string;
+			});
+
+		builder
+			.addCase(resendOtpAsync.pending, (state) => {
+				state.isLoading = true;
+				state.error = null;
+			})
+			.addCase(resendOtpAsync.fulfilled, (state) => {
+				state.isLoading = false;
+			})
+			.addCase(resendOtpAsync.rejected, (state, action) => {
+				state.isLoading = false;
+				state.error = action.payload as string;
+			});
+
+		builder
+			.addCase(googleOAuthSigninAsync.pending, (state) => {
+				state.isLoading = true;
+				state.error = null;
+			})
+			.addCase(googleOAuthSigninAsync.fulfilled, (state, action: PayloadAction<any>) => {
+				state.isLoading = false;
+				state.user = action.payload?.data?.profileInfo;
+				state.isAuthenticated = true;
+				state.error = null;
+				secureTokenStorage.setTokens(
+					action.payload.data.accessToken,
+					action.payload.data.refreshToken,
+					action.payload.data.profileInfo
+				);
+			})
+			.addCase(googleOAuthSigninAsync.rejected, (state, action) => {
+				state.isLoading = false;
+				state.error = action.payload as string;
+				state.isAuthenticated = false;
 			});
 	},
 });

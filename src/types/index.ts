@@ -193,11 +193,11 @@ export interface AdminState {
 	user: AdminUser | null;
 	stats: AdminStats;
 	salesData: SalesData[];
-	orders: Order[];
+	orders: any[];
 	customers: any[];
 	selectedProduct: Product | null;
 	selectedCategory: ProductCategory | null;
-	selectedOrder: Order | null;
+	selectedOrder: any | null;
 }
 
 type NotificationType = "success" | "error";
@@ -210,4 +210,159 @@ export interface StatusModalProps {
 	message: string;
 	autoClose?: boolean;
 	autoCloseDelay?: number;
+}
+
+// ─── API Response Types ─────────────────────────────────────────────────
+
+export interface ApiResponse<T> {
+	message: string;
+	data: T | null;
+}
+
+export interface PaginationMeta {
+	totalItems: number;
+	itemCount: number;
+	itemsPerPage: number;
+	totalPages: number;
+	currentPage: number;
+}
+
+export interface PaginationLinks {
+	first: string;
+	previous: string;
+	next: string;
+	last: string;
+}
+
+export interface PaginatedData<T> {
+	items: T[];
+	meta: PaginationMeta;
+	links: PaginationLinks;
+}
+
+// ─── Backend Entity Types ───────────────────────────────────────────────
+
+export interface BackendItem {
+	id: number;
+	name: string;
+	description?: string;
+	price: number;
+	unit: number;
+	product?: { id: number; name: string };
+	photos?: { id: number; url: string; publicId: string }[];
+	ratingStats?: { average: number; count: number };
+	reviews?: BackendReview[];
+	status: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface BackendReview {
+	id: number;
+	rating: number;
+	comment?: string;
+	customer: string;
+	item?: BackendItem;
+	status: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface BackendOrder {
+	id: number;
+	orderReference: string;
+	orderStatus: OrderStatusType;
+	customer?: BackendCustomer;
+	items?: BackendOrderItem[];
+	totalAmount: number;
+	status: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface BackendOrderItem {
+	id: number;
+	item: BackendItem;
+	quantity: number;
+	unitPrice: number;
+}
+
+export interface BackendCustomer {
+	id: number;
+	referrerCode?: string;
+	profile: ProfileData;
+	status: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface BackendStaff {
+	id: number;
+	profile: ProfileData;
+	status: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface ProfileData {
+	id: number;
+	firstName: string;
+	lastName: string;
+	email: string;
+	phoneNumber?: string;
+	gender?: string;
+	profileStatus?: string;
+	profileType?: string;
+	profileImage?: { url: string; publicId: string };
+	address?: ShippingAddress;
+	status?: string;
+	createdAt?: string;
+	updatedAt?: string;
+}
+
+export interface ShippingAddress {
+	street: string;
+	city: string;
+	state: string;
+	country: string;
+	postalCode: string;
+}
+
+export type OrderStatusType =
+	| "PENDING"
+	| "PROCESSING"
+	| "SHIPPED"
+	| "DELIVERED"
+	| "CANCELLED";
+
+export type ShippingMethodType = "STANDARD" | "EXPRESS" | "OVERNIGHT";
+
+export type PaymentMethodType = "CARD" | "CASH_ON_DELIVERY" | "WALLET";
+
+// ─── Extended State Types ───────────────────────────────────────────────
+
+export interface CheckoutState {
+	orderId: number | null;
+	paymentUrl: string | null;
+	paymentReference: string | null;
+	paymentStatus: "idle" | "pending" | "success" | "failed";
+	isCheckingOut: boolean;
+	isPlacingOrder: boolean;
+	isVerifying: boolean;
+	error: string | null;
+}
+
+export interface ReviewState {
+	reviews: BackendReview[];
+	pagination: PaginationMeta | null;
+	isLoading: boolean;
+	isSubmitting: boolean;
+	error: string | null;
+}
+
+export interface ProfileState {
+	profile: ProfileData | null;
+	isLoading: boolean;
+	isUpdating: boolean;
+	error: string | null;
 }

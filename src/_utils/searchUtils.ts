@@ -1,79 +1,80 @@
 import { SearchFilters } from "@/_redux/reducers/search.reducer";
 import { Product } from "../types";
-import { logger } from "./logger";
 
 export const filterAndSortProducts = (
 	products: Product[],
 	query: string,
 	filters: SearchFilters
 ): Product[] => {
-	let filtered = products?.filter((product) => {
+	if (!products) return [];
+
+	let filtered = products.filter((product) => {
+		const p = product as any;
+
+		// Adapt to both old Product type and backend Item shape
+		const name = p.name || "";
+		const description = p.description || "";
+		const category = p.product?.name || p.category || "";
+		const price = Number(p.price || 0);
+		const inStock = p.unit !== undefined ? p.unit > 0 : p.inStock;
+		const rating = p.ratingStats?.average ?? p.rating ?? 0;
+
 		// Text search
 		const matchesQuery =
 			!query ||
 			query.trim() === "" ||
-			product.name.toLowerCase().includes(query.toLowerCase()) ||
-			product.description.toLowerCase().includes(query.toLowerCase()) ||
-			product.category.toLowerCase().includes(query.toLowerCase());
+			name.toLowerCase().includes(query.toLowerCase()) ||
+			description.toLowerCase().includes(query.toLowerCase()) ||
+			category.toLowerCase().includes(query.toLowerCase());
 
 		// Category filter
 		const matchesCategory =
-			filters?.category === "All" || product?.category === filters?.category;
+			!filters?.category ||
+			filters.category === "All" ||
+			category === filters.category;
 
 		// Price range filter
 		const matchesPrice =
-			product?.price >= filters?.priceRange[0] &&
-			product?.price <= filters?.priceRange[1];
+			price >= (filters?.priceRange?.[0] ?? 0) &&
+			price <= (filters?.priceRange?.[1] ?? Infinity);
 
 		// Stock filter
-		const matchesStock = !filters?.inStockOnly || product.inStock;
+		const matchesStock = !filters?.inStockOnly || inStock;
 
 		// Rating filter
 		const matchesRating =
-			filters?.rating === 0 || product.rating >= filters?.rating;
+			!filters?.rating || filters.rating === 0 || rating >= filters.rating;
 
-		const passes =
+		return (
 			matchesQuery &&
 			matchesCategory &&
 			matchesPrice &&
 			matchesStock &&
-			matchesRating;
-
-		// Debug individual product filtering
-		if (query && product.name.toLowerCase().includes(query.toLowerCase())) {
-			logger.log("Product filter result:", {
-				product: product.name,
-				matchesQuery,
-				matchesCategory,
-				matchesPrice: `${product.price} in [${filters.priceRange[0]}, ${filters.priceRange[1]}] = ${matchesPrice}`,
-				matchesStock,
-				matchesRating,
-				passes,
-			});
-		}
-
-		return passes;
+			matchesRating
+		);
 	});
 
-	logger.log("Filtered results:", filtered?.length);
-
-	// Sort products
+	// Sort
 	switch (filters?.sortBy) {
 		case "price-low":
-			filtered?.sort((a, b) => a.price - b.price);
+			filtered.sort((a, b) => Number(a.price) - Number(b.price));
 			break;
 		case "price-high":
-			filtered?.sort((a, b) => b.price - a.price);
+			filtered.sort((a, b) => Number(b.price) - Number(a.price));
 			break;
-		case "rating":
-			filtered?.sort((a, b) => b.rating - a.rating);
+		case "rating": {
+			filtered.sort((a, b) => {
+				const ra = (a as any).ratingStats?.average ?? (a as any).rating ?? 0;
+				const rb = (b as any).ratingStats?.average ?? (b as any).rating ?? 0;
+				return rb - ra;
+			});
 			break;
+		}
 		case "newest":
-			filtered?.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+			filtered.sort((a, b) => Number(b.id) - Number(a.id));
 			break;
 		case "name":
 		default:
-			// filtered?.sort((a, b) => a.name.localeCompare(b.name));
 			break;
 	}
 

@@ -1,5 +1,11 @@
-import { Facebook, Instagram, MessageCircle } from "lucide-react";
-import Image from "next/image";
+import {
+	Facebook,
+	Instagram,
+	MessageCircle,
+	Phone,
+	Mail,
+	MapPin,
+} from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
@@ -33,54 +39,70 @@ const socialLinks: SocialLink[] = [
 	},
 ];
 
-const navLinks = [
+const quickLinks = [
 	{ href: "/", label: "Home" },
 	{ href: "/products", label: "Products" },
-	{ href: "/search", label: "Search" },
-	{ href: "/wishlist", label: "Wishlist" },
 	{ href: "/about", label: "About" },
 	{ href: "/contact", label: "Contact" },
 ];
 
-const categories = ["fruits", "vegetables", "grains", "pantry"];
+const customerServiceLinks = [
+	{ href: "/cart", label: "Cart" },
+	{ href: "/wishlist", label: "Wishlist" },
+	{ href: "/profile", label: "Profile" },
+	{ href: "/search", label: "Track Order" },
+];
 
 const Footer = () => {
 	return (
-		<footer className="bg-green-800 text-white mt-8 md:mt-16">
-			<div className="container page-wrapper mx-auto px-4 py-12">
-				<div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-					<div>
-						<div className="mb-4">
-							<Link href="/" className="flex items-center space-x-2">
-								<div className="relative w-[2.2rem] aspect-square bg-transparent">
-									<Image
-										src="/images/GP Organic Logo (Primary).png"
-										alt="Green Pastures Logo"
-										height={100}
-										width={100}
-										priority
-										sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
-										className="object-contain"
-									/>
-								</div>
-								<span className="text-md md:text-lg font-bold">
-									Green Pastures Organics
-								</span>
-							</Link>
-						</div>
-						<p className="text-green-200">
-							Your trusted source for premium organic products. Fresh,
-							healthy, and sustainably grown.
+		<footer className="bg-gray-900 dark:bg-black text-gray-300">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+					{/* Column 1: Brand */}
+					<div className="sm:col-span-2 lg:col-span-1">
+						<Link
+							href="/"
+							className="inline-flex items-center gap-2 mb-4"
+						>
+							<span className="text-xl font-bold text-white tracking-tight">
+								Green Pastures
+							</span>
+						</Link>
+						<p className="text-gray-400 text-sm leading-relaxed mb-6">
+							Your trusted source for premium organic products.
+							Fresh, healthy, and sustainably grown for a better
+							life.
 						</p>
+						<div className="flex gap-3">
+							{socialLinks?.map(
+								({ href, label, title, icon: Icon }) => (
+									<a
+										key={href}
+										href={href}
+										title={title}
+										target="_blank"
+										aria-label={label}
+										rel="noopener noreferrer"
+										className="w-10 h-10 rounded-full border border-gray-700 flex items-center justify-center text-gray-400 hover:scale-110 hover:text-primary-400 hover:border-primary-400 transition-all duration-200"
+									>
+										<Icon size={18} />
+									</a>
+								)
+							)}
+						</div>
 					</div>
+
+					{/* Column 2: Quick Links */}
 					<div>
-						<h3 className="font-semibold mb-4">Quick Links</h3>
-						<ul className="space-y-2 text-green-200">
-							{navLinks?.map(({ href, label }) => (
+						<h3 className="text-sm font-semibold uppercase tracking-wider text-white mb-4">
+							Quick Links
+						</h3>
+						<ul className="space-y-2.5">
+							{quickLinks.map(({ href, label }) => (
 								<li key={href}>
 									<Link
 										href={href}
-										className="hover:text-white transition-colors duration-200"
+										className="text-gray-400 hover:text-primary-400 transition-colors duration-200 text-sm"
 									>
 										{label}
 									</Link>
@@ -88,61 +110,81 @@ const Footer = () => {
 							))}
 						</ul>
 					</div>
+
+					{/* Column 3: Customer Service */}
 					<div>
-						<h3 className="font-semibold mb-4">Categories</h3>
-						<ul className="space-y-2 text-green-200">
-							{categories?.map((category) => (
-								<li key={category}>
+						<h3 className="text-sm font-semibold uppercase tracking-wider text-white mb-4">
+							Customer Service
+						</h3>
+						<ul className="space-y-2.5">
+							{customerServiceLinks.map(({ href, label }) => (
+								<li key={href}>
 									<Link
-										href={`/products?category=${category}`}
-										className="capitalize hover:text-white transition-colors duration-200"
+										href={href}
+										className="text-gray-400 hover:text-primary-400 transition-colors duration-200 text-sm"
 									>
-										{category}
+										{label}
 									</Link>
 								</li>
 							))}
 						</ul>
 					</div>
+
+					{/* Column 4: Contact Info */}
 					<div>
-						<h3 className="font-semibold mb-4">Contact Info</h3>
-						<ul className="space-y-2 text-green-200">
-							<li>
-								Phone:{" "}
-								<Link href={`tel:+2347018845177`}>(234)7018845177</Link>
+						<h3 className="text-sm font-semibold uppercase tracking-wider text-white mb-4">
+							Contact Info
+						</h3>
+						<ul className="space-y-3">
+							<li className="flex items-start gap-3">
+								<Phone className="h-4 w-4 text-primary-400 mt-0.5 flex-shrink-0" />
+								<Link
+									href="tel:+2347018845177"
+									className="text-gray-400 hover:text-primary-400 transition-colors duration-200 text-sm"
+								>
+									(234) 701 884 5177
+								</Link>
 							</li>
-							<li>
-								Email:{" "}
-								<Link href={`mailto:hello@gporganics.com`} className="">
+							<li className="flex items-start gap-3">
+								<Mail className="h-4 w-4 text-primary-400 mt-0.5 flex-shrink-0" />
+								<Link
+									href="mailto:hello@gporganics.com"
+									className="text-gray-400 hover:text-primary-400 transition-colors duration-200 text-sm"
+								>
 									hello@gporganics.com
 								</Link>
 							</li>
-						</ul>
-						<ul className="flex justify-center md:justify-start gap-4 mt-4 md:mt-8">
-							{socialLinks?.map(({ href, label, title, icon: Icon }) => (
-								<li
-									key={href}
-									className="w-10 h-10 rounded-full border border-white flex items-center justify-center transition-all duration-200 hover:border-transparent hover:scale-110"
-								>
-									<a
-										href={href}
-										title={title}
-										target="_blank"
-										aria-label={label}
-										rel="noopener noreferrer"
-										className="flex items-center justify-center w-full h-full rounded-full transition-colors duration-200 hover:bg-white hover:text-green-900 text-white"
-									>
-										<Icon size={18} />
-									</a>
-								</li>
-							))}
+							<li className="flex items-start gap-3">
+								<MapPin className="h-4 w-4 text-primary-400 mt-0.5 flex-shrink-0" />
+								<span className="text-gray-400 text-sm">
+									Lagos, Nigeria
+								</span>
+							</li>
 						</ul>
 					</div>
 				</div>
-				<div className="border-t border-green-700 mt-8 pt-8 text-center text-green-200">
+
+				{/* Bottom Bar */}
+				<div className="border-t border-gray-800 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500">
 					<p>
 						&copy; 2024 - {new Date().getFullYear()} Green Pastures
 						Organics. All rights reserved.
 					</p>
+					<div className="flex items-center gap-4">
+						<Link
+							href="/privacy"
+							className="hover:text-primary-400 transition-colors duration-200"
+						>
+							Privacy Policy
+						</Link>
+						<span className="text-gray-700">|</span>
+						<Link
+							href="/terms"
+							className="hover:text-primary-400 transition-colors duration-200"
+						>
+							Terms of Service
+						</Link>
+					</div>
 				</div>
 			</div>
 		</footer>

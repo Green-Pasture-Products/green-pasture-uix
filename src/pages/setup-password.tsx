@@ -9,18 +9,21 @@ import {
 	Lock,
 	CheckCircle,
 	AlertCircle,
-	Leaf,
 	UserCheck,
+	KeyRound,
 } from "lucide-react";
 
-import { setLoading, clearError } from "@/_redux/reducers/auth.reducer";
+import { clearError } from "@/_redux/reducers/auth.reducer";
 import {
-	setupPasswordSchema,
-	SetupPasswordFormData,
+	resetPasswordFormSchema,
+	ResetPasswordOtpFormData,
 } from "@/_validations/auth";
-import { authAPI } from "@/_utils/auth";
+import { resetPasswordAsync } from "@/_redux/actions/auth.action";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import Image from "next/image";
+import Card from "@/_UI/Card";
+import Input from "@/_UI/Input";
+import Button from "@/_UI/Button";
 
 const SetupPasswordPage: React.FC = () => {
 	const router = useRouter();
@@ -29,252 +32,193 @@ const SetupPasswordPage: React.FC = () => {
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [setupComplete, setSetupComplete] = useState(false);
-	const [token, setToken] = useState<string | null>(null);
-	const [tokenError, setTokenError] = useState<string | null>(null);
+
+	const email = (router.query.email as string) || "";
 
 	const {
 		register,
 		handleSubmit,
+		setValue,
 		formState: { errors },
-	} = useForm<SetupPasswordFormData>({
-		resolver: zodResolver(setupPasswordSchema),
+	} = useForm<ResetPasswordOtpFormData>({
+		resolver: zodResolver(resetPasswordFormSchema),
+		defaultValues: {
+			email: email,
+		},
 	});
 
 	useEffect(() => {
 		dispatch(clearError());
+	}, [dispatch]);
 
-		// Get token from URL
-		const { token: urlToken } = router.query;
-		if (urlToken && typeof urlToken === "string") {
-			setToken(urlToken);
-		} else if (router.isReady && !urlToken) {
-			setTokenError("Invalid or missing setup token");
+	useEffect(() => {
+		if (email) {
+			setValue("email", email);
 		}
-	}, [dispatch, router.query, router.isReady]);
+	}, [email, setValue]);
 
-	const onSubmit = async (data: SetupPasswordFormData) => {
-		if (!token) {
-			setTokenError("Invalid setup token");
-			return;
-		}
-
-		dispatch(setLoading(true));
+	const onSubmit = async (data: ResetPasswordOtpFormData) => {
 		dispatch(clearError());
 
 		try {
-			await authAPI.setupPassword(token, data.password);
+			await dispatch(
+				resetPasswordAsync({
+					email: data.email,
+					otp: data.otp,
+					newPassword: data.newPassword,
+				})
+			).unwrap();
 			setSetupComplete(true);
 		} catch (err: any) {
-			setTokenError(err.message);
-		} finally {
-			dispatch(setLoading(false));
+			console.error(err);
 		}
 	};
 
-	if (tokenError) {
-		return (
-			<div className="min-h-screen bg-green-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-				<div className="max-w-md w-full space-y-8 text-center">
-					<div>
-						<AlertCircle className="h-24 w-24 text-red-500 mx-auto mb-6" />
-						<h2 className="text-3xl font-bold text-gray-900">
-							Invalid Setup Link
-						</h2>
-						<p className="mt-4 text-gray-600">
-							This password setup link is invalid or has expired.
-						</p>
-						<div className="mt-6 space-y-3">
-							<Link
-								href="/signup"
-								className="block w-full bg-green-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-green-700 transition-colors"
-							>
-								Create New Account
-							</Link>
-							<Link
-								href="/login"
-								className="block w-full bg-gray-100 text-gray-800 px-6 py-3 rounded-md font-semibold hover:bg-gray-200 transition-colors"
-							>
-								Sign In
-							</Link>
-						</div>
-					</div>
-				</div>
-			</div>
-		);
-	}
-
 	if (setupComplete) {
 		return (
-			<div className="min-h-screen bg-green-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-				<div className="max-w-md w-full space-y-8 text-center">
-					<div>
-						<CheckCircle className="h-24 w-24 text-green-600 mx-auto mb-6" />
-						<h2 className="text-3xl font-bold text-gray-900">
-							Account Setup Complete!
-						</h2>
-						<p className="mt-4 text-gray-600">
-							Your password has been set and your account is now active.
-							You can now sign in to start shopping.
-						</p>
-						<div className="mt-6">
-							<Link
-								href="/login"
-								className="bg-green-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-green-700 transition-colors inline-block"
-							>
-								Sign In
-							</Link>
-						</div>
+			<div className="min-h-screen bg-white dark:bg-[#0a0f1a] flex items-center justify-center p-4">
+				<Card elevation={2} padding="lg" className="max-w-md w-full text-center animate-page-enter">
+					<CheckCircle className="h-24 w-24 text-primary-600 dark:text-primary-400 mx-auto mb-6" />
+					<h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+						Account Setup Complete!
+					</h2>
+					<p className="mt-4 text-gray-600 dark:text-gray-400">
+						Your password has been set and your account is now active.
+						You can now sign in to start shopping.
+					</p>
+					<div className="mt-6">
+						<Link href="/login">
+							<Button variant="filled" size="lg">Sign In</Button>
+						</Link>
 					</div>
-				</div>
+				</Card>
 			</div>
 		);
 	}
 
 	return (
-		<div className="min-h-screen bg-green-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-			<div className="max-w-md w-full space-y-8">
-				<div>
-					<div className="flex justify-center">
-						<Link href="/" className="flex items-center space-x-2">
-							<div className="relative w-[2.2rem] aspect-square bg-transparent">
-								<Image
-									src="/images/GP Organic Logo (Primary).png"
-									alt="Green Pastures Logo"
-									height={100}
-									width={100}
-									priority
-									sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
-									className="object-contain"
-								/>
-							</div>
-							<span className="text-md md:text-lg font-bold text-green-800">
-								Green Pastures Organics
-							</span>
-						</Link>
-					</div>
-					<div className="mt-6 text-center">
-						<UserCheck className="h-16 w-16 text-green-600 mx-auto mb-4" />
-						<h2 className="text-3xl font-bold text-gray-900">
-							Complete your account setup
-						</h2>
-						<p className="mt-2 text-sm text-gray-600">
-							Set a secure password to finish creating your account.
-						</p>
-					</div>
+		<div className="min-h-screen bg-white dark:bg-[#0a0f1a] flex items-center justify-center p-4">
+			<Card
+				elevation={2}
+				padding="lg"
+				className="max-w-md w-full rounded-radius-lg animate-page-enter"
+			>
+				{/* Logo */}
+				<div className="flex justify-center mb-6">
+					<Link href="/" className="flex items-center space-x-2">
+						<div className="relative w-[2.2rem] aspect-square bg-transparent">
+							<Image
+								src="/images/GP Organic Logo (Primary).png"
+								alt="Green Pastures Logo"
+								height={100}
+								width={100}
+								priority
+								sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
+								className="object-contain"
+							/>
+						</div>
+						<span className="text-md md:text-lg font-bold text-primary-800 dark:text-primary-300">
+							Green Pastures Organics
+						</span>
+					</Link>
 				</div>
 
-				<form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+				<div className="text-center mb-8">
+					<UserCheck className="h-16 w-16 text-primary-600 dark:text-primary-400 mx-auto mb-4" />
+					<h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+						Complete your account setup
+					</h2>
+					<p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+						Set a secure password to finish creating your account.
+					</p>
+				</div>
+
+				<form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
 					{error && (
-						<div className="bg-red-50 border border-red-200 rounded-md p-4">
+						<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-radius-md p-4">
 							<div className="flex">
-								<AlertCircle className="h-5 w-5 text-red-400" />
+								<AlertCircle className="h-5 w-5 text-red-400 dark:text-red-500" />
 								<div className="ml-3">
-									<p className="text-sm text-red-800">{error}</p>
+									<p className="text-sm text-red-800 dark:text-red-300">{error}</p>
 								</div>
 							</div>
 						</div>
 					)}
 
-					<div className="space-y-4">
-						<div>
-							<label
-								htmlFor="password"
-								className="block text-sm font-medium text-gray-700"
-							>
-								Create password
-							</label>
-							<div className="mt-1 relative">
-								<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-									<Lock className="h-5 w-5 text-gray-400" />
-								</div>
-								<input
-									{...register("password")}
-									type={showPassword ? "text" : "password"}
-									autoComplete="new-password"
-									className="appearance-none block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
-									placeholder="Create a secure password"
-								/>
-								<button
-									type="button"
-									className="absolute inset-y-0 right-0 pr-3 flex items-center"
-									onClick={() => setShowPassword(!showPassword)}
-								>
-									{showPassword ? (
-										<EyeOff className="h-5 w-5 text-gray-400" />
-									) : (
-										<Eye className="h-5 w-5 text-gray-400" />
-									)}
-								</button>
-							</div>
-							{errors.password && (
-								<p className="mt-1 text-sm text-red-600">
-									{errors.password.message}
-								</p>
-							)}
-							<p className="mt-1 text-xs text-gray-500">
-								Password must contain at least 8 characters with
-								uppercase, lowercase, and number.
-							</p>
-						</div>
+					<Input
+						label="Email address"
+						{...register("email")}
+						type="email"
+						readOnly
+						className="opacity-70"
+						error={errors.email?.message}
+					/>
 
-						<div>
-							<label
-								htmlFor="confirmPassword"
-								className="block text-sm font-medium text-gray-700"
-							>
-								Confirm password
-							</label>
-							<div className="mt-1 relative">
-								<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-									<Lock className="h-5 w-5 text-gray-400" />
-								</div>
-								<input
-									{...register("confirmPassword")}
-									type={showConfirmPassword ? "text" : "password"}
-									autoComplete="new-password"
-									className="appearance-none block w-full pl-10 pr-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
-									placeholder="Confirm your password"
-								/>
-								<button
-									type="button"
-									className="absolute inset-y-0 right-0 pr-3 flex items-center"
-									onClick={() =>
-										setShowConfirmPassword(!showConfirmPassword)
-									}
-								>
-									{showConfirmPassword ? (
-										<EyeOff className="h-5 w-5 text-gray-400" />
-									) : (
-										<Eye className="h-5 w-5 text-gray-400" />
-									)}
-								</button>
-							</div>
-							{errors.confirmPassword && (
-								<p className="mt-1 text-sm text-red-600">
-									{errors.confirmPassword.message}
-								</p>
-							)}
-						</div>
-					</div>
+					<Input
+						label="OTP Code"
+						{...register("otp")}
+						type="text"
+						maxLength={6}
+						placeholder="Enter OTP code"
+						leftIcon={KeyRound}
+						error={errors.otp?.message}
+					/>
 
 					<div>
-						<button
-							type="submit"
-							disabled={isLoading || !token}
-							className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							{isLoading ? (
-								<div className="flex items-center">
-									<div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-									Setting up account...
-								</div>
-							) : (
-								"Complete setup"
-							)}
-						</button>
+						<Input
+							label="Create password"
+							{...register("newPassword")}
+							type={showPassword ? "text" : "password"}
+							autoComplete="new-password"
+							placeholder="Create a secure password"
+							leftIcon={Lock}
+							error={errors.newPassword?.message}
+							rightElement={
+								<button
+									type="button"
+									className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+									onClick={() => setShowPassword(!showPassword)}
+								>
+									{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+								</button>
+							}
+						/>
+						<p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+							Password must contain at least 8 characters with uppercase, lowercase, and number.
+						</p>
 					</div>
+
+					<Input
+						label="Confirm password"
+						{...register("confirmPassword")}
+						type={showConfirmPassword ? "text" : "password"}
+						autoComplete="new-password"
+						placeholder="Confirm your password"
+						leftIcon={Lock}
+						error={errors.confirmPassword?.message}
+						rightElement={
+							<button
+								type="button"
+								className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+								onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+							>
+								{showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+							</button>
+						}
+					/>
+
+					<Button
+						type="submit"
+						variant="filled"
+						size="lg"
+						fullWidth
+						loading={isLoading}
+						disabled={isLoading}
+					>
+						{isLoading ? "Setting up account..." : "Complete setup"}
+					</Button>
 				</form>
-			</div>
+			</Card>
 		</div>
 	);
 };

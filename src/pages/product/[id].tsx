@@ -2,6 +2,7 @@ import React, { MouseEvent, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { motion } from "framer-motion";
 import {
 	Star,
 	ShoppingCart,
@@ -26,6 +27,13 @@ import {
 } from "@/_redux/reducers/wishlist.reducer";
 import Layout from "@/_components/Layout";
 import { appConstants } from "@/_redux/constants";
+import ReviewList from "@/_components/ReviewList";
+import ReviewForm from "@/_components/ReviewForm";
+import Breadcrumb from "@/_UI/Breadcrumb";
+import Card from "@/_UI/Card";
+import Button from "@/_UI/Button";
+import Badge from "@/_UI/Badge";
+import EmptyState from "@/_UI/EmptyState";
 
 const ProductDetailsPage: React.FC = () => {
 	const router = useRouter();
@@ -34,38 +42,38 @@ const ProductDetailsPage: React.FC = () => {
 	const products = useAppSelector((state) => state.product.products);
 	const cartItems = useAppSelector((state) => state.cart.items);
 	const wishlistItems = useAppSelector((state) => state.wishlist.items);
-	const product = products?.find((p: Product) => p.id === id);
-	// const isInWishlist = wishlistItems.some((item) => item.id === product?.id);
+	const product = products?.find((p: Product) => String(p.id) === String(id));
 
 	const [quantity, setQuantity] = useState(1);
 	const [selectedImage, setSelectedImage] = useState(0);
 	const [activeTab, setActiveTab] = useState("description");
 
+	const p = product as any;
+	const productCategory = p?.product?.name || p?.category || "";
 	const relatedProducts = products
-		.filter((p: Product) => p.category === product?.category && p.id !== id)
+		.filter((pr: any) => {
+			const cat = pr.product?.name || pr.category || "";
+			return cat === productCategory && String(pr.id) !== String(id);
+		})
 		.slice(0, 4);
 
-	const cartItem = cartItems.find((item) => item.id === id);
+	const cartItem = cartItems.find((item) => String(item.id) === String(id));
 	const isInCart = !!cartItem;
-	const cartQuantity = cartItem?.quantity || 0;
-	const isInWishlist = wishlistItems.some((item) => item.id === id);
+	const isInWishlist = wishlistItems.some((item) => String(item.id) === String(id));
 
 	if (!product) {
 		return (
-			<div className="container page-wrapper mx-auto px-4 py-16 text-center">
-				<h1 className="text-2xl font-bold text-gray-800 mb-4">
-					Product Not Found
-				</h1>
-				<p className="text-gray-600 mb-8">
-					The product you're looking for doesn't exist.
-				</p>
-				<Link
-					href="/products"
-					className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-colors"
-				>
-					Browse All Products
-				</Link>
-			</div>
+			<Layout pageTitle="Product Not Found">
+				<div className="container page-wrapper mx-auto px-4 py-16">
+					<EmptyState
+						icon={ShoppingCart}
+						title="Product Not Found"
+						description="The product you're looking for doesn't exist."
+						actionLabel="Browse All Products"
+						actionHref="/products"
+					/>
+				</div>
+			</Layout>
 		);
 	}
 
@@ -74,12 +82,12 @@ const ProductDetailsPage: React.FC = () => {
 			for (let i = 0; i < quantity; i++) {
 				dispatch(removeFromCart(product.id));
 			}
-			toast.error(`${product.name} removed from cart ❌`);
+			toast.error(`${product.name} removed from cart`);
 		} else {
 			for (let i = 0; i < quantity; i++) {
 				dispatch(addToCart(product));
 			}
-			toast.success(`${product.name} added to cart 🛒`);
+			toast.success(`${product.name} added to cart`);
 		}
 		setQuantity(1);
 	};
@@ -94,19 +102,24 @@ const ProductDetailsPage: React.FC = () => {
 		e.stopPropagation();
 		if (isInWishlist) {
 			dispatch(removeFromWishlist(product.id));
-			toast.error(`${product.name} removed from wishlist 💔`);
+			toast.error(`${product.name} removed from wishlist`);
 		} else {
 			dispatch(addToWishlist(product));
-			toast.success(`${product.name} added to wishlist ❤️`);
+			toast.success(`${product.name} added to wishlist`);
 		}
 	};
 
-	// Mock additional images for demonstration
-	const productImages = [
-		product.image,
-		product.image, // In a real app, you'd have different angles
-		product.image,
-	];
+	// Adapt to backend item shape
+	const itemData = product as any;
+	const productImages = itemData.photos?.length > 0
+		? itemData.photos.map((photo: any) => photo.url)
+		: itemData.image ? [itemData.image] : [];
+	const itemRating = itemData.ratingStats?.average ?? itemData.rating ?? 0;
+	const itemReviewCount = itemData.ratingStats?.count ?? itemData.reviews ?? 0;
+	const itemInStock = itemData.unit > 0 || itemData.inStock;
+	const itemOriginalPrice = itemData.originalPrice ? Number(itemData.originalPrice) : null;
+	const itemPrice = Number(itemData.price || 0);
+	const itemMaxQuantity = itemData.unit || itemData.quantity || 10;
 
 	const productFeatures = [
 		"100% Certified Organic",
@@ -116,85 +129,54 @@ const ProductDetailsPage: React.FC = () => {
 		"Pesticide-Free",
 	];
 
-	const detailsTab = [
-		"description",
-		// "nutrition",
-		"reviews",
-	];
-
-	const productReviews = [
-		{
-			name: "Sarah M.",
-			rating: 5,
-			date: "2 weeks ago",
-			review:
-				"Absolutely fresh and delicious! The quality is outstanding and you can really taste the difference with organic produce.",
-		},
-		{
-			name: "Mike R.",
-			rating: 4,
-			date: "1 month ago",
-			review:
-				"Great product, arrived fresh and well-packaged. Will definitely order again.",
-		},
-		{
-			name: "Jennifer L.",
-			rating: 5,
-			date: "1 month ago",
-			review:
-				"Perfect ripeness and amazing flavor. Worth every penny for the organic quality.",
-		},
-	];
+	const detailsTab = ["description", "reviews"];
 
 	return (
-		<Layout pageTitle={`Product Details`}>
+		<Layout pageTitle="Product Details">
 			<div className="container page-wrapper mx-auto px-4 py-8">
-				<nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
-					<Link href="/" className="hover:text-green-600">
-						Home
-					</Link>
-					<span>/</span>
-					<Link href="/products" className="hover:text-green-600">
-						Products
-					</Link>
-					<span>/</span>
-					<Link
-						href={`/products?category=${product?.category.toLowerCase()}`}
-						className="hover:text-green-600"
-					>
-						{product?.category}
-					</Link>
-					<span>/</span>
-					<span className="text-gray-800">{product?.name}</span>
-				</nav>
+				{/* Breadcrumb */}
+				<div className="mb-6">
+					<Breadcrumb
+						items={[
+							{ label: "Home", href: "/" },
+							{ label: "Products", href: "/products" },
+							{ label: productCategory || "Products", href: `/products?category=${(productCategory || "").toLowerCase()}` },
+							{ label: product?.name },
+						]}
+					/>
+				</div>
 
 				<button
 					onClick={() => router.back()}
-					className="flex items-center space-x-2 text-green-600 hover:text-green-700 mb-8"
+					className="flex items-center space-x-2 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 mb-8 transition-colors"
 				>
 					<ArrowLeft className="h-4 w-4" />
-					<span>Back to Products</span>
+					<span className="text-sm font-medium">Back to Products</span>
 				</button>
 
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+				{/* Main Product Section */}
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-16">
+					{/* Image Column */}
 					<div className="space-y-4">
-						<div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-							<img
-								src={productImages[selectedImage]}
-								alt={product?.name}
-								className="w-full h-full object-cover"
-							/>
-						</div>
+						<Card elevation={1} padding="none" className="overflow-hidden">
+							<div className="aspect-square bg-gray-50 dark:bg-white/[0.04]">
+								<img
+									src={productImages[selectedImage]}
+									alt={product?.name}
+									className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+								/>
+							</div>
+						</Card>
 
-						<div className="flex space-x-4">
+						<div className="flex space-x-3">
 							{productImages.map((image, index) => (
 								<button
 									key={index}
 									onClick={() => setSelectedImage(index)}
-									className={`w-20 h-20 rounded-md overflow-hidden border-2 ${
+									className={`w-20 h-20 rounded-radius-md overflow-hidden border-2 transition-all ${
 										selectedImage === index
-											? "border-green-600"
-											: "border-gray-200"
+											? "border-primary-600 dark:border-primary-400 shadow-elevation-1"
+											: "border-gray-200 dark:border-white/15 hover:border-primary-300 dark:hover:border-primary-600"
 									}`}
 								>
 									<img
@@ -207,195 +189,206 @@ const ProductDetailsPage: React.FC = () => {
 						</div>
 					</div>
 
+					{/* Info Column */}
 					<div className="space-y-6">
 						<div>
-							<h1 className="text-3xl font-bold text-gray-800 mb-2">
+							<h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
 								{product?.name}
 							</h1>
-							<p className="text-gray-600">{product?.category}</p>
+							<p className="text-gray-500 dark:text-gray-400">{productCategory}</p>
 						</div>
+
+						{/* Rating */}
 						<div className="flex items-center space-x-4">
 							<div className="flex items-center space-x-1">
 								{[...Array(5)].map((_, i) => (
 									<Star
 										key={i}
 										className={`h-5 w-5 ${
-											i < Math.floor(product?.rating)
-												? "text-yellow-400 fill-current"
-												: "text-gray-300"
+											i < Math.floor(itemRating)
+												? "text-amber-400 fill-amber-400"
+												: "text-gray-300 dark:text-gray-600"
 										}`}
 									/>
 								))}
 							</div>
-							<span className="text-lg font-medium">
-								{product?.rating}
+							<span className="text-lg font-medium text-gray-900 dark:text-white">
+								{itemRating}
 							</span>
-							<span className="text-gray-500">
-								({product?.reviews} reviews)
+							<span className="text-gray-500 dark:text-gray-400">
+								({itemReviewCount} reviews)
 							</span>
 						</div>
+
+						{/* Price */}
 						<div className="flex items-center space-x-4">
-							<span className="text-3xl font-bold text-green-600">
-								₦{product?.price.toLocaleString()}
+							<span className="text-3xl font-bold text-primary-600 dark:text-primary-400">
+								&#8358;{itemPrice.toLocaleString()}
 							</span>
-							{product?.originalPrice && (
+							{itemOriginalPrice && (
 								<div className="flex items-center space-x-2">
-									<span className="text-xl text-gray-500 line-through">
-										₦{product?.originalPrice.toLocaleString()}
+									<span className="text-xl text-gray-400 dark:text-gray-500 line-through">
+										&#8358;{itemOriginalPrice.toLocaleString()}
 									</span>
-									<span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium">
-										Save ₦
-										{(
-											product?.originalPrice - product?.price
-										).toLocaleString()}
-									</span>
+									<Badge variant="error">
+										Save &#8358;{(itemOriginalPrice - itemPrice).toLocaleString()}
+									</Badge>
 								</div>
 							)}
 						</div>
+
+						{/* Badges */}
 						<div className="flex flex-wrap gap-2">
-							<span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-								Organic Certified
-							</span>
-							{product?.inStock ? (
-								<span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
-									<Check className="h-4 w-4 mr-1" />
+							<Badge variant="success">Organic Certified</Badge>
+							{itemInStock ? (
+								<Badge variant="info">
+									<Check className="h-3 w-3 mr-1" />
 									In Stock
-								</span>
+								</Badge>
 							) : (
-								<span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-									Out of Stock
-								</span>
+								<Badge variant="error">Out of Stock</Badge>
 							)}
 						</div>
+
+						{/* Quantity & Actions */}
 						<div className="space-y-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
+								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 									Quantity
 								</label>
 								<div className="flex items-center space-x-3">
 									<button
 										onClick={() => handleQuantityChange(quantity - 1)}
-										className="p-2 border border-gray-300 rounded-md hover:bg-gray-50"
+										className="p-2 border rounded-radius-md transition-colors disabled:opacity-50"
+										style={{ borderColor: "var(--border-light)" }}
 										disabled={quantity <= 1}
 									>
-										<Minus className="h-4 w-4" />
+										<Minus className="h-4 w-4 text-gray-600 dark:text-gray-300" />
 									</button>
-									<span className="text-xl font-semibold w-12 text-center">
+									<span className="text-xl font-semibold w-12 text-center text-gray-900 dark:text-white">
 										{quantity}
 									</span>
 									<button
 										onClick={() => handleQuantityChange(quantity + 1)}
-										className="p-2 border border-gray-300 rounded-md hover:bg-gray-50"
-										disabled={
-											quantity === product?.quantity || !isInCart
-										}
+										className="p-2 border rounded-radius-md transition-colors disabled:opacity-50"
+										style={{ borderColor: "var(--border-light)" }}
+										disabled={quantity === itemMaxQuantity || !isInCart}
 									>
-										<Plus className="h-4 w-4" />
+										<Plus className="h-4 w-4 text-gray-600 dark:text-gray-300" />
 									</button>
 								</div>
 								{isInCart && (
-									<p className="text-sm text-gray-600 mt-2">
-										{/* {cartQuantity} */}
+									<p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
 										Already in cart
 									</p>
 								)}
 							</div>
 
 							<div className="flex space-x-4">
-								<button
-									onClick={handleCartToggle}
-									disabled={product?.inStock && !isInCart}
-									className={`flex flex-1 items-center justify-center space-x-1 px-6 py-3 rounded-md transition-colors font-medium ${
-										product?.inStock && !isInCart
-											? "bg-gray-300 text-gray-500 cursor-not-allowed"
-											: isInCart
-											? "bg-red-500 text-white hover:bg-red-600"
-											: "bg-green-600 text-white hover:bg-green-700"
-									}`}
-								>
-									{isInCart ? (
-										<>
-											<XCircle className="h-5 w-5" />
-											<span>Remove</span>
-										</>
-									) : (
-										<>
-											<ShoppingCart className="h-5 w-5" />
-											<span>
-												{product?.inStock
-													? "Add to Cart"
-													: "Out of Stock"}
-											</span>
-										</>
-									)}
-								</button>
+								{isInCart ? (
+									<Button
+										variant="outlined"
+										color="error"
+										size="lg"
+										fullWidth
+										leftIcon={XCircle}
+										onClick={handleCartToggle}
+									>
+										Remove from Cart
+									</Button>
+								) : (
+									<Button
+										variant="filled"
+										size="lg"
+										fullWidth
+										leftIcon={ShoppingCart}
+										onClick={handleCartToggle}
+										disabled={!itemInStock}
+									>
+										{itemInStock ? "Add to Cart" : "Out of Stock"}
+									</Button>
+								)}
 
 								<button
 									aria-label="Add to Wishlist"
 									onClick={(e) => handleWishlistToggle(e)}
-									className={`p-3 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors ${
+									className={`p-3 border rounded-radius-md transition-all ${
 										isInWishlist
-											? "bg-red-500 hover:bg-red-600"
-											: "bg-white hover:bg-gray-100"
+											? "bg-red-500 border-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
+											: ""
 									}`}
+									style={!isInWishlist ? { borderColor: "var(--border-light)" } : undefined}
 								>
 									<Heart
 										className={`h-5 w-5 ${
 											isInWishlist
 												? "text-white fill-white"
-												: "text-gray-600"
+												: "text-gray-600 dark:text-gray-300"
 										}`}
 									/>
 								</button>
 							</div>
 						</div>
+
+						{/* Features */}
 						<div className="space-y-3">
-							<h3 className="font-semibold text-gray-800">
+							<h3 className="font-semibold text-gray-900 dark:text-white">
 								Product Features:
 							</h3>
 							<ul className="space-y-2">
 								{productFeatures?.map((feature, index) => (
 									<li
 										key={index}
-										className="flex items-center space-x-2 text-sm text-gray-600"
+										className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400"
 									>
-										<Check className="h-4 w-4 text-green-600" />
+										<Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
 										<span>{feature}</span>
 									</li>
 								))}
 							</ul>
 						</div>
 
-						<div className="bg-green-50 border border-green-200 rounded-md p-4 space-y-2">
-							<div className="flex items-center space-x-2 text-green-800">
-								<Truck className="h-5 w-5" />
-								<span className="font-medium">
-									Free shipping on orders over ₦
-									{appConstants.FREE_SHIPPING_THRESHOLD.toLocaleString()}
-								</span>
+						{/* Shipping Info */}
+						<Card elevation={0} padding="md" className="bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800">
+							<div className="space-y-2">
+								<div className="flex items-center space-x-2 text-primary-800 dark:text-primary-300">
+									<Truck className="h-5 w-5" />
+									<span className="font-medium">
+										Free shipping on orders over &#8358;
+										{appConstants.FREE_SHIPPING_THRESHOLD.toLocaleString()}
+									</span>
+								</div>
+								<div className="flex items-center space-x-2 text-primary-700 dark:text-primary-400 text-sm">
+									<Shield className="h-4 w-4" />
+									<span>100% satisfaction guarantee</span>
+								</div>
 							</div>
-							<div className="flex items-center space-x-2 text-green-700 text-sm">
-								<Shield className="h-4 w-4" />
-								<span>100% satisfaction guarantee</span>
-							</div>
-						</div>
+						</Card>
 					</div>
 				</div>
 
+				{/* Tabs Section */}
 				<div className="mb-16">
-					<div className="border-b border-gray-200">
+					<div className="border-b border-gray-200 dark:border-white/15 relative">
 						<nav className="flex space-x-8">
 							{detailsTab.map((tab) => (
 								<button
 									key={tab}
 									onClick={() => setActiveTab(tab)}
-									className={`py-4 px-2 font-medium text-sm capitalize border-b-2 ${
+									className={`py-4 px-2 font-medium text-sm capitalize relative transition-colors ${
 										activeTab === tab
-											? "border-green-600 text-green-600"
-											: "border-transparent text-gray-500 hover:text-gray-700"
+											? "text-primary-600 dark:text-primary-400"
+											: "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
 									}`}
 								>
 									{tab}
+									{activeTab === tab && (
+										<motion.div
+											layoutId="tab-indicator"
+											className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400"
+											transition={{ type: "spring", stiffness: 400, damping: 30 }}
+										/>
+									)}
 								</button>
 							))}
 						</nav>
@@ -403,105 +396,87 @@ const ProductDetailsPage: React.FC = () => {
 
 					<div className="py-8">
 						{activeTab === "description" && (
-							<div className="prose max-w-none">
-								<h3 className="text-xl font-semibold text-gray-800 mb-4">
-									About this product
-								</h3>
-								<p className="text-gray-700 mb-6 leading-relaxed">
-									{product?.description}. Our{" "}
-									{product?.name.toLowerCase()} is carefully selected
-									from certified organic farms that follow sustainable
-									farming practices. Each item is hand-picked at peak
-									ripeness to ensure maximum flavor and nutritional
-									value.
-								</p>
+							<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
+								<div className="prose max-w-none dark:prose-invert">
+									<h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+										About this product
+									</h3>
+									<p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
+										{product?.description}. Our{" "}
+										{product?.name?.toLowerCase() || "This product"} is carefully selected
+										from certified organic farms that follow sustainable
+										farming practices. Each item is hand-picked at peak
+										ripeness to ensure maximum flavor and nutritional
+										value.
+									</p>
 
-								<h4 className="text-lg font-semibold text-gray-800 mb-3">
-									Storage Instructions
-								</h4>
-								<p className="text-gray-700 mb-6">
-									Store in a cool, dry place away from direct sunlight.
-									{/* For best freshness, consume within 30 days of
-									unsealing. */}
-								</p>
+									<h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+										Storage Instructions
+									</h4>
+									<p className="text-gray-700 dark:text-gray-300 mb-6">
+										Store in a cool, dry place away from direct sunlight.
+									</p>
 
-								<h4 className="text-lg font-semibold text-gray-800 mb-3">
-									Origin
-								</h4>
-								<p className="text-gray-700">
-									Sourced from certified organic farms in Northern
-									parts of Nigeria, known for their ideal growing
-									conditions and commitment to sustainable agriculture.
-								</p>
-							</div>
+									<h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+										Origin
+									</h4>
+									<p className="text-gray-700 dark:text-gray-300">
+										Sourced from certified organic farms in Northern
+										parts of Nigeria, known for their ideal growing
+										conditions and commitment to sustainable agriculture.
+									</p>
+								</div>
+							</Card>
 						)}
 
 						{activeTab === "nutrition" && (
-							<div>
-								<h3 className="text-xl font-semibold text-gray-800 mb-4">
+							<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
+								<h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
 									Nutritional Information
 								</h3>
-								<div className="bg-white border border-gray-200 rounded-lg p-6">
+								<div className="border border-gray-200 dark:border-white/15 rounded-radius-md p-6">
 									<div className="grid grid-cols-2 gap-4">
 										<div>
-											<h4 className="font-medium text-gray-800 mb-2">
+											<h4 className="font-medium text-gray-900 dark:text-white mb-2">
 												Per Serving (100g)
 											</h4>
 											<ul className="space-y-2 text-sm">
-												<li className="flex justify-between">
-													<span>Calories</span>
-													<span className="font-medium">160</span>
-												</li>
-												<li className="flex justify-between">
-													<span>Total Fat</span>
-													<span className="font-medium">15g</span>
-												</li>
-												<li className="flex justify-between">
-													<span>Protein</span>
-													<span className="font-medium">2g</span>
-												</li>
-												<li className="flex justify-between">
-													<span>Carbohydrates</span>
-													<span className="font-medium">9g</span>
-												</li>
+												{[
+													{ label: "Calories", value: "160" },
+													{ label: "Total Fat", value: "15g" },
+													{ label: "Protein", value: "2g" },
+													{ label: "Carbohydrates", value: "9g" },
+												].map((item) => (
+													<li key={item.label} className="flex justify-between text-gray-600 dark:text-gray-400">
+														<span>{item.label}</span>
+														<span className="font-medium text-gray-900 dark:text-white">{item.value}</span>
+													</li>
+												))}
 											</ul>
 										</div>
 										<div>
-											<h4 className="font-medium text-gray-800 mb-2">
+											<h4 className="font-medium text-gray-900 dark:text-white mb-2">
 												Vitamins & Minerals
 											</h4>
 											<ul className="space-y-2 text-sm">
-												<li className="flex justify-between">
-													<span>Vitamin K</span>
-													<span className="font-medium">
-														26% DV
-													</span>
-												</li>
-												<li className="flex justify-between">
-													<span>Folate</span>
-													<span className="font-medium">
-														20% DV
-													</span>
-												</li>
-												<li className="flex justify-between">
-													<span>Potassium</span>
-													<span className="font-medium">
-														14% DV
-													</span>
-												</li>
-												<li className="flex justify-between">
-													<span>Vitamin E</span>
-													<span className="font-medium">
-														10% DV
-													</span>
-												</li>
+												{[
+													{ label: "Vitamin K", value: "26% DV" },
+													{ label: "Folate", value: "20% DV" },
+													{ label: "Potassium", value: "14% DV" },
+													{ label: "Vitamin E", value: "10% DV" },
+												].map((item) => (
+													<li key={item.label} className="flex justify-between text-gray-600 dark:text-gray-400">
+														<span>{item.label}</span>
+														<span className="font-medium text-gray-900 dark:text-white">{item.value}</span>
+													</li>
+												))}
 											</ul>
 										</div>
 									</div>
-									<div className="mt-4 p-3 bg-blue-50 rounded-md">
+									<div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-radius-md">
 										<div className="flex items-start space-x-2">
-											<Info className="h-5 w-5 text-blue-600 mt-0.5" />
-											<p className="text-sm text-blue-800">
+											<Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+											<p className="text-sm text-blue-800 dark:text-blue-300">
 												Nutritional values are approximate and may
 												vary based on growing conditions and
 												ripeness.
@@ -509,123 +484,29 @@ const ProductDetailsPage: React.FC = () => {
 										</div>
 									</div>
 								</div>
-							</div>
+							</Card>
 						)}
 
 						{activeTab === "reviews" && (
-							<div>
-								<h3 className="text-xl font-semibold text-gray-800 mb-6">
+							<div className="space-y-8">
+								<h3 className="text-xl font-semibold text-gray-900 dark:text-white">
 									Customer Reviews
 								</h3>
-
-								<div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-									<div className="flex items-center space-x-6">
-										<div className="text-center">
-											<div className="text-3xl font-bold text-gray-800">
-												{product.rating}
-											</div>
-											<div className="flex items-center justify-center space-x-1 mt-1">
-												{[...Array(5)].map((_, i) => (
-													<Star
-														key={i}
-														className={`h-4 w-4 ${
-															i < Math.floor(product.rating)
-																? "text-yellow-400 fill-current"
-																: "text-gray-300"
-														}`}
-													/>
-												))}
-											</div>
-											<div className="text-sm text-gray-600 mt-1">
-												{product.reviews} reviews
-											</div>
-										</div>
-
-										<div className="flex-1">
-											{[5, 4, 3, 2, 1].map((rating) => (
-												<div
-													key={rating}
-													className="flex items-center space-x-3 mb-2"
-												>
-													<span className="text-sm text-gray-600 w-3">
-														{rating}
-													</span>
-													<Star className="h-4 w-4 text-yellow-400 fill-current" />
-													<div className="flex-1 bg-gray-200 rounded-full h-2">
-														<div
-															className="bg-yellow-400 h-2 rounded-full"
-															style={{
-																width: `${
-																	rating === 5
-																		? 70
-																		: rating === 4
-																		? 20
-																		: rating === 3
-																		? 8
-																		: rating === 2
-																		? 1
-																		: 1
-																}%`,
-															}}
-														/>
-													</div>
-													<span className="text-sm text-gray-600 w-8">
-														{rating === 5
-															? "70%"
-															: rating === 4
-															? "20%"
-															: rating === 3
-															? "8%"
-															: "1%"}
-													</span>
-												</div>
-											))}
-										</div>
-									</div>
-								</div>
-
-								<div className="space-y-6">
-									{productReviews.map((review, index) => (
-										<div
-											key={index}
-											className="bg-white border border-gray-200 rounded-lg p-6"
-										>
-											<div className="flex items-start justify-between mb-3">
-												<div>
-													<div className="font-medium text-gray-800">
-														{review.name}
-													</div>
-													<div className="flex items-center space-x-1 mt-1">
-														{[...Array(5)].map((_, i) => (
-															<Star
-																key={i}
-																className={`h-4 w-4 ${
-																	i < review.rating
-																		? "text-yellow-400 fill-current"
-																		: "text-gray-300"
-																}`}
-															/>
-														))}
-													</div>
-												</div>
-												<span className="text-sm text-gray-500">
-													{review.date}
-												</span>
-											</div>
-											<p className="text-gray-700">
-												{review.review}
-											</p>
-										</div>
-									))}
-								</div>
+								<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
+									<ReviewList itemId={Number(id)} />
+								</Card>
+								<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
+									<ReviewForm itemId={Number(id)} />
+								</Card>
 							</div>
 						)}
 					</div>
 				</div>
 
+				{/* Related Products */}
 				{relatedProducts?.length > 0 && (
 					<div>
-						<h2 className="text-2xl font-bold text-gray-800 mb-8">
+						<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
 							Related Products
 						</h2>
 						<Products products={relatedProducts} />

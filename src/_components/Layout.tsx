@@ -9,7 +9,7 @@ import Footer from "../_navigations/Footer";
 import { usePathname } from "next/navigation";
 
 const Layout = ({ children, pageTitle }: LayoutProps) => {
-	const pathnaame = usePathname();
+	const pathnaame = usePathname() || "/";
 	const lastSegment = pathnaame.split("/").filter(Boolean).pop() || "";
 
 	// Capitalize first letter
@@ -88,10 +88,10 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 			</Head>
 
-			<div className="min-h-screen overflow-x-hidden bg-green-50">
+			<div className="min-h-screen overflow-x-hidden bg-white dark:bg-[#0a0f1a] transition-colors duration-300">
 				{/* <PromoBanner /> */}
 				<Navbar />
-				<main className="flex-1">{children}</main>
+				<main className="flex-1 pt-16 md:pt-[72px]">{children}</main>
 				<Footer />
 			</div>
 		</>

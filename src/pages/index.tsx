@@ -1,40 +1,48 @@
-import { Leaf, Truck, Shield, Award } from "lucide-react";
-import React, { useEffect } from "react";
+import { Leaf, Truck, Shield, Award, Mail, ArrowRight } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import AnimatedSection from "@/_UI/AnimatedSection";
 import { productsAction } from "@/_redux/actions";
 import Products from "@/_components/Products";
 import Layout from "@/_components/Layout";
+import Button from "@/_UI/Button";
+import Input from "@/_UI/Input";
+import Card from "@/_UI/Card";
 
-const featuredSection = [
+const features = [
 	{
-		icon: <Leaf className="h-8 w-8 text-green-600" />,
+		icon: Leaf,
 		title: "100% Organic",
 		desc: "Certified organic products with no harmful chemicals or pesticides.",
 	},
 	{
-		icon: <Truck className="h-8 w-8 text-green-600" />,
+		icon: Truck,
 		title: "Fast Delivery",
 		desc: "Fresh products delivered to your door within 24-48 hours.",
 	},
 	{
-		icon: <Shield className="h-8 w-8 text-green-600" />,
+		icon: Shield,
 		title: "Quality Guarantee",
 		desc: "100% satisfaction guaranteed or your money back.",
 	},
 	{
-		icon: <Award className="h-8 w-8 text-green-600" />,
+		icon: Award,
 		title: "Premium Quality",
 		desc: "Hand-picked products from trusted organic farms.",
 	},
 ];
 
+const heroWords = ["Your", "Source", "for", "Natural", "Health", "and", "Wellness"];
+
 const HomePage: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const { products } = useAppSelector((state) => state.product);
 	const featuredProducts = products?.slice(0, 4);
+	const [email, setEmail] = useState("");
 
 	useEffect(() => {
 		dispatch(productsAction.fetchAllProducts());
@@ -42,168 +50,206 @@ const HomePage: React.FC = () => {
 
 	return (
 		<Layout pageTitle={"Home"}>
-			<section id="welcome" className="bg-green-50 pb-12">
-				<div className="container page-wrapper mx-auto px-4">
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-						{/* <!-- Left Column --> */}
-						<div className="order-2 md:order-1 flex items-center">
-							<div className="flex w-full aspect-square items-center">
-								<div className="w-1/2 h-full overflow-hidden lg:p-3 pr-2 2xl:mr-3">
+			{/* Hero Section */}
+			<section className="relative min-h-[80vh] flex items-center bg-gradient-to-br from-primary-700 via-primary-600 to-emerald-500 dark:from-primary-900 dark:via-[#0e0e1a] dark:to-[#0e0e1a] overflow-hidden">
+				{/* Decorative blurred shapes */}
+				<div className="absolute top-20 right-10 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
+				<div className="absolute bottom-10 left-10 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl" />
+
+				<div className="container page-wrapper mx-auto px-4 relative z-10">
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+						<div className="order-2 lg:order-1">
+							<motion.p
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.5 }}
+								className="text-primary-200 dark:text-primary-300 uppercase tracking-widest text-sm font-medium mb-4"
+							>
+								Welcome to Green Pastures
+							</motion.p>
+
+							<h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+								{heroWords.map((word, i) => (
+									<motion.span
+										key={i}
+										initial={{ opacity: 0, y: 30 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ duration: 0.5, delay: 0.1 + i * 0.08 }}
+										className="inline-block mr-3"
+									>
+										{word}
+									</motion.span>
+								))}
+							</h1>
+
+							<motion.p
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.5, delay: 0.7 }}
+								className="text-lg md:text-xl text-primary-100 dark:text-white/70 mb-8 max-w-lg leading-relaxed"
+							>
+								Elevating immunity and fertility with the power of nature.
+								Discover premium organic supplements crafted with care.
+							</motion.p>
+
+							<motion.div
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.5, delay: 0.9 }}
+								className="flex flex-wrap gap-4"
+							>
+								<Link href="/products">
+									<button
+										className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium rounded-radius-md bg-white text-[#15803d] hover:bg-gray-100 active:bg-gray-200 shadow-elevation-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
+									>
+										Shop Now
+										<ArrowRight className="h-5 w-5" />
+									</button>
+								</Link>
+								<Link href="/about">
+									<button
+										className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium rounded-radius-md border border-white/50 text-white hover:bg-white/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
+									>
+										Learn More
+									</button>
+								</Link>
+							</motion.div>
+						</div>
+
+						<motion.div
+							initial={{ opacity: 0, scale: 0.9 }}
+							animate={{ opacity: 1, scale: 1 }}
+							transition={{ duration: 0.8, delay: 0.3 }}
+							className="order-1 lg:order-2 flex justify-center"
+						>
+							<div className="relative w-full max-w-md animate-float">
+								<div className="aspect-square relative">
 									<Image
-										height={100}
-										width={100}
+										height={500}
+										width={500}
 										priority
 										quality={100}
 										src="/images/Green_vegggies_1.jpeg"
 										alt="Fresh green vegetables"
-										className="w-full h-full object-cover rounded-l-xl shadow-lg"
-									/>
-								</div>
-								<div className="w-1/2 h-full overflow-hidden lg:p-3 pl-2 mt-16 md:mt-24">
-									<Image
-										height={100}
-										width={100}
-										src="/images/strawberries-on-plant.jpg"
-										alt="Strawberries on the plant"
-										className="w-full h-full object-cover rounded-r-xl shadow-lg"
+										className="w-full h-full object-cover rounded-radius-xl shadow-elevation-4"
 									/>
 								</div>
 							</div>
-						</div>
-
-						{/* <!-- Right Column --> */}
-						<div className="order-1 md:order-2 flex flex-col justify-center h-full lg:pr-5 pt-8 md:pt-12 lg:pt-0">
-							<p className="uppercase font-medium text-[#80b500] text-[0.8rem]">
-								Welcome to Green Pastures
-							</p>
-
-							<h1
-								id="welcome-heading"
-								className="font-bold pb-2 md:pb-3 pt-2 text-left uppercase text-xl md:text-3xl lg:text-4xl md:leading-11 tracking-[-0.02rem]"
-							>
-								Your Source for Natural Health and Wellness
-							</h1>
-
-							<i className="italic md:mb-2 py-1 pl-3 md:pl-5 text-sm md:text-md border-l-2 border-[#80b500]">
-								Elevating Immunity and Fertility with the Power of
-								Nature
-							</i>
-
-							<p className="pt-4 lg:pe-10 text-sm md:text-md text-gray-700 leading-relaxed">
-								At Green Pastures, we believe in nurturing your body
-								from the inside out. Our organic supplements are crafted
-								with care to naturally support a strong immune system
-								and enhance fertility for both men and women. Discover
-								the power of fruits, vegetables, and herbs to support
-								your health journey.
-							</p>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			{/* Hero Section */}
-			<section className="relative bg-gradient-to-r from-green-600 to-green-700 text-white py-12 md:py-24">
-				<div className="container page-wrapper mx-auto px-4">
-					<div className="max-w-3xl">
-						<h1 className="text-3xl md:text-5xl font-bold mb-6">
-							Fresh Organic Products for a Healthier Life
-						</h1>
-						<p className="text-md md:text-xl mb-8 text-green-100">
-							Discover our premium selection of certified organic fruits,
-							vegetables, and pantry essentials. Farm-fresh quality
-							delivered to your doorstep.
-						</p>
-						<div className="flex flex-wrap gap-4">
-							<Link
-								href="/products"
-								className="bg-white text-green-600 px-8 py-3 rounded-md font-semibold hover:bg-green-50 transition-colors"
-							>
-								Shop Now
-							</Link>
-							<Link
-								href="/about"
-								className="border-2 border-white text-white px-8 py-3 rounded-md font-semibold hover:bg-white hover:text-green-600 transition-colors"
-							>
-								Learn More
-							</Link>
-						</div>
+						</motion.div>
 					</div>
 				</div>
 			</section>
 
 			{/* Features Section */}
-			<section className="py-10 md:py-16 bg-white">
+			<section className="py-16 md:py-24 bg-white dark:bg-[#0e0e1a]">
 				<div className="container page-wrapper mx-auto px-4">
-					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-						{featuredSection?.map((feature) => (
-							<div className="text-center">
-								<div className="bg-green-100 rounded-full p-6 w-20 h-20 flex items-center justify-center mx-auto mb-4">
-									{feature.icon}
-								</div>
-								<h3 className="font-semibold text-lg mb-2">
-									{feature.title}
-								</h3>
-								<p className="text-gray-600">{feature.desc}</p>
-							</div>
-						))}
-					</div>
+					<AnimatedSection>
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+							{features.map((feature, index) => {
+								const Icon = feature.icon;
+								return (
+									<Card
+										key={index}
+										elevation={1}
+										hoverable
+										padding="lg"
+										className="text-center animate-card-enter"
+									>
+										<div className="bg-primary-100 dark:bg-primary-500/10 rounded-radius-lg p-4 w-16 h-16 flex items-center justify-center mx-auto mb-4">
+											<Icon className="h-8 w-8 text-primary-600 dark:text-primary-400" />
+										</div>
+										<h3 className="font-semibold text-lg mb-2 text-gray-900 dark:text-white/90">
+											{feature.title}
+										</h3>
+										<p className="text-gray-600 dark:text-white/50 text-sm leading-relaxed">
+											{feature.desc}
+										</p>
+									</Card>
+								);
+							})}
+						</div>
+					</AnimatedSection>
 				</div>
 			</section>
 
 			{/* Featured Products */}
-			<section className="py-10 md:py-16 bg-green-50">
+			<section className="py-16 md:py-24 bg-gray-50 dark:bg-white/[0.02]">
 				<div className="container page-wrapper mx-auto px-4">
-					<div className="text-center mb-8 lg:mb-12">
-						<h2 className="text-2xl lg:text-3xl font-bold text-gray-800 mb-2 lg:mb-4">
-							Featured Products
-						</h2>
-						<p className="text-gray-600 max-w-2xl mx-auto text-sm lg:text-md">
-							Discover our most popular organic products, carefully
-							selected for their exceptional quality and nutritional
-							value.
-						</p>
-					</div>
-
-					{featuredProducts?.length > 0 ? (
-						<Products products={featuredProducts} />
-					) : (
-						<div className="flex items-center justify-center">
-							no products available at this time
+					<AnimatedSection>
+						<div className="text-center mb-10 lg:mb-14">
+							<p className="text-primary-600 dark:text-primary-400 uppercase tracking-widest text-xs font-semibold mb-3">
+								OUR PRODUCTS
+							</p>
+							<h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white/90 mb-4">
+								Featured Products
+							</h2>
+							<p className="text-gray-600 dark:text-white/50 max-w-2xl mx-auto">
+								Discover our most popular organic products, carefully
+								selected for their exceptional quality and nutritional
+								value.
+							</p>
 						</div>
-					)}
+					</AnimatedSection>
+
+					<AnimatedSection delay={0.2}>
+						{featuredProducts?.length > 0 ? (
+							<Products products={featuredProducts} />
+						) : (
+							<div className="flex items-center justify-center py-12 text-gray-500 dark:text-white/50">
+								No products available at this time
+							</div>
+						)}
+					</AnimatedSection>
 
 					{products?.length > 4 && (
-						<div className="text-center">
-							<Link
-								href="/products"
-								className="bg-green-600 text-white px-8 py-3 rounded-md font-semibold hover:bg-green-700 transition-colors inline-block"
-							>
-								View All Products
-							</Link>
-						</div>
+						<AnimatedSection delay={0.3}>
+							<div className="text-center mt-8">
+								<Link href="/products">
+									<Button variant="filled" size="lg" rightIcon={ArrowRight}>
+										View All Products
+									</Button>
+								</Link>
+							</div>
+						</AnimatedSection>
 					)}
 				</div>
 			</section>
 
 			{/* Newsletter Section */}
-			<section className="py-16 bg-green-800 text-white">
-				<div className="container page-wrapper mx-auto px-4 text-center">
-					<h2 className="text-3xl font-bold mb-4">Stay Updated</h2>
-					<p className="text-green-200 mb-8 max-w-2xl mx-auto">
-						Subscribe to our newsletter for the latest organic products,
-						health tips, and exclusive offers.
-					</p>
-					<div className="flex flex-col sm:flex-row max-w-md mx-auto gap-4">
-						<input
-							type="email"
-							placeholder="Enter your email"
-							className="flex-1 px-4 py-3 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
-						/>
-						<button className="bg-green-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-green-500 transition-colors">
-							Subscribe
-						</button>
-					</div>
+			<section className="py-16 md:py-24 bg-white dark:bg-[#0e0e1a]">
+				<div className="container page-wrapper mx-auto px-4">
+					<AnimatedSection>
+						<Card
+							elevation={0}
+							padding="lg"
+							className="bg-primary-600 dark:bg-primary-800 border-none text-center max-w-3xl mx-auto rounded-radius-xl"
+						>
+							<h2 className="text-3xl font-bold mb-4 text-white">
+								Stay Updated
+							</h2>
+							<p className="text-primary-100 dark:text-primary-200 mb-8 max-w-lg mx-auto">
+								Subscribe to our newsletter for the latest organic products,
+								health tips, and exclusive offers.
+							</p>
+							<div className="flex flex-col sm:flex-row max-w-md mx-auto gap-3">
+								<Input
+									type="email"
+									placeholder="Enter your email"
+									value={email}
+									onChange={(e) => setEmail(e.target.value)}
+									leftIcon={Mail}
+									className="flex-1"
+								/>
+								<Button
+									variant="filled"
+									size="lg"
+									className="bg-white text-primary-700 hover:bg-gray-100 active:bg-gray-200 shrink-0"
+								>
+									Subscribe
+								</Button>
+							</div>
+						</Card>
+					</AnimatedSection>
 				</div>
 			</section>
 		</Layout>

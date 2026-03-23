@@ -1,145 +1,163 @@
-import React, { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import withAdminAuth from "@/_components/withAdminAuth";
+import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
+
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
 import AddCategory from "@/_components/Modals/AddCategory";
 import { selectCategory } from "@/_redux/reducers/admin.reducer";
-import { Column, CustomTable } from "@/_components/CustomTable";
+import { DataTable, Column } from "@/_UI/DataTable";
+import ActionMenu from "@/_UI/ActionMenu";
+import Button from "@/_UI/Button";
+import Modal from "@/_UI/Modal";
 import { ProductCategory } from "@/types";
 import { categoryAction } from "@/_redux/actions/category.action";
-import SearchBar from "@/_components/SearchBar";
-import { filterAndSortProducts, logger } from "@/_utils";
 
-interface ActionDropDownProps {
-	row: ProductCategory;
-}
+const VIEW_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+);
 
-const AdminProducts: React.FC = () => {
+const EDIT_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+);
+
+const DELETE_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+);
+
+const AdminCategories: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const categories = useAppSelector((state) => state.category.productCategories);
-	const { query, filters } = useAppSelector((state) => state.search);
-	const [currentPage, setCurrentPage] = useState(1);
-	const isDeleting = useAppSelector((state) => state.category.isDeletingCategory);
+	const isDeletingCategory = useAppSelector((state) => state.category.isDeletingCategory);
+	const [searchTerm, setSearchTerm] = useState("");
+	const [deleteTarget, setDeleteTarget] = useState<ProductCategory | null>(null);
 
 	useEffect(() => {
 		dispatch(categoryAction.fetchAllCategories());
 	}, []);
 
-	// const filteredProducts = filterAndSortProducts(categories, query, filters);
+	const filteredCategories = categories?.filter((cat) =>
+		cat.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+		cat.description?.toLowerCase().includes(searchTerm.toLowerCase())
+	);
 
-	const ActionDropDown: React.FC<ActionDropDownProps> = (props) => {
-		const handleDelete = async (id: number) => {
-		if (!window.confirm("Are you sure you want to delete this product?")) return;
+	const handleSearch = useCallback((query: string) => {
+		setSearchTerm(query);
+	}, []);
 
+	const handleEditCategory = (row: ProductCategory) => {
+		dispatch(selectCategory(row));
+	};
+
+	const handleDeleteCategory = (row: ProductCategory) => {
+		setDeleteTarget(row);
+	};
+
+	const handleDelete = async () => {
+		if (!deleteTarget) return;
 		try {
-			await dispatch(categoryAction.deleteCategory(id)).unwrap();
+			await dispatch(categoryAction.deleteCategory(deleteTarget.id)).unwrap();
 			toast.success("Category deleted successfully");
+			setDeleteTarget(null);
 		} catch (error) {
 			toast.error(error as string);
 		}
-		};
-
-
-		return (
-			<div className="flex items-center space-x-2">
-				<button
-					onClick={() => dispatch(selectCategory(props?.row))}
-					className="text-blue-600 hover:text-blue-900 p-1 rounded"
-					title="View"
-				>
-					<Eye className="h-4 w-4" />
-				</button>
-				<AddCategory
-					category={props?.row}
-					title="edit product"
-					className="text-green-600 hover:text-green-900 p-1 rounded"
-				>
-					<Edit className="h-4 w-4" />
-				</AddCategory>
-				<button
-					onClick={() => handleDelete(props?.row.id)}
-					className="text-red-600 hover:text-red-900 p-1 rounded"
-					title="Delete"
-					disabled={isDeleting}
-				>
-					<Trash2 className="h-4 w-4" />
-				</button>
-			</div>
-		);
 	};
 
 	const columns: Column<ProductCategory>[] = [
-		
 		{
 			key: "name",
 			header: "Name",
-			render: (value: string | number, row: ProductCategory) => {
-				return (
-					<div className="flex items-center">
-						<div className="ml-4">
-							<div className="text-sm font-medium text-gray-900">
-								{row.name}
-							</div>
-						</div>
-					</div>
-				);
-			},
+			render: (_value: any, row: ProductCategory) => (
+				<span className="text-sm font-medium text-on-surface dark:text-white">
+					{row.name}
+				</span>
+			),
 		},
 		{
 			key: "description",
 			header: "Description",
-			render: (value: string | number, row: ProductCategory) => {
-				return (
-					<div className="flex items-center">
-						<div className="ml-4">
-							<div className="text-sm font-medium text-gray-900">
-								{row.description}
-							</div>
-						</div>
-					</div>
-				);
-			},
+			render: (_value: any, row: ProductCategory) => (
+				<span className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+					{row.description}
+				</span>
+			),
 		},
-		
 		{
 			key: "id",
-			header: "Actions",
-			render: (value: string | number, row: ProductCategory) => (
-				<ActionDropDown row={row} />
+			header: "",
+			width: "50px",
+			align: "center" as const,
+			render: (_: any, row: ProductCategory) => (
+				<ActionMenu items={[
+					{ label: "View", icon: VIEW_ICON, onClick: () => {} },
+					{ label: "Edit", icon: EDIT_ICON, onClick: () => handleEditCategory(row) },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => handleDeleteCategory(row), variant: "danger" as const },
+				]} />
 			),
 		},
 	];
 
-	const handleSearch = (searchQuery: string) => {
-		logger.log({ searchQuery });
-	};
-
 	return (
 		<AdminLayout>
-			<div className="space-y-6">
-				<div className="flex justify-between items-center">
-					<div className="max-w-3xl">
-						<SearchBar onSearch={handleSearch} autoFocus />
-					</div>
-					<AddCategory
-						title="add product"
-						className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center space-x-2"
-					>
-						<span>Add Category</span>
-						<Plus className="h-5 w-5" />
-					</AddCategory>
-				</div>
-
-				<CustomTable
+			<div className="animate-page-enter space-y-6">
+				{/* Categories Table */}
+				<DataTable
 					columns={columns}
-					tableRow={categories}
-					currentPage={currentPage}
-					setCurrentPage={setCurrentPage}
+					data={filteredCategories ?? []}
+					onSearch={handleSearch}
+					searchPlaceholder="Search categories..."
+					actions={
+						<AddCategory
+							title="add category"
+							className="inline-flex"
+						>
+							<Button variant="filled" leftIcon={Plus}>
+								Add Category
+							</Button>
+						</AddCategory>
+					}
+					emptyMessage="No categories found"
 				/>
+
+				{/* Delete Confirmation Modal */}
+				<Modal
+					isOpen={!!deleteTarget}
+					onClose={() => setDeleteTarget(null)}
+					title="Delete Category"
+					size="sm"
+				>
+					<div className="space-y-4">
+						<p className="text-sm text-gray-600 dark:text-gray-300">
+							Are you sure you want to delete{" "}
+							<span className="font-semibold text-on-surface dark:text-white">{deleteTarget?.name}</span>?
+							This action cannot be undone.
+						</p>
+						<div className="flex justify-end gap-3">
+							<Button
+								variant="outlined"
+								color="secondary"
+								size="sm"
+								onClick={() => setDeleteTarget(null)}
+							>
+								Cancel
+							</Button>
+							<Button
+								variant="filled"
+								color="error"
+								size="sm"
+								loading={isDeletingCategory}
+								onClick={handleDelete}
+							>
+								Delete
+							</Button>
+						</div>
+					</div>
+				</Modal>
 			</div>
 		</AdminLayout>
 	);
 };
 
-export default AdminProducts;
+export default withAdminAuth(AdminCategories);

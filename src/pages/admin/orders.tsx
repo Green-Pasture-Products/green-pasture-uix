@@ -1,223 +1,234 @@
-import React, { useState } from "react";
-import AdminLayout from "@/_components/AdminLayout";
-import { Eye, Package, Truck, CheckCircle, Clock, Search } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/router";
+import withAdminAuth from "@/_components/withAdminAuth";
+import toast from "react-hot-toast";
 
+import AdminLayout from "@/_components/AdminLayout";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { updateOrderStatus } from "@/_redux/reducers/admin.reducer";
-import { Column, CustomTable } from "@/_components/CustomTable";
-import { Order } from "@/types";
+import { adminAction } from "@/_redux/actions/admin.action";
+import { DataTable, Column, FilterDef } from "@/_UI/DataTable";
+import ActionMenu from "@/_UI/ActionMenu";
+import Badge from "@/_UI/Badge";
+import Modal from "@/_UI/Modal";
+import Button from "@/_UI/Button";
+import { BackendOrder } from "@/types";
+
+const VIEW_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+);
+
+const DELETE_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+);
+
+const ORDER_STATUS_FILTERS: FilterDef[] = [
+	{
+		key: "status",
+		label: "Status",
+		options: [
+			{ value: "PENDING", label: "Pending" },
+			{ value: "PROCESSING", label: "Processing" },
+			{ value: "DELIVERED", label: "Delivered" },
+			{ value: "CANCELLED", label: "Cancelled" },
+			{ value: "COMPLETED", label: "Completed" },
+		],
+	},
+];
+
+const getStatusBadgeVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
+	switch (status?.toUpperCase()) {
+		case "PENDING":
+			return "warning";
+		case "PROCESSING":
+			return "info";
+		case "SHIPPED":
+			return "info";
+		case "DELIVERED":
+			return "success";
+		case "CANCELLED":
+			return "error";
+		default:
+			return "neutral";
+	}
+};
 
 const AdminOrders: React.FC = () => {
+	const router = useRouter();
 	const dispatch = useAppDispatch();
-	const { orders } = useAppSelector((state) => state.admin);
-	const [selectedStatus, setSelectedStatus] = useState("all");
+	const { orders, ordersLoading, ordersPagination } = useAppSelector((state) => state.admin);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
+	const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+	const [cancelTarget, setCancelTarget] = useState<BackendOrder | null>(null);
+	const [isCancelling, setIsCancelling] = useState(false);
 
-	const filteredOrders = orders?.filter((order) => {
-		const matchesStatus =
-			selectedStatus === "all" || order.status === selectedStatus;
-		const matchesSearch =
-			order.id.includes(searchTerm) ||
-			order.customer.firstName
-				.toLowerCase()
-				.includes(searchTerm.toLowerCase()) ||
-			order.customer.lastName
-				.toLowerCase()
-				.includes(searchTerm.toLowerCase()) ||
-			order.customer.email.toLowerCase().includes(searchTerm.toLowerCase());
-		return matchesStatus && matchesSearch;
+	useEffect(() => {
+		dispatch(adminAction.fetchOrdersAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm]);
+
+	const filteredOrders = orders?.filter((order: any) => {
+		const statusFilter = filterValues.status;
+		if (!statusFilter) return true;
+		return order.orderStatus?.toUpperCase() === statusFilter.toUpperCase();
 	});
 
-	const handleStatusUpdate = (orderId: string, newStatus: any) => {
-		dispatch(updateOrderStatus({ id: orderId, status: newStatus }));
-	};
+	const handleSearch = useCallback((query: string) => {
+		setSearchTerm(query);
+		setCurrentPage(1);
+	}, []);
 
-	const getStatusIcon = (status: string) => {
-		switch (status) {
-			case "pending":
-				return <Clock className="h-4 w-4" />;
-			case "confirmed":
-				return <CheckCircle className="h-4 w-4" />;
-			case "shipped":
-				return <Truck className="h-4 w-4" />;
-			case "delivered":
-				return <Package className="h-4 w-4" />;
-			default:
-				return <Clock className="h-4 w-4" />;
+	const handleFilterChange = useCallback((key: string, value: string) => {
+		setFilterValues((prev) => ({ ...prev, [key]: value }));
+	}, []);
+
+	const handlePageChange = useCallback((page: number) => {
+		setCurrentPage(page);
+	}, []);
+
+	const handleCancelOrder = async () => {
+		if (!cancelTarget) return;
+		setIsCancelling(true);
+		try {
+			await dispatch(adminAction.cancelOrderAsync(cancelTarget.id)).unwrap();
+			toast.success("Order cancelled successfully");
+			setCancelTarget(null);
+		} catch (error: any) {
+			toast.error(error || "Failed to cancel order");
+		} finally {
+			setIsCancelling(false);
 		}
 	};
 
-	const getStatusColor = (status: string) => {
-		switch (status) {
-			case "pending":
-				return "bg-yellow-100 text-yellow-800";
-			case "confirmed":
-				return "bg-blue-100 text-blue-800";
-			case "shipped":
-				return "bg-purple-100 text-purple-800";
-			case "delivered":
-				return "bg-green-100 text-green-800";
-			default:
-				return "bg-gray-100 text-gray-800";
-		}
-	};
-
-	const columns: Column<Order>[] = [
+	const columns: Column<BackendOrder>[] = [
 		{
-			key: "id",
-			header: "Order ID",
-			render: (value: string | number, row: Order) => {
-				return (
-					<div className="text-sm font-medium text-gray-900">
-						#{row.id}
-					</div>
-				);
-			},
-		},
-		{
-			key: "items",
-			header: "Product",
-			render: (value: string | number, row: Order) => {
-				return (
-					<div className="text-sm font-medium text-gray-900 space-y-2">
-						{row.items?.map((item) => (
-							<div key={item.id} className="flex items-center">
-								<img
-									className="h-10 w-10 rounded-md object-cover"
-									src={item.image}
-									alt={item.name}
-								/>
-								<div className="ml-4">
-									<div className="text-sm font-medium text-gray-900">
-										{item.name}
-									</div>
-									<span className="font-normal">
-										₦{item.price.toLocaleString()}
-									</span>{" "}
-									<span className="font-normal">
-										Qty: ({item.quantity})
-									</span>
-								</div>
-							</div>
-						))}
-					</div>
-				);
-			},
+			key: "orderReference",
+			header: "Order Ref",
+			render: (value: any) => (
+				<span className="text-sm font-medium text-on-surface dark:text-white">#{value}</span>
+			),
 		},
 		{
 			key: "customer",
 			header: "Customer",
-			render: (value: string | number, row: Order) => {
-				return (
-					<div>
-						<div className="text-sm font-medium text-gray-900">
-							{row.customer.firstName} {row.customer.lastName}
-						</div>
-						<div className="text-sm text-gray-500">
-							{row.customer.email}
-						</div>
+			render: (_value: any, row: BackendOrder) => (
+				<div>
+					<div className="text-sm font-medium text-on-surface dark:text-white">
+						{row.customer?.profile?.firstName} {row.customer?.profile?.lastName}
 					</div>
-				);
-			},
+					<div className="text-xs text-gray-500 dark:text-gray-400">
+						{row.customer?.profile?.email}
+					</div>
+				</div>
+			),
+		},
+		{
+			key: "items",
+			header: "Items",
+			render: (_value: any, row: BackendOrder) => (
+				<span className="text-sm text-gray-600 dark:text-gray-300">
+					{row.items?.length ?? 0}
+				</span>
+			),
+		},
+		{
+			key: "totalAmount",
+			header: "Total",
+			render: (value: any) => (
+				<span className="text-sm font-semibold text-on-surface dark:text-gray-200">
+					₦{Number(value).toLocaleString()}
+				</span>
+			),
+		},
+		{
+			key: "orderStatus",
+			header: "Status",
+			render: (value: any) => (
+				<Badge variant={getStatusBadgeVariant(String(value))} dot>
+					{String(value)}
+				</Badge>
+			),
 		},
 		{
 			key: "createdAt",
-			header: "Date Created",
-			render: (value: string | number, row: Order) => {
-				return (
-					<span className="">
-						{new Date(row.createdAt).toLocaleDateString()}
-					</span>
-				);
-			},
-		},
-		{
-			key: "total",
-			header: "Amount",
-			render: (value: string | number, row: Order) => {
-				return <span>${row.total.toFixed(2)}</span>;
-			},
-		},
-		{
-			key: "status",
-			header: "Status",
-			render: (value: string | number, row: Order) => {
-				return (
-					<select
-						value={row.status}
-						onChange={(e) => handleStatusUpdate(row.id, e.target.value)}
-						className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border-0 focus:outline-none focus:ring-2 focus:ring-green-500 ${getStatusColor(
-							row.status
-						)}`}
-					>
-						<option value="pending">Pending</option>
-						<option value="confirmed">Confirmed</option>
-						<option value="shipped">Shipped</option>
-						<option value="delivered">Delivered</option>
-					</select>
-				);
-			},
+			header: "Date",
+			render: (value: any) => (
+				<span className="text-sm text-gray-500 dark:text-gray-400">
+					{new Date(value).toLocaleDateString()}
+				</span>
+			),
 		},
 		{
 			key: "id",
-			header: "#",
-			render: (value: string | number, row: Order) => {
-				return (
-					<div className="flex items-center justify-center space-x-2">
-						<button
-							className="text-green-600 hover:text-green-900 p-1 rounded"
-							title="View Details"
-						>
-							<Eye className="h-4 w-4" />
-						</button>
-					</div>
-				);
-			},
+			header: "",
+			width: "50px",
+			align: "center" as const,
+			render: (_: any, row: BackendOrder) => (
+				<ActionMenu items={[
+					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/order/${row.id}`) },
+					{ label: "Cancel", icon: DELETE_ICON, onClick: () => setCancelTarget(row), variant: "danger" as const, hidden: row.orderStatus === "CANCELLED" },
+				]} />
+			),
 		},
 	];
 
 	return (
 		<AdminLayout>
-			<div className="space-y-6">
-				<div className="flex justify-between items-center">
-					<div className="max-w-3xl">
-						<div className="relative">
-							<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-							<input
-								type="text"
-								placeholder="Search orders..."
-								value={searchTerm}
-								onChange={(e) => setSearchTerm(e.target.value)}
-								className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
-							/>
+			<div className="animate-page-enter space-y-6">
+				{/* Orders Table */}
+				<DataTable
+					columns={columns}
+					data={filteredOrders ?? []}
+					isLoading={ordersLoading}
+					onSearch={handleSearch}
+					searchPlaceholder="Search orders..."
+					filters={ORDER_STATUS_FILTERS}
+					filterValues={filterValues}
+					onFilterChange={handleFilterChange}
+					pagination={ordersPagination ?? undefined}
+					onPageChange={handlePageChange}
+					onRowClick={(row) => router.push(`/admin/order/${row.id}`)}
+					emptyMessage="No orders found"
+				/>
+
+				{/* Cancel Confirmation Modal */}
+				<Modal
+					isOpen={!!cancelTarget}
+					onClose={() => setCancelTarget(null)}
+					title="Cancel Order"
+					size="sm"
+				>
+					<div className="space-y-4">
+						<p className="text-sm text-gray-600 dark:text-gray-300">
+							Are you sure you want to cancel order{" "}
+							<span className="font-semibold text-on-surface dark:text-white">
+								#{cancelTarget?.orderReference}
+							</span>?
+							This action cannot be undone.
+						</p>
+						<div className="flex justify-end gap-3">
+							<Button
+								variant="outlined"
+								color="secondary"
+								size="sm"
+								onClick={() => setCancelTarget(null)}
+							>
+								Keep Order
+							</Button>
+							<Button
+								variant="filled"
+								color="error"
+								size="sm"
+								loading={isCancelling}
+								onClick={handleCancelOrder}
+							>
+								Cancel Order
+							</Button>
 						</div>
 					</div>
-
-					<select
-						value={selectedStatus}
-						onChange={(e) => setSelectedStatus(e.target.value)}
-						className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium border-0 focus:outline-none focus:ring-2 focus:ring-green-500 ${getStatusColor(
-							selectedStatus
-						)}`}
-					>
-						<option value="all">All Orders</option>
-						<option value="pending">Pending</option>
-						<option value="confirmed">Confirmed</option>
-						<option value="shipped">Shipped</option>
-						<option value="delivered">Delivered</option>
-					</select>
-				</div>
-
-				<CustomTable
-					columns={columns}
-					tableRow={filteredOrders}
-					currentPage={currentPage}
-					setCurrentPage={setCurrentPage}
-				/>
+				</Modal>
 			</div>
 		</AdminLayout>
 	);
 };
 
-export default AdminOrders;
+export default withAdminAuth(AdminOrders);

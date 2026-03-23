@@ -1,178 +1,215 @@
-import React, { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/router";
+import withAdminAuth from "@/_components/withAdminAuth";
+import { Plus, Star } from "lucide-react";
+import toast from "react-hot-toast";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
 import AddProduct from "@/_components/Modals/AddProduct";
-import { selectProduct } from "@/_redux/reducers/admin.reducer";
-import { Column, CustomTable } from "@/_components/CustomTable";
+import { DataTable, Column } from "@/_UI/DataTable";
+import ActionMenu from "@/_UI/ActionMenu";
+import Badge from "@/_UI/Badge";
+import Button from "@/_UI/Button";
+import Modal from "@/_UI/Modal";
 import { Product } from "@/types";
 import { productsAction } from "@/_redux/actions";
-import SearchBar from "@/_components/SearchBar";
-import { filterAndSortProducts, logger } from "@/_utils";
+import { filterAndSortProducts } from "@/_utils";
 
-interface ActionDropDownProps {
-	row: Product;
-}
+const VIEW_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+);
+
+const DELETE_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+);
 
 const AdminProducts: React.FC = () => {
+	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const products = useAppSelector((state) => state.product.products);
 	const { query, filters } = useAppSelector((state) => state.search);
-	const [currentPage, setCurrentPage] = useState(1);
+	const [searchTerm, setSearchTerm] = useState("");
+	const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	useEffect(() => {
 		dispatch(productsAction.fetchAllProducts());
 	}, []);
 
-	const filteredProducts = filterAndSortProducts(products, query, filters);
+	const filteredProducts = filterAndSortProducts(products, query || searchTerm, filters);
 
-	const ActionDropDown: React.FC<ActionDropDownProps> = (props) => {
-		const handleDelete = (productId: string) => {
-			if (window.confirm("Are you sure you want to delete this product?")) {
-				// dispatch(removeProduct(productId));
-			}
-		};
+	const handleSearch = useCallback((searchQuery: string) => {
+		setSearchTerm(searchQuery);
+	}, []);
 
-		return (
-			<div className="flex items-center justify-end space-x-2">
-				<button
-					onClick={() => dispatch(selectProduct(props?.row))}
-					className="text-blue-600 hover:text-blue-900 p-1 rounded"
-					title="View"
-				>
-					<Eye className="h-4 w-4" />
-				</button>
-				<AddProduct
-					product={props?.row}
-					title="edit product"
-					className="text-green-600 hover:text-green-900 p-1 rounded"
-				>
-					<Edit className="h-4 w-4" />
-				</AddProduct>
-				<button
-					onClick={() => handleDelete(props?.row.id)}
-					className="text-red-600 hover:text-red-900 p-1 rounded"
-					title="Delete"
-				>
-					<Trash2 className="h-4 w-4" />
-				</button>
-			</div>
-		);
+	const handleDeleteClick = (row: Product) => {
+		setDeleteTarget(row);
+	};
+
+	const handleDelete = async () => {
+		if (!deleteTarget) return;
+		setIsDeleting(true);
+		try {
+			await dispatch(productsAction.deleteItemAsync(Number(deleteTarget.id))).unwrap();
+			toast.success("Product deleted successfully");
+			dispatch(productsAction.fetchAllProducts());
+		} catch (error: any) {
+			toast.error(error || "Failed to delete product");
+		} finally {
+			setIsDeleting(false);
+			setDeleteTarget(null);
+		}
 	};
 
 	const columns: Column<Product>[] = [
-		
 		{
 			key: "name",
-			header: "Name",
-			render: (value: string | number, row: Product) => {
-				return (
-					<div className="flex items-center">
+			header: "Product",
+			render: (_value: any, row: any) => (
+				<div className="flex items-center gap-3">
+					{row.photos?.[0]?.url ? (
 						<img
-							className="h-10 w-10 rounded-md object-cover"
-							src={row.image}
+							className="h-10 w-10 rounded-radius-sm object-cover"
+							style={{ border: "1px solid var(--border-light)" }}
+							src={row.photos[0].url}
 							alt={row.name}
 						/>
-						<div className="ml-4">
-							<div className="text-sm font-medium text-gray-900">
-								{row.name}
-							</div>
+					) : (
+						<div
+							className="h-10 w-10 rounded-radius-sm flex items-center justify-center text-xs font-bold"
+							style={{ background: "var(--surface-medium)", color: "var(--text-hint)" }}
+						>
+							{row.name?.charAt(0)?.toUpperCase() || "?"}
 						</div>
-					</div>
-				);
-			},
+					)}
+					<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+						{row.name}
+					</span>
+				</div>
+			),
 		},
 		{
-			key: "category",
+			key: "product",
 			header: "Category",
-		},
-		{
-			key: "quantity",
-			header: "Quantity",
+			render: (value: any) => (
+				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+					{value?.name || "—"}
+				</span>
+			),
 		},
 		{
 			key: "price",
 			header: "Price",
-			render: (value: string | number, row: Product) => {
-				return (
-					<div className="flex flex-col">
-						₦{row.price.toLocaleString()}
-						{row.originalPrice && (
-							<span className="ml-2 text-xs text-red-300 line-through">
-								₦{row.originalPrice.toLocaleString()}
-							</span>
-						)}
-					</div>
-				);
-			},
+			render: (value: any) => (
+				<span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+					₦{Number(value || 0).toLocaleString()}
+				</span>
+			),
 		},
 		{
-			key: "inStock",
+			key: "unit",
 			header: "Stock",
-			render: (value: string | number, row: Product) => {
+			render: (value: any) => {
+				const qty = Number(value || 0);
 				return (
-					<span
-						className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-							row.inStock
-								? "bg-green-100 text-green-800"
-								: "bg-red-100 text-red-800"
-						}`}
-					>
-						{row.inStock ? "In Stock" : "Out of Stock"}
-					</span>
+					<Badge variant={qty > 0 ? "success" : "error"} dot>
+						{qty > 0 ? `${qty} units` : "Out of Stock"}
+					</Badge>
 				);
 			},
 		},
 		{
-			key: "rating",
+			key: "ratingStats",
 			header: "Rating",
-			render: (value: string | number, row: Product) => {
+			render: (value: any) => {
+				const avg = value?.average ?? 0;
+				const count = value?.count ?? 0;
 				return (
-					<span>
-						{row.rating.toFixed(1)} ({row.reviews})
-					</span>
+					<div className="flex items-center gap-1.5">
+						<Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+						<span className="text-sm" style={{ color: "var(--text-primary)" }}>
+							{Number(avg).toFixed(1)}
+						</span>
+						<span className="text-xs" style={{ color: "var(--text-hint)" }}>({count})</span>
+					</div>
 				);
 			},
 		},
 		{
 			key: "id",
-			header: "Actions",
-			render: (value: string | number, row: Product) => (
-				<ActionDropDown row={row} />
+			header: "",
+			width: "50px",
+			align: "center" as const,
+			render: (_: any, row: any) => (
+				<ActionMenu items={[
+					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/product/${row.id}`) },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: "danger" as const },
+				]} />
 			),
 		},
 	];
 
-	const handleSearch = (searchQuery: string) => {
-		logger.log({ searchQuery });
-	};
-
 	return (
 		<AdminLayout>
-			<div className="space-y-6">
-				<div className="flex justify-between items-center">
-					<div className="max-w-3xl">
-						<SearchBar onSearch={handleSearch} autoFocus />
-					</div>
-					<AddProduct
-						title="add product"
-						className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center space-x-2"
-					>
-						<span>Add Product</span>
-						<Plus className="h-5 w-5" />
-					</AddProduct>
-				</div>
-
-				<CustomTable
+			<div className="animate-page-enter space-y-6">
+				{/* Products Table */}
+				<DataTable
 					columns={columns}
-					tableRow={filteredProducts}
-					currentPage={currentPage}
-					setCurrentPage={setCurrentPage}
+					data={filteredProducts}
+					onSearch={handleSearch}
+					searchPlaceholder="Search products..."
+					onRowClick={(row) => router.push(`/admin/product/${row.id}`)}
+					actions={
+						<AddProduct
+							title="add product"
+							className="inline-flex"
+						>
+							<Button variant="filled" leftIcon={Plus}>
+								Add Product
+							</Button>
+						</AddProduct>
+					}
+					emptyMessage="No products found"
 				/>
+
+				{/* Delete Confirmation Modal */}
+				<Modal
+					isOpen={!!deleteTarget}
+					onClose={() => setDeleteTarget(null)}
+					title="Delete Product"
+					size="sm"
+				>
+					<div className="space-y-4">
+						<p className="text-sm text-gray-600 dark:text-gray-300">
+							Are you sure you want to delete{" "}
+							<span className="font-semibold text-on-surface dark:text-white">{deleteTarget?.name}</span>?
+							This action cannot be undone.
+						</p>
+						<div className="flex justify-end gap-3">
+							<Button
+								variant="outlined"
+								color="secondary"
+								size="sm"
+								onClick={() => setDeleteTarget(null)}
+							>
+								Cancel
+							</Button>
+							<Button
+								variant="filled"
+								color="error"
+								size="sm"
+								loading={isDeleting}
+								onClick={handleDelete}
+							>
+								Delete
+							</Button>
+						</div>
+					</div>
+				</Modal>
 			</div>
 		</AdminLayout>
 	);
 };
 
-export default AdminProducts;
+export default withAdminAuth(AdminProducts);

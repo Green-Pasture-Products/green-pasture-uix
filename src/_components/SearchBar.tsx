@@ -148,7 +148,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 						onKeyDown={handleKeyDown}
 						placeholder={placeholder}
 						autoFocus={autoFocus}
-						className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+						className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-white/[0.04] dark:border-white/15 dark:text-white dark:placeholder:text-white/30"
 					/>
 					{localQuery && (
 						<button
@@ -166,7 +166,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 				(suggestions?.length > 0 || recentSearches?.length > 0) && (
 					<div
 						ref={dropdownRef}
-						className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-96 overflow-y-auto"
+						className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#1a1a2e] border border-[rgba(22,163,74,0.06)] dark:border-white/8 rounded-xl shadow-lg dark:shadow-none z-50 max-h-96 overflow-y-auto"
 					>
 						{suggestions?.length > 0 && (
 							<div className="p-2">
@@ -178,9 +178,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
 									<button
 										key={suggestion}
 										onClick={() => handleSearch(suggestion)}
-										className={`w-full text-left px-3 py-2 rounded text-sm hover:bg-gray-100 ${
+										className={`w-full text-left px-3 py-2 rounded text-sm hover:bg-gray-100 dark:hover:bg-white/10 dark:text-white/90 ${
 											selectedSuggestion === index
-												? "bg-gray-100"
+												? "bg-gray-100 dark:bg-white/5"
 												: ""
 										}`}
 									>
@@ -205,10 +205,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
 										onClick={() =>
 											handleRecentSearchClick(recentSearch)
 										}
-										className={`w-full text-left px-3 py-2 rounded text-sm hover:bg-gray-100 ${
+										className={`w-full text-left px-3 py-2 rounded text-sm hover:bg-gray-100 dark:hover:bg-white/10 dark:text-white/90 ${
 											selectedSuggestion ===
 											suggestions.length + index
-												? "bg-gray-100"
+												? "bg-gray-100 dark:bg-white/5"
 												: ""
 										}`}
 									>

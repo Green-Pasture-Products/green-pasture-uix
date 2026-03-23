@@ -1,212 +1,199 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import toast from "react-hot-toast";
 
-import { useAppDispatch } from "@/_redux/store";
-import { Product } from "@/types";
-import Modal from ".";
+import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import { productsAction } from "@/_redux/actions/products.action";
+import { categoryAction } from "@/_redux/actions/category.action";
+import Modal from "@/_UI/Modal";
+import { FormInput, FormTextarea, FormFileUpload, FormActions } from "@/_UI/FormField";
+import FormSelectDropdown from "@/_UI/FormSelect";
+import CurrencyInput from "@/_UI/CurrencyInput";
+
+const schema = z.object({
+	productId: z.coerce.number().positive("Category is required"),
+	name: z.string().min(1, "Name is required"),
+	description: z.string().optional(),
+	price: z.coerce.number().positive("Price must be greater than 0"),
+	unit: z.coerce.number().int().min(0, "Units must be 0 or more"),
+});
+
+type FormData = z.infer<typeof schema>;
 
 const AddProduct: React.FC<{
-	product?: Product;
 	children: React.ReactNode;
-	className: string;
-	title: string;
-}> = ({ product, children, className, title }) => {
+	className?: string;
+	title?: string;
+}> = ({ children, className = "", title = "Add Product" }) => {
 	const [isOpen, setIsOpen] = useState(false);
-	const dispatch = useAppDispatch();
+	const [images, setImages] = useState<File[]>([]);
+	const [previews, setPreviews] = useState<string[]>([]);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const [formData, setFormData] = useState({
-		id: product?.id || Date.now().toString(),
-		name: product?.name || "",
-		price: product?.price || 0,
-		originalPrice: product?.originalPrice || "",
-		image: product?.image || "",
-		category: product?.category || "Fruits",
-		description: product?.description || "",
-		inStock: product?.inStock ?? true,
-		// organic: product?.organic ?? true,
-		rating: product?.rating || 0,
-		reviews: product?.reviews || 0,
-		quantity: 1,
+	const dispatch = useAppDispatch();
+	const { productCategories } = useAppSelector((state) => state.category);
+
+	const {
+		register,
+		handleSubmit,
+		reset,
+		control,
+		formState: { errors },
+	} = useForm<FormData>({
+		resolver: zodResolver(schema),
+		defaultValues: { unit: 0, price: 0 },
 	});
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
+	useEffect(() => {
+		if (isOpen && productCategories.length === 0) {
+			dispatch(categoryAction.fetchAllCategories());
+		}
+	}, [isOpen, productCategories.length, dispatch]);
 
-		// if (product) {
-		// 	dispatch(updateProduct(product));
-		// } else {
-		// 	dispatch(addProduct(product));
-		// }
-		setIsOpen(false);
+	const handleImageSelect = (files: File[]) => {
+		const valid = files.filter((f) => f.type.startsWith("image/"));
+		if (valid.length + images.length > 5) {
+			toast.error("Maximum 5 images allowed");
+			return;
+		}
+		setImages((prev) => [...prev, ...valid]);
+		valid.forEach((file) => {
+			const reader = new FileReader();
+			reader.onload = (ev) =>
+				setPreviews((prev) => [...prev, ev.target?.result as string]);
+			reader.readAsDataURL(file);
+		});
 	};
 
-	const handleClick = () => {
-		setIsOpen(true);
+	const removeImage = (index: number) => {
+		setImages((prev) => prev.filter((_, i) => i !== index));
+		setPreviews((prev) => prev.filter((_, i) => i !== index));
 	};
 
-	const onClose = () => {
+	const onSubmit = async (data: FormData) => {
+		setIsSubmitting(true);
+		try {
+			const formData = new FormData();
+			formData.append("productId", String(data.productId));
+			formData.append("name", data.name);
+			formData.append("price", String(data.price));
+			formData.append("unit", String(data.unit));
+			if (data.description) formData.append("description", data.description);
+			images.forEach((file) => formData.append("images", file));
+
+			await dispatch(productsAction.createItemAsync(formData)).unwrap();
+			toast.success("Product created successfully");
+			dispatch(productsAction.fetchAllProducts());
+			handleClose();
+		} catch (err: any) {
+			toast.error(err || "Failed to create product");
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	const handleClose = () => {
 		setIsOpen(false);
+		reset();
+		setImages([]);
+		setPreviews([]);
 	};
 
 	return (
 		<>
-			<button title={title} onClick={handleClick} className={className}>
+			<button
+				title={title}
+				onClick={() => setIsOpen(true)}
+				className={className}
+			>
 				{children}
 			</button>
 
 			<Modal
 				isOpen={isOpen}
-				onClose={() => setIsOpen(false)}
-				title={product ? "Edit Product" : "Add New Product"}
-				size="md"
+				onClose={handleClose}
+				title="Add New Product"
+				subtitle="Fill in the details to create a new product listing"
+				size="lg"
 			>
-				<form onSubmit={handleSubmit} className="space-y-4">
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-1">
-							Name
-						</label>
-						<input
-							type="text"
-							required
-							value={formData.name}
-							onChange={(e) =>
-								setFormData({ ...formData, name: e.target.value })
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-						/>
-					</div>
-					<div className="grid grid-cols-2 gap-4">
-						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-1">
-								Price
-							</label>
-							<input
-								type="number"
-								step="0.01"
+				<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+					<FormInput
+						label="Product Name"
+						placeholder="e.g. Brain Super Food"
+						required
+						{...register("name")}
+						error={errors.name?.message}
+					/>
+
+					<Controller
+						name="productId"
+						control={control}
+						render={({ field }) => (
+							<FormSelectDropdown
+								label="Category"
 								required
-								value={formData.price}
-								onChange={(e) =>
-									setFormData({
-										...formData,
-										price: parseFloat(e.target.value),
-									})
-								}
-								className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+								placeholder="Select a category"
+								searchable={productCategories.length > 5}
+								options={productCategories.map((c) => ({
+									value: c.id,
+									label: c.name,
+								}))}
+								value={field.value}
+								onChange={(val) => field.onChange(Number(val))}
+								error={errors.productId?.message}
 							/>
-						</div>
-						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-1">
-								Original Price
-							</label>
-							<input
-								type="number"
-								step="0.01"
-								value={formData.originalPrice}
-								onChange={(e) =>
-									setFormData({
-										...formData,
-										originalPrice: e.target.value
-											? parseFloat(e.target.value)
-											: 0,
-									})
-								}
-								className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-							/>
-						</div>
-					</div>
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-1">
-							Category
-						</label>
-						<select
-							value={formData.category}
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									category: e.target.value,
-								})
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-						>
-							<option value="Fruits">Fruits</option>
-							<option value="Vegetables">Vegetables</option>
-							<option value="Grains">Grains</option>
-							<option value="Pantry">Pantry</option>
-						</select>
-					</div>
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-1">
-							Image URL
-						</label>
-						<input
-							type="url"
-							value={formData.image}
-							onChange={(e) =>
-								setFormData({ ...formData, image: e.target.value })
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+						)}
+					/>
+
+					<div className="grid grid-cols-2 gap-4">
+						<Controller
+							name="price"
+							control={control}
+							render={({ field }) => (
+								<CurrencyInput
+									label="Price"
+									required
+									placeholder="0.00"
+									value={field.value || ""}
+									onChange={(val) => field.onChange(parseFloat(val) || 0)}
+									error={errors.price?.message}
+									showWords
+								/>
+							)}
+						/>
+						<FormInput
+							label="Available Units"
+							type="number"
+							placeholder="0"
+							required
+							{...register("unit")}
+							error={errors.unit?.message}
 						/>
 					</div>
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-1">
-							Description
-						</label>
-						<textarea
-							rows={3}
-							value={formData.description}
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									description: e.target.value,
-								})
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-						/>
-					</div>
-					<div className="flex items-center space-x-6">
-						<label className="flex items-center">
-							<input
-								type="checkbox"
-								checked={!!formData.inStock}
-								onChange={(e) =>
-									setFormData({
-										...formData,
-										inStock: e.target.checked,
-									})
-								}
-								className="mr-2"
-							/>
-							In Stock
-						</label>
-						{/* <label className="flex items-center">
-							<input
-								type="checkbox"
-								checked={formData.organic}
-								onChange={(e) =>
-									setFormData({
-										...formData,
-										organic: e.target.checked,
-									})
-								}
-								className="mr-2"
-							/>
-							Organic
-						</label> */}
-					</div>
-					<div className="flex justify-end space-x-3 pt-4">
-						<button
-							type="button"
-							onClick={onClose}
-							className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
-						>
-							Cancel
-						</button>
-						<button
-							type="submit"
-							className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-						>
-							{product ? "Update" : "Create"}
-						</button>
-					</div>
+
+					<FormTextarea
+						label="Description"
+						rows={3}
+						placeholder="Describe the product benefits, ingredients, etc."
+						{...register("description")}
+					/>
+
+					<FormFileUpload
+						label="Product Images"
+						hint="max 5"
+						previews={previews}
+						onSelect={handleImageSelect}
+						onRemove={removeImage}
+						maxFiles={5}
+					/>
+
+					<FormActions
+						onCancel={handleClose}
+						submitLabel="Create Product"
+						isSubmitting={isSubmitting}
+					/>
 				</form>
 			</Modal>
 		</>

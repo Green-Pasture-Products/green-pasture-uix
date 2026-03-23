@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Heart, ShoppingCart, Trash2, Star, XCircle } from "lucide-react";
+import { Heart, ShoppingCart } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import toast from "react-hot-toast";
 
@@ -11,6 +11,9 @@ import {
 import { addToCart } from "@/_redux/reducers/cart.reducer";
 import Products from "@/_components/Products";
 import Layout from "@/_components/Layout";
+import EmptyState from "@/_UI/EmptyState";
+import Button from "@/_UI/Button";
+import Badge from "@/_UI/Badge";
 
 const WishlistPage: React.FC = () => {
 	const dispatch = useAppDispatch();
@@ -28,7 +31,7 @@ const WishlistPage: React.FC = () => {
 			const isInCart = cartItems.some((item) => item.id === product.id);
 			if (product.inStock && !isInCart) {
 				dispatch(addToCart(product));
-				toast.success(`${product.name} added to cart 🛒`);
+				toast.success(`${product.name} added to cart`);
 				dispatch(removeFromWishlist(product.id));
 			}
 		});
@@ -36,67 +39,55 @@ const WishlistPage: React.FC = () => {
 
 	if (items.length === 0) {
 		return (
-			<Layout pageTitle={"Wishlist"}>
-				<div className="container mx-auto px-4 py-16 text-center">
-					<div className="max-w-md mx-auto">
-						<Heart className="h-24 w-24 text-gray-300 mx-auto mb-8" />
-						<h1 className="text-3xl font-bold text-gray-800 mb-4">
-							Your Wishlist is Empty
-						</h1>
-						<p className="text-gray-600 mb-8">
-							Save your favorite products to your wishlist so you can
-							easily find them later.
-						</p>
-						<Link
-							href="/products"
-							className="bg-green-600 text-white px-8 py-3 rounded-md font-semibold hover:bg-green-700 transition-colors inline-block"
-						>
-							Start Shopping
-						</Link>
-					</div>
+			<Layout pageTitle="Wishlist">
+				<div className="container page-wrapper mx-auto px-4 py-16">
+					<EmptyState
+						icon={Heart}
+						title="Your Wishlist is Empty"
+						description="Save your favorite products to your wishlist so you can easily find them later."
+						actionLabel="Start Shopping"
+						actionHref="/products"
+					/>
 				</div>
 			</Layout>
 		);
 	}
 
 	return (
-		<Layout pageTitle={"Wishlist"}>
+		<Layout pageTitle="Wishlist">
 			<div className="container page-wrapper mx-auto px-4 py-8">
 				<div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
 					<div>
-						<h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+						<h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
 							My Wishlist
+							<Badge variant="neutral">{wishlistItemCount} {wishlistItemCount === 1 ? "item" : "items"}</Badge>
 						</h1>
-						<p className="text-gray-600 mt-2">
-							{wishlistItemCount}{" "}
-							{wishlistItemCount === 1 ? "item" : "items"} saved
-						</p>
 					</div>
-					<div className="flex space-x-4 mt-4 md:mt-0">
-						<button
+					<div className="flex space-x-3 mt-4 md:mt-0">
+						<Button
+							variant="tonal"
+							leftIcon={ShoppingCart}
 							onClick={handleAddAllToCart}
-							className="bg-green-600 text-white px-4 md:px-6 py-2 rounded-md font-medium hover:bg-green-700 transition-colors flex items-center space-x-2 cursor-pointer"
 						>
-							<ShoppingCart className="h-4 w-4" />
-							<span>Add All to Cart</span>
-						</button>
-						<button
+							Add All to Cart
+						</Button>
+						<Button
+							variant="outlined"
+							color="error"
 							onClick={handleClearWishlist}
-							className="text-red-600 hover:text-red-700 font-medium px-4 py-2 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
 						>
 							Clear Wishlist
-						</button>
+						</Button>
 					</div>
 				</div>
 
 				<Products products={items} />
 
 				<div className="text-center mt-12">
-					<Link
-						href="/products"
-						className="bg-gray-100 text-gray-800 px-8 py-3 rounded-md font-semibold hover:bg-gray-200 transition-colors inline-block"
-					>
-						Continue Shopping
+					<Link href="/products">
+						<Button variant="tonal" color="secondary" size="lg">
+							Continue Shopping
+						</Button>
 					</Link>
 				</div>
 			</div>

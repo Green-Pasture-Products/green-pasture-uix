@@ -46,9 +46,9 @@ export function CustomTable<T extends Record<string, any>>({
 
 	return (
 		<>
-			<div className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto scrollbar-hidden">
-				<table className="w-full table-auto divide-y divide-gray-200">
-					<thead className="bg-gray-50">
+			<div className="w-full bg-white dark:bg-white/[0.04] rounded-lg shadow-sm border border-gray-200 dark:border-white/8 overflow-x-auto scrollbar-hidden">
+				<table className="w-full table-auto divide-y divide-gray-200 dark:divide-white/8">
+					<thead className="bg-gray-50 dark:bg-white/[0.02]">
 						<tr>
 							{columns?.map((col) => (
 								<th
@@ -60,17 +60,17 @@ export function CustomTable<T extends Record<string, any>>({
 							))}
 						</tr>
 					</thead>
-					<tbody className="bg-white divide-y divide-gray-200">
+					<tbody className="bg-white divide-y divide-gray-200 dark:divide-white/8">
 						{currentData?.length > 0 ? (
 							currentData?.map((row, rowIndex) => (
 								<tr
 									key={rowIndex}
-									className="hover:bg-gray-50 transition duration-150"
+									className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition duration-150"
 								>
 									{columns?.map((col) => (
 										<td
 											key={String(col.key)}
-											className="px-6 py-4 text-sm text-gray-900 last:relative whitespace-nowrap"
+											className="px-6 py-4 text-sm text-gray-900 dark:text-white/90 last:relative whitespace-nowrap"
 										>
 											{col.render
 												? col.render(row[col.key], row)

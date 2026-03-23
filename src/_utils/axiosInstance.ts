@@ -28,7 +28,7 @@ async function getIpInfo(): Promise<any> {
 	if (cachedIpInfo) return cachedIpInfo;
 
 	try {
-		const response = await fetch("/api/ipinfo");
+		const response = await fetch(`https://ipinfo.io/json?token=${appConstants.IPINFO_TOKEN}`);
 		if (!response.ok) throw new Error("Failed to fetch IP info");
 
 		const data = await response.json();
@@ -48,7 +48,7 @@ const axiosInstance: AxiosInstance = axios.create({
 	headers: {
 		"Content-Type": "application/json",
 	},
-	timeout: 5000
+	timeout: 15000
 	// withCredentials: true,
 });
 
@@ -68,7 +68,6 @@ axiosInstance.interceptors.request.use(
 
 			// ✅ CHANGED: Get token from encrypted storage
 			const tokenData = secureTokenStorage.getTokens();
-			console.log("Axios token:", tokenData?.accessToken);
 			const token = tokenData?.accessToken;
 
 			if (token && !config.headers.Authorization) {
@@ -108,7 +107,6 @@ axiosInstance.interceptors.response.use(
 			isRefreshing = true;
 
 			try {
-				// ✅ CHANGED: Get refresh token from encrypted storage
 				const tokenData = secureTokenStorage.getTokens();
 				const refreshToken = tokenData?.refreshToken;
 
@@ -116,17 +114,21 @@ axiosInstance.interceptors.response.use(
 					throw new Error("No refresh token available");
 				}
 
-				// Call refresh endpoint
+				// Backend expects refresh token in Authorization header (not body)
 				const response = await axios.post(
 					`${appConstants.API_BASE_URL}auth/refresh`,
-					{ refreshToken },
-					{ withCredentials: true }
+					{},
+					{
+						headers: {
+							Authorization: `Bearer ${refreshToken}`,
+						},
+					}
 				);
 
 				const { accessToken, refreshToken: newRefreshToken } =
 					response.data.data;
 
-				// ✅ CHANGED: Update tokens in encrypted storage
+				// Update tokens in encrypted storage
 				secureTokenStorage.setTokens(
 					accessToken,
 					newRefreshToken || refreshToken,
@@ -148,16 +150,18 @@ axiosInstance.interceptors.response.use(
 				return axiosInstance(originalRequest);
 			} catch (refreshError) {
 				isRefreshing = false;
+				refreshSubscribers = [];
 
-				// ✅ CHANGED: Clear tokens from encrypted storage
+				// Clear tokens
 				secureTokenStorage.clearTokens();
 
-				// Dispatch logout action
-				const { logout } = await import("@/_redux/reducers/auth.reducer");
-				const { store } = await import("@/_redux/store");
-				store.dispatch(logout());
+				// Dispatch logout and redirect
+				try {
+					const { logout } = await import("@/_redux/reducers/auth.reducer");
+					const { store } = await import("@/_redux/store");
+					store.dispatch(logout());
+				} catch {}
 
-				// Redirect to login
 				if (typeof window !== "undefined") {
 					window.location.href = "/login";
 				}

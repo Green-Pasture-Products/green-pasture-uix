@@ -2,7 +2,8 @@
 
 import React, { MouseEvent, useState } from "react";
 import Image from "next/image";
-import { Star, ShoppingCart, Heart, XCircle, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Star, ShoppingCart, Heart, XCircle, Trash2, Check } from "lucide-react";
 import { Product } from "../types";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
@@ -11,7 +12,6 @@ import Link from "next/link";
 import {
 	addToWishlist,
 	removeFromWishlist,
-	toggleWishlist,
 } from "@/_redux/reducers/wishlist.reducer";
 import { usePathname } from "next/navigation";
 
@@ -27,14 +27,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const isInCart = cartItems.some((item) => item.id === product.id);
 	const wishlistItems = useAppSelector((state) => state.wishlist.items);
 	const isInWishlist = wishlistItems?.some((item) => item.id === product.id);
+	const [justAdded, setJustAdded] = useState(false);
+
+	// Backend item shape adaptation
+	const p = product as any;
+	const imageUrl = p.photos?.[0]?.url || p.image || "";
+	const rating = p.ratingStats?.average ?? p.rating ?? 0;
+	const reviewCount = p.ratingStats?.count ?? p.reviews ?? 0;
+	const inStock = p.unit > 0 || p.inStock;
+	const price = Number(p.price || 0);
+	const originalPrice = p.originalPrice ? Number(p.originalPrice) : null;
+	const discount = originalPrice && originalPrice > price
+		? Math.round(((originalPrice - price) / originalPrice) * 100)
+		: null;
 
 	const handleAddToCart = () => {
 		if (isInCart) {
 			dispatch(removeFromCart(product.id));
-			toast.error(`${product.name} removed from cart ❌`);
+			toast.error(`${product.name} removed from cart`);
 		} else {
 			dispatch(addToCart(product));
-			toast.success(`${product.name} added to cart 🛒`);
+			setJustAdded(true);
+			toast.success(`${product.name} added to cart`);
+			setTimeout(() => setJustAdded(false), 1500);
 		}
 	};
 
@@ -43,149 +58,225 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		e.preventDefault();
 		if (isInWishlist) {
 			dispatch(removeFromWishlist(product.id));
-			toast.error(`${product.name} removed from wishlist 💔`);
+			toast.error(`${product.name} removed from wishlist`);
 		} else {
 			dispatch(addToWishlist(product));
-			toast.success(`${product.name} added to wishlist ❤️`);
+			toast.success(`${product.name} added to wishlist`);
 		}
 	};
 
-	const handleRemoveFromWishlist = (productId: string) => {
-		dispatch(removeFromWishlist(productId));
-	};
-
 	return (
-		<div
-			key={product.id}
-			className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow md:mb-4 duration-300 overflow-hidden"
+		<motion.div
+			layout
+			className="group rounded-xl overflow-hidden"
+			style={{
+				background: "var(--surface-paper)",
+				border: "1px solid var(--border-light)",
+			}}
+			whileHover={{
+				y: -4,
+				boxShadow: "0 12px 24px -8px rgba(0,0,0,0.12)",
+				transition: { duration: 0.25, ease: "easeOut" },
+			}}
 		>
-			{/* Product Image */}
+			{/* Image */}
 			<Link href={`/product/${product?.id}`}>
-				<div className="relative w-full aspect-square bg-[#f6f6f6]">
-					<Image
-						src={product?.image}
-						alt={product.name}
-						fill
-						sizes="(max-width: 768px) 100vw, 33vw"
-						priority={false}
-						className="object-cover"
-					/>
-					{!product?.inStock && (
-						<span className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow">
-							Out of Stock
-						</span>
+				<div
+					className="relative aspect-[4/3] overflow-hidden"
+					style={{ background: "var(--surface-medium)" }}
+				>
+					{imageUrl ? (
+						<Image
+							src={imageUrl}
+							alt={product.name}
+							fill
+							sizes="(max-width: 768px) 50vw, 33vw"
+							className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+						/>
+					) : (
+						<div
+							className="w-full h-full flex items-center justify-center text-4xl font-bold"
+							style={{ color: "var(--text-disabled)" }}
+						>
+							{product.name?.charAt(0)?.toUpperCase()}
+						</div>
 					)}
-					<button
-						aria-label="Add to Wishlist"
+
+					{/* Gradient overlay on hover */}
+					<div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+					{/* Out of stock overlay */}
+					{!inStock && (
+						<div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center">
+							<span className="text-white text-xs font-semibold px-3 py-1.5 rounded-full bg-red-500/90 shadow-lg">
+								Out of Stock
+							</span>
+						</div>
+					)}
+
+					{/* Discount badge */}
+					{discount && discount > 0 && (
+						<motion.div
+							initial={{ scale: 0, rotate: -12 }}
+							animate={{ scale: 1, rotate: 0 }}
+							className="absolute top-3 left-3 px-2 py-0.5 rounded-md text-[0.6rem] font-bold text-white"
+							style={{ background: "#ef4444" }}
+						>
+							-{discount}%
+						</motion.div>
+					)}
+
+					{/* Wishlist button */}
+					<motion.button
+						aria-label="Wishlist"
 						onClick={
 							isWishlistPage
-								? () => handleRemoveFromWishlist(product.id)
+								? () => dispatch(removeFromWishlist(product.id))
 								: (e) => handleWishlistToggle(e)
 						}
-						className={`absolute bottom-2 right-2 p-2 rounded-full shadow-md transition ${
-							isInWishlist
-								? "bg-red-500 hover:bg-red-600"
-								: "bg-white hover:bg-gray-100"
-						}`}
+						className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md transition-all cursor-pointer"
+						style={{
+							background: isInWishlist
+								? "rgba(239,68,68,0.9)"
+								: "rgba(255,255,255,0.8)",
+							color: isInWishlist ? "#fff" : "var(--text-secondary)",
+							opacity: isInWishlist ? 1 : undefined,
+						}}
+						initial={{ opacity: 0, scale: 0.5 }}
+						animate={{ opacity: isInWishlist ? 1 : 0, scale: isInWishlist ? 1 : 0.5 }}
+						whileHover={{ opacity: 1, scale: 1 }}
+						whileTap={{ scale: 0.85 }}
 					>
-						<Heart
-							className={`h-5 w-5 ${
-								isInWishlist ? "text-white fill-white" : "text-gray-600"
-							}`}
-						/>
-					</button>
+						<Heart className={`h-4 w-4 ${isInWishlist ? "fill-current" : ""}`} />
+					</motion.button>
+
+					{/* Quick view on hover — bottom of image */}
+					<div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
+						<div
+							className="text-center text-[0.65rem] font-medium py-1.5 rounded-md backdrop-blur-md"
+							style={{ background: "rgba(255,255,255,0.85)", color: "#15803d" }}
+						>
+							View Details →
+						</div>
+					</div>
 				</div>
 			</Link>
 
-			{/* Product Details */}
-			<div className="p-2 md:p-4">
+			{/* Details */}
+			<div className="p-4">
 				<Link href={`/product/${product.id}`}>
-					<h3 className="font-semibold text-sm md:text-lg text-gray-800 leading-[1.15rem] md:leading-6">
+					<h3
+						className="font-semibold text-sm leading-snug mb-1 transition-colors line-clamp-1"
+						style={{ color: "var(--text-primary)" }}
+					>
 						{product.name}
 					</h3>
 				</Link>
-				<p className="text-gray-600 text-sm mt-2 line-clamp-2 leading-4 md:leading-5">
+
+				<p
+					className="text-[0.7rem] line-clamp-2 leading-relaxed mb-2.5"
+					style={{ color: "var(--text-hint)" }}
+				>
 					{product.description}
 				</p>
 
 				{/* Rating */}
-				<div className="flex items-center my-2 md:my-3">
-					<div className="flex items-center space-x-1">
+				<div className="flex items-center gap-1.5 mb-2.5">
+					<div className="flex items-center gap-px">
 						{[...Array(5)].map((_, i) => (
 							<Star
 								key={i}
 								className={`h-3 w-3 ${
-									i < Math.floor(product.rating)
-										? "text-yellow-400 fill-current"
-										: "text-gray-300"
+									i < Math.floor(rating)
+										? "text-amber-400 fill-amber-400"
+										: ""
 								}`}
+								style={
+									i >= Math.floor(rating)
+										? { color: "var(--text-disabled)" }
+										: undefined
+								}
 							/>
 						))}
 					</div>
-					<span className="text-xs text-gray-500 ml-2">
-						({product.reviews})
+					<span className="text-[0.6rem] tabular-nums" style={{ color: "var(--text-hint)" }}>
+						{Number(rating).toFixed(1)} ({reviewCount})
 					</span>
 				</div>
 
-				{/* Price & Button */}
-				<div className="flex flex-col items-start justify-between">
-					{/* Price Section */}
-					<div className="flex items-center flex-wrap space-x-2">
-						<span className="text-sm md:text-xl font-bold text-green-600">
-							₦{product.price?.toLocaleString()}
+				{/* Price */}
+				<div className="flex items-baseline gap-2 mb-3">
+					<span className="text-lg font-bold tabular-nums" style={{ color: "var(--color-primary)" }}>
+						₦{price.toLocaleString()}
+					</span>
+					{originalPrice && originalPrice > price && (
+						<span className="text-xs line-through tabular-nums" style={{ color: "var(--text-disabled)" }}>
+							₦{originalPrice.toLocaleString()}
 						</span>
-						{product.originalPrice && (
-							<span className="text-xs md:text-sm text-gray-500 line-through">
-								₦{product.originalPrice?.toLocaleString()}
-							</span>
-						)}
-					</div>
+					)}
+				</div>
 
-					{/* Add / Remove from Cart */}
-					<div className="flex gap-2 mt-2">
-						<div className="flex-1">
-							<button
-								onClick={handleAddToCart}
-								disabled={!product.inStock && !isInCart}
-								className={`flex items-center justify-center w-full space-x-1 px-2 md:px-4 py-2 rounded-md transition-colors text-xs md:text-sm font-medium ${
-									!product.inStock && !isInCart
-										? "bg-gray-300 text-gray-500 cursor-not-allowed"
-										: isInCart
-										? "bg-red-500 text-white hover:bg-red-600 cursor-pointer"
-										: "bg-green-600 text-white hover:bg-green-700 cursor-pointer"
-								}`}
+				{/* Add to Cart */}
+				<div className="flex gap-2">
+					<AnimatePresence mode="wait">
+						{justAdded ? (
+							<motion.div
+								key="added"
+								initial={{ opacity: 0, scale: 0.8 }}
+								animate={{ opacity: 1, scale: 1 }}
+								exit={{ opacity: 0, scale: 0.8 }}
+								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold"
+								style={{ background: "rgba(22,163,74,0.1)", color: "var(--color-primary)" }}
 							>
-								{isInCart ? (
-									<>
-										<XCircle className="h-3 md:h-4 w-3 md:w-4" />
-										<span>Remove</span>
-									</>
-								) : (
-									<>
-										<ShoppingCart className="h-3 md:h-4 w-3 md:w-4" />
-										<span>
-											{product.inStock
-												? "Add to Cart"
-												: "Out of Stock"}
-										</span>
-									</>
-								)}
-							</button>
-						</div>
-						<div className="flex flex-wrap">
-							{isWishlistPage && (
-								<button
-									onClick={() => handleRemoveFromWishlist(product.id)}
-									className="px-2 md:px-4 py-2 border border-gray-300 rounded-md hover:bg-red-50 hover:border-red-300 transition-colors"
-								>
-									<Trash2 className="h-3 md:h-4 w-3 md:w-4 text-gray-600 hover:text-red-600" />
-								</button>
-							)}
-						</div>
-					</div>
+								<Check className="h-3.5 w-3.5" />
+								Added!
+							</motion.div>
+						) : isInCart ? (
+							<motion.button
+								key="remove"
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={{ opacity: 0 }}
+								onClick={handleAddToCart}
+								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+								style={{ border: "1px solid #ef4444", color: "#ef4444" }}
+								whileTap={{ scale: 0.95 }}
+							>
+								<XCircle className="h-3.5 w-3.5" />
+								Remove
+							</motion.button>
+						) : (
+							<motion.button
+								key="add"
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={{ opacity: 0 }}
+								onClick={handleAddToCart}
+								disabled={!inStock}
+								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+								style={{ background: "var(--color-primary)" }}
+								whileHover={{ brightness: 1.1 }}
+								whileTap={{ scale: 0.95 }}
+							>
+								<ShoppingCart className="h-3.5 w-3.5" />
+								{inStock ? "Add to Cart" : "Out of Stock"}
+							</motion.button>
+						)}
+					</AnimatePresence>
+
+					{isWishlistPage && (
+						<motion.button
+							onClick={() => dispatch(removeFromWishlist(product.id))}
+							className="p-2 rounded-lg cursor-pointer"
+							style={{ border: "1px solid #ef4444", color: "#ef4444" }}
+							whileTap={{ scale: 0.9 }}
+						>
+							<Trash2 className="h-3.5 w-3.5" />
+						</motion.button>
+					)}
 				</div>
 			</div>
-		</div>
+		</motion.div>
 	);
 };
 

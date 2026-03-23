@@ -1,33 +1,41 @@
-import { AdminState, AdminStats, AdminUser, Order, Product, ProductCategory } from "@/types";
+import { AdminState, AdminStats, AdminUser, Order, PaginationMeta, Product, ProductCategory } from "@/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { mockOrders } from "../mockData";
+import { adminAction } from "../actions/admin.action";
 
-const initialState: AdminState = {
+const initialState: AdminState & {
+	ordersLoading: boolean;
+	ordersPagination: PaginationMeta | null;
+	customersLoading: boolean;
+	customersPagination: PaginationMeta | null;
+	staffList: any[];
+	staffLoading: boolean;
+	staffPagination: PaginationMeta | null;
+} = {
 	isAuthenticated: false,
 	user: null,
 	stats: {
-		totalProducts: 8,
-		totalOrders: 25,
-		totalCustomers: 15,
-		totalRevenue: 1250.75,
-		ordersToday: 3,
-		revenueToday: 87.5,
-		lowStockProducts: 2,
-		pendingOrders: 5,
+		totalProducts: 0,
+		totalOrders: 0,
+		totalCustomers: 0,
+		totalRevenue: 0,
+		ordersToday: 0,
+		revenueToday: 0,
+		lowStockProducts: 0,
+		pendingOrders: 0,
 	},
-	salesData: [
-		{ date: "2024-01-10", sales: 150, orders: 5 },
-		{ date: "2024-01-11", sales: 200, orders: 8 },
-		{ date: "2024-01-12", sales: 175, orders: 6 },
-		{ date: "2024-01-13", sales: 225, orders: 9 },
-		{ date: "2024-01-14", sales: 180, orders: 7 },
-		{ date: "2024-01-15", sales: 250, orders: 10 },
-		{ date: "2024-01-16", sales: 190, orders: 8 },
-	],
-	orders: mockOrders,
+	salesData: [],
+	orders: [],
 	customers: [],
 	selectedProduct: null,
+	selectedCategory: null,
 	selectedOrder: null,
+	ordersLoading: false,
+	ordersPagination: null,
+	customersLoading: false,
+	customersPagination: null,
+	staffList: [],
+	staffLoading: false,
+	staffPagination: null,
 };
 
 const adminSlice = createSlice({
@@ -63,6 +71,63 @@ const adminSlice = createSlice({
 		updateStats: (state, action: PayloadAction<Partial<AdminStats>>) => {
 			state.stats = { ...state.stats, ...action.payload };
 		},
+	},
+	extraReducers: (builder) => {
+		builder
+			// Fetch Orders
+			.addCase(adminAction.fetchOrdersAsync.pending, (state) => {
+				state.ordersLoading = true;
+			})
+			.addCase(adminAction.fetchOrdersAsync.fulfilled, (state, action) => {
+				state.ordersLoading = false;
+				state.orders = action.payload?.data?.items ?? [];
+				state.ordersPagination = action.payload?.data?.meta ?? null;
+			})
+			.addCase(adminAction.fetchOrdersAsync.rejected, (state) => {
+				state.ordersLoading = false;
+			})
+			// Cancel Order
+			.addCase(adminAction.cancelOrderAsync.fulfilled, (state, action) => {
+				const orderId = action.payload.orderId;
+				const order = state.orders.find((o: any) => o.id === orderId);
+				if (order) {
+					(order as any).orderStatus = "CANCELLED";
+				}
+			})
+			// Fetch Customers
+			.addCase(adminAction.fetchCustomersAsync.pending, (state) => {
+				state.customersLoading = true;
+			})
+			.addCase(adminAction.fetchCustomersAsync.fulfilled, (state, action) => {
+				state.customersLoading = false;
+				state.customers = action.payload?.data?.items ?? [];
+				state.customersPagination = action.payload?.data?.meta ?? null;
+			})
+			.addCase(adminAction.fetchCustomersAsync.rejected, (state) => {
+				state.customersLoading = false;
+			})
+			// Fetch Staff
+			.addCase(adminAction.fetchStaffAsync.pending, (state) => {
+				state.staffLoading = true;
+			})
+			.addCase(adminAction.fetchStaffAsync.fulfilled, (state, action) => {
+				state.staffLoading = false;
+				state.staffList = action.payload?.data?.items ?? [];
+				state.staffPagination = action.payload?.data?.meta ?? null;
+			})
+			.addCase(adminAction.fetchStaffAsync.rejected, (state) => {
+				state.staffLoading = false;
+			})
+			// Update Staff
+			.addCase(adminAction.updateStaffAsync.fulfilled, (state, action) => {
+				const updated = action.payload?.data;
+				if (updated) {
+					const index = state.staffList.findIndex((s: any) => s.id === updated.id);
+					if (index !== -1) {
+						state.staffList[index] = updated;
+					}
+				}
+			});
 	},
 });
 

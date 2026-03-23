@@ -46,12 +46,12 @@ export default function Modal({
 			onClick={onClose}
 		>
 			<div
-				className={`relative w-full ${sizeClasses[size]} bg-white rounded-lg shadow-xl transform transition-all`} // top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white
+				className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-[#1a1a2e] rounded-xl shadow-xl dark:shadow-none border border-[rgba(22,163,74,0.06)] dark:border-white/8 transform transition-all`} // top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white
 				onClick={(e) => e.stopPropagation()}
 			>
 				{title && (
 					<div className="flex items-center justify-between p-6 border-b border-gray-200">
-						<h3 className="text-xl font-semibold text-gray-900">
+						<h3 className="text-xl font-semibold text-gray-900 dark:text-white/90">
 							{title}
 						</h3>
 						<button

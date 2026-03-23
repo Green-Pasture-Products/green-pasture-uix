@@ -2,6 +2,8 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { appConstants } from "../constants";
 import axios from "axios";
 import axiosInstance from "@/_utils/axiosInstance";
+import { extractErrorMessage } from "@/_utils/apiHelpers";
+import { secureTokenStorage } from "@/_utils/secureStorage";
 
 interface Address {
 	latitude: string;
@@ -61,6 +63,78 @@ export const loginAsync = createAsyncThunk(
         }
       }
 			return rejectWithValue(message);
+		}
+	}
+);
+
+export const logoutAsync = createAsyncThunk<void, void, { rejectValue: string }>(
+	"auth/logout",
+	async (_, { rejectWithValue }) => {
+		try {
+			await axiosInstance.post("auth/logout");
+			secureTokenStorage.clearTokens();
+		} catch {
+			secureTokenStorage.clearTokens(); // Always clear tokens even on error
+		}
+	}
+);
+
+export const forgotPasswordAsync = createAsyncThunk<any, { email: string }, { rejectValue: string }>(
+	"auth/forgotPassword",
+	async (payload, { rejectWithValue }) => {
+		try {
+			const res = await axios.post(`${appConstants.API_BASE_URL}auth/forgot-password`, payload);
+			return res.data;
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
+export const resetPasswordAsync = createAsyncThunk<any, { email: string; otp: string; newPassword: string }, { rejectValue: string }>(
+	"auth/resetPassword",
+	async (payload, { rejectWithValue }) => {
+		try {
+			const res = await axios.post(`${appConstants.API_BASE_URL}auth/reset-password`, payload);
+			return res.data;
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
+export const verifyAccountAsync = createAsyncThunk<any, { email: string; otp: string }, { rejectValue: string }>(
+	"auth/verifyAccount",
+	async (payload, { rejectWithValue }) => {
+		try {
+			const res = await axios.post(`${appConstants.API_BASE_URL}auth/verify-account`, payload);
+			return res.data;
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
+export const resendOtpAsync = createAsyncThunk<any, { email: string }, { rejectValue: string }>(
+	"auth/resendOtp",
+	async (payload, { rejectWithValue }) => {
+		try {
+			const res = await axios.post(`${appConstants.API_BASE_URL}auth/resend-verification-otp`, payload);
+			return res.data;
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
+export const googleOAuthSigninAsync = createAsyncThunk<any, { accessToken: string }, { rejectValue: string }>(
+	"auth/googleOAuth",
+	async (payload, { rejectWithValue }) => {
+		try {
+			const res = await axios.post(`${appConstants.API_BASE_URL}auth/google/oauth/signin`, payload);
+			return res.data;
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
 		}
 	}
 );

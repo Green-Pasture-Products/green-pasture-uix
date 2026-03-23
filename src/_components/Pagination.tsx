@@ -68,13 +68,13 @@ export function Pagination({
 	const pageNumbers = getPageNumbers();
 
 	return (
-		<div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white border-t border-gray-200">
+		<div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white dark:bg-white/[0.04] border-t border-[rgba(22,163,74,0.06)] dark:border-white/8">
 			{/* Items per page selector */}
 			{showItemsPerPage && (
 				<div className="flex items-center gap-2">
 					<label
 						htmlFor="items-per-page"
-						className="text-sm text-gray-700"
+						className="text-sm text-gray-700 dark:text-white/70"
 					>
 						Rows per page:
 					</label>
@@ -95,7 +95,7 @@ export function Pagination({
 
 			{/* Page info */}
 			{showPageInfo && (
-				<div className="text-sm text-gray-700">
+				<div className="text-sm text-gray-700 dark:text-white/70">
 					Showing <span className="font-medium">{startItem}</span> to{" "}
 					<span className="font-medium">{endItem}</span> of{" "}
 					<span className="font-medium">{totalItems}</span> results
@@ -108,11 +108,11 @@ export function Pagination({
 				<button
 					onClick={() => onPageChange(1)}
 					disabled={currentPage === 1}
-					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+					className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
 					aria-label="First page"
 				>
 					<svg
-						className="w-5 h-5 text-gray-700"
+						className="w-5 h-5 text-gray-700 dark:text-white/70"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -130,11 +130,11 @@ export function Pagination({
 				<button
 					onClick={() => onPageChange(currentPage - 1)}
 					disabled={currentPage === 1}
-					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+					className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
 					aria-label="Previous page"
 				>
 					<svg
-						className="w-5 h-5 text-gray-700"
+						className="w-5 h-5 text-gray-700 dark:text-white/70"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -154,12 +154,12 @@ export function Pagination({
 						key={index}
 						onClick={() => typeof page === "number" && onPageChange(page)}
 						disabled={page === "..."}
-						className={`min-w-[2.5rem] px-3 py-2 text-sm rounded-md hover:bg-gray-100 cursor-pointer transition-colors ${
+						className={`min-w-[2.5rem] px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer transition-colors ${
 							page === currentPage
-								? "bg-green-100 text-green-700 font-medium"
+								? "bg-green-100 dark:bg-white/10 text-green-700 font-medium"
 								: page === "..."
 								? "cursor-default"
-								: "hover:text-gray-900 text-gray-700"
+								: "hover:text-gray-900 text-gray-700 dark:text-white/70"
 						}`}
 					>
 						{page}
@@ -170,11 +170,11 @@ export function Pagination({
 				<button
 					onClick={() => onPageChange(currentPage + 1)}
 					disabled={currentPage === totalPages}
-					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+					className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
 					aria-label="Next page"
 				>
 					<svg
-						className="w-5 h-5 text-gray-700"
+						className="w-5 h-5 text-gray-700 dark:text-white/70"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -192,11 +192,11 @@ export function Pagination({
 				<button
 					onClick={() => onPageChange(totalPages)}
 					disabled={currentPage === totalPages}
-					className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+					className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
 					aria-label="Last page"
 				>
 					<svg
-						className="w-5 h-5 text-gray-700"
+						className="w-5 h-5 text-gray-700 dark:text-white/70"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"

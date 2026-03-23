@@ -6,9 +6,11 @@ import {
 	clearCartAsync,
 	removeFromCartAsync,
 	updateQuantityAsync,
+	syncCartOnLoginAsync,
+	fetchCartAsync,
 } from "../actions/cart.action";
 
-const initialState: CartState = {
+const initialState: CartState & { cartId: number | null } = {
 	items: [],
 	total: 0,
 	loading: false,
@@ -19,6 +21,7 @@ const initialState: CartState = {
 	lastUpdated: null,
 	appliedCoupons: [],
 	discountAmount: 0,
+	cartId: null,
 };
 
 const cartSlice = createSlice({
@@ -169,6 +172,31 @@ const cartSlice = createSlice({
 			.addCase(clearCartAsync.rejected, (state, action) => {
 				state.loading = false;
 				state.error = action.payload as string;
+			});
+
+		// Fetch cart
+		builder
+			.addCase(fetchCartAsync.fulfilled, (state, action) => {
+				const cart = action.payload?.data;
+				if (cart?.id) {
+					state.cartId = cart.id;
+				}
+			});
+
+		// Sync cart on login
+		builder
+			.addCase(syncCartOnLoginAsync.pending, (state) => {
+				state.loading = true;
+			})
+			.addCase(syncCartOnLoginAsync.fulfilled, (state, action) => {
+				state.loading = false;
+				if (action.payload) {
+					state.cartId = action.payload.cartId;
+				}
+				state.lastUpdated = Date.now();
+			})
+			.addCase(syncCartOnLoginAsync.rejected, (state) => {
+				state.loading = false;
 			});
 	},
 });

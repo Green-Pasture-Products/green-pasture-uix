@@ -1,14 +1,26 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ShoppingCart, Search, User, Heart, LogOut } from "lucide-react";
+import {
+	ShoppingCart,
+	Search,
+	User,
+	Heart,
+	LogOut,
+	Menu,
+	X,
+	Sun,
+	Moon,
+} from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useRouter } from "next/router";
 import { logout } from "@/_redux/reducers/auth.reducer";
+import { logoutAsync } from "@/_redux/actions/auth.action";
 import { getBio } from "@/_redux/actions/user.action";
+import { useTheme } from "@/_hooks/useTheme";
 
 interface NavLink {
 	href: string;
@@ -26,184 +38,358 @@ const Navbar: React.FC = () => {
 	const router = useRouter();
 	const pathname = usePathname();
 	const dispatch = useAppDispatch();
+	const { toggleTheme, isDark } = useTheme();
+
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const userMenuRef = useRef<HTMLDivElement>(null);
+
 	const itemCount = useAppSelector((state) => state.cart.itemCount);
-	const { isAuthenticated } = useAppSelector((state) => state.auth);
-	const { bio } = useAppSelector((state) => state.user);
+	const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+	const bio = user; // Use auth.user directly instead of stale localforage bio
 	const wishlistCount = useAppSelector(
 		(state) => state.wishlist.wishlistItemCount
 	);
 
 	useEffect(() => {
-		dispatch(getBio());
+		// bio now comes from auth.user, no need to fetch from storage
+	}, []);
+
+	// Close user menu on outside click
+	useEffect(() => {
+		const handleClickOutside = (e: MouseEvent) => {
+			if (
+				userMenuRef.current &&
+				!userMenuRef.current.contains(e.target as Node)
+			) {
+				setIsUserMenuOpen(false);
+			}
+		};
+		document.addEventListener("mousedown", handleClickOutside);
+		return () =>
+			document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
 
 	const handleLogout = () => {
-		dispatch(logout());
-		router.push("/");
+		dispatch(logoutAsync())
+			.unwrap()
+			.catch(() => {})
+			.finally(() => {
+				dispatch(logout());
+				router.push("/login");
+			});
 	};
 
-	const isActive = (path: string) =>
-		pathname === path ? "text-green-600" : "text-gray-700";
+	const isActive = (path: string) => pathname === path;
 
 	return (
-		<header className="bg-white shadow-sm border-b border-green-100">
-			<div className="container page-wrapper mx-auto px-4">
-				<div className="flex items-center justify-between h-16 md:h-18">
-					<Link href="/" className="flex items-center space-x-2">
-						<div className="relative w-[2.2rem] aspect-square bg-transparent">
-							<Image
-								src="/images/GP Organic Logo (Primary).png"
-								alt="Green Pastures Logo"
-								height={100}
-								width={100}
-								priority
-								sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
-								className="object-contain"
-							/>
-						</div>
-						<span className="text-md md:text-lg hidden lg:inline-block font-bold text-green-800">
-							Green Pastures Organics
-						</span>
+		<header className="fixed top-0 left-0 right-0 z-50 h-16 md:h-[72px] bg-white/95 dark:bg-[#0e0e1a]/95 backdrop-blur-md shadow-elevation-1 dark:shadow-none border-b border-transparent dark:border-white/8 animate-header-enter">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-full">
+				{/* Left: Logo */}
+				<Link
+					href="/"
+					className="flex items-center gap-2.5 press-effect"
+				>
+					<div className="relative w-9 h-9 flex-shrink-0">
+						<Image
+							src="/images/GP Organic Logo (Primary).png"
+							alt="Green Pastures Logo"
+							height={100}
+							width={100}
+							priority
+							sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
+							className="object-contain"
+						/>
+					</div>
+					<span className="hidden lg:inline-block text-lg font-bold text-on-surface dark:text-white tracking-tight">
+						Green Pastures
+					</span>
+				</Link>
+
+				{/* Center: Nav Links (desktop) */}
+				<nav className="hidden md:flex gap-1">
+					{navLinks.map(({ href, label }) => (
+						<Link
+							key={href}
+							href={href}
+							className={`relative px-4 py-2 text-sm font-medium rounded-radius-md transition-colors duration-200 ${
+								isActive(href)
+									? "text-primary-600 dark:text-primary-400 font-semibold"
+									: "text-on-surface/70 dark:text-white/70 hover:text-on-surface dark:hover:text-white hover:bg-surface-variant/50 dark:hover:bg-white/5"
+							}`}
+						>
+							{label}
+							{isActive(href) && (
+								<span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-primary-600 dark:bg-primary-400 rounded-full" />
+							)}
+						</Link>
+					))}
+				</nav>
+
+				{/* Right: Actions */}
+				<div className="flex items-center gap-1 sm:gap-2">
+					{/* Theme Toggle */}
+					<button
+						onClick={toggleTheme}
+						className="p-2 rounded-radius-md text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect"
+						aria-label="Toggle theme"
+					>
+						{isDark ? (
+							<Sun className="h-5 w-5" />
+						) : (
+							<Moon className="h-5 w-5" />
+						)}
+					</button>
+
+					{/* Search */}
+					<Link
+						href="/search"
+						className={`p-2 rounded-radius-md transition-colors duration-200 press-effect ${
+							isActive("/search")
+								? "text-primary-600 dark:text-primary-400"
+								: "text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
+						}`}
+					>
+						<Search className="h-5 w-5" />
 					</Link>
 
-					<nav className="hidden md:flex space-x-8">
+					{/* Wishlist */}
+					<Link
+						href="/wishlist"
+						className={`relative p-2 rounded-radius-md transition-colors duration-200 press-effect ${
+							isActive("/wishlist")
+								? "text-primary-600 dark:text-primary-400"
+								: "text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
+						}`}
+					>
+						<Heart className="h-5 w-5" />
+						{wishlistCount > 0 && (
+							<span className="bg-primary-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5">
+								{wishlistCount}
+							</span>
+						)}
+					</Link>
+
+					{/* User Menu */}
+					{isAuthenticated && bio ? (
+						<div className="relative" ref={userMenuRef}>
+							<button
+								onClick={() =>
+									setIsUserMenuOpen(!isUserMenuOpen)
+								}
+								className="flex items-center gap-2 p-1.5 rounded-radius-md text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect"
+							>
+								<div className="w-8 h-8 rounded-full bg-primary-600 dark:bg-primary-500 text-white text-sm font-semibold flex items-center justify-center">
+									{bio.firstName?.charAt(0)?.toUpperCase() ||
+										"U"}
+								</div>
+								<span className="hidden sm:block text-sm font-medium text-on-surface dark:text-white/90">
+									{bio.firstName}
+								</span>
+							</button>
+
+							{isUserMenuOpen && (
+								<div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 py-1 z-50 animate-dropdown-enter">
+									<div className="break-all px-4 py-3 border-b border-outline-variant dark:border-white/8">
+										<p className="text-sm font-semibold text-on-surface dark:text-white">
+											{bio.firstName} {bio.lastName}
+										</p>
+										<p className="text-xs text-on-surface/50 dark:text-white/50 mt-0.5">
+											{bio.email}
+										</p>
+									</div>
+									<Link
+										href="/profile"
+										className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+										onClick={() =>
+											setIsUserMenuOpen(false)
+										}
+									>
+										<User className="h-4 w-4" />
+										Profile
+									</Link>
+									{["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(
+										bio?.profileType?.toUpperCase() || ""
+									) && (
+										<Link
+											href="/admin/dashboard"
+											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+											onClick={() =>
+												setIsUserMenuOpen(false)
+											}
+										>
+											<ShoppingCart className="h-4 w-4" />
+											Admin Dashboard
+										</Link>
+									)}
+									<div className="flex items-center justify-between px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70">
+										<span>Dark Mode</span>
+										<button
+											onClick={toggleTheme}
+											className="p-1 rounded-radius-sm hover:bg-surface-variant dark:hover:bg-white/10 transition-colors"
+										>
+											{isDark ? (
+												<Sun className="h-4 w-4" />
+											) : (
+												<Moon className="h-4 w-4" />
+											)}
+										</button>
+									</div>
+									<div className="border-t border-outline-variant dark:border-white/8 my-1" />
+									<button
+										onClick={() => {
+											handleLogout();
+											setIsUserMenuOpen(false);
+										}}
+										className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-error hover:bg-error/5 dark:hover:bg-error/10 transition-colors duration-150"
+									>
+										<LogOut className="h-4 w-4" />
+										Sign out
+									</button>
+								</div>
+							)}
+						</div>
+					) : (
+						<div className="relative" ref={userMenuRef}>
+							<button
+								onClick={() =>
+									setIsUserMenuOpen(!isUserMenuOpen)
+								}
+								className="p-2 rounded-radius-md text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect"
+							>
+								<User className="h-5 w-5" />
+							</button>
+
+							{isUserMenuOpen && (
+								<div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 py-1 z-50 animate-dropdown-enter">
+									<Link
+										href="/login"
+										className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+										onClick={() =>
+											setIsUserMenuOpen(false)
+										}
+									>
+										<User className="h-4 w-4" />
+										Login
+									</Link>
+								</div>
+							)}
+						</div>
+					)}
+
+					{/* Cart */}
+					<Link
+						href="/cart"
+						className={`relative p-2 rounded-radius-md transition-colors duration-200 press-effect ${
+							isActive("/cart")
+								? "text-primary-600 dark:text-primary-400"
+								: "text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
+						}`}
+					>
+						<ShoppingCart className="h-5 w-5" />
+						{itemCount > 0 && (
+							<span className="bg-primary-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5">
+								{itemCount}
+							</span>
+						)}
+					</Link>
+
+					{/* Mobile Hamburger */}
+					<button
+						onClick={() =>
+							setIsMobileMenuOpen(!isMobileMenuOpen)
+						}
+						className="md:hidden p-2 rounded-radius-md text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect"
+						aria-label="Toggle mobile menu"
+					>
+						{isMobileMenuOpen ? (
+							<X className="h-5 w-5" />
+						) : (
+							<Menu className="h-5 w-5" />
+						)}
+					</button>
+				</div>
+			</div>
+
+			{/* Mobile Menu Panel */}
+			{isMobileMenuOpen && (
+				<div className="md:hidden bg-white dark:bg-[#0e0e1a] border-t border-outline-variant dark:border-white/8 shadow-elevation-2 dark:shadow-none animate-dropdown-enter">
+					<div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
+						{/* Search Bar */}
+						<Link
+							href="/search"
+							className="flex items-center gap-3 px-3 py-2.5 rounded-radius-md text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+							onClick={() => setIsMobileMenuOpen(false)}
+						>
+							<Search className="h-5 w-5" />
+							<span className="text-sm font-medium">Search</span>
+						</Link>
+
+						<div className="border-t border-outline-variant dark:border-white/8 my-2" />
+
+						{/* Nav Links */}
 						{navLinks.map(({ href, label }) => (
 							<Link
 								key={href}
 								href={href}
-								className={`${isActive(
-									href
-								)} hover:text-green-600 transition-colors font-bold`}
+								className={`flex items-center px-3 py-2.5 rounded-radius-md text-sm font-medium transition-colors duration-150 ${
+									isActive(href)
+										? "text-primary-600 dark:text-primary-400 bg-primary-600/10 dark:bg-primary-400/10 font-semibold"
+										: "text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5"
+								}`}
+								onClick={() => setIsMobileMenuOpen(false)}
 							>
 								{label}
 							</Link>
 						))}
-					</nav>
 
-					<div
-						className={`flex items-center space-x-4 ${
-							pathname?.includes("/admin") && "ms-auto"
-						}`}
-					>
-						<Link
-							href="/search"
-							className={`${isActive(
-								"/search"
-							)} text-gray-700 hover:text-green-600 transition-colors`}
-						>
-							<Search className="h-6 w-6" />
-						</Link>
-						<Link
-							href="/wishlist"
-							className={`${isActive(
-								"/wishlist"
-							)} relative text-gray-700 hover:text-green-600 transition-colors`}
-						>
-							<Heart className="h-6 w-6" />
-							{wishlistCount > 0 && (
-								<span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-									{wishlistCount}
-								</span>
-							)}
-						</Link>
+						<div className="border-t border-outline-variant dark:border-white/8 my-2" />
+
+						{/* User actions */}
 						{isAuthenticated && bio ? (
-							<div className="relative">
-								<button
-									onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-									className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-colors"
-								>
-									<User className="h-6 w-6" />
-									<span className="hidden sm:block text-sm font-medium">
-										{bio.firstName}
-									</span>
-								</button>
-
-								{isUserMenuOpen && (
-									<div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-										<div className="break-all px-4 py-2 border-b border-gray-100">
-											<p className="text-sm font-medium text-gray-900">
-												{bio.firstName} {bio.lastName}
-											</p>
-											<p className="text-sm text-gray-500">
-												{bio.email}
-											</p>
-										</div>
-										<Link
-											href="/profile"
-											className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-											onClick={() => setIsUserMenuOpen(false)}
-										>
-											Profile
-										</Link>
-										{bio?.profileType === "admin" && (
-											<Link
-												href="/admin/orders"
-												className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-												onClick={() => setIsUserMenuOpen(false)}
-											>
-												Orders
-											</Link>
-										)}
-										<button
-											onClick={() => {
-												handleLogout();
-												setIsUserMenuOpen(false);
-											}}
-											className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-										>
-											<LogOut className="h-4 w-4 inline mr-2" />
-											Sign out
-										</button>
-									</div>
-								)}
-							</div>
-						) : (
 							<>
-								<div className="relative">
-									<button
-										onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-										className="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-colors"
-									>
-										<User className="h-6 w-6" />
-									</button>
-
-									{isUserMenuOpen && (
-										<div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-											<Link
-												href="/login"
-												className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-												onClick={() => setIsUserMenuOpen(false)}
-											>
-												Login
-											</Link>
-										</div>
-									)}
+								<div className="px-3 py-2">
+									<p className="text-sm font-semibold text-on-surface dark:text-white">
+										{bio.firstName} {bio.lastName}
+									</p>
+									<p className="text-xs text-on-surface/50 dark:text-white/50">
+										{bio.email}
+									</p>
 								</div>
-								{/* <Link
-								href="/login"
-								className="text-gray-700 hover:text-green-600 transition-colors"
-							>
-								<User className="h-6 w-6" />
-							</Link> */}
+								<Link
+									href="/profile"
+									className="flex items-center gap-3 px-3 py-2.5 rounded-radius-md text-sm text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+									onClick={() =>
+										setIsMobileMenuOpen(false)
+									}
+								>
+									<User className="h-4 w-4" />
+									Profile
+								</Link>
+								<button
+									onClick={() => {
+										handleLogout();
+										setIsMobileMenuOpen(false);
+									}}
+									className="flex items-center gap-3 w-full px-3 py-2.5 rounded-radius-md text-sm text-error hover:bg-error/5 transition-colors duration-150"
+								>
+									<LogOut className="h-4 w-4" />
+									Sign out
+								</button>
 							</>
+						) : (
+							<Link
+								href="/login"
+								className="flex items-center gap-3 px-3 py-2.5 rounded-radius-md text-sm text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+								onClick={() => setIsMobileMenuOpen(false)}
+							>
+								<User className="h-4 w-4" />
+								Login
+							</Link>
 						)}
-						<Link
-							href="/cart"
-							className={`${isActive(
-								"/cart"
-							)} relative text-gray-700 hover:text-green-600 transition-colors`}
-						>
-							<ShoppingCart className="h-6 w-6" />
-							{itemCount > 0 && (
-								<span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-									{itemCount}
-								</span>
-							)}
-						</Link>
 					</div>
 				</div>
-			</div>
+			)}
 		</header>
 	);
 };

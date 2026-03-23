@@ -1,55 +1,159 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import { ChevronLeft, ChevronRight, Sun, Moon } from "lucide-react";
 
 import { usePathname } from "next/navigation";
 import { sidebarNavigation } from "./routes";
+import { useTheme } from "@/_hooks/useTheme";
+import { useAppSelector } from "@/_redux/store";
 
-const Sidebar = () => {
+interface SidebarProps {
+	isCollapsed: boolean;
+	onToggle: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
 	const pathname = usePathname();
+	const { toggleTheme, isDark } = useTheme();
+	const { user } = useAppSelector((state) => state.auth);
 
 	return (
-		<aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg">
-			<div className="flex h-18 items-center px-6 border-b border-gray-200">
-				<div className="relative w-[2.2rem] aspect-square bg-transparent">
-					<Image
-						src="/images/GP Organic Logo (Primary).png"
-						alt="Green Pastures Logo"
-						height={100}
-						width={100}
-						priority
-						sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
-						className="object-contain"
-					/>
-				</div>
-				<span className="ml-2 text-xl font-bold text-gray-900">
-					Admin Panel
-				</span>
+		<aside className="bg-[#14532d] dark:bg-[#0e0e1a] h-full flex flex-col animate-sidebar-enter overflow-hidden">
+			{/* Header */}
+			<div className="flex items-center h-16 md:h-[72px] px-4 border-b border-white/10 flex-shrink-0">
+				{!isCollapsed && (
+					<Link
+						href="/admin/dashboard"
+						className="flex items-center gap-2.5 flex-1 min-w-0"
+					>
+						<div className="relative w-8 h-8 flex-shrink-0">
+							<Image
+								src="/images/GP Organic Logo (Primary).png"
+								alt="Green Pastures Logo"
+								height={100}
+								width={100}
+								priority
+								sizes="36px"
+								className="object-contain"
+							/>
+						</div>
+						<span className="text-base font-bold text-white truncate">
+							Admin Panel
+						</span>
+					</Link>
+				)}
+				<button
+					onClick={onToggle}
+					className={`p-2 rounded-radius-md text-white/50 hover:bg-white/5 hover:text-white transition-colors duration-200 press-effect flex-shrink-0 ${
+						isCollapsed ? "mx-auto" : "ml-auto"
+					}`}
+					aria-label={
+						isCollapsed ? "Expand sidebar" : "Collapse sidebar"
+					}
+				>
+					<div
+						className="transition-transform duration-300"
+						style={{
+							transform: isCollapsed
+								? "rotate(180deg)"
+								: "rotate(0deg)",
+						}}
+					>
+						<ChevronLeft className="h-5 w-5" />
+					</div>
+				</button>
 			</div>
 
-			<nav className="mt-6 px-3">
+			{/* Navigation */}
+			<nav className="flex-1 overflow-y-auto py-4">
 				<div className="space-y-1">
-					{sidebarNavigation?.map((item) => (
-						<Link
-							key={item.name}
-							href={item.href}
-							className={`group flex items-center px-3 py-2 my-4 text-sm font-medium rounded-md transition-colors ${
-								pathname === item.href
-									? "bg-green-100 text-green-700"
-									: "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-							}`}
-						>
-							<item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-							{item.name}
-							{/* {item.badge && item.badge > 0 && (
-									<span className="ml-auto bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded-full">
-										{item.badge}
+					{sidebarNavigation?.map((item) => {
+						const active =
+							pathname === item.href ||
+							pathname?.startsWith(item.href + "/");
+						return (
+							<Link
+								key={item.name}
+								href={item.href}
+								title={isCollapsed ? item.name : undefined}
+								className={`flex items-center gap-3 px-3 py-2.5 mx-2 rounded-radius-md transition-colors duration-200 relative ${
+									active
+										? "bg-white/10 text-white font-medium border-l-[3px] border-primary-400"
+										: "text-white/50 hover:bg-white/5 hover:text-white/90 border-l-[3px] border-transparent"
+								} ${isCollapsed ? "justify-center mx-1 px-2" : ""}`}
+							>
+								<item.icon
+									className={`h-5 w-5 flex-shrink-0 ${
+										active
+											? "text-primary-400"
+											: "text-white/50"
+									}`}
+								/>
+								{!isCollapsed && (
+									<span className="text-sm truncate">
+										{item.name}
 									</span>
-								)} */}
-						</Link>
-					))}
+								)}
+							</Link>
+						);
+					})}
 				</div>
 			</nav>
+
+			{/* Bottom Section */}
+			<div className="mt-auto border-t border-white/10 p-4 flex-shrink-0">
+				{isCollapsed ? (
+					<div className="flex flex-col items-center gap-3">
+						<div className="w-8 h-8 rounded-full bg-primary-600 text-white text-sm font-semibold flex items-center justify-center">
+							{user?.firstName?.charAt(0)?.toUpperCase() || "A"}
+						</div>
+						<button
+							onClick={toggleTheme}
+							className="p-2 rounded-radius-md text-white/50 hover:bg-white/5 hover:text-white transition-colors duration-200"
+							aria-label="Toggle theme"
+						>
+							{isDark ? (
+								<Sun className="h-4 w-4" />
+							) : (
+								<Moon className="h-4 w-4" />
+							)}
+						</button>
+					</div>
+				) : (
+					<div className="space-y-3">
+						<div className="flex items-center gap-3">
+							<div className="w-9 h-9 rounded-full bg-primary-600 text-white text-sm font-semibold flex items-center justify-center flex-shrink-0">
+								{user?.firstName?.charAt(0)?.toUpperCase() ||
+									"A"}
+							</div>
+							<div className="min-w-0">
+								<p className="text-sm font-medium text-white truncate">
+									{user?.firstName} {user?.lastName}
+								</p>
+								<p className="text-xs text-white/50 capitalize truncate">
+									{user?.profileType || "Admin"}
+								</p>
+							</div>
+						</div>
+						<button
+							onClick={toggleTheme}
+							className="flex items-center gap-3 w-full px-2 py-2 rounded-radius-md text-white/50 hover:bg-white/5 hover:text-white transition-colors duration-200 text-sm"
+						>
+							{isDark ? (
+								<Sun className="h-4 w-4" />
+							) : (
+								<Moon className="h-4 w-4" />
+							)}
+							<span>
+								{isDark ? "Light Mode" : "Dark Mode"}
+							</span>
+						</button>
+					</div>
+				)}
+			</div>
 		</aside>
 	);
 };

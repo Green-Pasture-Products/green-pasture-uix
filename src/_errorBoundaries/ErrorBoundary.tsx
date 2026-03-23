@@ -31,7 +31,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 				this.props.fallback || (
 					<div className="container mx-auto px-4 py-16 text-center">
 						<AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-						<h2 className="text-xl font-bold text-gray-800 mb-2">
+						<h2 className="text-xl font-bold text-gray-800 dark:text-white/90 mb-2">
 							Something went wrong
 						</h2>
 						<p className="text-gray-600 mb-4">
