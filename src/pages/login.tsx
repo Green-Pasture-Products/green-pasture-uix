@@ -59,6 +59,13 @@ const LoginPage: React.FC = () => {
 		// Redirect to home or previous page
 	}, [isAuthenticated]);
 
+	useEffect(() => {
+  // Wake up the server
+  		fetch("https://green-pasture-api.onrender.com/api/v1/health").catch(() => {});
+  		dispatch(clearError());
+  	dispatch(setLoading(false));
+	}, [dispatch]);
+
 	return (
 		<div className="min-h-screen bg-green-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
 			<div className="max-w-md w-full space-y-8">

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { appConstants } from "@/_redux/constants";
+import formidable from "formidable";
 
 const BACKEND_URL = appConstants.API_BASE_URL;
 
@@ -43,14 +44,23 @@ export default async function handler(
 				return res.status(401).json({ error: "No authorization header" });
 			}
 
+			const form = formidable()
+			const [fields] = await form.parse(req);
+
+			const formData = new FormData();
+			if (fields.productId?.[0]) formData.append("productId", String(Number(fields.productId[0])));
+			if (fields.name?.[0]) formData.append("name", fields.name[0]);
+			if (fields.price?.[0]) formData.append("price", String(parseFloat(fields.price[0])));
+			if (fields.unit?.[0]) formData.append("unit", String(parseInt(fields.unit[0])));
+			if (fields.description?.[0]) formData.append("description", fields.description[0]);
+
 			// Update product - backend uses PATCH at /items/:id
 			const response = await fetch(`${BACKEND_URL}items/${id}`, {
 				method: "PATCH",
 				headers: {
-					"Content-Type": "application/json",
 					"Authorization": authHeader,
 				},
-				body: JSON.stringify(req.body),
+				body: formData,
 			});
 
 			if (!response.ok) {
@@ -96,3 +106,9 @@ export default async function handler(
 			.json({ error: "Internal server error", details: String(error) });
 	}
 }
+
+export const config = {
+  api: {
+    bodyParser: false, // required for FormData
+  },
+};

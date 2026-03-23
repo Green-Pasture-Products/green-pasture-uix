@@ -12,18 +12,19 @@ const generateSessionKey = (): string => {
 	// - Random value generated on first load
 	const userAgent =
 		typeof window !== "undefined" ? window.navigator.userAgent : "";
-	const sessionId =
+	// Use localStorage instead of sessionStorage
+  // so key persists across page loads
+	let persistentId =
 		typeof window !== "undefined"
-			? sessionStorage.getItem("sessionId")
+			? localStorage.getItem("_session_key")
 			: null;
 
-	if (!sessionId && typeof window !== "undefined") {
-		const newSessionId = CryptoJS.lib.WordArray.random(16).toString();
-		sessionStorage.setItem("sessionId", newSessionId);
-		return `${newSessionId}-${userAgent}`;
+	if (!persistentId && typeof window !== "undefined") {
+		persistentId = CryptoJS.lib.WordArray.random(16).toString();
+		localStorage.setItem("_session_key", persistentId);
 	}
 
-	return `${sessionId}-${userAgent}`;
+	return `${persistentId}-${userAgent}`;
 };
 
 /**
@@ -177,6 +178,37 @@ export const secureTokenStorage = {
 			console.error("Error updating access token:", error);
 		}
 	},
+
+	refreshAccessToken: async (): Promise<string | null> => {
+    try {
+      const current = secureTokenStorage.getTokens();
+      if (!current?.refreshToken) return null;
+
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: current.refreshToken }),
+      });
+
+      if (!response.ok) {
+        secureTokenStorage.clearTokens();
+        return null;
+      }
+
+      const data = await response.json();
+      const newAccessToken = data?.data?.accessToken;
+
+      if (newAccessToken) {
+        secureTokenStorage.updateAccessToken(newAccessToken);
+        return newAccessToken;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Token refresh error:", error);
+      return null;
+    }
+  },
 };
 
 /**

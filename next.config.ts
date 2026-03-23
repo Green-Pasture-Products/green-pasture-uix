@@ -12,7 +12,11 @@ const nextConfig: NextConfig = {
 		ignoreBuildErrors: true, // 🚫 ignore TS errors during build
 	},
 	images: {
-		domains: ["images.unsplash.com", "unsplash.com", "res.cloudinary.com"],
+		remotePatterns: [
+			{ protocol: "https", hostname: "images.unsplash.com"},
+			{ protocol: "https", hostname: "unsplash.com"},
+			{ protocol: "https", hostname: "res.cloudinary.com"},
+		],
 	},
 	webpack(config, { dev }) {
 		if (!dev && config.optimization?.minimizer) {

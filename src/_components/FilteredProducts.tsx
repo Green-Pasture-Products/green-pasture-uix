@@ -184,7 +184,7 @@ const FilteredProducts: React.FC = () => {
 																	key={i}
 																	className={`text-sm ${
 																		i <
-																		Math.floor(product.rating)
+																		Math.floor(product.rating ?? 0)
 																			? "text-yellow-400"
 																			: "text-gray-300"
 																	}`}
@@ -194,7 +194,7 @@ const FilteredProducts: React.FC = () => {
 															))}
 														</div>
 														<span className="text-sm text-gray-500">
-															({product.reviews})
+															({product.reviews ?? 0})
 														</span>
 													</div>
 													{/* {product.organic && (

@@ -78,14 +78,21 @@ const AdminProducts: React.FC = () => {
 		{
 			key: "name",
 			header: "Name",
-			render: (value: string | number, row: Product) => {
+			render: (value: string | number, row: any) => {
+				const imageUrl = row?.photos?.[0]?.url ?? null;
 				return (
 					<div className="flex items-center">
-						<img
-							className="h-10 w-10 rounded-md object-cover"
-							src={row.image}
-							alt={row.name}
-						/>
+						{imageUrl ? ( // only render img if URL exists
+        				<img
+          					className="h-10 w-10 rounded-md object-cover"
+          					src={imageUrl}
+          					alt={row.name}
+        				/>
+      				) : (
+        				<div className="h-10 w-10 rounded-md bg-gray-200 flex items-center justify-center">
+          					<span className="text-xs text-gray-400">N/A</span>
+        				</div>
+      				)}
 						<div className="ml-4">
 							<div className="text-sm font-medium text-gray-900">
 								{row.name}
@@ -98,10 +105,16 @@ const AdminProducts: React.FC = () => {
 		{
 			key: "category",
 			header: "Category",
+			render: (value: string | number, row: any) => {
+				return <div>{row.product?.name ?? row.category ?? "—"}</div>;
+			}
 		},
 		{
 			key: "quantity",
 			header: "Quantity",
+			render: (value: string | number, row: Product) => {
+				return <div>{row.quantity ?? row.unit ?? 0}</div>;
+			}
 		},
 		{
 			key: "price",
@@ -109,12 +122,7 @@ const AdminProducts: React.FC = () => {
 			render: (value: string | number, row: Product) => {
 				return (
 					<div className="flex flex-col">
-						₦{row.price.toLocaleString()}
-						{row.originalPrice && (
-							<span className="ml-2 text-xs text-red-300 line-through">
-								₦{row.originalPrice.toLocaleString()}
-							</span>
-						)}
+						₦{row.price.toLocaleString() ?? 0}
 					</div>
 				);
 			},
@@ -123,6 +131,7 @@ const AdminProducts: React.FC = () => {
 			key: "inStock",
 			header: "Stock",
 			render: (value: string | number, row: Product) => {
+				const inStock = (row.quantity ?? row.unit ?? 0) > 0;
 				return (
 					<span
 						className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -131,7 +140,7 @@ const AdminProducts: React.FC = () => {
 								: "bg-red-100 text-red-800"
 						}`}
 					>
-						{row.inStock ? "In Stock" : "Out of Stock"}
+						{inStock ? "In Stock" : "Out of Stock"}
 					</span>
 				);
 			},
@@ -142,7 +151,7 @@ const AdminProducts: React.FC = () => {
 			render: (value: string | number, row: Product) => {
 				return (
 					<span>
-						{row.rating.toFixed(1)} ({row.reviews})
+						{row.rating ? row.rating.toFixed(1) : "0.0"} ({row.reviews ?? 0})
 					</span>
 				);
 			},

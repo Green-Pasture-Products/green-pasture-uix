@@ -9,73 +9,84 @@ export const filterAndSortProducts = (
 ): Product[] => {
 	let filtered = products?.filter((product) => {
 		// Text search
-		const matchesQuery =
-			!query ||
-			query.trim() === "" ||
-			product.name.toLowerCase().includes(query.toLowerCase()) ||
-			product.description.toLowerCase().includes(query.toLowerCase()) ||
-			product.category.toLowerCase().includes(query.toLowerCase());
+		  const matchesQuery =
+      !query ||
+      query.trim() === "" ||
+      product.name?.toLowerCase().includes(query.toLowerCase()) ||
+      product.description?.toLowerCase().includes(query.toLowerCase()) || // ✅ optional chaining
+      product.category?.toLowerCase().includes(query.toLowerCase()); // ✅ optional chaining
 
-		// Category filter
-		const matchesCategory =
-			filters?.category === "All" || product?.category === filters?.category;
+    // Category filter
+    const matchesCategory =
+      filters?.category === "All" || 
+      product?.category === filters?.category;
 
-		// Price range filter
-		const matchesPrice =
-			product?.price >= filters?.priceRange[0] &&
-			product?.price <= filters?.priceRange[1];
+    // Price range filter
+    const matchesPrice =
+      (product?.price ?? 0) >= (filters?.priceRange?.[0] ?? 0) &&
+      (product?.price ?? 0) <= (filters?.priceRange?.[1] ?? Infinity); // ✅ safe fallbacks
 
-		// Stock filter
-		const matchesStock = !filters?.inStockOnly || product.inStock;
+    // Stock filter
+    const inStock = (product as any)?.unit > 0 || product?.inStock; // ✅ check unit too
+    const matchesStock = !filters?.inStockOnly || inStock;
 
-		// Rating filter
-		const matchesRating =
-			filters?.rating === 0 || product.rating >= filters?.rating;
+    // Rating filter
+    const rating = (product as any)?.ratingStats?.average ?? product?.rating ?? 0; // ✅ backend shape
+    const matchesRating =
+      filters?.rating === 0 || rating >= filters?.rating;
 
-		const passes =
-			matchesQuery &&
-			matchesCategory &&
-			matchesPrice &&
-			matchesStock &&
-			matchesRating;
+    return matchesQuery && matchesCategory && matchesPrice && matchesStock && matchesRating;
+  });
 
-		// Debug individual product filtering
-		if (query && product.name.toLowerCase().includes(query.toLowerCase())) {
-			logger.log("Product filter result:", {
-				product: product.name,
-				matchesQuery,
-				matchesCategory,
-				matchesPrice: `${product.price} in [${filters.priceRange[0]}, ${filters.priceRange[1]}] = ${matchesPrice}`,
-				matchesStock,
-				matchesRating,
-				passes,
-			});
-		}
+  logger.log("Filtered results:", filtered?.length);
 
-		return passes;
-	});
+		
+	// 	const passes =
+	// 		matchesQuery &&
+	// 		matchesCategory &&
+	// 		matchesPrice &&
+	// 		matchesStock &&
+	// 		matchesRating;
 
-	logger.log("Filtered results:", filtered?.length);
+	// 	// Debug individual product filtering
+	// 	if (query && product.name.toLowerCase().includes(query.toLowerCase())) {
+	// 		logger.log("Product filter result:", {
+	// 			product: product.name,
+	// 			matchesQuery,
+	// 			matchesCategory,
+	// 			matchesPrice: `${product.price} in [${filters.priceRange[0]}, ${filters.priceRange[1]}] = ${matchesPrice}`,
+	// 			matchesStock,
+	// 			matchesRating,
+	// 			passes,
+	// 		});
+	// 	}
+
+	// 	return passes;
+	// });
+
+	//logger.log("Filtered results:", filtered?.length);
 
 	// Sort products
 	switch (filters?.sortBy) {
-		case "price-low":
-			filtered?.sort((a, b) => a.price - b.price);
-			break;
-		case "price-high":
-			filtered?.sort((a, b) => b.price - a.price);
-			break;
-		case "rating":
-			filtered?.sort((a, b) => b.rating - a.rating);
-			break;
-		case "newest":
-			filtered?.sort((a, b) => parseInt(b.id) - parseInt(a.id));
-			break;
-		case "name":
-		default:
-			// filtered?.sort((a, b) => a.name.localeCompare(b.name));
-			break;
-	}
+    case "price-low":
+      filtered?.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+      break;
+    case "price-high":
+      filtered?.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+      break;
+    case "rating":
+      filtered?.sort((a, b) => {
+        const ratingA = (a as any)?.ratingStats?.average ?? a?.rating ?? 0;
+        const ratingB = (b as any)?.ratingStats?.average ?? b?.rating ?? 0;
+        return ratingB - ratingA;
+      });
+      break;
+    case "newest":
+      filtered?.sort((a, b) => parseInt(String(b.id)) - parseInt(String(a.id)));
+      break;
+    default:
+      break;
+  }
 
-	return filtered;
+  return filtered;
 };

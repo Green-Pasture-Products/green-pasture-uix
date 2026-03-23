@@ -6,7 +6,8 @@ import { categories } from "../constants/categories.constant";
 const initialState: ProductsState = {
 	isFetchingAllProducts: false,
 	isFetchingProduct: false,
-	products: [],
+	products: [], // items from /api/items
+	categoryProducts: [], // categories from /api/products
 	product: null,
 	categories: categories.ALL_CATEGORIES,
 	selectedCategory: "All",
@@ -21,11 +22,19 @@ const productsSlice = createSlice({
 			state.products.unshift(action.payload);
 		},
 		updateProduct: (state, action: PayloadAction<Product>) => {
-			const index = state.products.findIndex(p => p.id === action.payload.id);
-			if (index !== -1) {
-				state.products[index] = action.payload;
-			}
-		},
+  console.log("updating product:", action.payload.id, typeof action.payload.id);
+  console.log("products ids:", state.products.map(p => `${p.id} (${typeof p.id})`));
+  
+  const index = state.products.findIndex(
+    p => String(p.id) === String(action.payload.id)
+  );
+  
+  console.log("found index:", index);
+  
+  if (index !== -1) {
+    state.products[index] = action.payload;
+  }
+},
 		setSelectedCategory: (state, action) => {
 			state.selectedCategory = action.payload;
 		},
@@ -47,7 +56,12 @@ const productsSlice = createSlice({
 			)
 			.addCase(productsAction.fetchAllProducts.rejected, (state) => {
 				state.isFetchingAllProducts = false;
-			});
+			})
+			.addCase(productsAction.fetchAllCategories.fulfilled,
+  				(state, action: PayloadAction<Product[]>) => {
+   				state.categoryProducts = action.payload.filter(p => p != null); // ✅ filter nulls
+  }
+);
 	},
 });
 

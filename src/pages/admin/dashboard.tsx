@@ -60,9 +60,13 @@ const AdminDashboard: React.FC = () => {
 		);
 	});
 
+	const { isAuthenticated } = useAppSelector((state) => state.auth);
+	
 	useEffect(() => {
-		dispatch(productsAction.fetchAllProducts());
-	}, []);
+		if (isAuthenticated) {
+			dispatch(productsAction.fetchAllProducts());
+		}
+	}, [isAuthenticated]);
 
 	const filteredOrders = orders?.filter((order) => {
 		const matchesStatus =
@@ -79,10 +83,10 @@ const AdminDashboard: React.FC = () => {
 		return matchesStatus && matchesSearch;
 	});
 
-	const topSellingCategories = products?.reduce((acc: any, product) => {
-		acc[product.category] = (acc[product.category] || 0) + 1;
-		return acc;
-	}, {});
+	const topSellingCategories = products?.filter(p => p != null)?.reduce((acc: any, product) => {
+  		acc[product.category] = (acc[product.category] || 0) + 1;
+  		return acc;
+		}, {});
 
 	const categoryData = Object.entries(topSellingCategories).map(
 		([category, count]) => ({

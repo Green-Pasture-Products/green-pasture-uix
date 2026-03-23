@@ -21,20 +21,27 @@ export interface UpdateCategoryPayload {
   description: string;
 }
 
+export interface ItemPhoto {
+  id: number;
+  url: string;
+  publicId: string;
+}
 
 export interface Product {
 	id: string;
 	name: string;
 	price: number;
-	originalPrice?: number;
+	//originalPrice?: number;
 	image: string;
 	images?: string[];
+	photos?: ItemPhoto[];
 	category: string;
 	description: string;
-	quantity: number;
+	quantity?: number;
+	unit?: number;
 	inStock: boolean;
-	rating: number;
-	reviews: number;
+	rating?: number;
+	reviews?: number;
 }
 
 export interface CategoriesState {
@@ -56,6 +63,7 @@ export interface ProductsState {
 	isFetchingProduct: boolean;
 	products: Product[];
 	product: Product | null;
+	categoryProducts: Product[];
 	categories: string[];
 	selectedCategory: string;
 	searchTerm: string;
