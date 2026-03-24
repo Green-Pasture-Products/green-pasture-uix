@@ -42,7 +42,7 @@ const AddProduct: React.FC<{
 		control,
 		formState: { errors },
 	} = useForm<FormData>({
-		resolver: zodResolver(schema),
+		resolver: zodResolver(schema) as any,
 		defaultValues: { unit: 0, price: 0 },
 	});
 

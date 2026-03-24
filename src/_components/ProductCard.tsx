@@ -7,6 +7,7 @@ import { Star, ShoppingCart, Heart, XCircle, Trash2, Check } from "lucide-react"
 import { Product } from "../types";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import { useCurrency } from "@/_hooks/useCurrency";
 import { addToCart, removeFromCart } from "@/_redux/reducers/cart.reducer";
 import Link from "next/link";
 import {
@@ -19,9 +20,14 @@ interface ProductCardProps {
 	product: Product;
 }
 
+const ADMIN_ROLES = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"];
+
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const pathname = usePathname();
 	const dispatch = useAppDispatch();
+	const { formatPrice } = useCurrency();
+	const { user } = useAppSelector((state) => state.auth);
+	const isAdmin = ADMIN_ROLES.includes(user?.profileType?.toUpperCase() || "");
 	const isWishlistPage = pathname === "/wishlist";
 	const cartItems = useAppSelector((state) => state.cart.items);
 	const isInCart = cartItems.some((item) => item.id === product.id);
@@ -207,17 +213,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 				{/* Price */}
 				<div className="flex items-baseline gap-2 mb-3">
 					<span className="text-lg font-bold tabular-nums" style={{ color: "var(--color-primary)" }}>
-						₦{price.toLocaleString()}
+						{formatPrice(price)}
 					</span>
 					{originalPrice && originalPrice > price && (
 						<span className="text-xs line-through tabular-nums" style={{ color: "var(--text-disabled)" }}>
-							₦{originalPrice.toLocaleString()}
+							{formatPrice(originalPrice)}
 						</span>
 					)}
 				</div>
 
-				{/* Add to Cart */}
+				{/* Actions */}
 				<div className="flex gap-2">
+					{isAdmin ? (
+						<Link
+							href={`/product/${product.id}`}
+							className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all"
+							style={{ border: "1px solid var(--border-light)", color: "var(--text-secondary)" }}
+							onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-low)"; }}
+							onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+						>
+							View Details
+						</Link>
+					) : (
 					<AnimatePresence mode="wait">
 						{justAdded ? (
 							<motion.div
@@ -255,7 +272,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 								disabled={!inStock}
 								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
 								style={{ background: "var(--color-primary)" }}
-								whileHover={{ brightness: 1.1 }}
+								whileHover={{ scale: 1.02 }}
 								whileTap={{ scale: 0.95 }}
 							>
 								<ShoppingCart className="h-3.5 w-3.5" />
@@ -263,8 +280,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 							</motion.button>
 						)}
 					</AnimatePresence>
+					)}
 
-					{isWishlistPage && (
+					{isWishlistPage && !isAdmin && (
 						<motion.button
 							onClick={() => dispatch(removeFromWishlist(product.id))}
 							className="p-2 rounded-lg cursor-pointer"

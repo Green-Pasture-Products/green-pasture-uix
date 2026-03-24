@@ -38,6 +38,7 @@ import {
 import Link from "next/link";
 
 import AdminLayout from "@/_components/AdminLayout";
+import PageLoader from "@/_UI/PageLoader";
 import { useAppDispatch } from "@/_redux/store";
 import { analyticsAction } from "@/_redux/actions/analytics.action";
 import { DataTable, Column } from "@/_UI/DataTable";
@@ -158,12 +159,7 @@ const AdminDashboard: React.FC = () => {
 	if (loading) {
 		return (
 			<AdminLayout>
-				<div className="animate-page-enter space-y-4">
-					<div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-						{[0, 1, 2, 3].map((i) => <div key={i} className={`${CARD} p-5`}><Skeleton className="h-4 w-20 mb-4" /><Skeleton className="h-7 w-16" /></div>)}
-					</div>
-					<div className={`${CARD} p-6`}><Skeleton className="h-[280px]" /></div>
-				</div>
+				<PageLoader fullScreen={false} message="Loading dashboard..." />
 			</AdminLayout>
 		);
 	}

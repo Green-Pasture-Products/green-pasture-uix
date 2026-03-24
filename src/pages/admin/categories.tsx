@@ -69,8 +69,9 @@ const AdminCategories: React.FC = () => {
 		{
 			key: "name",
 			header: "Name",
+			width: "200px",
 			render: (_value: any, row: ProductCategory) => (
-				<span className="text-sm font-medium text-on-surface dark:text-white">
+				<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
 					{row.name}
 				</span>
 			),
@@ -78,8 +79,10 @@ const AdminCategories: React.FC = () => {
 		{
 			key: "description",
 			header: "Description",
+			maxWidth: "400px",
+			truncate: true,
 			render: (_value: any, row: ProductCategory) => (
-				<span className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>
 					{row.description}
 				</span>
 			),

@@ -8,8 +8,10 @@ export type Column<T> = {
 	header: string;
 	render?: (value: any, row: T, index: number) => React.ReactNode;
 	width?: string;
+	maxWidth?: string;
 	align?: "left" | "center" | "right";
 	hidden?: boolean;
+	truncate?: boolean;
 };
 
 export interface FilterDef {
@@ -42,6 +44,7 @@ interface DataTableProps<T> {
 	emptyMessage?: string;
 	emptyDescription?: string;
 	className?: string;
+	showSN?: boolean;
 
 	// Legacy compat props
 	currentPage?: number;
@@ -50,8 +53,16 @@ interface DataTableProps<T> {
 
 // ── Skeleton Row ──
 
-const SkeletonRow: React.FC<{ cols: number }> = ({ cols }) => (
+const SkeletonRow: React.FC<{ cols: number; showSN?: boolean }> = ({ cols, showSN }) => (
 	<tr style={{ borderBottom: "1px solid var(--border-light)" }}>
+		{showSN && (
+			<td className="px-4 py-4" style={{ width: 52 }}>
+				<div
+					className="h-3.5 w-5 rounded-full animate-pulse"
+					style={{ background: "var(--surface-medium)" }}
+				/>
+			</td>
+		)}
 		{Array.from({ length: cols }).map((_, i) => (
 			<td key={i} className="px-4 py-4">
 				<div
@@ -119,6 +130,7 @@ export function DataTable<T extends Record<string, any>>({
 	emptyMessage = "No data found",
 	emptyDescription,
 	className = "",
+	showSN = true,
 	currentPage: legacyCurrentPage,
 	totalPages: legacyTotalPages,
 }: DataTableProps<T>) {
@@ -359,7 +371,7 @@ export function DataTable<T extends Record<string, any>>({
 
 			{/* ── Table ── */}
 			<div className="overflow-x-auto">
-				<table className="w-full">
+				<table className="w-full" style={{ tableLayout: "fixed" }}>
 					<thead>
 						<tr
 							style={{
@@ -367,6 +379,17 @@ export function DataTable<T extends Record<string, any>>({
 								borderBottom: "1px solid var(--border-light)",
 							}}
 						>
+							{showSN && (
+								<th
+									className="px-4 py-3.5 text-[0.65rem] font-semibold uppercase tracking-wider whitespace-nowrap text-left"
+									style={{
+										color: "var(--text-hint)",
+										width: 52,
+									}}
+								>
+									S/N
+								</th>
+							)}
 							{visibleColumns.map((col) => (
 								<th
 									key={String(col.key)}
@@ -380,6 +403,7 @@ export function DataTable<T extends Record<string, any>>({
 									style={{
 										color: "var(--text-hint)",
 										width: col.width,
+										maxWidth: col.maxWidth,
 									}}
 								>
 									{col.header}
@@ -393,12 +417,13 @@ export function DataTable<T extends Record<string, any>>({
 								<SkeletonRow
 									key={i}
 									cols={visibleColumns.length}
+									showSN={showSN}
 								/>
 							))
 						) : displayData.length === 0 ? (
 							<tr>
 								<td
-									colSpan={visibleColumns.length}
+									colSpan={visibleColumns.length + (showSN ? 1 : 0)}
 									className="px-6 py-16 text-center"
 								>
 									<div className="flex flex-col items-center">
@@ -461,15 +486,27 @@ export function DataTable<T extends Record<string, any>>({
 												: "var(--surface-low)";
 									}}
 								>
+									{showSN && (
+										<td
+											className="px-4 py-3.5 text-[0.8rem] tabular-nums"
+											style={{
+												color: "var(--text-hint)",
+												width: 52,
+											}}
+										>
+											{startItem + rowIndex}
+										</td>
+									)}
 									{visibleColumns.map((col) => {
 										const val = getValue(
 											row,
 											String(col.key)
 										);
+										const shouldTruncate = col.truncate !== false && (col.maxWidth || col.truncate);
 										return (
 											<td
 												key={String(col.key)}
-												className={`px-4 py-3.5 text-[0.8rem] whitespace-nowrap ${
+												className={`px-4 py-3.5 text-[0.8rem] ${
 													col.align === "center"
 														? "text-center"
 														: col.align ===
@@ -479,7 +516,16 @@ export function DataTable<T extends Record<string, any>>({
 												}`}
 												style={{
 													color: "var(--text-primary)",
+													maxWidth: col.maxWidth,
+													...(shouldTruncate
+														? {
+																overflow: "hidden",
+																textOverflow: "ellipsis",
+																whiteSpace: "nowrap",
+															}
+														: {}),
 												}}
+												title={shouldTruncate ? String(val ?? "") : undefined}
 											>
 												{col.render
 													? col.render(

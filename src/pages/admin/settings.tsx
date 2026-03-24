@@ -4,12 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
 import withAdminAuth from "@/_components/withAdminAuth";
-import { Store, User, Shield, Loader2 } from "lucide-react";
+import { Store, User, Shield } from "lucide-react";
 
 import { useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
 import axiosInstance from "@/_utils/axiosInstance";
 import { FormInput, FormActions } from "@/_UI/FormField";
+import PageLoader from "@/_UI/PageLoader";
 
 // ── Schemas ──
 
@@ -176,9 +177,7 @@ const AdminSettings: React.FC = () => {
 	if (loading) {
 		return (
 			<AdminLayout>
-				<div className="flex items-center justify-center h-64">
-					<Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--color-primary)" }} />
-				</div>
+				<PageLoader fullScreen={false} message="Loading settings..." />
 			</AdminLayout>
 		);
 	}

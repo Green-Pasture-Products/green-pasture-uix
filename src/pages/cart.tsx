@@ -13,6 +13,10 @@ import {
 	AlertTriangle,
 	RefreshCw,
 	ArrowLeft,
+	ShieldCheck,
+	Truck,
+	Lock,
+	X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
@@ -23,30 +27,95 @@ import {
 import { appConstants } from "@/_redux/constants";
 import Image from "next/image";
 import Layout from "@/_components/Layout";
+import PageLoader from "@/_UI/PageLoader";
 import { useCartOperations } from "@/_hooks/useCart";
-import { CartItemSkeleton } from "@/_skeletonLoading/CartItemSkeleton";
-import Card from "@/_UI/Card";
-import Badge from "@/_UI/Badge";
-import Button from "@/_UI/Button";
-import EmptyState from "@/_UI/EmptyState";
+
+const itemVariants = {
+	hidden: { opacity: 0, y: 20 },
+	visible: (i: number) => ({
+		opacity: 1,
+		y: 0,
+		transition: {
+			delay: i * 0.08,
+			duration: 0.4,
+			ease: [0.25, 0.46, 0.45, 0.94] as const,
+		},
+	}),
+	exit: {
+		x: -100,
+		opacity: 0,
+		height: 0,
+		marginBottom: 0,
+		paddingTop: 0,
+		paddingBottom: 0,
+		transition: { duration: 0.35, ease: "easeInOut" as const },
+	},
+};
+
+const fadeUp = {
+	hidden: { opacity: 0, y: 12 },
+	visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
+};
 
 const CartPage: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const { items, total, itemCount, loading, error } = useAppSelector(
 		(state) => state.cart
 	);
+	const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+	const isAdmin = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(user?.profileType?.toUpperCase() || "");
 	const { handleQuantityChange, handleRemoveItem, isUpdating, errors } =
 		useCartOperations();
 
 	const [isClearing, setIsClearing] = useState(false);
 	const [showClearConfirm, setShowClearConfirm] = useState(false);
+	const [syncing, setSyncing] = useState(false);
+	const [storeConfig, setStoreConfig] = useState<any>(null);
+
+	// Fetch store settings + sync cart on page load
+	useEffect(() => {
+		const init = async () => {
+			setSyncing(true);
+			try {
+				const axiosInstance = (await import("@/_utils/axiosInstance")).default;
+
+				// Fetch store settings (tax, shipping, thresholds)
+				try {
+					const storeRes = await axiosInstance.get("store/settings");
+					setStoreConfig(storeRes.data?.data);
+				} catch {
+					// Store settings not available — use defaults
+				}
+
+				// Sync cart with backend if authenticated
+				if (isAuthenticated) {
+					try {
+						const customerRes = await axiosInstance.get("customers/me");
+						const customerId = customerRes.data?.data?.id;
+						if (customerId) {
+							const { syncCartOnLoginAsync } = await import("@/_redux/actions/cart.action");
+							await dispatch(syncCartOnLoginAsync({ customerId }) as any);
+						}
+					} catch {
+						// Customer may not exist — keep local cart
+					}
+				}
+			} finally {
+				setSyncing(false);
+			}
+		};
+		init();
+	}, [isAuthenticated, dispatch]);
+
+	// Server-driven values with fallbacks
+	const taxRate = storeConfig?.orderSettings?.taxRate ?? 0.08;
+	const freeShippingThreshold = storeConfig?.orderSettings?.freeShippingThreshold ?? appConstants.FREE_SHIPPING_THRESHOLD;
+	const shippingFee = storeConfig?.shippingConfig?.methods?.[0]?.baseCost ?? appConstants.SHIPPING_FEE;
+	const defaultCurrency = storeConfig?.orderSettings?.defaultCurrency ?? "NGN";
 
 	const calculations = useMemo(() => {
 		const subtotal = total || 0;
-		const freeShippingThreshold = appConstants.FREE_SHIPPING_THRESHOLD;
-		const shipping =
-			subtotal > freeShippingThreshold ? 0 : appConstants.SHIPPING_FEE;
-		const taxRate = 0.08;
+		const shipping = subtotal > freeShippingThreshold ? 0 : shippingFee;
 		const tax = Math.round(subtotal * taxRate);
 		const finalTotal = subtotal + shipping + tax;
 		const remainingForFreeShipping = Math.max(
@@ -58,12 +127,13 @@ const CartPage: React.FC = () => {
 			subtotal,
 			shipping,
 			tax,
+			taxRate,
 			finalTotal,
 			freeShippingThreshold,
 			remainingForFreeShipping,
 			hasQualifiedForFreeShipping: subtotal > freeShippingThreshold,
 		};
-	}, [total]);
+	}, [total, taxRate, freeShippingThreshold, shippingFee]);
 
 	useEffect(() => {
 		if (itemCount !== undefined) {
@@ -90,164 +160,539 @@ const CartPage: React.FC = () => {
 		}
 	}, [dispatch, showClearConfirm]);
 
+	const getItemImage = (item: any): string => {
+		return (item as any).photos?.[0]?.url || item.image || "";
+	};
+
+	const isItemInStock = (item: any): boolean => {
+		return (item as any).unit > 0 || item.inStock;
+	};
+
+	const shippingProgress = useMemo(() => {
+		if (!calculations) return 0;
+		return Math.min(
+			100,
+			(calculations.subtotal / calculations.freeShippingThreshold) * 100
+		);
+	}, [calculations]);
+
+	// --- Loading State ---
 	if (loading) {
 		return (
 			<Layout>
-				<div className="container page-wrapper mx-auto px-4 py-8">
-					<div className="flex items-center justify-between mb-8">
-						<div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-radius-md w-64 animate-pulse" />
-						<div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-radius-md w-24 animate-pulse" />
-					</div>
-					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-						<div className="lg:col-span-2">
-							<Card elevation={1} padding="none">
-								{[1, 2, 3].map((i) => (
-									<CartItemSkeleton key={i} />
-								))}
-							</Card>
-						</div>
-					</div>
-				</div>
+				<PageLoader fullScreen={false} message="Loading your cart..." />
 			</Layout>
 		);
 	}
 
+	// --- Error State ---
 	if (error) {
 		return (
 			<Layout>
-				<div className="container mx-auto px-4 py-16 text-center">
-					<AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-					<h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+				<div className="page-wrapper py-16 text-center">
+					<div
+						style={{
+							width: "80px",
+							height: "80px",
+							borderRadius: "50%",
+							backgroundColor: "rgba(239, 68, 68, 0.1)",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							margin: "0 auto 1.5rem",
+						}}
+					>
+						<AlertTriangle style={{ width: "36px", height: "36px", color: "#ef4444" }} />
+					</div>
+					<h2
+						style={{
+							fontSize: "1.25rem",
+							fontWeight: 700,
+							color: "var(--text-primary)",
+							marginBottom: "0.5rem",
+						}}
+					>
 						Unable to load your cart
 					</h2>
-					<p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
-					<Button
-						variant="filled"
-						color="error"
-						leftIcon={RefreshCw}
-						onClick={() => window.location.reload()}
+					<p
+						style={{
+							color: "var(--text-secondary)",
+							marginBottom: "1.5rem",
+						}}
 					>
+						{error}
+					</p>
+					<button
+						onClick={() => window.location.reload()}
+						className="press-effect"
+						style={{
+							display: "inline-flex",
+							alignItems: "center",
+							gap: "0.5rem",
+							padding: "0.75rem 1.5rem",
+							backgroundColor: "#ef4444",
+							color: "#fff",
+							border: "none",
+							borderRadius: "12px",
+							fontWeight: 600,
+							fontSize: "0.875rem",
+							cursor: "pointer",
+							transition: "transform 0.15s ease, box-shadow 0.15s ease",
+						}}
+					>
+						<RefreshCw style={{ width: "16px", height: "16px" }} />
 						Try Again
-					</Button>
+					</button>
 				</div>
 			</Layout>
 		);
 	}
 
+	// --- Admin users can't shop ---
+	if (isAdmin) {
+		return (
+			<Layout>
+				<div className="page-wrapper py-16 md:py-24">
+					<div
+						className="max-w-md mx-auto text-center rounded-xl p-12"
+						style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}
+					>
+						<ShoppingBag className="h-16 w-16 mx-auto mb-4" style={{ color: "var(--text-disabled)" }} />
+						<h2 className="text-xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>
+							Admin Account
+						</h2>
+						<p className="text-sm mb-6" style={{ color: "var(--text-hint)" }}>
+							Shopping is only available for customer accounts. Switch to a customer account to browse and purchase products.
+						</p>
+						<Link
+							href="/products"
+							className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
+							style={{ border: "1px solid var(--border-medium)", color: "var(--text-secondary)" }}
+						>
+							Browse Products
+						</Link>
+					</div>
+				</div>
+			</Layout>
+		);
+	}
+
+	// --- Empty State ---
 	if (!items || items?.length === 0) {
 		return (
 			<Layout>
-				<div className="container page-wrapper mx-auto px-4 py-16">
-					<EmptyState
-						icon={ShoppingBag}
-						title="Your Cart is Empty"
-						description="Looks like you haven't added any items to your cart yet. Start shopping to fill it up!"
-						actionLabel="Start Shopping"
-						actionHref="/products"
-					/>
+				<div className="page-wrapper py-16 md:py-24">
+					<motion.div
+						initial={{ opacity: 0, y: 30 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.6, ease: "easeOut" }}
+						style={{ textAlign: "center", maxWidth: "28rem", margin: "0 auto" }}
+					>
+						<div
+							style={{
+								width: "120px",
+								height: "120px",
+								borderRadius: "50%",
+								background: "linear-gradient(135deg, var(--surface-low), var(--surface-medium))",
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "center",
+								margin: "0 auto 2rem",
+								position: "relative",
+							}}
+						>
+							<ShoppingBag
+								style={{
+									width: "48px",
+									height: "48px",
+									color: "var(--text-hint)",
+								}}
+							/>
+							<div
+								style={{
+									position: "absolute",
+									top: "8px",
+									right: "8px",
+									width: "24px",
+									height: "24px",
+									borderRadius: "50%",
+									backgroundColor: "var(--surface-high)",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									fontSize: "0.75rem",
+									fontWeight: 700,
+									color: "var(--text-hint)",
+								}}
+							>
+								0
+							</div>
+						</div>
+						<h2
+							style={{
+								fontSize: "1.75rem",
+								fontWeight: 800,
+								color: "var(--text-primary)",
+								marginBottom: "0.75rem",
+								letterSpacing: "-0.02em",
+							}}
+						>
+							Your cart is empty
+						</h2>
+						<p
+							style={{
+								color: "var(--text-secondary)",
+								fontSize: "1rem",
+								lineHeight: 1.6,
+								marginBottom: "2rem",
+							}}
+						>
+							Looks like you haven't added any items to your cart yet.
+							Discover our premium supplements and start your wellness journey.
+						</p>
+						<Link href="/products">
+							<button
+								className="press-effect"
+								style={{
+									display: "inline-flex",
+									alignItems: "center",
+									gap: "0.5rem",
+									padding: "0.875rem 2rem",
+									backgroundColor: "var(--color-primary)",
+									color: "#fff",
+									border: "none",
+									borderRadius: "12px",
+									fontWeight: 600,
+									fontSize: "1rem",
+									cursor: "pointer",
+									transition: "transform 0.15s ease, box-shadow 0.2s ease",
+									boxShadow: "0 4px 14px rgba(22, 163, 74, 0.3)",
+								}}
+								onMouseEnter={(e) => {
+									e.currentTarget.style.transform = "translateY(-2px)";
+									e.currentTarget.style.boxShadow = "0 6px 20px rgba(22, 163, 74, 0.4)";
+								}}
+								onMouseLeave={(e) => {
+									e.currentTarget.style.transform = "translateY(0)";
+									e.currentTarget.style.boxShadow = "0 4px 14px rgba(22, 163, 74, 0.3)";
+								}}
+							>
+								Browse Products
+								<ArrowLeft style={{ width: "16px", height: "16px", transform: "rotate(180deg)" }} />
+							</button>
+						</Link>
+					</motion.div>
 				</div>
 			</Layout>
 		);
 	}
 
+	// --- Main Cart ---
 	return (
 		<Layout>
-			<div className="container page-wrapper mx-auto px-4 py-8">
+			<div className="page-wrapper py-8 md:py-12">
 				{/* Header */}
-				<div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+				<motion.div
+					initial="hidden"
+					animate="visible"
+					variants={fadeUp}
+					className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4"
+				>
 					<div className="flex items-center gap-4">
 						<Link
 							href="/products"
-							className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
 							aria-label="Back to products"
+							style={{
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "center",
+								width: "40px",
+								height: "40px",
+								borderRadius: "12px",
+								backgroundColor: "var(--surface-low)",
+								border: "1px solid var(--border-light)",
+								color: "var(--text-secondary)",
+								transition: "all 0.2s ease",
+							}}
+							onMouseEnter={(e) => {
+								e.currentTarget.style.backgroundColor = "var(--surface-medium)";
+								e.currentTarget.style.color = "var(--text-primary)";
+							}}
+							onMouseLeave={(e) => {
+								e.currentTarget.style.backgroundColor = "var(--surface-low)";
+								e.currentTarget.style.color = "var(--text-secondary)";
+							}}
 						>
-							<ArrowLeft className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+							<ArrowLeft style={{ width: "18px", height: "18px" }} />
 						</Link>
-						<h1 className="text-xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+						<h1
+							className="flex items-center gap-3"
+							style={{
+								fontSize: "clamp(1.25rem, 3vw, 1.875rem)",
+								fontWeight: 800,
+								color: "var(--text-primary)",
+								letterSpacing: "-0.02em",
+								margin: 0,
+							}}
+						>
 							Shopping Cart
-							<Badge variant="neutral">{itemCount} {itemCount === 1 ? "item" : "items"}</Badge>
+							<span
+								style={{
+									display: "inline-flex",
+									alignItems: "center",
+									justifyContent: "center",
+									minWidth: "28px",
+									height: "28px",
+									padding: "0 8px",
+									borderRadius: "14px",
+									backgroundColor: "var(--color-primary)",
+									color: "#fff",
+									fontSize: "0.8rem",
+									fontWeight: 700,
+								}}
+							>
+								{itemCount}
+							</span>
 						</h1>
 					</div>
-					<div className="flex items-center gap-2">
-						<Button
-							variant="text"
-							color="error"
-							onClick={() => setShowClearConfirm(!showClearConfirm)}
-							disabled={isClearing}
-							loading={isClearing}
-						>
-							{showClearConfirm ? "Cancel" : "Clear Cart"}
-						</Button>
-						{showClearConfirm && (
-							<Button
-								variant="filled"
-								color="error"
-								size="sm"
-								onClick={handleClearCart}
-								disabled={isClearing}
-							>
-								Confirm Clear
-							</Button>
-						)}
-					</div>
-				</div>
 
-				{/* Free Shipping Progress */}
+					<div className="flex items-center gap-2">
+						<AnimatePresence mode="wait">
+							{showClearConfirm ? (
+								<motion.div
+									key="confirm"
+									initial={{ opacity: 0, scale: 0.95 }}
+									animate={{ opacity: 1, scale: 1 }}
+									exit={{ opacity: 0, scale: 0.95 }}
+									className="flex items-center gap-2"
+								>
+									<span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+										Clear all items?
+									</span>
+									<button
+										onClick={handleClearCart}
+										disabled={isClearing}
+										className="press-effect"
+										style={{
+											padding: "0.5rem 1rem",
+											backgroundColor: "#ef4444",
+											color: "#fff",
+											border: "none",
+											borderRadius: "8px",
+											fontSize: "0.8rem",
+											fontWeight: 600,
+											cursor: "pointer",
+											opacity: isClearing ? 0.6 : 1,
+											transition: "opacity 0.2s ease",
+										}}
+									>
+										{isClearing ? "Clearing..." : "Confirm"}
+									</button>
+									<button
+										onClick={() => setShowClearConfirm(false)}
+										style={{
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "center",
+											width: "32px",
+											height: "32px",
+											borderRadius: "8px",
+											border: "1px solid var(--border-light)",
+											backgroundColor: "transparent",
+											color: "var(--text-secondary)",
+											cursor: "pointer",
+											transition: "background-color 0.2s ease",
+										}}
+										onMouseEnter={(e) => {
+											e.currentTarget.style.backgroundColor = "var(--surface-low)";
+										}}
+										onMouseLeave={(e) => {
+											e.currentTarget.style.backgroundColor = "transparent";
+										}}
+									>
+										<X style={{ width: "14px", height: "14px" }} />
+									</button>
+								</motion.div>
+							) : (
+								<motion.button
+									key="clear"
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									onClick={() => setShowClearConfirm(true)}
+									disabled={isClearing}
+									style={{
+										padding: "0.5rem 1rem",
+										backgroundColor: "transparent",
+										color: "#ef4444",
+										border: "1px solid transparent",
+										borderRadius: "8px",
+										fontSize: "0.875rem",
+										fontWeight: 600,
+										cursor: "pointer",
+										transition: "all 0.2s ease",
+									}}
+									onMouseEnter={(e) => {
+										e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.08)";
+										e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.2)";
+									}}
+									onMouseLeave={(e) => {
+										e.currentTarget.style.backgroundColor = "transparent";
+										e.currentTarget.style.borderColor = "transparent";
+									}}
+								>
+									<span className="flex items-center gap-1.5">
+										<Trash2 style={{ width: "14px", height: "14px" }} />
+										Clear Cart
+									</span>
+								</motion.button>
+							)}
+						</AnimatePresence>
+					</div>
+				</motion.div>
+
+				{/* Free Shipping Progress Bar */}
 				{!calculations?.hasQualifiedForFreeShipping &&
 					calculations?.remainingForFreeShipping > 0 && (
-						<Card elevation={0} padding="md" className="bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 mb-6">
-							<div className="flex items-center justify-between mb-2">
-								<span className="text-sm font-medium text-primary-800 dark:text-primary-300">
+						<motion.div
+							initial="hidden"
+							animate="visible"
+							variants={fadeUp}
+							style={{
+								padding: "1rem 1.25rem",
+								borderRadius: "14px",
+								backgroundColor: "var(--surface-paper)",
+								border: "1px solid var(--border-light)",
+								boxShadow: "var(--shadow-sm)",
+								marginBottom: "1.5rem",
+							}}
+						>
+							<div className="flex items-center justify-between mb-2.5">
+								<span className="flex items-center gap-2" style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-primary)" }}>
+									<Truck style={{ width: "16px", height: "16px", color: "var(--color-primary)" }} />
 									Free shipping progress
 								</span>
-								<span className="text-sm text-primary-700 dark:text-primary-400">
-									&#8358;{calculations?.remainingForFreeShipping.toLocaleString()} remaining
+								<span className="tabular-nums" style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--color-primary)" }}>
+									{"\u20A6"}{calculations?.remainingForFreeShipping.toLocaleString()} away
 								</span>
 							</div>
-							<div className="w-full bg-primary-200 dark:bg-primary-900/40 rounded-full h-2">
-								<div
-									className="bg-primary-600 dark:bg-primary-400 h-2 rounded-full transition-all duration-500"
+							<div
+								style={{
+									width: "100%",
+									height: "8px",
+									borderRadius: "4px",
+									backgroundColor: "var(--surface-medium)",
+									overflow: "hidden",
+								}}
+							>
+								<motion.div
+									initial={{ width: 0 }}
+									animate={{ width: `${shippingProgress}%` }}
+									transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
 									style={{
-										width: `${Math.min(
-											100,
-											(calculations?.subtotal /
-												calculations?.freeShippingThreshold) *
-												100
-										)}%`,
+										height: "100%",
+										borderRadius: "4px",
+										background: `linear-gradient(90deg, var(--color-primary), var(--color-primary-light))`,
 									}}
 								/>
 							</div>
-						</Card>
+						</motion.div>
 					)}
 
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-					{/* Cart Items */}
-					<div className="lg:col-span-2">
-						<Card elevation={1} padding="none">
-							<AnimatePresence mode="popLayout">
-								{items?.map((item) => (
-									<motion.div
-										key={item?.id}
-										layout
-										initial={{ opacity: 1, scale: 1 }}
-										exit={{ opacity: 0, scale: 0.95, height: 0 }}
-										transition={{ duration: 0.3 }}
-										className="p-4 md:p-6 border-b border-gray-200 dark:border-white/15 last:border-b-0"
-									>
-										{errors[item?.id] && (
-											<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-3 py-2 rounded-radius-md mb-4 text-sm">
-												{errors[item?.id]}
-											</div>
-										)}
+				{/* Qualified for free shipping */}
+				{calculations?.hasQualifiedForFreeShipping && (
+					<motion.div
+						initial={{ opacity: 0, y: -10 }}
+						animate={{ opacity: 1, y: 0 }}
+						style={{
+							padding: "0.75rem 1.25rem",
+							borderRadius: "14px",
+							backgroundColor: "var(--surface-paper)",
+							border: "1px solid var(--color-primary)",
+							boxShadow: "var(--shadow-sm)",
+							marginBottom: "1.5rem",
+							display: "flex",
+							alignItems: "center",
+							gap: "0.75rem",
+						}}
+					>
+						<Truck style={{ width: "18px", height: "18px", color: "var(--color-primary)", flexShrink: 0 }} />
+						<span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-primary)" }}>
+							You have qualified for free shipping!
+						</span>
+					</motion.div>
+				)}
 
-										<div className="grid grid-cols-2 md:grid-cols-5 gap-4 items-center">
-											<div className="relative flex items-center justify-center">
+				{/* Main Grid */}
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+					{/* Cart Items Column */}
+					<div className="lg:col-span-2">
+						<AnimatePresence mode="popLayout">
+							{items?.map((item, index) => (
+								<motion.div
+									key={item?.id}
+									custom={index}
+									variants={itemVariants}
+									initial="hidden"
+									animate="visible"
+									exit="exit"
+									layout
+									style={{
+										backgroundColor: "var(--surface-paper)",
+										borderRadius: "16px",
+										border: "1px solid var(--border-light)",
+										boxShadow: "var(--shadow-sm)",
+										marginBottom: "0.75rem",
+										overflow: "hidden",
+										transition: "box-shadow 0.2s ease",
+									}}
+									onMouseEnter={(e) => {
+										(e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-md)";
+									}}
+									onMouseLeave={(e) => {
+										(e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-sm)";
+									}}
+								>
+									{/* Item Error */}
+									{errors[item?.id] && (
+										<div
+											style={{
+												padding: "0.5rem 1rem",
+												backgroundColor: "rgba(239, 68, 68, 0.08)",
+												borderBottom: "1px solid rgba(239, 68, 68, 0.15)",
+												color: "#ef4444",
+												fontSize: "0.8rem",
+												fontWeight: 500,
+											}}
+										>
+											{errors[item?.id]}
+										</div>
+									)}
+
+									<div className="p-4 md:p-5">
+										<div className="flex gap-4 md:gap-6 items-center">
+											{/* Product Image */}
+											<div
+												style={{
+													width: "88px",
+													height: "88px",
+													borderRadius: "12px",
+													overflow: "hidden",
+													backgroundColor: "var(--surface-low)",
+													flexShrink: 0,
+													position: "relative",
+												}}
+											>
 												<Image
-													height={100}
-													width={100}
-													src={item?.image}
+													height={88}
+													width={88}
+													src={getItemImage(item)}
 													alt={item?.name}
-													className="w-20 h-20 object-cover rounded-radius-md"
+													style={{
+														width: "100%",
+														height: "100%",
+														objectFit: "cover",
+													}}
 													onError={(e) => {
 														const target = e.target as HTMLImageElement;
 														target.src = "/placeholder-product.jpg";
@@ -255,156 +700,472 @@ const CartPage: React.FC = () => {
 												/>
 											</div>
 
-											<div className="md:col-span-2">
-												<h3 className="font-semibold text-md md:text-lg text-gray-900 dark:text-white leading-5 md:leading-7">
-													{item?.name}
-												</h3>
-												<p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-													{item?.category}
-												</p>
-												{item?.inStock && item?.quantity < 5 && (
-													<p className="text-amber-600 dark:text-amber-400 text-xs mt-1">
-														Only {item?.quantity} left in stock
-													</p>
-												)}
-											</div>
-
-											<div className="flex items-center justify-center">
-												<div className="flex items-center space-x-3 border rounded-radius-md p-1" style={{ borderColor: "var(--border-light)" }}>
-													<button
-														onClick={() =>
-															handleQuantityChange(
-																item?.id,
-																item?.quantity - 1,
-																item?.quantity
-															)
-														}
-														disabled={
-															isUpdating === item?.id ||
-															item?.quantity <= 1
-														}
-														className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-														aria-label="Decrease quantity"
-													>
-														<Minus className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-													</button>
-													<span className="font-semibold text-lg w-8 text-center text-gray-900 dark:text-white">
-														{isUpdating === item?.id ? (
-															<RefreshCw className="h-4 w-4 animate-spin mx-auto text-gray-500" />
-														) : (
-															item?.quantity
-														)}
-													</span>
-													<button
-														onClick={() =>
-															handleQuantityChange(
-																item?.id,
-																item?.quantity + 1,
-																item?.quantity
-															)
-														}
-														disabled={
-															isUpdating === item?.id ||
-															(item?.inStock &&
-																item?.quantity >= 10)
-														}
-														className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-														aria-label="Increase quantity"
-													>
-														<Plus className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-													</button>
-												</div>
-											</div>
-
-											<div className="flex items-center justify-between md:flex-col md:items-end">
-												<div className="text-right">
-													<div className="font-semibold text-lg text-primary-600 dark:text-primary-400">
-														&#8358;{(item?.price * item?.quantity).toLocaleString()}
+											{/* Product Info & Controls */}
+											<div className="flex-1 min-w-0">
+												<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+													{/* Name & Category */}
+													<div className="min-w-0">
+														<h3
+															style={{
+																fontWeight: 700,
+																fontSize: "1rem",
+																color: "var(--text-primary)",
+																margin: "0 0 0.25rem 0",
+																lineHeight: 1.3,
+																overflow: "hidden",
+																textOverflow: "ellipsis",
+																whiteSpace: "nowrap",
+															}}
+														>
+															{item?.name}
+														</h3>
+														<p
+															style={{
+																fontSize: "0.8rem",
+																color: "var(--text-hint)",
+																margin: 0,
+															}}
+														>
+															{(item as any)?.product?.name || item?.category || ""}
+														</p>
+														{(() => {
+															const availableStock = (item as any).unit ?? (item as any).availableQuantity;
+															return availableStock !== undefined && availableStock > 0 && availableStock <= 5 ? (
+																<p
+																	style={{
+																		fontSize: "0.75rem",
+																		color: "#f59e0b",
+																		fontWeight: 600,
+																		margin: "0.25rem 0 0 0",
+																	}}
+																>
+																	Only {availableStock} left in stock
+																</p>
+															) : null;
+														})()}
 													</div>
-													<div className="text-sm text-gray-500 dark:text-gray-400">
-														&#8358;{item?.price.toLocaleString()} each
+
+													{/* Quantity + Price + Remove */}
+													<div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
+														{/* Quantity Controls */}
+														<div
+															className="flex items-center"
+															style={{
+																borderRadius: "10px",
+																border: "1px solid var(--border-light)",
+																backgroundColor: "var(--surface-low)",
+																overflow: "hidden",
+															}}
+														>
+															<button
+																onClick={() =>
+																	handleQuantityChange(
+																		item?.id,
+																		item?.quantity - 1,
+																		item?.quantity
+																	)
+																}
+																disabled={
+																	isUpdating === item?.id ||
+																	item?.quantity <= 1
+																}
+																className="press-effect"
+																aria-label="Decrease quantity"
+																style={{
+																	display: "flex",
+																	alignItems: "center",
+																	justifyContent: "center",
+																	width: "34px",
+																	height: "34px",
+																	border: "none",
+																	backgroundColor: "transparent",
+																	color: "var(--text-secondary)",
+																	cursor: "pointer",
+																	transition: "background-color 0.15s ease",
+																	opacity:
+																		isUpdating === item?.id ||
+																		item?.quantity <= 1
+																			? 0.4
+																			: 1,
+																}}
+																onMouseEnter={(e) => {
+																	if (!(isUpdating === item?.id || item?.quantity <= 1)) {
+																		e.currentTarget.style.backgroundColor = "var(--surface-medium)";
+																	}
+																}}
+																onMouseLeave={(e) => {
+																	e.currentTarget.style.backgroundColor = "transparent";
+																}}
+															>
+																<Minus style={{ width: "14px", height: "14px" }} />
+															</button>
+
+															<div
+																className="tabular-nums"
+																style={{
+																	width: "36px",
+																	textAlign: "center",
+																	fontWeight: 700,
+																	fontSize: "0.95rem",
+																	color: "var(--text-primary)",
+																	userSelect: "none",
+																}}
+															>
+																{isUpdating === item?.id ? (
+																	<RefreshCw
+																		className="animate-spin"
+																		style={{
+																			width: "14px",
+																			height: "14px",
+																			margin: "0 auto",
+																			color: "var(--text-hint)",
+																		}}
+																	/>
+																) : (
+																	<motion.span
+																		key={item?.quantity}
+																		initial={{ scale: 1.3, opacity: 0.5 }}
+																		animate={{ scale: 1, opacity: 1 }}
+																		transition={{ duration: 0.2 }}
+																	>
+																		{item?.quantity}
+																	</motion.span>
+																)}
+															</div>
+
+															<button
+																onClick={() =>
+																	handleQuantityChange(
+																		item?.id,
+																		item?.quantity + 1,
+																		item?.quantity
+																	)
+																}
+																disabled={
+																	isUpdating === item?.id ||
+																	(isItemInStock(item) &&
+																		item?.quantity >= 10)
+																}
+																className="press-effect"
+																aria-label="Increase quantity"
+																style={{
+																	display: "flex",
+																	alignItems: "center",
+																	justifyContent: "center",
+																	width: "34px",
+																	height: "34px",
+																	border: "none",
+																	backgroundColor: "transparent",
+																	color: "var(--text-secondary)",
+																	cursor: "pointer",
+																	transition: "background-color 0.15s ease",
+																	opacity:
+																		isUpdating === item?.id ||
+																		(isItemInStock(item) &&
+																			item?.quantity >= 10)
+																			? 0.4
+																			: 1,
+																}}
+																onMouseEnter={(e) => {
+																	if (
+																		!(
+																			isUpdating === item?.id ||
+																			(isItemInStock(item) &&
+																				item?.quantity >= 10)
+																		)
+																	) {
+																		e.currentTarget.style.backgroundColor = "var(--surface-medium)";
+																	}
+																}}
+																onMouseLeave={(e) => {
+																	e.currentTarget.style.backgroundColor = "transparent";
+																}}
+															>
+																<Plus style={{ width: "14px", height: "14px" }} />
+															</button>
+														</div>
+
+														{/* Price */}
+														<div style={{ textAlign: "right", minWidth: "80px" }}>
+															<motion.div
+																key={item?.price * item?.quantity}
+																initial={{ scale: 1.05, opacity: 0.7 }}
+																animate={{ scale: 1, opacity: 1 }}
+																transition={{ duration: 0.25 }}
+																className="tabular-nums"
+																style={{
+																	fontWeight: 700,
+																	fontSize: "1.05rem",
+																	color: "var(--color-primary)",
+																	lineHeight: 1.3,
+																}}
+															>
+																{"\u20A6"}{(item?.price * item?.quantity).toLocaleString()}
+															</motion.div>
+															<div
+																className="tabular-nums"
+																style={{
+																	fontSize: "0.75rem",
+																	color: "var(--text-hint)",
+																	marginTop: "2px",
+																}}
+															>
+																{"\u20A6"}{item?.price.toLocaleString()} each
+															</div>
+														</div>
+
+														{/* Remove Button */}
+														<button
+															onClick={() => handleRemoveItem(item?.id)}
+															disabled={isUpdating === item?.id}
+															aria-label="Remove item"
+															style={{
+																display: "flex",
+																alignItems: "center",
+																justifyContent: "center",
+																width: "36px",
+																height: "36px",
+																borderRadius: "10px",
+																border: "none",
+																backgroundColor: "transparent",
+																color: "var(--text-hint)",
+																cursor: "pointer",
+																transition: "all 0.2s ease",
+																opacity: isUpdating === item?.id ? 0.4 : 1,
+															}}
+															onMouseEnter={(e) => {
+																e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+																e.currentTarget.style.color = "#ef4444";
+															}}
+															onMouseLeave={(e) => {
+																e.currentTarget.style.backgroundColor = "transparent";
+																e.currentTarget.style.color = "var(--text-hint)";
+															}}
+														>
+															<Trash2 style={{ width: "16px", height: "16px" }} />
+														</button>
 													</div>
 												</div>
-												<button
-													onClick={() => handleRemoveItem(item?.id)}
-													disabled={isUpdating === item?.id}
-													className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors disabled:opacity-50"
-													aria-label="Remove item"
-												>
-													<Trash2 className="h-5 w-5" />
-												</button>
 											</div>
 										</div>
-									</motion.div>
-								))}
-							</AnimatePresence>
-						</Card>
+									</div>
+								</motion.div>
+							))}
+						</AnimatePresence>
 					</div>
 
 					{/* Order Summary */}
 					<div className="lg:col-span-1">
-						<Card elevation={2} padding="lg" className="sticky top-24">
-							<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+						<motion.div
+							initial="hidden"
+							animate="visible"
+							variants={fadeUp}
+							className="sticky top-24"
+							style={{
+								backgroundColor: "var(--surface-paper)",
+								borderRadius: "16px",
+								border: "1px solid var(--border-light)",
+								boxShadow: "var(--shadow-md)",
+								padding: "1.5rem",
+							}}
+						>
+							<h2
+								style={{
+									fontSize: "1.15rem",
+									fontWeight: 800,
+									color: "var(--text-primary)",
+									margin: "0 0 1.25rem 0",
+									letterSpacing: "-0.01em",
+								}}
+							>
 								Order Summary
 							</h2>
 
-							<div className="space-y-4 mb-6">
-								<div className="flex justify-between">
-									<span className="text-gray-600 dark:text-gray-400">Subtotal</span>
-									<span className="font-medium text-gray-900 dark:text-white">
-										&#8358;{calculations?.subtotal?.toLocaleString()}
+							{/* Line Items */}
+							<div style={{ display: "flex", flexDirection: "column", gap: "0.875rem" }}>
+								<div className="flex justify-between items-center">
+									<span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+										Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})
 									</span>
+									<motion.span
+										key={calculations?.subtotal}
+										initial={{ opacity: 0.6, y: -4 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ duration: 0.25 }}
+										className="tabular-nums"
+										style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-primary)" }}
+									>
+										{"\u20A6"}{calculations?.subtotal?.toLocaleString()}
+									</motion.span>
 								</div>
-								<div className="flex justify-between">
-									<span className="text-gray-600 dark:text-gray-400">
+
+								<div className="flex justify-between items-center">
+									<span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
 										Shipping
 										{calculations?.hasQualifiedForFreeShipping && (
-											<span className="text-primary-600 dark:text-primary-400 ml-1">(Free!)</span>
+											<span style={{ color: "var(--color-primary)", marginLeft: "4px", fontWeight: 600 }}>
+												(Free!)
+											</span>
 										)}
 									</span>
-									<span className="font-medium text-gray-900 dark:text-white">
-										{calculations?.shipping === 0 ? (
-											<span className="text-primary-600 dark:text-primary-400">Free</span>
-										) : (
-											`\u20A6${calculations?.shipping?.toLocaleString()}`
-										)}
-									</span>
+									<motion.span
+										key={calculations?.shipping}
+										initial={{ opacity: 0.6 }}
+										animate={{ opacity: 1 }}
+										transition={{ duration: 0.25 }}
+										className="tabular-nums"
+										style={{
+											fontSize: "0.9rem",
+											fontWeight: 600,
+											color: calculations?.shipping === 0 ? "var(--color-primary)" : "var(--text-primary)",
+										}}
+									>
+										{calculations?.shipping === 0 ? "Free" : `\u20A6${calculations?.shipping?.toLocaleString()}`}
+									</motion.span>
 								</div>
-								<div className="flex justify-between">
-									<span className="text-gray-600 dark:text-gray-400">Tax (8%)</span>
-									<span className="font-medium text-gray-900 dark:text-white">
-										&#8358;{calculations?.tax?.toLocaleString()}
+
+								<div className="flex justify-between items-center">
+									<span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+										Tax ({Math.round(calculations.taxRate * 100)}%)
 									</span>
-								</div>
-								<div className="border-t border-gray-200 dark:border-white/15 pt-4">
-									<div className="flex justify-between items-center">
-										<span className="text-lg font-semibold text-gray-900 dark:text-white">
-											Total
-										</span>
-										<span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-											&#8358;{calculations?.finalTotal?.toLocaleString()}
-										</span>
-									</div>
+									<motion.span
+										key={calculations?.tax}
+										initial={{ opacity: 0.6, y: -4 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ duration: 0.25 }}
+										className="tabular-nums"
+										style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-primary)" }}
+									>
+										{"\u20A6"}{calculations?.tax?.toLocaleString()}
+									</motion.span>
 								</div>
 							</div>
 
-							<div className="space-y-3">
-								<Link href="/checkout">
-									<Button variant="filled" size="lg" fullWidth>
+							{/* Divider */}
+							<div
+								style={{
+									height: "1px",
+									backgroundColor: "var(--border-light)",
+									margin: "1.25rem 0",
+								}}
+							/>
+
+							{/* Total */}
+							<div className="flex justify-between items-center">
+								<span
+									style={{
+										fontSize: "1rem",
+										fontWeight: 700,
+										color: "var(--text-primary)",
+									}}
+								>
+									Total
+								</span>
+								<motion.span
+									key={calculations?.finalTotal}
+									initial={{ scale: 1.08, opacity: 0.7 }}
+									animate={{ scale: 1, opacity: 1 }}
+									transition={{ duration: 0.3 }}
+									className="tabular-nums"
+									style={{
+										fontSize: "1.5rem",
+										fontWeight: 800,
+										color: "var(--color-primary)",
+										letterSpacing: "-0.01em",
+									}}
+								>
+									{"\u20A6"}{calculations?.finalTotal?.toLocaleString()}
+								</motion.span>
+							</div>
+
+							{/* Checkout Button */}
+							<div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+								<Link href="/checkout" style={{ display: "block" }}>
+									<button
+										className="press-effect"
+										style={{
+											width: "100%",
+											padding: "0.875rem 1.5rem",
+											backgroundColor: "var(--color-primary)",
+											color: "#fff",
+											border: "none",
+											borderRadius: "12px",
+											fontWeight: 700,
+											fontSize: "1rem",
+											cursor: "pointer",
+											transition: "transform 0.2s ease, box-shadow 0.2s ease",
+											boxShadow: "0 4px 14px rgba(22, 163, 74, 0.3)",
+										}}
+										onMouseEnter={(e) => {
+											e.currentTarget.style.transform = "translateY(-2px)";
+											e.currentTarget.style.boxShadow = "0 8px 24px rgba(22, 163, 74, 0.4)";
+										}}
+										onMouseLeave={(e) => {
+											e.currentTarget.style.transform = "translateY(0)";
+											e.currentTarget.style.boxShadow = "0 4px 14px rgba(22, 163, 74, 0.3)";
+										}}
+									>
 										Proceed to Checkout
-									</Button>
+									</button>
 								</Link>
-								<Link href="/products">
-									<Button variant="tonal" color="secondary" size="lg" fullWidth>
+
+								<Link href="/products" style={{ display: "block" }}>
+									<button
+										style={{
+											width: "100%",
+											padding: "0.75rem 1.5rem",
+											backgroundColor: "transparent",
+											color: "var(--text-secondary)",
+											border: "1px solid var(--border-light)",
+											borderRadius: "12px",
+											fontWeight: 600,
+											fontSize: "0.9rem",
+											cursor: "pointer",
+											transition: "all 0.2s ease",
+										}}
+										onMouseEnter={(e) => {
+											e.currentTarget.style.backgroundColor = "var(--surface-low)";
+											e.currentTarget.style.borderColor = "var(--border-medium)";
+											e.currentTarget.style.color = "var(--text-primary)";
+										}}
+										onMouseLeave={(e) => {
+											e.currentTarget.style.backgroundColor = "transparent";
+											e.currentTarget.style.borderColor = "var(--border-light)";
+											e.currentTarget.style.color = "var(--text-secondary)";
+										}}
+									>
 										Continue Shopping
-									</Button>
+									</button>
 								</Link>
 							</div>
 
-							<div className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
-								Secure checkout guaranteed
+							{/* Security Badge */}
+							<div
+								style={{
+									marginTop: "1.25rem",
+									padding: "0.75rem",
+									borderRadius: "10px",
+									backgroundColor: "var(--surface-low)",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									gap: "1.25rem",
+								}}
+							>
+								<div className="flex items-center gap-1.5" style={{ color: "var(--text-hint)", fontSize: "0.7rem" }}>
+									<ShieldCheck style={{ width: "14px", height: "14px" }} />
+									<span>Secure</span>
+								</div>
+								<div className="flex items-center gap-1.5" style={{ color: "var(--text-hint)", fontSize: "0.7rem" }}>
+									<Lock style={{ width: "14px", height: "14px" }} />
+									<span>Encrypted</span>
+								</div>
+								<div className="flex items-center gap-1.5" style={{ color: "var(--text-hint)", fontSize: "0.7rem" }}>
+									<Truck style={{ width: "14px", height: "14px" }} />
+									<span>Tracked</span>
+								</div>
 							</div>
-						</Card>
+						</motion.div>
 					</div>
 				</div>
 			</div>

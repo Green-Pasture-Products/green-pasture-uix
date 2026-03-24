@@ -103,19 +103,22 @@ const AdminOrders: React.FC = () => {
 		{
 			key: "orderReference",
 			header: "Order Ref",
+			width: "140px",
 			render: (value: any) => (
-				<span className="text-sm font-medium text-on-surface dark:text-white">#{value}</span>
+				<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>#{value}</span>
 			),
 		},
 		{
 			key: "customer",
 			header: "Customer",
+			maxWidth: "220px",
+			truncate: true,
 			render: (_value: any, row: BackendOrder) => (
 				<div>
-					<div className="text-sm font-medium text-on-surface dark:text-white">
+					<div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
 						{row.customer?.profile?.firstName} {row.customer?.profile?.lastName}
 					</div>
-					<div className="text-xs text-gray-500 dark:text-gray-400">
+					<div className="text-xs truncate" style={{ color: "var(--text-hint)" }}>
 						{row.customer?.profile?.email}
 					</div>
 				</div>

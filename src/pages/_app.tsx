@@ -1,6 +1,7 @@
 import { ErrorBoundary } from "@/_errorBoundaries/ErrorBoundary";
 import { persistor, store } from "@/_redux/store";
 import { ThemeProvider } from "@/_hooks/useTheme";
+import { CurrencyProvider } from "@/_hooks/useCurrency";
 import PageTransition from "@/_UI/PageTransition";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
@@ -14,9 +15,11 @@ export default function App({ Component, pageProps }: AppProps) {
 			<Provider store={store}>
 				<PersistGate loading={null} persistor={persistor}>
 					<ThemeProvider>
-						<PageTransition>
-							<Component {...pageProps} />
-						</PageTransition>
+						<CurrencyProvider>
+							<PageTransition>
+								<Component {...pageProps} />
+							</PageTransition>
+						</CurrencyProvider>
 					</ThemeProvider>
 
 					<Toaster

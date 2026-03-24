@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { User, Camera, Trash2, Loader2, Edit3 } from "lucide-react";
+import { User, Camera, Trash2, Edit3 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import Layout from "@/_components/Layout";
@@ -12,6 +12,7 @@ import { profileSchema, ProfileFormData } from "@/_validations/profile";
 import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
 import Button from "@/_UI/Button";
+import PageLoader from "@/_UI/PageLoader";
 
 const Profile = () => {
 	const router = useRouter();
@@ -98,9 +99,7 @@ const Profile = () => {
 	if (isLoading && !profile) {
 		return (
 			<Layout pageTitle="Profile">
-				<div className="container page-wrapper mx-auto px-4 py-16 flex items-center justify-center">
-					<Loader2 className="h-10 w-10 animate-spin text-primary-600 dark:text-primary-400" />
-				</div>
+				<PageLoader fullScreen={false} message="Loading profile..." />
 			</Layout>
 		);
 	}

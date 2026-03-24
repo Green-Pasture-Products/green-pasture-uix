@@ -5,6 +5,7 @@ import AdminLayout from "@/_components/AdminLayout";
 import { BackButton, DetailHeader, DetailSection, DetailRow } from "@/_UI/DetailField";
 import Badge from "@/_UI/Badge";
 import { formatPhoneDisplay } from "@/_UI/FormatValue";
+import PageLoader from "@/_UI/PageLoader";
 import axiosInstance from "@/_utils/axiosInstance";
 import { BackendStaff } from "@/types";
 
@@ -33,11 +34,7 @@ const StaffDetail: React.FC = () => {
 	if (loading) {
 		return (
 			<AdminLayout>
-				<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
-					<div className="h-8 w-20 rounded animate-pulse" style={{ background: "var(--surface-medium)" }} />
-					<div className="h-40 rounded-xl animate-pulse" style={{ background: "var(--surface-medium)" }} />
-					<div className="h-48 rounded-xl animate-pulse" style={{ background: "var(--surface-medium)" }} />
-				</div>
+				<PageLoader fullScreen={false} message="Loading staff details..." />
 			</AdminLayout>
 		);
 	}

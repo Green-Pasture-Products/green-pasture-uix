@@ -48,16 +48,34 @@ const LoginPage: React.FC = () => {
 	};
 
 	useEffect(() => {
-		if (isAuthenticated) {
-			const redirect = router.query.redirect as string;
-			if (redirect) {
-				// Always honor explicit redirects (e.g. from checkout, admin guard)
-				router.push(redirect);
-			} else {
-				// Default: everyone lands on the store homepage
-				// Admins can navigate to /admin from the navbar
-				router.push("/");
+		if (isAuthenticated && user) {
+			const isAdminUser = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(
+				user?.profileType?.toUpperCase() || ""
+			);
+
+			if (isAdminUser) {
+				// Admins go straight to admin dashboard
+				const redirect = router.query.redirect as string;
+				router.push(redirect?.startsWith("/admin") ? redirect : "/admin/dashboard");
+				return;
 			}
+
+			// Customer: sync cart with backend
+			const syncCart = async () => {
+				try {
+					const axiosInstance = (await import("@/_utils/axiosInstance")).default;
+					const res = await axiosInstance.get("customers/me");
+					const customerId = res.data?.data?.id;
+					if (customerId) {
+						const { syncCartOnLoginAsync } = await import("@/_redux/actions/cart.action");
+						dispatch(syncCartOnLoginAsync({ customerId }));
+					}
+				} catch {}
+			};
+			syncCart();
+
+			const redirect = router.query.redirect as string;
+			router.push(redirect || "/");
 		}
 	}, [isAuthenticated]);
 

@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useAppSelector } from "@/_redux/store";
+import PageLoader from "@/_UI/PageLoader";
 
 const ADMIN_ROLES = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"];
 
@@ -49,17 +50,7 @@ export default function withAdminAuth<P extends object>(
 		}, [isAuthenticated, user, checked]);
 
 		if (!authorized) {
-			return (
-				<div
-					className="flex items-center justify-center min-h-screen"
-					style={{ background: "var(--background)" }}
-				>
-					<div
-						className="animate-spin rounded-full h-8 w-8 border-b-2"
-						style={{ borderColor: "var(--color-primary)" }}
-					/>
-				</div>
-			);
+			return <PageLoader message="Verifying access..." />;
 		}
 
 		return <WrappedComponent {...props} />;

@@ -66,6 +66,8 @@ const AdminProducts: React.FC = () => {
 		{
 			key: "name",
 			header: "Product",
+			maxWidth: "280px",
+			truncate: true,
 			render: (_value: any, row: any) => (
 				<div className="flex items-center gap-3">
 					{row.photos?.[0]?.url ? (

@@ -63,25 +63,25 @@ const AdminCustomers: React.FC = () => {
 			key: "profile",
 			header: "Name",
 			render: (_value: any, row: BackendCustomer) => (
-				<div>
-					<div className="text-sm font-medium text-on-surface dark:text-white">
-						{row.profile?.firstName} {row.profile?.lastName}
-					</div>
-				</div>
+				<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+					{row.profile?.firstName} {row.profile?.lastName}
+				</span>
 			),
 		},
 		{
 			key: "profile",
 			header: "Email",
+			maxWidth: "240px",
+			truncate: true,
 			render: (_value: any, row: BackendCustomer) => (
-				<span className="text-sm text-gray-600 dark:text-gray-300">{row.profile?.email}</span>
+				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>{row.profile?.email}</span>
 			),
 		},
 		{
 			key: "profile",
 			header: "Phone",
 			render: (_value: any, row: BackendCustomer) => (
-				<span className="text-sm text-gray-600 dark:text-gray-300">{row.profile?.phoneNumber ?? "N/A"}</span>
+				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>{row.profile?.phoneNumber ?? "N/A"}</span>
 			),
 		},
 		{

@@ -1,26 +1,36 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-	Eye,
-	EyeOff,
-	Mail,
-	Lock,
-	User,
-	AlertCircle,
-	CheckCircle,
-} from "lucide-react";
+import { Eye, EyeOff, AlertCircle, ArrowRight, ArrowLeft, Check, User, Mail, Lock } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { clearError } from "@/_redux/reducers/auth.reducer";
 import { signupSchema, SignupFormData } from "@/_validations/auth";
 import { signupAsync } from "@/_redux/actions/auth.action";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import Image from "next/image";
-import Card from "@/_UI/Card";
-import Input from "@/_UI/Input";
-import Button from "@/_UI/Button";
+import { FormInput, FormSelect } from "@/_UI/FormField";
+import PhoneInput from "@/_UI/PhoneInput";
+
+const STEPS = [
+	{ id: 1, label: "Personal", icon: User },
+	{ id: 2, label: "Contact", icon: Mail },
+	{ id: 3, label: "Security", icon: Lock },
+];
+
+const slideVariants = {
+	enter: (direction: number) => ({
+		x: direction > 0 ? 200 : -200,
+		opacity: 0,
+	}),
+	center: { x: 0, opacity: 1 },
+	exit: (direction: number) => ({
+		x: direction > 0 ? -200 : 200,
+		opacity: 0,
+	}),
+};
 
 const SignupPage: React.FC = () => {
 	const router = useRouter();
@@ -28,14 +38,20 @@ const SignupPage: React.FC = () => {
 	const { isLoading, error } = useAppSelector((state) => state.auth);
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-	const [signupComplete, setSignupComplete] = useState(false);
+	const [step, setStep] = useState(1);
+	const [direction, setDirection] = useState(1);
 
 	const {
 		register,
 		handleSubmit,
+		trigger,
+		watch,
+		control,
 		formState: { errors },
 	} = useForm<SignupFormData>({
-		resolver: zodResolver(signupSchema),
+		resolver: zodResolver(signupSchema) as any,
+		defaultValues: { gender: "NOT_SPECIFIED" },
+		mode: "onTouched",
 	});
 
 	React.useEffect(() => {
@@ -44,206 +60,408 @@ const SignupPage: React.FC = () => {
 
 	const onSubmit = async (data: SignupFormData) => {
 		try {
-			await dispatch(signupAsync(data)).unwrap();
+			await dispatch(
+				signupAsync({
+					firstName: data.firstName,
+					lastName: data.lastName,
+					email: data.email,
+					phoneNumber: data.phoneNumber,
+					password: data.password,
+					gender: data.gender,
+					profileType: "CLIENT",
+				} as any)
+			).unwrap();
 			router.push(`/verify-account?email=${encodeURIComponent(data.email)}`);
-		} catch (err: any) {
-			console.error(err);
+		} catch {}
+	};
+
+	const goNext = async () => {
+		let fieldsToValidate: (keyof SignupFormData)[] = [];
+		if (step === 1) fieldsToValidate = ["firstName", "lastName", "gender"];
+		if (step === 2) fieldsToValidate = ["email", "phoneNumber"];
+
+		const valid = await trigger(fieldsToValidate);
+		if (valid) {
+			setDirection(1);
+			setStep((s) => Math.min(s + 1, 3));
 		}
 	};
 
-	if (signupComplete) {
-		return (
-			<div className="min-h-screen bg-white dark:bg-[#0a0f1a] flex items-center justify-center p-4">
-				<Card elevation={2} padding="lg" className="max-w-md w-full text-center animate-page-enter">
-					<CheckCircle className="h-24 w-24 text-primary-600 dark:text-primary-400 mx-auto mb-6" />
-					<h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-						Account Created!
-					</h2>
-					<p className="mt-4 text-gray-600 dark:text-gray-400">
-						We've sent a verification email to your inbox. Please check
-						your email and click the verification link to activate your
-						account.
-					</p>
-					<div className="mt-6">
-						<Link href="/login">
-							<Button variant="filled" size="lg">Go to Login</Button>
-						</Link>
-					</div>
-				</Card>
-			</div>
-		);
-	}
+	const goBack = () => {
+		setDirection(-1);
+		setStep((s) => Math.max(s - 1, 1));
+	};
+
+	const errorMessage = error
+		? typeof error === "string"
+			? error
+			: Array.isArray(error)
+				? (error as string[]).join(". ")
+				: "Registration failed. Please try again."
+		: null;
+
+	// Watch values for step summary
+	const firstName = watch("firstName");
+	const email = watch("email");
 
 	return (
-		<div className="min-h-screen bg-white dark:bg-[#0a0f1a] flex items-center justify-center p-4">
-			<Card
-				elevation={2}
-				padding="lg"
-				className="max-w-md w-full rounded-radius-lg animate-page-enter"
+		<div
+			className="min-h-screen flex items-center justify-center p-4"
+			style={{ background: "var(--background)" }}
+		>
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+				className="w-full max-w-md rounded-2xl overflow-hidden"
+				style={{
+					background: "var(--surface-paper)",
+					border: "1px solid var(--border-light)",
+					boxShadow: "var(--shadow-xl)",
+				}}
 			>
-				{/* Logo */}
-				<div className="flex justify-center mb-6">
-					<Link href="/" className="flex items-center space-x-2">
-						<div className="relative w-[2.2rem] aspect-square bg-transparent">
-							<Image
-								src="/images/GP Organic Logo (Primary).png"
-								alt="Green Pastures Logo"
-								height={100}
-								width={100}
-								priority
-								sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
-								className="object-contain"
-							/>
-						</div>
-						<span className="text-md md:text-lg font-bold text-primary-800 dark:text-primary-300">
-							Green Pastures Organics
-						</span>
-					</Link>
+				{/* Header */}
+				<div className="px-8 pt-8 pb-2">
+					<div className="flex justify-center mb-5">
+						<Link href="/" className="flex items-center gap-2">
+							<div className="relative w-8 h-8">
+								<Image
+									src="/images/GP Organic Logo (Primary).png"
+									alt="Logo"
+									height={32}
+									width={32}
+									priority
+									className="object-contain"
+								/>
+							</div>
+							<span className="text-base font-bold" style={{ color: "var(--color-primary)" }}>
+								Green Pastures
+							</span>
+						</Link>
+					</div>
+
+					<h2
+						className="text-center text-xl font-bold mb-1"
+						style={{ color: "var(--text-primary)" }}
+					>
+						Create your account
+					</h2>
+					<p className="text-center text-xs mb-6" style={{ color: "var(--text-hint)" }}>
+						Already have an account?{" "}
+						<Link href="/login" className="font-medium" style={{ color: "var(--color-primary)" }}>
+							Sign in
+						</Link>
+					</p>
+
+					{/* Step Indicator */}
+					<div className="flex items-center justify-center gap-0 mb-6">
+						{STEPS.map((s, i) => {
+							const Icon = s.icon;
+							const isActive = step === s.id;
+							const isCompleted = step > s.id;
+							return (
+								<React.Fragment key={s.id}>
+									{i > 0 && (
+										<div
+											className="w-10 h-[2px] mx-1"
+											style={{
+												background: isCompleted
+													? "var(--color-primary)"
+													: "var(--border-light)",
+												transition: "background 0.3s",
+											}}
+										/>
+									)}
+									<button
+										type="button"
+										onClick={() => {
+											if (isCompleted) {
+												setDirection(s.id < step ? -1 : 1);
+												setStep(s.id);
+											}
+										}}
+										className="flex items-center gap-1.5 transition-all"
+										style={{
+											cursor: isCompleted ? "pointer" : "default",
+										}}
+									>
+										<div
+											className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300"
+											style={{
+												background: isCompleted
+													? "var(--color-primary)"
+													: isActive
+														? "rgba(22,163,74,0.12)"
+														: "var(--surface-medium)",
+												color: isCompleted
+													? "#fff"
+													: isActive
+														? "var(--color-primary)"
+														: "var(--text-disabled)",
+												border: isActive
+													? "2px solid var(--color-primary)"
+													: "2px solid transparent",
+											}}
+										>
+											{isCompleted ? (
+												<Check className="w-3.5 h-3.5" />
+											) : (
+												<Icon className="w-3.5 h-3.5" />
+											)}
+										</div>
+										<span
+											className="text-[0.65rem] font-semibold hidden sm:inline"
+											style={{
+												color: isActive || isCompleted
+													? "var(--text-primary)"
+													: "var(--text-disabled)",
+											}}
+										>
+											{s.label}
+										</span>
+									</button>
+								</React.Fragment>
+							);
+						})}
+					</div>
 				</div>
 
-				<h2 className="text-center text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-					Create your account
-				</h2>
-				<p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-8">
-					Already have an account?{" "}
-					<Link
-						href="/login"
-						className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
-					>
-						Sign in here
-					</Link>
-				</p>
+				{/* Form */}
+				<form onSubmit={handleSubmit(onSubmit)}>
+					<div className="px-8 overflow-hidden" style={{ minHeight: 220 }}>
+						{errorMessage && step === 3 && (
+							<motion.div
+								initial={{ opacity: 0, y: -8 }}
+								animate={{ opacity: 1, y: 0 }}
+								className="flex items-start gap-2 p-3 rounded-lg text-xs mb-4"
+								style={{
+									background: "rgba(239,68,68,0.08)",
+									border: "1px solid rgba(239,68,68,0.2)",
+									color: "#dc2626",
+								}}
+							>
+								<AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+								<span>{errorMessage}</span>
+							</motion.div>
+						)}
 
-				<form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
-					{error && (
-						<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-radius-md p-4">
-							<div className="flex">
-								<AlertCircle className="h-5 w-5 text-red-400 dark:text-red-500" />
-								<div className="ml-3">
-									<p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-								</div>
-							</div>
-						</div>
-					)}
+						<AnimatePresence mode="wait" custom={direction}>
+							{/* Step 1: Personal */}
+							{step === 1 && (
+								<motion.div
+									key="step1"
+									custom={direction}
+									variants={slideVariants}
+									initial="enter"
+									animate="center"
+									exit="exit"
+									transition={{ duration: 0.25, ease: "easeInOut" }}
+									className="space-y-4"
+								>
+									<div className="grid grid-cols-2 gap-3">
+										<FormInput
+											label="First name"
+											placeholder="John"
+											required
+											{...register("firstName")}
+											error={errors.firstName?.message}
+										/>
+										<FormInput
+											label="Last name"
+											placeholder="Doe"
+											required
+											{...register("lastName")}
+											error={errors.lastName?.message}
+										/>
+									</div>
+									<FormSelect
+										label="Gender"
+										options={[
+											{ value: "NOT_SPECIFIED", label: "Prefer not to say" },
+											{ value: "MALE", label: "Male" },
+											{ value: "FEMALE", label: "Female" },
+										]}
+										{...register("gender")}
+										error={errors.gender?.message}
+									/>
+								</motion.div>
+							)}
 
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<Input
-							label="First name"
-							{...register("firstName")}
-							type="text"
-							autoComplete="given-name"
-							placeholder="First name"
-							leftIcon={User}
-							error={errors.firstName?.message}
-						/>
-						<Input
-							label="Last name"
-							{...register("lastName")}
-							type="text"
-							autoComplete="family-name"
-							placeholder="Last name"
-							leftIcon={User}
-							error={errors.lastName?.message}
-						/>
+							{/* Step 2: Contact */}
+							{step === 2 && (
+								<motion.div
+									key="step2"
+									custom={direction}
+									variants={slideVariants}
+									initial="enter"
+									animate="center"
+									exit="exit"
+									transition={{ duration: 0.25, ease: "easeInOut" }}
+									className="space-y-4"
+								>
+									<FormInput
+										label="Email address"
+										type="email"
+										placeholder="john@example.com"
+										required
+										{...register("email")}
+										error={errors.email?.message}
+									/>
+									<Controller
+										name="phoneNumber"
+										control={control}
+										render={({ field }) => (
+											<PhoneInput
+												label="Phone number"
+												required
+												value={field.value}
+												onChange={(val) => field.onChange(val)}
+												error={errors.phoneNumber?.message}
+											/>
+										)}
+									/>
+								</motion.div>
+							)}
+
+							{/* Step 3: Security */}
+							{step === 3 && (
+								<motion.div
+									key="step3"
+									custom={direction}
+									variants={slideVariants}
+									initial="enter"
+									animate="center"
+									exit="exit"
+									transition={{ duration: 0.25, ease: "easeInOut" }}
+									className="space-y-4"
+								>
+									{/* Summary */}
+									{firstName && (
+										<div
+											className="p-3 rounded-lg text-xs"
+											style={{
+												background: "rgba(22,163,74,0.06)",
+												border: "1px solid rgba(22,163,74,0.12)",
+												color: "var(--text-secondary)",
+											}}
+										>
+											Creating account for <strong style={{ color: "var(--text-primary)" }}>{firstName}</strong>
+											{email && <> · <span style={{ color: "var(--text-hint)" }}>{email}</span></>}
+										</div>
+									)}
+
+									<div className="relative">
+										<FormInput
+											label="Password"
+											type={showPassword ? "text" : "password"}
+											placeholder="Min. 8 characters"
+											required
+											{...register("password")}
+											error={errors.password?.message}
+										/>
+										<button
+											type="button"
+											onClick={() => setShowPassword(!showPassword)}
+											className="absolute right-3 top-[2rem] p-1 cursor-pointer"
+											style={{ color: "var(--text-hint)" }}
+										>
+											{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+										</button>
+									</div>
+
+									<div className="relative">
+										<FormInput
+											label="Confirm password"
+											type={showConfirmPassword ? "text" : "password"}
+											placeholder="Re-enter password"
+											required
+											{...register("confirmPassword")}
+											error={errors.confirmPassword?.message}
+										/>
+										<button
+											type="button"
+											onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+											className="absolute right-3 top-[2rem] p-1 cursor-pointer"
+											style={{ color: "var(--text-hint)" }}
+										>
+											{showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+										</button>
+									</div>
+
+									<label className="flex items-start gap-2 cursor-pointer">
+										<input
+											type="checkbox"
+											required
+											className="mt-0.5 h-4 w-4 rounded cursor-pointer accent-green-600"
+										/>
+										<span className="text-[0.65rem] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+											I agree to the{" "}
+											<Link href="/terms" style={{ color: "var(--color-primary)" }}>Terms</Link>
+											{" "}and{" "}
+											<Link href="/privacy" style={{ color: "var(--color-primary)" }}>Privacy Policy</Link>
+										</span>
+									</label>
+								</motion.div>
+							)}
+						</AnimatePresence>
 					</div>
 
-					<Input
-						label="Email address"
-						{...register("email")}
-						type="email"
-						autoComplete="email"
-						placeholder="Enter your email"
-						leftIcon={Mail}
-						error={errors.email?.message}
-					/>
-
-					<Input
-						label="Password"
-						{...register("password")}
-						type={showPassword ? "text" : "password"}
-						autoComplete="new-password"
-						placeholder="Create a password"
-						leftIcon={Lock}
-						error={errors.password?.message}
-						rightElement={
-							<button
-								type="button"
-								className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-								onClick={() => setShowPassword(!showPassword)}
-							>
-								{showPassword ? (
-									<EyeOff className="h-5 w-5" />
-								) : (
-									<Eye className="h-5 w-5" />
-								)}
-							</button>
-						}
-					/>
-
-					<Input
-						label="Confirm password"
-						{...register("confirmPassword")}
-						type={showConfirmPassword ? "text" : "password"}
-						autoComplete="new-password"
-						placeholder="Confirm your password"
-						leftIcon={Lock}
-						error={errors.confirmPassword?.message}
-						rightElement={
-							<button
-								type="button"
-								className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-								onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-							>
-								{showConfirmPassword ? (
-									<EyeOff className="h-5 w-5" />
-								) : (
-									<Eye className="h-5 w-5" />
-								)}
-							</button>
-						}
-					/>
-
-					<div className="flex items-center">
-						<input
-							id="terms"
-							name="terms"
-							type="checkbox"
-							required
-							className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded"
-						/>
-						<label
-							htmlFor="terms"
-							className="ml-2 block text-sm text-gray-900 dark:text-gray-300"
-						>
-							I agree to the{" "}
-							<Link
-								href="/terms"
-								className="text-primary-600 dark:text-primary-400 hover:text-primary-500"
-							>
-								Terms of Service
-							</Link>{" "}
-							and{" "}
-							<Link
-								href="/privacy"
-								className="text-primary-600 dark:text-primary-400 hover:text-primary-500"
-							>
-								Privacy Policy
-							</Link>
-						</label>
-					</div>
-
-					<Button
-						type="submit"
-						variant="filled"
-						size="lg"
-						fullWidth
-						loading={isLoading}
-						disabled={isLoading}
+					{/* Footer Buttons */}
+					<div
+						className="px-8 py-5 mt-4 flex items-center justify-between"
+						style={{ borderTop: "1px solid var(--border-light)" }}
 					>
-						{isLoading ? "Creating account..." : "Create account"}
-					</Button>
+						{step > 1 ? (
+							<button
+								type="button"
+								onClick={goBack}
+								className="flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer press-effect px-3 py-2 rounded-lg"
+								style={{ color: "var(--text-secondary)" }}
+								onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-low)"; }}
+								onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+							>
+								<ArrowLeft className="w-3.5 h-3.5" />
+								Back
+							</button>
+						) : (
+							<div />
+						)}
+
+						{step < 3 ? (
+							<button
+								type="button"
+								onClick={goNext}
+								className="flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-xs font-semibold text-white transition-all cursor-pointer press-effect"
+								style={{ background: "var(--color-primary)", boxShadow: "var(--shadow-sm)" }}
+							>
+								Continue
+								<ArrowRight className="w-3.5 h-3.5" />
+							</button>
+						) : (
+							<button
+								type="submit"
+								disabled={isLoading}
+								className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-semibold text-white transition-all cursor-pointer press-effect disabled:opacity-60 disabled:cursor-not-allowed"
+								style={{ background: "var(--color-primary)", boxShadow: "var(--shadow-sm)" }}
+							>
+								{isLoading ? (
+									<>
+										<svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+											<circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4" strokeDashoffset="10" strokeLinecap="round" />
+										</svg>
+										Creating...
+									</>
+								) : (
+									<>
+										Create account
+										<Check className="w-3.5 h-3.5" />
+									</>
+								)}
+							</button>
+						)}
+					</div>
 				</form>
-			</Card>
+			</motion.div>
 		</div>
 	);
 };

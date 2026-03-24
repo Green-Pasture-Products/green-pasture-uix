@@ -10,12 +10,14 @@ export const signupSchema = z
 		firstName: z.string().min(1, "First name is required"),
 		lastName: z.string().min(1, "Last name is required"),
 		email: z.string().email("Please enter a valid email address"),
+		phoneNumber: z.string().min(10, "Enter a valid phone number"),
+		gender: z.enum(["MALE", "FEMALE", "NOT_SPECIFIED"]).default("NOT_SPECIFIED"),
 		password: z
 			.string()
 			.min(8, "Password must be at least 8 characters")
 			.regex(
 				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-				"Password must contain at least one uppercase letter, one lowercase letter, and one number"
+				"Must contain uppercase, lowercase, and a number"
 			),
 		confirmPassword: z.string(),
 	})

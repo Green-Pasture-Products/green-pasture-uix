@@ -55,37 +55,7 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 				<meta property="og:site_name" content="Green Pastures" />
 
-				{/* <!-- Favicon and icons --> */}
-				<link rel="icon" href="./icons/favicon.ico" type="image/x-icon" />
-				<link
-					rel="icon"
-					href="./icons/favicon-16x16.png"
-					type="image/png"
-					sizes="32x32"
-				/>
-				<link
-					rel="icon"
-					href="./icons/favicon-32x32.png"
-					type="image/png"
-					sizes="64x64"
-				/>
-				<link
-					rel="apple-touch-icon"
-					href="./icons/apple-touch-icon.png"
-					sizes="180x180"
-				/>
-				<link
-					rel="icon"
-					href="./icons/android-chrome-192x192.png"
-					type="image/png"
-					sizes="192x192"
-				/>
-				<link
-					rel="icon"
-					href="./icons/android-chrome-512x512.png"
-					type="image/png"
-					sizes="512x512"
-				/>
+				{/* Favicons are in _document.tsx */}
 			</Head>
 
 			<div className="min-h-screen overflow-x-hidden bg-white dark:bg-[#0a0f1a] transition-colors duration-300">

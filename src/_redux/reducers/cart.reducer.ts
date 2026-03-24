@@ -192,6 +192,40 @@ const cartSlice = createSlice({
 				state.loading = false;
 				if (action.payload) {
 					state.cartId = action.payload.cartId;
+
+					// Merge backend cart items into local state
+					const backendItems = action.payload.items;
+					if (Array.isArray(backendItems) && backendItems.length > 0) {
+						for (const bItem of backendItems) {
+							// Backend cart item shape: { id, cart, item: { id, name, price, ... }, quantity }
+							const itemData = bItem.item || bItem;
+							const itemId = String(itemData.id || bItem.itemId);
+							const existing = state.items.find((i) => String(i.id) === itemId);
+
+							if (!existing) {
+								// Add backend item to local cart
+								state.items.push({
+									id: itemId,
+									name: itemData.name || "",
+									price: Number(itemData.price || 0),
+									image: itemData.photos?.[0]?.url || "",
+									category: itemData.product?.name || "",
+									description: itemData.description || "",
+									quantity: bItem.quantity || 1,
+									inStock: (itemData.unit || 0) > 0,
+									rating: itemData.ratingStats?.average || 0,
+									reviews: itemData.ratingStats?.count || 0,
+									createdAt: Date.now(),
+								} as any);
+							}
+						}
+						// Recalculate totals
+						state.itemCount = state.items.length;
+						state.total = state.items.reduce(
+							(sum, item) => sum + item.price * item.quantity,
+							0
+						);
+					}
 				}
 				state.lastUpdated = Date.now();
 			})

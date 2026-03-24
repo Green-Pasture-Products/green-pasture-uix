@@ -51,6 +51,9 @@ const customerServiceLinks = [
 	{ href: "/wishlist", label: "Wishlist" },
 	{ href: "/profile", label: "Profile" },
 	{ href: "/search", label: "Track Order" },
+	{ href: "/terms", label: "Terms of Service" },
+	{ href: "/privacy", label: "Privacy Policy" },
+	{ href: "/refund-policy", label: "Return Policy" },
 ];
 
 const Footer = () => {

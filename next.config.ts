@@ -11,8 +11,12 @@ const nextConfig: NextConfig = {
 		ignoreBuildErrors: false,
 	},
 	images: {
-		domains: ["images.unsplash.com", "unsplash.com"],
-		    unoptimized: true
+		unoptimized: true, // Required with output: "export" (static HTML)
+		remotePatterns: [
+			{ protocol: "https", hostname: "**.cloudinary.com" },
+			{ protocol: "https", hostname: "images.unsplash.com" },
+			{ protocol: "https", hostname: "unsplash.com" },
+		],
 	},
 	webpack(config, { dev }) {
 		if (!dev && config.optimization?.minimizer) {

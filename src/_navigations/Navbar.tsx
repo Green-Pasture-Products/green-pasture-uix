@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
 	ShoppingCart,
+	ShoppingBag,
 	Search,
 	User,
 	Heart,
@@ -27,11 +28,18 @@ interface NavLink {
 	label: string;
 }
 
-const navLinks: NavLink[] = [
+const customerNavLinks: NavLink[] = [
 	{ href: "/", label: "Home" },
 	{ href: "/products", label: "Products" },
 	{ href: "/about", label: "About" },
 	{ href: "/contact", label: "Contact" },
+];
+
+const adminNavLinks: NavLink[] = [
+	{ href: "/admin/dashboard", label: "Dashboard" },
+	{ href: "/admin/products", label: "Products" },
+	{ href: "/admin/orders", label: "Orders" },
+	{ href: "/admin/customers", label: "Customers" },
 ];
 
 const Navbar: React.FC = () => {
@@ -46,7 +54,8 @@ const Navbar: React.FC = () => {
 
 	const itemCount = useAppSelector((state) => state.cart.itemCount);
 	const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-	const bio = user; // Use auth.user directly instead of stale localforage bio
+	const bio = user;
+	const isAdmin = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(user?.profileType?.toUpperCase() || "");
 	const wishlistCount = useAppSelector(
 		(state) => state.wishlist.wishlistItemCount
 	);
@@ -108,7 +117,7 @@ const Navbar: React.FC = () => {
 
 				{/* Center: Nav Links (desktop) */}
 				<nav className="hidden md:flex gap-1">
-					{navLinks.map(({ href, label }) => (
+					{(isAdmin ? adminNavLinks : customerNavLinks).map(({ href, label }) => (
 						<Link
 							key={href}
 							href={href}
@@ -141,34 +150,38 @@ const Navbar: React.FC = () => {
 						)}
 					</button>
 
-					{/* Search */}
-					<Link
-						href="/search"
-						className={`p-2 rounded-radius-md transition-colors duration-200 press-effect ${
-							isActive("/search")
-								? "text-primary-600 dark:text-primary-400"
-								: "text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
-						}`}
-					>
-						<Search className="h-5 w-5" />
-					</Link>
+					{/* Search — customers only */}
+					{!isAdmin && (
+						<Link
+							href="/search"
+							className={`p-2 rounded-radius-md transition-colors duration-200 press-effect ${
+								isActive("/search")
+									? "text-primary-600 dark:text-primary-400"
+									: "text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
+							}`}
+						>
+							<Search className="h-5 w-5" />
+						</Link>
+					)}
 
-					{/* Wishlist */}
-					<Link
-						href="/wishlist"
-						className={`relative p-2 rounded-radius-md transition-colors duration-200 press-effect ${
-							isActive("/wishlist")
-								? "text-primary-600 dark:text-primary-400"
-								: "text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
-						}`}
-					>
-						<Heart className="h-5 w-5" />
-						{wishlistCount > 0 && (
-							<span className="bg-primary-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5">
-								{wishlistCount}
-							</span>
-						)}
-					</Link>
+					{/* Wishlist — customers only */}
+					{!isAdmin && (
+						<Link
+							href="/wishlist"
+							className={`relative p-2 rounded-radius-md transition-colors duration-200 press-effect ${
+								isActive("/wishlist")
+									? "text-primary-600 dark:text-primary-400"
+									: "text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
+							}`}
+						>
+							<Heart className="h-5 w-5" />
+							{wishlistCount > 0 && (
+								<span className="bg-primary-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5">
+									{wishlistCount}
+								</span>
+							)}
+						</Link>
+					)}
 
 					{/* User Menu */}
 					{isAuthenticated && bio ? (
@@ -208,6 +221,18 @@ const Navbar: React.FC = () => {
 										<User className="h-4 w-4" />
 										Profile
 									</Link>
+									{!isAdmin && (
+										<Link
+											href="/my-orders"
+											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+											onClick={() =>
+												setIsUserMenuOpen(false)
+											}
+										>
+											<ShoppingBag className="h-4 w-4" />
+											My Orders
+										</Link>
+									)}
 									{["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(
 										bio?.profileType?.toUpperCase() || ""
 									) && (
@@ -277,22 +302,24 @@ const Navbar: React.FC = () => {
 						</div>
 					)}
 
-					{/* Cart */}
-					<Link
-						href="/cart"
-						className={`relative p-2 rounded-radius-md transition-colors duration-200 press-effect ${
-							isActive("/cart")
-								? "text-primary-600 dark:text-primary-400"
-								: "text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
-						}`}
-					>
-						<ShoppingCart className="h-5 w-5" />
-						{itemCount > 0 && (
-							<span className="bg-primary-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5">
-								{itemCount}
-							</span>
-						)}
-					</Link>
+					{/* Cart — only for customers */}
+					{!isAdmin && (
+						<Link
+							href="/cart"
+							className={`relative p-2 rounded-radius-md transition-colors duration-200 press-effect ${
+								isActive("/cart")
+									? "text-primary-600 dark:text-primary-400"
+									: "text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
+							}`}
+						>
+							<ShoppingCart className="h-5 w-5" />
+							{itemCount > 0 && (
+								<span className="bg-primary-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5">
+									{itemCount}
+								</span>
+							)}
+						</Link>
+					)}
 
 					{/* Mobile Hamburger */}
 					<button
@@ -328,7 +355,7 @@ const Navbar: React.FC = () => {
 						<div className="border-t border-outline-variant dark:border-white/8 my-2" />
 
 						{/* Nav Links */}
-						{navLinks.map(({ href, label }) => (
+						{(isAdmin ? adminNavLinks : customerNavLinks).map(({ href, label }) => (
 							<Link
 								key={href}
 								href={href}

@@ -169,7 +169,7 @@ const ProductDetailsPage: React.FC = () => {
 						</Card>
 
 						<div className="flex space-x-3">
-							{productImages.map((image, index) => (
+							{productImages.map((image: string, index: number) => (
 								<button
 									key={index}
 									onClick={() => setSelectedImage(index)}
