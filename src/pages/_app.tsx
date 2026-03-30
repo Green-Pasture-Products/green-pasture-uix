@@ -5,9 +5,20 @@ import { CurrencyProvider } from "@/_hooks/useCurrency";
 import PageTransition from "@/_UI/PageTransition";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
+import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
+
+// Clean up old localStorage keys from previous persist versions
+if (typeof window !== "undefined") {
+	const OLD_KEYS = ["persist:Green_Pastures_GlObAl-StAtE"];
+	OLD_KEYS.forEach((key) => {
+		if (localStorage.getItem(key)) {
+			localStorage.removeItem(key);
+		}
+	});
+}
 
 export default function App({ Component, pageProps }: AppProps) {
 	return (

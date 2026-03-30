@@ -13,6 +13,7 @@ import {
 import { LoginFormData, loginSchema } from "@/_validations/auth";
 import Image from "next/image";
 import { loginAsync } from "@/_redux/actions/auth.action";
+import { appConstants } from "@/_redux/constants";
 import { logger } from "@/_utils";
 import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
@@ -49,8 +50,8 @@ const LoginPage: React.FC = () => {
 
 	useEffect(() => {
 		if (isAuthenticated && user) {
-			const isAdminUser = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(
-				user?.profileType?.toUpperCase() || ""
+			const isAdminUser = appConstants.ADMIN_ROLES.includes(
+				user?.profileType?.toUpperCase() as any || ""
 			);
 
 			if (isAdminUser) {
@@ -60,16 +61,11 @@ const LoginPage: React.FC = () => {
 				return;
 			}
 
-			// Customer: sync cart with backend
+			// Customer: sync cart with backend (backend derives customer from JWT)
 			const syncCart = async () => {
 				try {
-					const axiosInstance = (await import("@/_utils/axiosInstance")).default;
-					const res = await axiosInstance.get("customers/me");
-					const customerId = res.data?.data?.id;
-					if (customerId) {
-						const { syncCartOnLoginAsync } = await import("@/_redux/actions/cart.action");
-						dispatch(syncCartOnLoginAsync({ customerId }));
-					}
+					const { syncCartOnLoginAsync } = await import("@/_redux/actions/cart.action");
+					await dispatch(syncCartOnLoginAsync()).unwrap();
 				} catch {}
 			};
 			syncCart();
@@ -77,7 +73,7 @@ const LoginPage: React.FC = () => {
 			const redirect = router.query.redirect as string;
 			router.push(redirect || "/");
 		}
-	}, [isAuthenticated]);
+	}, [isAuthenticated, user, dispatch, router]);
 
 	return (
 		<div className="min-h-screen bg-[#fafafa] dark:bg-[#0e0e1a] flex items-center justify-center p-4">
@@ -164,22 +160,7 @@ const LoginPage: React.FC = () => {
 						}
 					/>
 
-					<div className="flex items-center justify-between">
-						<div className="flex items-center">
-							<input
-								id="remember-me"
-								name="remember-me"
-								type="checkbox"
-								className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-white/15 rounded"
-							/>
-							<label
-								htmlFor="remember-me"
-								className="ml-2 block text-sm text-gray-900 dark:text-white/90/70"
-							>
-								Remember me
-							</label>
-						</div>
-
+					<div className="flex items-center justify-end">
 						<div className="text-sm">
 							<Link
 								href="/forgot-password"

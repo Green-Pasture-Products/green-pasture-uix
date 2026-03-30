@@ -3,6 +3,7 @@ import {
 	LayoutDashboard,
 	Package,
 	Settings,
+	Shield,
 	ShoppingCart,
 	Users,
 	ShoppingBasket
@@ -32,6 +33,10 @@ export const getPageNames = (link: string) => {
 			return "staff";
 		case "/admin/staff/[id]":
 			return "staff";
+		case "/admin/roles":
+			return "roles";
+		case "/admin/role/[id]":
+			return "role";
 		// case "/admin/analytics":
 		// 	return "analytics";
 		case "/admin/settings":
@@ -72,6 +77,11 @@ export const sidebarNavigation = [
 		name: "Staff",
 		href: "/admin/staff",
 		icon: Users,
+	},
+	{
+		name: "Roles",
+		href: "/admin/roles",
+		icon: Shield,
 	},
 	// {
 	// 	name: "Analytics",

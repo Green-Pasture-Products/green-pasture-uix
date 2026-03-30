@@ -7,7 +7,8 @@ import Link from "next/link";
 import Button from "./Button";
 
 interface EmptyStateProps {
-	icon: LucideIcon;
+	icon?: LucideIcon;
+	illustration?: React.ReactNode;
 	title: string;
 	description?: string;
 	actionLabel?: string;
@@ -17,6 +18,7 @@ interface EmptyStateProps {
 
 const EmptyState: React.FC<EmptyStateProps> = ({
 	icon: Icon,
+	illustration,
 	title,
 	description,
 	actionLabel,
@@ -36,7 +38,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 			transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
 			className="flex flex-col items-center justify-center py-16"
 		>
-			<Icon className="h-16 w-16 text-gray-300 dark:text-white/20" />
+			{illustration || (Icon && <Icon className="h-16 w-16 text-gray-300 dark:text-white/20" />)}
 			<h3 className="text-xl font-semibold text-on-surface dark:text-white/90 mt-4">
 				{title}
 			</h3>

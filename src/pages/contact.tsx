@@ -5,24 +5,25 @@ import AnimatedSection from "@/_UI/AnimatedSection";
 import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
 import Button from "@/_UI/Button";
+import { appConstants } from "@/_redux/constants";
 
 const contactInfo = [
 	{
 		icon: Phone,
 		title: "Phone",
-		detail: "+234 800 000 0000",
+		detail: appConstants.CONTACT.PHONE,
 		subtitle: "Mon-Fri, 9am-5pm WAT",
 	},
 	{
 		icon: Mail,
 		title: "Email",
-		detail: "hello@greenpastures.ng",
+		detail: appConstants.CONTACT.EMAIL,
 		subtitle: "We reply within 24 hours",
 	},
 	{
 		icon: MapPin,
 		title: "Office",
-		detail: "Lagos, Nigeria",
+		detail: appConstants.CONTACT.ADDRESS,
 		subtitle: "Visit by appointment",
 	},
 ];

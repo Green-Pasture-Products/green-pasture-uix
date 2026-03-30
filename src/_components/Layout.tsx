@@ -19,7 +19,7 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 		<>
 			<Head>
 				<title className="capitalize">
-					{`${page_name} Page |` || "Home |"} Green Patures Organics |
+					{`${page_name} Page |` || "Home |"} Green Pastures Organics |
 					Living Healthy
 				</title>
 				{/* <meta charset="UTF-8" /> */}

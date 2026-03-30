@@ -13,6 +13,7 @@ import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
 import Button from "@/_UI/Button";
 import PageLoader from "@/_UI/PageLoader";
+import AuthPrompt from "@/_UI/AuthPrompt";
 
 const Profile = () => {
 	const router = useRouter();
@@ -20,6 +21,7 @@ const Profile = () => {
 	const { isAuthenticated } = useAppSelector((state) => state.auth);
 	const { profile, isLoading, isUpdating } = useAppSelector((state) => state.profile);
 	const [isEditing, setIsEditing] = useState(false);
+	const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const {
@@ -33,7 +35,7 @@ const Profile = () => {
 
 	useEffect(() => {
 		if (!isAuthenticated) {
-			router.push("/login");
+			setShowAuthPrompt(true);
 			return;
 		}
 		dispatch(profileAction.fetchProfileAsync());
@@ -93,7 +95,17 @@ const Profile = () => {
 	};
 
 	if (!isAuthenticated) {
-		return null;
+		return (
+			<Layout pageTitle="Profile">
+				<AuthPrompt
+					isOpen={showAuthPrompt}
+					onClose={() => router.push("/products")}
+					redirectTo="/profile"
+					title="Sign in to manage profile"
+					message="Log in to view and update your personal information."
+				/>
+			</Layout>
+		);
 	}
 
 	if (isLoading && !profile) {

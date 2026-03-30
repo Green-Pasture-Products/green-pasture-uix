@@ -19,9 +19,11 @@ import {
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useRouter } from "next/router";
 import { logout } from "@/_redux/reducers/auth.reducer";
+import { clearCart } from "@/_redux/reducers/cart.reducer";
 import { logoutAsync } from "@/_redux/actions/auth.action";
 import { getBio } from "@/_redux/actions/user.action";
 import { useTheme } from "@/_hooks/useTheme";
+import { appConstants } from "@/_redux/constants";
 
 interface NavLink {
 	href: string;
@@ -52,10 +54,11 @@ const Navbar: React.FC = () => {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const userMenuRef = useRef<HTMLDivElement>(null);
 
+
 	const itemCount = useAppSelector((state) => state.cart.itemCount);
 	const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 	const bio = user;
-	const isAdmin = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(user?.profileType?.toUpperCase() || "");
+	const isAdmin = appConstants.ADMIN_ROLES.includes(user?.profileType?.toUpperCase() as any || "");
 	const wishlistCount = useAppSelector(
 		(state) => state.wishlist.wishlistItemCount
 	);
@@ -85,6 +88,7 @@ const Navbar: React.FC = () => {
 			.catch(() => {})
 			.finally(() => {
 				dispatch(logout());
+				dispatch(clearCart());
 				router.push("/login");
 			});
 	};
@@ -183,6 +187,7 @@ const Navbar: React.FC = () => {
 						</Link>
 					)}
 
+	
 					{/* User Menu */}
 					{isAuthenticated && bio ? (
 						<div className="relative" ref={userMenuRef}>
@@ -233,8 +238,8 @@ const Navbar: React.FC = () => {
 											My Orders
 										</Link>
 									)}
-									{["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(
-										bio?.profileType?.toUpperCase() || ""
+									{appConstants.ADMIN_ROLES.includes(
+										bio?.profileType?.toUpperCase() as any || ""
 									) && (
 										<Link
 											href="/admin/dashboard"

@@ -318,6 +318,7 @@ export interface ProfileData {
 	status?: string;
 	createdAt?: string;
 	updatedAt?: string;
+	role?: { id: number; name: string; permissions?: BackendPermission[] };
 }
 
 export interface ShippingAddress {
@@ -365,4 +366,20 @@ export interface ProfileState {
 	isLoading: boolean;
 	isUpdating: boolean;
 	error: string | null;
+}
+
+export interface BackendRole {
+	id: number;
+	name: string;
+	description: string;
+	permissions: BackendPermission[];
+	status: string;
+	createdAt: string;
+}
+
+export interface BackendPermission {
+	id: number;
+	name: string;
+	description: string;
+	status: string;
 }

@@ -10,7 +10,9 @@ import { DataTable, Column } from "@/_UI/DataTable";
 import { formatCurrency } from "@/_UI/FormatValue";
 import PageLoader from "@/_UI/PageLoader";
 import OrderTimeline from "@/_UI/OrderTimeline";
+import AuthPrompt from "@/_UI/AuthPrompt";
 import { BackendOrder, BackendOrderItem } from "@/types";
+import { appConstants } from "@/_redux/constants";
 
 const getStatusVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
 	switch (status?.toUpperCase()) {
@@ -35,14 +37,15 @@ const MyOrderDetail: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-	const isAdmin = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(user?.profileType?.toUpperCase() || "");
+	const isAdmin = appConstants.ADMIN_ROLES.includes(user?.profileType?.toUpperCase() as any || "");
 
 	const [order, setOrder] = useState<BackendOrder | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
 	useEffect(() => {
 		if (!isAuthenticated) {
-			router.replace("/login");
+			setShowAuthPrompt(true);
 			return;
 		}
 		if (isAdmin) {
@@ -115,7 +118,14 @@ const MyOrderDetail: React.FC = () => {
 	if (!isAuthenticated || isAdmin) {
 		return (
 			<Layout>
-				<PageLoader message="Redirecting..." />
+				<AuthPrompt
+					isOpen={showAuthPrompt}
+					onClose={() => router.push("/products")}
+					redirectTo={`/my-orders/${router.query.id}`}
+					title="Sign in to view order details"
+					message="Log in to see your order details and tracking information."
+				/>
+				{!showAuthPrompt && <PageLoader message="Redirecting..." />}
 			</Layout>
 		);
 	}
@@ -131,7 +141,7 @@ const MyOrderDetail: React.FC = () => {
 	if (!order) {
 		return (
 			<Layout>
-				<div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16 space-y-5 animate-page-enter">
+				<div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-5 animate-page-enter">
 					<BackButton />
 					<div
 						className="rounded-xl px-6 py-16 text-center"
@@ -148,7 +158,7 @@ const MyOrderDetail: React.FC = () => {
 
 	return (
 		<Layout>
-			<div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16 space-y-5 animate-page-enter">
+			<div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-5 animate-page-enter">
 				<BackButton />
 
 				<DetailHeader

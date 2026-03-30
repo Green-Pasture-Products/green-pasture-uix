@@ -11,6 +11,7 @@ import Modal from "@/_UI/Modal";
 import { FormInput, FormTextarea, FormFileUpload, FormActions } from "@/_UI/FormField";
 import FormSelectDropdown from "@/_UI/FormSelect";
 import CurrencyInput from "@/_UI/CurrencyInput";
+import NumberInput from "@/_UI/NumberInput";
 
 const schema = z.object({
 	productId: z.coerce.number().positive("Category is required"),
@@ -163,13 +164,20 @@ const AddProduct: React.FC<{
 								/>
 							)}
 						/>
-						<FormInput
-							label="Available Units"
-							type="number"
-							placeholder="0"
-							required
-							{...register("unit")}
-							error={errors.unit?.message}
+						<Controller
+							name="unit"
+							control={control}
+							render={({ field }) => (
+								<NumberInput
+									label="Available Units"
+									placeholder="0"
+									required
+									prefix="Qty"
+									value={field.value ?? ""}
+									onChange={(val) => field.onChange(parseInt(val) || 0)}
+									error={errors.unit?.message}
+								/>
+							)}
 						/>
 					</div>
 

@@ -22,8 +22,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import {
 	clearCart,
+	clearError,
 	setFreeShippingThreshold,
 } from "@/_redux/reducers/cart.reducer";
+import { clearCartAsync } from "@/_redux/actions/cart.action";
 import { appConstants } from "@/_redux/constants";
 import Image from "next/image";
 import Layout from "@/_components/Layout";
@@ -63,7 +65,7 @@ const CartPage: React.FC = () => {
 		(state) => state.cart
 	);
 	const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-	const isAdmin = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(user?.profileType?.toUpperCase() || "");
+	const isAdmin = appConstants.ADMIN_ROLES.includes(user?.profileType?.toUpperCase() as any || "");
 	const { handleQuantityChange, handleRemoveItem, isUpdating, errors } =
 		useCartOperations();
 
@@ -71,6 +73,11 @@ const CartPage: React.FC = () => {
 	const [showClearConfirm, setShowClearConfirm] = useState(false);
 	const [syncing, setSyncing] = useState(false);
 	const [storeConfig, setStoreConfig] = useState<any>(null);
+
+	// Clear stale errors on mount
+	useEffect(() => {
+		dispatch(clearError());
+	}, [dispatch]);
 
 	// Fetch store settings + sync cart on page load
 	useEffect(() => {
@@ -87,15 +94,11 @@ const CartPage: React.FC = () => {
 					// Store settings not available — use defaults
 				}
 
-				// Sync cart with backend if authenticated
+				// Sync cart with backend if authenticated (backend derives customer from JWT)
 				if (isAuthenticated) {
 					try {
-						const customerRes = await axiosInstance.get("customers/me");
-						const customerId = customerRes.data?.data?.id;
-						if (customerId) {
-							const { syncCartOnLoginAsync } = await import("@/_redux/actions/cart.action");
-							await dispatch(syncCartOnLoginAsync({ customerId }) as any);
-						}
+						const { syncCartOnLoginAsync } = await import("@/_redux/actions/cart.action");
+						await dispatch(syncCartOnLoginAsync() as any);
 					} catch {
 						// Customer may not exist — keep local cart
 					}
@@ -107,15 +110,15 @@ const CartPage: React.FC = () => {
 		init();
 	}, [isAuthenticated, dispatch]);
 
-	// Server-driven values with fallbacks
-	const taxRate = storeConfig?.orderSettings?.taxRate ?? 0.08;
-	const freeShippingThreshold = storeConfig?.orderSettings?.freeShippingThreshold ?? appConstants.FREE_SHIPPING_THRESHOLD;
-	const shippingFee = storeConfig?.shippingConfig?.methods?.[0]?.baseCost ?? appConstants.SHIPPING_FEE;
+	// Server-driven values — no hardcoded fallbacks
+	const taxRate = Number(storeConfig?.orderSettings?.taxRate) || 0;
+	const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold) || 0;
+	const shippingFee = Number(storeConfig?.shippingConfig?.methods?.[0]?.baseCost) || 0;
 	const defaultCurrency = storeConfig?.orderSettings?.defaultCurrency ?? "NGN";
 
 	const calculations = useMemo(() => {
 		const subtotal = total || 0;
-		const shipping = subtotal > freeShippingThreshold ? 0 : shippingFee;
+		const shipping = subtotal >= freeShippingThreshold ? 0 : shippingFee;
 		const tax = Math.round(subtotal * taxRate);
 		const finalTotal = subtotal + shipping + tax;
 		const remainingForFreeShipping = Math.max(
@@ -131,7 +134,7 @@ const CartPage: React.FC = () => {
 			finalTotal,
 			freeShippingThreshold,
 			remainingForFreeShipping,
-			hasQualifiedForFreeShipping: subtotal > freeShippingThreshold,
+			hasQualifiedForFreeShipping: subtotal >= freeShippingThreshold,
 		};
 	}, [total, taxRate, freeShippingThreshold, shippingFee]);
 
@@ -151,10 +154,14 @@ const CartPage: React.FC = () => {
 
 		setIsClearing(true);
 		try {
-			await dispatch(clearCart());
+			// Clear backend cart first, then local state
+			await dispatch(clearCartAsync()).unwrap();
+			dispatch(clearCart());
 			setShowClearConfirm(false);
 		} catch (error) {
-			console.error("Failed to clear cart:", error);
+			// Even if backend fails, clear local state
+			dispatch(clearCart());
+			setShowClearConfirm(false);
 		} finally {
 			setIsClearing(false);
 		}
@@ -185,8 +192,8 @@ const CartPage: React.FC = () => {
 		);
 	}
 
-	// --- Error State ---
-	if (error) {
+	// --- Error State: only block if cart is truly empty AND there's an error ---
+	if (error && items.length === 0 && !syncing) {
 		return (
 			<Layout>
 				<div className="page-wrapper py-16 text-center">
@@ -762,7 +769,7 @@ const CartPage: React.FC = () => {
 																	handleQuantityChange(
 																		item?.id,
 																		item?.quantity - 1,
-																		item?.quantity
+																		Number((item as any).availableQuantity ?? (item as any).unit ?? 99)
 																	)
 																}
 																disabled={
@@ -838,7 +845,7 @@ const CartPage: React.FC = () => {
 																	handleQuantityChange(
 																		item?.id,
 																		item?.quantity + 1,
-																		item?.quantity
+																		Number((item as any).availableQuantity ?? (item as any).unit ?? 99)
 																	)
 																}
 																disabled={

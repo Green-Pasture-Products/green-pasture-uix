@@ -12,9 +12,11 @@ import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
+import PageLoader from "@/_UI/PageLoader";
 import { Product } from "@/types";
 import { productsAction } from "@/_redux/actions";
 import { filterAndSortProducts } from "@/_utils";
+import { formatCurrency } from "@/_UI/FormatValue";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -27,7 +29,7 @@ const DELETE_ICON = (
 const AdminProducts: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
-	const products = useAppSelector((state) => state.product.products);
+	const { products, isFetchingAllProducts } = useAppSelector((state) => state.product);
 	const { query, filters } = useAppSelector((state) => state.search);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
@@ -105,17 +107,17 @@ const AdminProducts: React.FC = () => {
 			header: "Price",
 			render: (value: any) => (
 				<span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-					₦{Number(value || 0).toLocaleString()}
+					{formatCurrency(value)}
 				</span>
 			),
 		},
 		{
-			key: "unit",
+			key: "availableQuantity",
 			header: "Stock",
-			render: (value: any) => {
-				const qty = Number(value || 0);
+			render: (value: any, row: any) => {
+				const qty = Number(value ?? row.unit ?? 0);
 				return (
-					<Badge variant={qty > 0 ? "success" : "error"} dot>
+					<Badge variant={qty > 0 ? "success" : qty === 0 ? "error" : "warning"} dot>
 						{qty > 0 ? `${qty} units` : "Out of Stock"}
 					</Badge>
 				);
@@ -151,6 +153,14 @@ const AdminProducts: React.FC = () => {
 			),
 		},
 	];
+
+	if (isFetchingAllProducts && !products?.length) {
+		return (
+			<AdminLayout>
+				<PageLoader fullScreen={false} message="Loading products..." />
+			</AdminLayout>
+		);
+	}
 
 	return (
 		<AdminLayout>

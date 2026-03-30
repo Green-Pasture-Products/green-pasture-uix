@@ -34,12 +34,13 @@ import Card from "@/_UI/Card";
 import Button from "@/_UI/Button";
 import Badge from "@/_UI/Badge";
 import EmptyState from "@/_UI/EmptyState";
+import PageLoader from "@/_UI/PageLoader";
 
 const ProductDetailsPage: React.FC = () => {
 	const router = useRouter();
 	const { id } = router.query;
 	const dispatch = useAppDispatch();
-	const products = useAppSelector((state) => state.product.products);
+	const { products, isFetchingAllProducts } = useAppSelector((state) => state.product);
 	const cartItems = useAppSelector((state) => state.cart.items);
 	const wishlistItems = useAppSelector((state) => state.wishlist.items);
 	const product = products?.find((p: Product) => String(p.id) === String(id));
@@ -60,6 +61,14 @@ const ProductDetailsPage: React.FC = () => {
 	const cartItem = cartItems.find((item) => String(item.id) === String(id));
 	const isInCart = !!cartItem;
 	const isInWishlist = wishlistItems.some((item) => String(item.id) === String(id));
+
+	if (!product && (isFetchingAllProducts || !products?.length)) {
+		return (
+			<Layout pageTitle="Loading Product...">
+				<PageLoader fullScreen={false} message="Loading product details..." />
+			</Layout>
+		);
+	}
 
 	if (!product) {
 		return (
@@ -93,7 +102,7 @@ const ProductDetailsPage: React.FC = () => {
 	};
 
 	const handleQuantityChange = (newQuantity: number) => {
-		if (newQuantity >= 1 && newQuantity <= 10) {
+		if (newQuantity >= 1 && newQuantity <= itemMaxQuantity) {
 			setQuantity(newQuantity);
 		}
 	};
@@ -119,15 +128,9 @@ const ProductDetailsPage: React.FC = () => {
 	const itemInStock = itemData.unit > 0 || itemData.inStock;
 	const itemOriginalPrice = itemData.originalPrice ? Number(itemData.originalPrice) : null;
 	const itemPrice = Number(itemData.price || 0);
-	const itemMaxQuantity = itemData.unit || itemData.quantity || 10;
+	const itemMaxQuantity = Number(itemData.availableQuantity) || Number(itemData.unit) || 10;
 
-	const productFeatures = [
-		"100% Certified Organic",
-		"Non-GMO Verified",
-		"Sustainably Grown",
-		"Locally Sourced",
-		"Pesticide-Free",
-	];
+	const productFeatures: string[] = (itemData.features as string[]) ?? [];
 
 	const detailsTab = ["description", "reviews"];
 
@@ -272,7 +275,7 @@ const ProductDetailsPage: React.FC = () => {
 										onClick={() => handleQuantityChange(quantity + 1)}
 										className="p-2 border rounded-radius-md transition-colors disabled:opacity-50"
 										style={{ borderColor: "var(--border-light)" }}
-										disabled={quantity === itemMaxQuantity || !isInCart}
+										disabled={quantity >= itemMaxQuantity}
 									>
 										<Plus className="h-4 w-4 text-gray-600 dark:text-gray-300" />
 									</button>
@@ -331,22 +334,24 @@ const ProductDetailsPage: React.FC = () => {
 						</div>
 
 						{/* Features */}
-						<div className="space-y-3">
-							<h3 className="font-semibold text-gray-900 dark:text-white">
-								Product Features:
-							</h3>
-							<ul className="space-y-2">
-								{productFeatures?.map((feature, index) => (
-									<li
-										key={index}
-										className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400"
-									>
-										<Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-										<span>{feature}</span>
-									</li>
-								))}
-							</ul>
-						</div>
+						{productFeatures.length > 0 && (
+							<div className="space-y-3">
+								<h3 className="font-semibold text-gray-900 dark:text-white">
+									Product Features:
+								</h3>
+								<ul className="space-y-2">
+									{productFeatures.map((feature, index) => (
+										<li
+											key={index}
+											className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400"
+										>
+											<Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+											<span>{feature}</span>
+										</li>
+									))}
+								</ul>
+							</div>
+						)}
 
 						{/* Shipping Info */}
 						<Card elevation={0} padding="md" className="bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800">
@@ -401,88 +406,9 @@ const ProductDetailsPage: React.FC = () => {
 									<h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
 										About this product
 									</h3>
-									<p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
-										{product?.description}. Our{" "}
-										{product?.name?.toLowerCase() || "This product"} is carefully selected
-										from certified organic farms that follow sustainable
-										farming practices. Each item is hand-picked at peak
-										ripeness to ensure maximum flavor and nutritional
-										value.
+									<p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+										{product?.description || "No description available."}
 									</p>
-
-									<h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-										Storage Instructions
-									</h4>
-									<p className="text-gray-700 dark:text-gray-300 mb-6">
-										Store in a cool, dry place away from direct sunlight.
-									</p>
-
-									<h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-										Origin
-									</h4>
-									<p className="text-gray-700 dark:text-gray-300">
-										Sourced from certified organic farms in Northern
-										parts of Nigeria, known for their ideal growing
-										conditions and commitment to sustainable agriculture.
-									</p>
-								</div>
-							</Card>
-						)}
-
-						{activeTab === "nutrition" && (
-							<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
-								<h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-									Nutritional Information
-								</h3>
-								<div className="border border-gray-200 dark:border-white/15 rounded-radius-md p-6">
-									<div className="grid grid-cols-2 gap-4">
-										<div>
-											<h4 className="font-medium text-gray-900 dark:text-white mb-2">
-												Per Serving (100g)
-											</h4>
-											<ul className="space-y-2 text-sm">
-												{[
-													{ label: "Calories", value: "160" },
-													{ label: "Total Fat", value: "15g" },
-													{ label: "Protein", value: "2g" },
-													{ label: "Carbohydrates", value: "9g" },
-												].map((item) => (
-													<li key={item.label} className="flex justify-between text-gray-600 dark:text-gray-400">
-														<span>{item.label}</span>
-														<span className="font-medium text-gray-900 dark:text-white">{item.value}</span>
-													</li>
-												))}
-											</ul>
-										</div>
-										<div>
-											<h4 className="font-medium text-gray-900 dark:text-white mb-2">
-												Vitamins & Minerals
-											</h4>
-											<ul className="space-y-2 text-sm">
-												{[
-													{ label: "Vitamin K", value: "26% DV" },
-													{ label: "Folate", value: "20% DV" },
-													{ label: "Potassium", value: "14% DV" },
-													{ label: "Vitamin E", value: "10% DV" },
-												].map((item) => (
-													<li key={item.label} className="flex justify-between text-gray-600 dark:text-gray-400">
-														<span>{item.label}</span>
-														<span className="font-medium text-gray-900 dark:text-white">{item.value}</span>
-													</li>
-												))}
-											</ul>
-										</div>
-									</div>
-									<div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-radius-md">
-										<div className="flex items-start space-x-2">
-											<Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-											<p className="text-sm text-blue-800 dark:text-blue-300">
-												Nutritional values are approximate and may
-												vary based on growing conditions and
-												ripeness.
-											</p>
-										</div>
-									</div>
 								</div>
 							</Card>
 						)}

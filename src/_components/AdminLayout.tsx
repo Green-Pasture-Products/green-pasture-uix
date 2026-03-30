@@ -11,7 +11,7 @@ import Header from "../_navigations/Header";
 import { usePathname } from "next/navigation";
 
 const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
-	const pathname = usePathname();
+	const pathname = usePathname() || "";
 	const lastSegment = pathname.split("/").filter(Boolean).pop() || "";
 	const page_name =
 		lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);

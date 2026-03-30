@@ -2,8 +2,9 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useAppSelector } from "@/_redux/store";
 import PageLoader from "@/_UI/PageLoader";
+import { appConstants } from "@/_redux/constants";
 
-const ADMIN_ROLES = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"];
+const ADMIN_ROLES: readonly string[] = appConstants.ADMIN_ROLES;
 
 export default function withAdminAuth<P extends object>(
 	WrappedComponent: React.ComponentType<P>

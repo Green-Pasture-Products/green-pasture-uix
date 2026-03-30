@@ -6,6 +6,7 @@ import { BackButton, DetailHeader, DetailSection, DetailRow } from "@/_UI/Detail
 import Badge from "@/_UI/Badge";
 import { formatPhoneDisplay } from "@/_UI/FormatValue";
 import PageLoader from "@/_UI/PageLoader";
+import toast from "react-hot-toast";
 import axiosInstance from "@/_utils/axiosInstance";
 import { BackendCustomer } from "@/types";
 
@@ -25,6 +26,7 @@ const CustomerDetail: React.FC = () => {
 			})
 			.catch(() => {
 				setCustomer(null);
+				toast.error("Failed to load customer");
 			})
 			.finally(() => {
 				setLoading(false);

@@ -7,7 +7,7 @@ import { Eye, EyeOff, AlertCircle, ArrowRight, ArrowLeft, Check, User, Mail, Loc
 import { motion, AnimatePresence } from "framer-motion";
 
 import { clearError } from "@/_redux/reducers/auth.reducer";
-import { signupSchema, SignupFormData } from "@/_validations/auth";
+import { signupSchema, signupStep1Schema, signupStep2Schema, SignupFormData } from "@/_validations/auth";
 import { signupAsync } from "@/_redux/actions/auth.action";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import Image from "next/image";
@@ -44,14 +44,15 @@ const SignupPage: React.FC = () => {
 	const {
 		register,
 		handleSubmit,
-		trigger,
 		watch,
 		control,
+		setError,
+		clearErrors,
 		formState: { errors },
 	} = useForm<SignupFormData>({
 		resolver: zodResolver(signupSchema) as any,
-		defaultValues: { gender: "NOT_SPECIFIED" },
-		mode: "onTouched",
+		defaultValues: { firstName: "", lastName: "", email: "", phoneNumber: "", gender: "NOT_SPECIFIED", password: "", confirmPassword: "" },
+		mode: "onSubmit",
 	});
 
 	React.useEffect(() => {
@@ -76,15 +77,32 @@ const SignupPage: React.FC = () => {
 	};
 
 	const goNext = async () => {
-		let fieldsToValidate: (keyof SignupFormData)[] = [];
-		if (step === 1) fieldsToValidate = ["firstName", "lastName", "gender"];
-		if (step === 2) fieldsToValidate = ["email", "phoneNumber"];
+		const values = watch();
+		let result: { success: boolean; error?: any };
 
-		const valid = await trigger(fieldsToValidate);
-		if (valid) {
-			setDirection(1);
-			setStep((s) => Math.min(s + 1, 3));
+		if (step === 1) {
+			result = signupStep1Schema.safeParse(values);
+		} else if (step === 2) {
+			result = signupStep2Schema.safeParse(values);
+		} else {
+			return;
 		}
+
+		if (!result.success) {
+			// Clear previous errors for this step before setting new ones
+			if (step === 1) clearErrors(["firstName", "lastName", "gender"]);
+			if (step === 2) clearErrors(["email", "phoneNumber"]);
+			for (const issue of result.error.issues) {
+				const field = issue.path[0] as keyof SignupFormData;
+				setError(field, { message: issue.message });
+			}
+			return;
+		}
+
+		// Clear all errors before advancing to prevent stale errors on the next step
+		clearErrors();
+		setDirection(1);
+		setStep((s) => Math.min(s + 1, 3));
 	};
 
 	const goBack = () => {

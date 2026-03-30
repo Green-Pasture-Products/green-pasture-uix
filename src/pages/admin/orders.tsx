@@ -12,6 +12,8 @@ import Badge from "@/_UI/Badge";
 import Modal from "@/_UI/Modal";
 import Button from "@/_UI/Button";
 import { BackendOrder } from "@/types";
+import { formatCurrency } from "@/_UI/FormatValue";
+import PageLoader from "@/_UI/PageLoader";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -44,8 +46,12 @@ const getStatusBadgeVariant = (status: string): "success" | "warning" | "error" 
 		case "SHIPPED":
 			return "info";
 		case "DELIVERED":
+		case "COMPLETED":
 			return "success";
 		case "CANCELLED":
+		case "FAILED":
+			return "error";
+		case "REFUNDED":
 			return "error";
 		default:
 			return "neutral";
@@ -103,9 +109,9 @@ const AdminOrders: React.FC = () => {
 		{
 			key: "orderReference",
 			header: "Order Ref",
-			width: "140px",
+			width: "200px",
 			render: (value: any) => (
-				<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>#{value}</span>
+				<span className="text-sm font-medium whitespace-nowrap" style={{ color: "var(--text-primary)" }}>#{value}</span>
 			),
 		},
 		{
@@ -138,7 +144,7 @@ const AdminOrders: React.FC = () => {
 			header: "Total",
 			render: (value: any) => (
 				<span className="text-sm font-semibold text-on-surface dark:text-gray-200">
-					₦{Number(value).toLocaleString()}
+					{formatCurrency(value)}
 				</span>
 			),
 		},
@@ -156,7 +162,7 @@ const AdminOrders: React.FC = () => {
 			header: "Date",
 			render: (value: any) => (
 				<span className="text-sm text-gray-500 dark:text-gray-400">
-					{new Date(value).toLocaleDateString()}
+					{new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
 				</span>
 			),
 		},
@@ -173,6 +179,14 @@ const AdminOrders: React.FC = () => {
 			),
 		},
 	];
+
+	if (ordersLoading && !orders?.length) {
+		return (
+			<AdminLayout>
+				<PageLoader fullScreen={false} message="Loading orders..." />
+			</AdminLayout>
+		);
+	}
 
 	return (
 		<AdminLayout>

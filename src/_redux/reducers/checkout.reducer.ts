@@ -18,6 +18,9 @@ const checkoutSlice = createSlice({
 	initialState,
 	reducers: {
 		resetCheckout: () => initialState,
+		clearCheckoutError: (state) => {
+			state.error = null;
+		},
 	},
 	extraReducers: (builder) => {
 		builder
@@ -89,5 +92,5 @@ const checkoutSlice = createSlice({
 	},
 });
 
-export const { resetCheckout } = checkoutSlice.actions;
+export const { resetCheckout, clearCheckoutError } = checkoutSlice.actions;
 export default checkoutSlice.reducer;

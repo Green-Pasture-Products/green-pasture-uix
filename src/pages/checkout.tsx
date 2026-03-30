@@ -21,18 +21,27 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { checkoutAction } from "@/_redux/actions/checkout.action";
 import { clearCart } from "@/_redux/reducers/cart.reducer";
-import { resetCheckout } from "@/_redux/reducers/checkout.reducer";
+import { resetCheckout, clearCheckoutError } from "@/_redux/reducers/checkout.reducer";
 import Image from "next/image";
 import Layout from "@/_components/Layout";
 import toast from "react-hot-toast";
 import { FormInput } from "@/_UI/FormField";
 import Button from "@/_UI/Button";
+import PageLoader from "@/_UI/PageLoader";
+import AuthPrompt from "@/_UI/AuthPrompt";
+import { appConstants } from "@/_redux/constants";
 
 /* ------------------------------------------------------------------ */
 /*  Zod schema                                                        */
 /* ------------------------------------------------------------------ */
 
 const checkoutFormSchema = z.object({
+	// Guest identity (only shown/required when not authenticated)
+	guestFirstName: z.string().optional(),
+	guestLastName: z.string().optional(),
+	guestEmail: z.string().optional(),
+	guestPhone: z.string().optional(),
+	// Existing fields
 	shippingAddress: z.object({
 		street: z.string().min(1, "Street is required"),
 		city: z.string().min(1, "City is required"),
@@ -235,9 +244,16 @@ const CheckoutPage: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const { items, total, cartId } = useAppSelector((state) => state.cart);
 	const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-	const isAdmin = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(user?.profileType?.toUpperCase() || "");
+	const isAdmin = appConstants.ADMIN_ROLES.includes(user?.profileType?.toUpperCase() as any || "");
 	const { isCheckingOut, isPlacingOrder, paymentUrl, error } = useAppSelector((state) => state.checkout);
 	const [orderPlaced, setOrderPlaced] = useState(false);
+	const [couponCode, setCouponCode] = useState("");
+	const [couponDiscount, setCouponDiscount] = useState(0);
+	const [couponLoading, setCouponLoading] = useState(false);
+	const [couponApplied, setCouponApplied] = useState(false);
+	const [couponError, setCouponError] = useState("");
+	const [emailExists, setEmailExists] = useState(false);
+	const [checkingEmail, setCheckingEmail] = useState(false);
 
 	const {
 		register,
@@ -250,6 +266,10 @@ const CheckoutPage: React.FC = () => {
 		defaultValues: {
 			shippingMethod: "STANDARD",
 			paymentMethod: "CARD",
+			guestFirstName: "",
+			guestLastName: "",
+			guestEmail: "",
+			guestPhone: "",
 		},
 	});
 
@@ -267,6 +287,12 @@ const CheckoutPage: React.FC = () => {
 	const visualStep = hasShippingErrors ? 1 : selectedPayment ? 3 : 2;
 
 	const [storeConfig, setStoreConfig] = useState<any>(null);
+	const [configLoading, setConfigLoading] = useState(true);
+
+	// Clear stale errors on mount
+	useEffect(() => {
+		dispatch(clearCheckoutError());
+	}, [dispatch]);
 
 	// Fetch store settings for tax/shipping
 	useEffect(() => {
@@ -275,42 +301,83 @@ const CheckoutPage: React.FC = () => {
 				const axiosInstance = (await import("@/_utils/axiosInstance")).default;
 				const res = await axiosInstance.get("store/settings");
 				setStoreConfig(res.data?.data);
-			} catch {}
+			} catch {} finally {
+				setConfigLoading(false);
+			}
 		};
 		fetchConfig();
 	}, []);
 
-	const taxRate = storeConfig?.orderSettings?.taxRate ?? 0.08;
-	const freeShippingThreshold = storeConfig?.orderSettings?.freeShippingThreshold ?? 50000;
-	const shippingFee = storeConfig?.shippingConfig?.methods?.[0]?.baseCost ?? 10000;
+	const taxRate = Number(storeConfig?.orderSettings?.taxRate) || 0;
+	const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold) || 0;
+	const shippingFee = Number(storeConfig?.shippingConfig?.methods?.[0]?.baseCost) || 0;
 
 	const subtotal = total;
-	const shipping = subtotal > freeShippingThreshold ? 0 : shippingFee;
+	const shipping = freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : shippingFee;
 	const tax = Math.round(subtotal * taxRate);
-	const finalTotal = subtotal + shipping + tax;
+	const finalTotal = subtotal + shipping + tax - couponDiscount;
 
-	/* ---- Auth & role guard ---- */
+	const handleApplyCoupon = async () => {
+		if (!couponCode.trim()) return;
+		setCouponLoading(true);
+		setCouponError("");
+		try {
+			const axiosInstance = (await import("@/_utils/axiosInstance")).default;
+			const res = await axiosInstance.post("coupons/validate", {
+				code: couponCode,
+				orderAmount: subtotal,
+			});
+			const data = res.data?.data;
+			if (data?.valid) {
+				setCouponDiscount(Number(data.discount) || 0);
+				setCouponApplied(true);
+				toast.success(`Coupon applied! You save ₦${Number(data.discount).toLocaleString()}`);
+			} else {
+				setCouponError(data?.message || "Invalid coupon");
+			}
+		} catch (err: any) {
+			setCouponError(err?.response?.data?.message || "Failed to validate coupon");
+		} finally {
+			setCouponLoading(false);
+		}
+	};
+
+	const handleEmailBlur = async (email: string) => {
+		if (!email || email.length < 5) return;
+		setCheckingEmail(true);
+		try {
+			const axiosInstance = (await import("@/_utils/axiosInstance")).default;
+			const res = await axiosInstance.get(`auth/check-email?email=${encodeURIComponent(email)}`);
+			setEmailExists(res.data?.data?.exists || false);
+		} catch {
+			setEmailExists(false);
+		} finally {
+			setCheckingEmail(false);
+		}
+	};
+
+	// Admin guard — admins can't checkout as customers
 	useEffect(() => {
-		if (!isAuthenticated) {
-			router.push("/login?redirect=/checkout");
-		} else if (isAdmin) {
+		if (!router.isReady) return;
+		if (isAdmin) {
 			router.push("/cart");
 		}
-	}, [isAuthenticated, isAdmin, router]);
+	}, [isAdmin, router]);
 
 	/* ---- Empty cart guard ---- */
 	useEffect(() => {
+		if (!router.isReady) return;
 		if (items.length === 0 && !orderPlaced) {
 			router.push("/cart");
 		}
 	}, [items, orderPlaced, router]);
 
 	/* ---- Paystack redirect ---- */
-	useEffect(() => {
-		if (paymentUrl) {
-			window.location.href = paymentUrl;
-		}
-	}, [paymentUrl]);
+	const redirectToPaystack = (authorizationUrl: string) => {
+		dispatch(clearCart());
+		dispatch(resetCheckout());
+		window.location.href = authorizationUrl;
+	};
 
 	/* ---- Double-click guard ---- */
 	const submittingRef = React.useRef(false);
@@ -322,11 +389,11 @@ const CheckoutPage: React.FC = () => {
 		submittingRef.current = true;
 
 		try {
-			const axiosInstance = (await import("@/_utils/axiosInstance")).default;
-			let activeCartId = cartId;
+			if (isAuthenticated) {
+				// ---- Authenticated checkout flow ----
+				const axiosInstance = (await import("@/_utils/axiosInstance")).default;
 
-			// Step 1: Ensure backend cart exists with items
-			if (!activeCartId) {
+				// Step 1: Get customer ID
 				const customerRes = await axiosInstance.get("customers/me");
 				const customerId = customerRes.data?.data?.id;
 				if (!customerId) {
@@ -334,75 +401,177 @@ const CheckoutPage: React.FC = () => {
 					return;
 				}
 
-				// Backend cart creation is idempotent — returns existing if one exists
-				const cartRes = await axiosInstance.post(`cart/create/${customerId}`);
-				activeCartId = cartRes.data?.data?.id;
+				// Step 2: Ensure backend cart exists (always verify — cartId may be stale)
+				let activeCartId = cartId;
+				let needsSync = !activeCartId;
+
+				if (activeCartId) {
+					// Verify the stored cartId still exists in the backend
+					try {
+						await axiosInstance.get(`cart/${activeCartId}`);
+					} catch {
+						// Cart was deleted or doesn't exist — need a new one
+						activeCartId = null;
+						needsSync = true;
+					}
+				}
+
 				if (!activeCartId) {
-					toast.error("Failed to create cart. Please try again.");
+					const cartRes = await axiosInstance.post("cart/create");
+					activeCartId = cartRes.data?.data?.id;
+					if (!activeCartId) {
+						toast.error("Failed to create cart. Please try again.");
+						return;
+					}
+				}
+
+				// Step 3: Sync local items to backend cart if needed
+				if (needsSync) {
+					for (const item of items) {
+						try {
+							await axiosInstance.post("cart-item/create", {
+								cartId: activeCartId,
+								itemId: Number(item.id),
+								quantity: item.quantity,
+							});
+						} catch {
+							// Item may already exist — backend handles idempotently
+						}
+					}
+				}
+
+				// Step 4: Create order from cart (idempotent — returns existing if cart already checked out)
+				const orderResult = await dispatch(
+					checkoutAction.checkoutCartAsync(activeCartId)
+				).unwrap();
+
+				const orderId = orderResult?.data?.id;
+				if (!orderId) {
+					toast.error("Failed to create order");
 					return;
 				}
 
-				// Sync local items to backend cart (addItemToCart is atomic)
-				for (const item of items) {
-					try {
-						await axiosInstance.post("cart-item/create", {
-							cartId: activeCartId,
-							itemId: Number(item.id),
-							quantity: item.quantity,
-						});
-					} catch {
-						// Item may already exist — backend handles idempotently
-					}
+				// Step 5: Handle payment method
+				const backendPaymentMethod = data.paymentMethod === "CARD" ? "Paystack" : "Cash On Delivery";
+
+				if (data.paymentMethod === "CASH_ON_DELIVERY") {
+					dispatch(clearCart());
+					dispatch(resetCheckout());
+					toast.success("Order placed successfully!");
+					router.push(`/order-confirmation/${orderId}`);
+					return;
 				}
-			}
 
-			// Step 2: Create order from cart (idempotent — returns existing if cart already checked out)
-			const orderResult = await dispatch(
-				checkoutAction.checkoutCartAsync(activeCartId)
-			).unwrap();
+				// Step 6: Initialize payment (idempotent — returns existing transaction if one exists)
+				const paymentResult = await dispatch(
+					checkoutAction.placeOrderAsync({
+						orderId,
+						shippingMethod: data.shippingMethod as any,
+						paymentMethod: backendPaymentMethod as any,
+						shippingAddress: {
+							...data.shippingAddress,
+							latitude: "0",
+							longitude: "0",
+							region: data.shippingAddress.state || "",
+							houseAddress: data.shippingAddress.street,
+						} as any,
+					}),
+				).unwrap();
 
-			const orderId = orderResult?.data?.id;
-			if (!orderId) {
-				toast.error("Failed to create order");
-				return;
-			}
+				// Step 7: Redirect to Paystack payment page
+				const paystackData = paymentResult?.data?.data ?? paymentResult?.data;
+				const authUrl = paystackData?.authorization_url;
+				if (authUrl) {
+					redirectToPaystack(authUrl);
+				} else {
+					toast.error("Failed to initialize payment. Please try again.");
+				}
+			} else {
+				// ---- Guest checkout flow ----
+				if (!data.guestFirstName || !data.guestEmail || !data.guestPhone) {
+					toast.error("Please fill in your name, email, and phone number.");
+					return;
+				}
 
-			// Step 3: Handle payment method
-			const backendPaymentMethod = data.paymentMethod === "CARD" ? "Paystack" : "Cash On Delivery";
+	
+				const axiosInstance = (await import("@/_utils/axiosInstance")).default;
 
-			if (data.paymentMethod === "CASH_ON_DELIVERY") {
-				dispatch(clearCart());
-				dispatch(resetCheckout());
-				setOrderPlaced(true);
-				toast.success("Order placed successfully!");
-				return;
-			}
-
-			// Step 4: Initialize payment (idempotent — returns existing transaction if one exists)
-			await dispatch(
-				checkoutAction.placeOrderAsync({
-					orderId,
-					shippingMethod: data.shippingMethod as any,
-					paymentMethod: backendPaymentMethod as any,
+				// Call guest-checkout endpoint
+				const guestRes = await axiosInstance.post("order/guest-checkout", {
+					firstName: data.guestFirstName,
+					lastName: data.guestLastName || "",
+					email: data.guestEmail,
+					phoneNumber: data.guestPhone,
+					items: items.map((item) => ({
+						itemId: Number(item.id),
+						quantity: item.quantity,
+					})),
+					shippingMethod: data.shippingMethod,
+					paymentMethod: data.paymentMethod === "CARD" ? "Paystack" : "Cash On Delivery",
 					shippingAddress: {
-						...data.shippingAddress,
+						houseAddress: data.shippingAddress.street,
+						city: data.shippingAddress.city,
+						region: data.shippingAddress.state || "",
+						state: data.shippingAddress.state || "",
+						country: data.shippingAddress.country,
+						postalCode: data.shippingAddress.postalCode || "",
 						latitude: "0",
 						longitude: "0",
-						region: data.shippingAddress.state || "",
+					},
+				});
+
+				const orderId = guestRes.data?.data?.orderId;
+				if (!orderId) {
+					toast.error("Failed to create order");
+					return;
+				}
+
+				if (data.paymentMethod === "CASH_ON_DELIVERY") {
+					dispatch(clearCart());
+					toast.success("Order placed successfully!");
+					router.push(`/order-confirmation/${orderId}`);
+					return;
+				}
+
+				// Initialize Paystack payment
+				const paymentRes = await axiosInstance.post("transaction/place-order", {
+					orderId,
+					shippingMethod: data.shippingMethod,
+					paymentMethod: "Paystack",
+					shippingAddress: {
 						houseAddress: data.shippingAddress.street,
-					} as any,
-				}),
-			).unwrap();
+						city: data.shippingAddress.city,
+						region: data.shippingAddress.state || "",
+						state: data.shippingAddress.state || "",
+						country: data.shippingAddress.country,
+						postalCode: data.shippingAddress.postalCode || "",
+						latitude: "0",
+						longitude: "0",
+					},
+				});
 
-			// Step 5: Clear cart immediately after payment init (order is created, cart is done)
-			dispatch(clearCart());
-			// Paystack redirect happens via the paymentUrl effect
-
+				const paystackData = paymentRes.data?.data?.data ?? paymentRes.data?.data;
+				const authUrl = paystackData?.authorization_url;
+				if (authUrl) {
+					redirectToPaystack(authUrl);
+				} else {
+					toast.error("Failed to initialize payment.");
+				}
+			}
 		} catch (err: any) {
-			const msg = typeof err === "string"
-				? err
-				: err?.message || err?.response?.data?.message || "Checkout failed. Please try again.";
-			toast.error(msg);
+			const status = err?.response?.status;
+			const serverMsg = err?.response?.data?.message || "";
+			if (status === 409) {
+				if (serverMsg.toLowerCase().includes("email")) {
+					setEmailExists(true);
+				}
+				toast.error(serverMsg || "An account with these details already exists. Please log in.");
+			} else {
+				const msg = typeof err === "string"
+					? err
+					: err?.response?.data?.message || err?.message || "Checkout failed. Please try again.";
+				toast.error(msg);
+			}
 		} finally {
 			submittingRef.current = false;
 		}
@@ -522,6 +691,70 @@ const CheckoutPage: React.FC = () => {
 						initial="hidden"
 						animate="visible"
 					>
+						{/* ===== Guest Identity — only shown for unauthenticated users ===== */}
+						{!isAuthenticated && (
+							<div className="rounded-xl p-5 mb-5" style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}>
+								<h3 className="text-sm font-semibold mb-4" style={{ color: "var(--text-primary)" }}>
+									Contact Information
+								</h3>
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+									<div>
+										<label className="block text-xs mb-1" style={{ color: "var(--text-secondary)" }}>First Name *</label>
+										<input
+											{...register("guestFirstName")}
+											placeholder="John"
+											className="w-full px-3 py-2.5 rounded-md text-sm bg-transparent outline-none transition-colors"
+											style={{ border: `1px solid ${errors.guestFirstName ? '#ef4444' : 'var(--border-light)'}`, color: "var(--text-primary)" }}
+										/>
+									</div>
+									<div>
+										<label className="block text-xs mb-1" style={{ color: "var(--text-secondary)" }}>Last Name</label>
+										<input
+											{...register("guestLastName")}
+											placeholder="Doe"
+											className="w-full px-3 py-2.5 rounded-md text-sm bg-transparent outline-none transition-colors"
+											style={{ border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+										/>
+									</div>
+									<div>
+										<label className="block text-xs mb-1" style={{ color: "var(--text-secondary)" }}>Email *</label>
+										<input
+											{...register("guestEmail")}
+											type="email"
+											placeholder="john@example.com"
+											onBlur={(e) => handleEmailBlur(e.target.value)}
+											className="w-full px-3 py-2.5 rounded-md text-sm bg-transparent outline-none transition-colors"
+											style={{ border: `1px solid ${emailExists ? '#ef4444' : 'var(--border-light)'}`, color: "var(--text-primary)" }}
+										/>
+										{emailExists && (
+											<p className="text-xs mt-1" style={{ color: "#ef4444" }}>
+												This email is already registered.{" "}
+												<a href={`/login?redirect=/checkout`} className="underline font-medium" style={{ color: "var(--color-primary)" }}>
+													Log in instead
+												</a>
+											</p>
+										)}
+									</div>
+									<div>
+										<label className="block text-xs mb-1" style={{ color: "var(--text-secondary)" }}>Phone *</label>
+										<input
+											{...register("guestPhone")}
+											type="tel"
+											placeholder="+2348012345678"
+											className="w-full px-3 py-2.5 rounded-md text-sm bg-transparent outline-none transition-colors"
+											style={{ border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+										/>
+									</div>
+								</div>
+								<p className="text-[0.65rem] mt-3" style={{ color: "var(--text-hint)" }}>
+									Already have an account?{" "}
+									<a href={`/login?redirect=/checkout`} className="font-medium" style={{ color: "var(--color-primary)" }}>
+										Log in
+									</a>
+								</p>
+							</div>
+						)}
+
 						{/* ===== Shipping Address ===== */}
 						<motion.section
 							variants={sectionVariants}
@@ -730,7 +963,54 @@ const CheckoutPage: React.FC = () => {
 							{/* Divider */}
 							<div className="h-px w-full mb-4" style={{ background: "var(--border-light)" }} />
 
+							{/* Coupon Code */}
+							<div className="mb-4">
+								<div className="flex gap-2">
+									<input
+										type="text"
+										value={couponCode}
+										onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); setCouponApplied(false); setCouponDiscount(0); }}
+										placeholder="Promo code"
+										disabled={couponApplied}
+										className="flex-1 px-3 py-2 text-sm rounded-lg outline-none"
+										style={{
+											background: "var(--surface-low)",
+											border: `1px solid ${couponError ? "#ef4444" : "var(--border-light)"}`,
+											color: "var(--text-primary)",
+										}}
+									/>
+									<button
+										type="button"
+										onClick={couponApplied ? () => { setCouponCode(""); setCouponApplied(false); setCouponDiscount(0); } : handleApplyCoupon}
+										disabled={couponLoading || (!couponApplied && !couponCode.trim())}
+										className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+										style={{
+											background: couponApplied ? "rgba(239,68,68,0.08)" : "rgba(22,163,74,0.08)",
+											color: couponApplied ? "#ef4444" : "var(--color-primary)",
+										}}
+									>
+										{couponLoading ? "..." : couponApplied ? "Remove" : "Apply"}
+									</button>
+								</div>
+								{couponError && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{couponError}</p>}
+								{couponApplied && <p className="text-xs mt-1" style={{ color: "var(--color-primary)" }}>Coupon applied successfully!</p>}
+							</div>
+
 							{/* Pricing breakdown */}
+							{configLoading ? (
+								<div className="space-y-2.5 mb-5">
+									{[1, 2, 3, 4].map((i) => (
+										<div key={i} className="flex justify-between">
+											<div className="h-4 rounded w-20 animate-pulse" style={{ background: "var(--surface-medium)" }} />
+											<div className="h-4 rounded w-16 animate-pulse" style={{ background: "var(--surface-medium)" }} />
+										</div>
+									))}
+								</div>
+							) : !storeConfig ? (
+								<div className="rounded-lg p-3 mb-5 text-xs" style={{ background: "var(--surface-medium)", color: "var(--text-secondary)" }}>
+									Tax and shipping info is currently unavailable. Totals shown may not include tax or shipping fees.
+								</div>
+							) : (
 							<div className="space-y-2.5 mb-5">
 								<div className="flex justify-between text-sm">
 									<span style={{ color: "var(--text-secondary)" }}>Subtotal</span>
@@ -751,6 +1031,15 @@ const CheckoutPage: React.FC = () => {
 									</span>
 								</div>
 
+								{couponDiscount > 0 && (
+									<div className="flex justify-between text-sm">
+										<span style={{ color: "var(--color-primary)" }}>Discount</span>
+										<span className="font-medium" style={{ color: "var(--color-primary)" }}>
+											-&#8358;{couponDiscount.toLocaleString()}
+										</span>
+									</div>
+								)}
+
 								{/* Total divider */}
 								<div className="h-px w-full" style={{ background: "var(--border-light)" }} />
 
@@ -763,6 +1052,7 @@ const CheckoutPage: React.FC = () => {
 									</span>
 								</div>
 							</div>
+							)}
 
 							{/* Place Order button */}
 							<Button
@@ -771,7 +1061,7 @@ const CheckoutPage: React.FC = () => {
 								size="lg"
 								fullWidth
 								loading={isProcessing}
-								disabled={isProcessing}
+								disabled={isProcessing || configLoading}
 							>
 								{isProcessing ? "Processing..." : "Place Order"}
 							</Button>

@@ -7,10 +7,11 @@ import {
 	List,
 	SlidersHorizontal,
 	X,
-	Package,
 	Star,
 } from "lucide-react";
 
+import EmptyState from "@/_UI/EmptyState";
+import EmptySearchIllustration from "@/_UI/illustrations/EmptySearchIllustration";
 import { resetFilters, setSearchQuery } from "@/_redux/reducers/search.reducer";
 import SearchFiltersComponent from "@/_components/SearchFilters";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
@@ -238,28 +239,17 @@ const FilteredProducts: React.FC = () => {
 						</div>
 					) : filteredProducts?.length === 0 ? (
 						<div
-							className="rounded-xl py-20 flex flex-col items-center justify-center text-center"
+							className="rounded-xl"
 							style={{
 								background: "var(--surface-paper)",
 								border: "1px solid var(--border-light)",
 							}}
 						>
-							<Package
-								className="h-16 w-16 mb-4"
-								style={{ color: "var(--text-disabled)" }}
+							<EmptyState
+								illustration={<EmptySearchIllustration className="w-36 h-36" />}
+								title="No products found"
+								description="Try adjusting your filters or search terms"
 							/>
-							<h3
-								className="text-lg font-semibold mb-1"
-								style={{ color: "var(--text-primary)" }}
-							>
-								No products found
-							</h3>
-							<p
-								className="text-sm max-w-sm"
-								style={{ color: "var(--text-hint)" }}
-							>
-								Try adjusting your filters or search terms
-							</p>
 						</div>
 					) : viewMode === "grid" ? (
 						<motion.div

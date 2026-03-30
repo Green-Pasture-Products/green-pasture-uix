@@ -152,19 +152,15 @@ axiosInstance.interceptors.response.use(
 				isRefreshing = false;
 				refreshSubscribers = [];
 
-				// Clear tokens
+				// Clear tokens and logout — but DON'T redirect
+				// Protected pages handle their own redirect to /login
 				secureTokenStorage.clearTokens();
 
-				// Dispatch logout and redirect
 				try {
 					const { logout } = await import("@/_redux/reducers/auth.reducer");
 					const { store } = await import("@/_redux/store");
 					store.dispatch(logout());
 				} catch {}
-
-				if (typeof window !== "undefined") {
-					window.location.href = "/login";
-				}
 
 				return Promise.reject(refreshError);
 			}

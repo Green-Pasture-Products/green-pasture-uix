@@ -98,7 +98,7 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
 		const rawNumber = parseFloat(stripCommas(displayValue)) || 0;
 		const wordsText =
 			rawNumber > 0
-				? `${numberToWords(rawNumber)} ${currencyInfo.label}${rawNumber !== 1 ? "s" : ""}`
+				? `${numberToWords(rawNumber)} ${currencyInfo.label}`
 				: "";
 
 		const handleChange = useCallback(

@@ -1,9 +1,11 @@
 import { removeFromCart, updateQuantity } from "@/_redux/reducers/cart.reducer";
-import { useAppDispatch } from "@/_redux/store";
+import { removeFromCartAsync, updateQuantityAsync } from "@/_redux/actions/cart.action";
+import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useCallback, useState } from "react";
 
 export const useCartOperations = () => {
 	const dispatch = useAppDispatch();
+	const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 	const [isUpdating, setIsUpdating] = useState<string | null>(null);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -11,11 +13,10 @@ export const useCartOperations = () => {
 		async (id: string, newQuantity: number, maxStock?: number) => {
 			if (newQuantity < 0) return;
 
-			// Check stock limits
 			if (maxStock && newQuantity > maxStock) {
 				setErrors((prev) => ({
 					...prev,
-					[id]: `Only ${maxStock} items available`,
+					[id]: `Only ${maxStock} ${maxStock === 1 ? "item" : "items"} available`,
 				}));
 				return;
 			}
@@ -25,9 +26,19 @@ export const useCartOperations = () => {
 
 			try {
 				if (newQuantity === 0) {
-					await dispatch(removeFromCart(id));
+					// Update local state immediately (optimistic)
+					dispatch(removeFromCart(id));
+					// Sync to backend in background
+					if (isAuthenticated) {
+						dispatch(removeFromCartAsync(id));
+					}
 				} else {
-					await dispatch(updateQuantity({ id, quantity: newQuantity }));
+					// Update local state immediately (optimistic)
+					dispatch(updateQuantity({ id, quantity: newQuantity }));
+					// Sync to backend in background
+					if (isAuthenticated) {
+						dispatch(updateQuantityAsync({ id, quantity: newQuantity }));
+					}
 				}
 			} catch (error) {
 				setErrors((prev) => ({
@@ -38,14 +49,19 @@ export const useCartOperations = () => {
 				setIsUpdating(null);
 			}
 		},
-		[dispatch]
+		[dispatch, isAuthenticated]
 	);
 
 	const handleRemoveItem = useCallback(
 		async (id: string) => {
 			setIsUpdating(id);
 			try {
-				await dispatch(removeFromCart(id));
+				// Update local state immediately (optimistic)
+				dispatch(removeFromCart(id));
+				// Sync to backend in background
+				if (isAuthenticated) {
+					dispatch(removeFromCartAsync(id));
+				}
 			} catch (error) {
 				setErrors((prev) => ({
 					...prev,
@@ -55,7 +71,7 @@ export const useCartOperations = () => {
 				setIsUpdating(null);
 			}
 		},
-		[dispatch]
+		[dispatch, isAuthenticated]
 	);
 
 	return { handleQuantityChange, handleRemoveItem, isUpdating, errors };

@@ -16,9 +16,21 @@ export const appConstants = {
 		process.env.INSTAGRAM_URL ||
 		`https://www.instagram.com/greenpastureorganics`,
 
-	ROOT_STORAGE: "Green_Pastures_GlObAl-StAtE" as const,
+	ROOT_STORAGE: "Green_Pastures_GlObAl-StAtE_v2" as const,
 
 	FREE_SHIPPING_THRESHOLD: 50000 as const,
 
 	SHIPPING_FEE: 10000 as const,
+
+	STORE_NAME: "Green Pastures Organics" as const,
+
+	CONTACT: {
+		PHONE: "+234 701 884 5177",
+		PHONE_HREF: "tel:+2347018845177",
+		EMAIL: "hello@gporganics.com",
+		EMAIL_HREF: "mailto:hello@gporganics.com",
+		ADDRESS: "Lagos, Nigeria",
+	} as const,
+
+	ADMIN_ROLES: ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"] as const,
 };

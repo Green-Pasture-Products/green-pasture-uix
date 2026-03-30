@@ -142,25 +142,25 @@ const Footer = () => {
 							<li className="flex items-start gap-3">
 								<Phone className="h-4 w-4 text-primary-400 mt-0.5 flex-shrink-0" />
 								<Link
-									href="tel:+2347018845177"
+									href={appConstants.CONTACT.PHONE_HREF}
 									className="text-gray-400 hover:text-primary-400 transition-colors duration-200 text-sm"
 								>
-									(234) 701 884 5177
+									{appConstants.CONTACT.PHONE}
 								</Link>
 							</li>
 							<li className="flex items-start gap-3">
 								<Mail className="h-4 w-4 text-primary-400 mt-0.5 flex-shrink-0" />
 								<Link
-									href="mailto:hello@gporganics.com"
+									href={appConstants.CONTACT.EMAIL_HREF}
 									className="text-gray-400 hover:text-primary-400 transition-colors duration-200 text-sm"
 								>
-									hello@gporganics.com
+									{appConstants.CONTACT.EMAIL}
 								</Link>
 							</li>
 							<li className="flex items-start gap-3">
 								<MapPin className="h-4 w-4 text-primary-400 mt-0.5 flex-shrink-0" />
 								<span className="text-gray-400 text-sm">
-									Lagos, Nigeria
+									{appConstants.CONTACT.ADDRESS}
 								</span>
 							</li>
 						</ul>

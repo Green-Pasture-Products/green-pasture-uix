@@ -9,6 +9,7 @@ import AdminLayout from "@/_components/AdminLayout";
 import { DataTable, Column, FilterDef } from "@/_UI/DataTable";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
+import PageLoader from "@/_UI/PageLoader";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -98,7 +99,7 @@ const AdminCustomers: React.FC = () => {
 			header: "Joined",
 			render: (value: any) => (
 				<span className="text-sm text-gray-500 dark:text-gray-400">
-					{new Date(value).toLocaleDateString()}
+					{new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
 				</span>
 			),
 		},
@@ -114,6 +115,14 @@ const AdminCustomers: React.FC = () => {
 			),
 		},
 	];
+
+	if (customersLoading && !customers?.length) {
+		return (
+			<AdminLayout>
+				<PageLoader fullScreen={false} message="Loading customers..." />
+			</AdminLayout>
+		);
+	}
 
 	return (
 		<AdminLayout>

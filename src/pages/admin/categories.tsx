@@ -11,6 +11,7 @@ import { DataTable, Column } from "@/_UI/DataTable";
 import ActionMenu from "@/_UI/ActionMenu";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
+import PageLoader from "@/_UI/PageLoader";
 import { ProductCategory } from "@/types";
 import { categoryAction } from "@/_redux/actions/category.action";
 
@@ -29,6 +30,7 @@ const DELETE_ICON = (
 const AdminCategories: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const categories = useAppSelector((state) => state.category.productCategories);
+	const isFetchingCategories = useAppSelector((state) => state.category.isFetchingAllCategories);
 	const isDeletingCategory = useAppSelector((state) => state.category.isDeletingCategory);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [deleteTarget, setDeleteTarget] = useState<ProductCategory | null>(null);
@@ -101,6 +103,14 @@ const AdminCategories: React.FC = () => {
 			),
 		},
 	];
+
+	if (isFetchingCategories && !categories?.length) {
+		return (
+			<AdminLayout>
+				<PageLoader fullScreen={false} message="Loading categories..." />
+			</AdminLayout>
+		);
+	}
 
 	return (
 		<AdminLayout>

@@ -10,11 +10,11 @@ interface RootState {
 
 export const fetchCartAsync = createAsyncThunk<
 	any,
-	number,
+	void,
 	{ rejectValue: string }
->("cart/fetchCart", async (customerId, { rejectWithValue }) => {
+>("cart/fetchCart", async (_, { rejectWithValue }) => {
 	try {
-		const response = await axiosInstance.get(`cart/customer/${customerId}`);
+		const response = await axiosInstance.get("cart/mine");
 		return response.data;
 	} catch (error: any) {
 		return rejectWithValue(extractErrorMessage(error));
@@ -36,11 +36,11 @@ export const fetchCartItemsAsync = createAsyncThunk<
 
 export const createCartAsync = createAsyncThunk<
 	any,
-	number,
+	void,
 	{ rejectValue: string }
->("cart/createCart", async (customerId, { rejectWithValue }) => {
+>("cart/createCart", async (_, { rejectWithValue }) => {
 	try {
-		const response = await axiosInstance.post(`cart/create/${customerId}`);
+		const response = await axiosInstance.post("cart/create");
 		return response.data;
 	} catch (error: any) {
 		return rejectWithValue(extractErrorMessage(error));
@@ -84,7 +84,10 @@ export const removeFromCartAsync = createAsyncThunk(
 
 			if (state.auth.isAuthenticated && state.cart.cartId) {
 				await axiosInstance.delete("cart-item/remove", {
-					data: Number(productId),
+					data: {
+						cartId: state.cart.cartId,
+						itemId: Number(productId),
+					},
 				});
 			}
 
@@ -132,22 +135,30 @@ export const updateQuantityAsync = createAsyncThunk(
 
 export const clearCartAsync = createAsyncThunk(
 	"cart/clearCartAsync",
-	async (_, { rejectWithValue }) => {
+	async (_, { rejectWithValue, getState }) => {
 		try {
+			const state = getState() as RootState;
+
+			if (state.auth.isAuthenticated) {
+				await axiosInstance.delete("cart/clear");
+			}
+
 			return true;
 		} catch (error) {
-			return rejectWithValue("Failed to clear cart");
+			return rejectWithValue(
+				error instanceof Error ? error.message : "Failed to clear cart"
+			);
 		}
 	}
 );
 
 export const syncCartOnLoginAsync = createAsyncThunk<
 	any,
-	{ customerId: number },
+	void,
 	{ rejectValue: string }
 >(
 	"cart/syncOnLogin",
-	async ({ customerId }, { rejectWithValue, getState }) => {
+	async (_, { rejectWithValue, getState }) => {
 		try {
 			const state = getState() as RootState;
 			const localItems = state.cart.items;
@@ -155,21 +166,17 @@ export const syncCartOnLoginAsync = createAsyncThunk<
 			// Try to fetch existing cart
 			let cartData: any;
 			try {
-				const cartRes = await axiosInstance.get(
-					`cart/customer/${customerId}`
-				);
+				const cartRes = await axiosInstance.get("cart/mine");
 				cartData = cartRes.data?.data;
 			} catch {
 				// No cart exists, create one
-				const createRes = await axiosInstance.post(
-					`cart/create/${customerId}`
-				);
+				const createRes = await axiosInstance.post("cart/create");
 				cartData = createRes.data?.data;
 			}
 
 			if (!cartData?.id) return null;
 
-			// Sync local items to backend cart
+			// Push any local-only items to the backend cart
 			for (const item of localItems) {
 				try {
 					await axiosInstance.post("cart-item/create", {
@@ -182,7 +189,7 @@ export const syncCartOnLoginAsync = createAsyncThunk<
 				}
 			}
 
-			// Fetch the full cart items from backend
+			// Fetch the full cart from backend — this is the source of truth
 			const itemsRes = await axiosInstance.get(
 				`cart-item/${cartData.id}`
 			);

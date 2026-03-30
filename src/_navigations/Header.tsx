@@ -21,6 +21,8 @@ import { logout } from "@/_redux/reducers/auth.reducer";
 import { getPageNames } from "./routes";
 import { getBio } from "@/_redux/actions/user.action";
 import { useTheme } from "@/_hooks/useTheme";
+import { useNotifications } from "@/_hooks/useNotifications";
+import NotificationDrawer from "@/_UI/NotificationDrawer";
 
 interface HeaderProps {
 	onMenuClick?: () => void;
@@ -33,7 +35,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 	const { toggleTheme, isDark } = useTheme();
 
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+	const [notifOpen, setNotifOpen] = useState(false);
 	const userMenuRef = useRef<HTMLDivElement>(null);
+
+	const { notifications, unreadCount, loading: notifLoading, markAsRead, markAllAsRead } = useNotifications();
 
 	const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 	const { bio } = useAppSelector((state) => state.user);
@@ -81,6 +86,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 	const pageName = getPageNames(pathname);
 
 	return (
+	<>
 		<header className="sticky top-0 z-30 bg-white/95 dark:bg-[#0e0e1a]/95 backdrop-blur-md border-b border-outline-variant dark:border-white/8 animate-header-enter">
 			<div className="px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between">
 				{/* Left: Menu + Breadcrumb */}
@@ -143,12 +149,18 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 						)}
 					</button>
 
-					{/* Notifications Placeholder */}
+					{/* Notifications */}
 					<button
+						onClick={() => setNotifOpen(true)}
 						className="relative p-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect"
 						aria-label="Notifications"
 					>
 						<Bell className="h-5 w-5" />
+						{unreadCount > 0 && (
+							<span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[0.6rem] font-bold rounded-full text-white" style={{ background: "#ef4444" }}>
+								{unreadCount > 99 ? "99+" : unreadCount}
+							</span>
+						)}
 					</button>
 
 					{/* User Dropdown */}
@@ -229,7 +241,17 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 					)}
 				</div>
 			</div>
-		</header>
+			</header>
+		<NotificationDrawer
+			isOpen={notifOpen}
+			onClose={() => setNotifOpen(false)}
+			notifications={notifications}
+			unreadCount={unreadCount}
+			onMarkAsRead={markAsRead}
+			onMarkAllAsRead={markAllAsRead}
+			loading={notifLoading}
+		/>
+	</>
 	);
 };
 

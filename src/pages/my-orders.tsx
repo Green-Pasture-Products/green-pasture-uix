@@ -4,15 +4,19 @@ import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 
 import Layout from "@/_components/Layout";
+import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { orderAction } from "@/_redux/actions/order.action";
+import { addToCart } from "@/_redux/reducers/cart.reducer";
 import { DataTable, Column } from "@/_UI/DataTable";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import PageLoader from "@/_UI/PageLoader";
 import EmptyState from "@/_UI/EmptyState";
+import AuthPrompt from "@/_UI/AuthPrompt";
 import { formatCurrency } from "@/_UI/FormatValue";
 import { BackendOrder } from "@/types";
+import { appConstants } from "@/_redux/constants";
 
 const getStatusVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
 	switch (status?.toUpperCase()) {
@@ -37,17 +41,18 @@ const MyOrders: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-	const isAdmin = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"].includes(user?.profileType?.toUpperCase() || "");
+	const isAdmin = appConstants.ADMIN_ROLES.includes(user?.profileType?.toUpperCase() as any || "");
 
 	const [orders, setOrders] = useState<BackendOrder[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [page, setPage] = useState(1);
 	const [meta, setMeta] = useState<any>(null);
 	const [search, setSearch] = useState("");
+	const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
 	useEffect(() => {
 		if (!isAuthenticated) {
-			router.replace("/login");
+			setShowAuthPrompt(true);
 			return;
 		}
 		if (isAdmin) {
@@ -59,6 +64,7 @@ const MyOrders: React.FC = () => {
 	const fetchOrders = useCallback(
 		(currentPage: number) => {
 			setLoading(true);
+			setOrders([]);
 			dispatch(orderAction.fetchMyOrdersAsync({ page: currentPage, limit: 10 }))
 				.unwrap()
 				.then((res: any) => {
@@ -68,6 +74,7 @@ const MyOrders: React.FC = () => {
 				})
 				.catch(() => {
 					setOrders([]);
+					setMeta(null);
 				})
 				.finally(() => {
 					setLoading(false);
@@ -90,8 +97,9 @@ const MyOrders: React.FC = () => {
 		{
 			key: "orderReference",
 			header: "Order Ref",
+			width: "180px",
 			render: (value: any) => (
-				<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+				<span className="text-sm font-medium whitespace-nowrap" style={{ color: "var(--text-primary)" }}>
 					#{value}
 				</span>
 			),
@@ -148,6 +156,34 @@ const MyOrders: React.FC = () => {
 							label: "View Details",
 							onClick: () => router.push(`/my-orders/${row.id}`),
 						},
+						{
+							label: "Buy Again",
+							onClick: () => {
+								// Add all items from this order back to cart
+								const items = row.items ?? [];
+								if (items.length > 0) {
+									items.forEach((orderItem: any) => {
+										const item = orderItem.item || orderItem;
+										if (item) {
+											dispatch(addToCart({
+												id: String(item.id),
+												name: item.name || "",
+												price: Number(orderItem.unitPrice || item.price || 0),
+												image: item.photos?.[0]?.url || "",
+												category: "",
+												description: item.description || "",
+												quantity: 1,
+												inStock: true,
+												rating: 0,
+												reviews: 0,
+											} as any));
+										}
+									});
+									toast.success("Items added to cart!");
+									router.push("/cart");
+								}
+							},
+						},
 					]}
 				/>
 			),
@@ -157,7 +193,14 @@ const MyOrders: React.FC = () => {
 	if (!isAuthenticated || isAdmin) {
 		return (
 			<Layout>
-				<PageLoader message="Redirecting..." />
+				<AuthPrompt
+					isOpen={showAuthPrompt}
+					onClose={() => router.push("/products")}
+					redirectTo="/my-orders"
+					title="Sign in to view orders"
+					message="Log in to view your order history and track deliveries."
+				/>
+				{!showAuthPrompt && <PageLoader message="Redirecting..." />}
 			</Layout>
 		);
 	}
@@ -172,7 +215,7 @@ const MyOrders: React.FC = () => {
 
 	return (
 		<Layout>
-			<div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16 animate-page-enter">
+			<div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-page-enter">
 				<div className="mb-6">
 					<h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
 						My Orders

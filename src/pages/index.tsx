@@ -12,6 +12,8 @@ import Layout from "@/_components/Layout";
 import Button from "@/_UI/Button";
 import Input from "@/_UI/Input";
 import Card from "@/_UI/Card";
+import EmptyState from "@/_UI/EmptyState";
+import EmptyShelfIllustration from "@/_UI/illustrations/EmptyShelfIllustration";
 
 const features = [
 	{
@@ -195,9 +197,11 @@ const HomePage: React.FC = () => {
 						{featuredProducts?.length > 0 ? (
 							<Products products={featuredProducts} />
 						) : (
-							<div className="flex items-center justify-center py-12 text-gray-500 dark:text-white/50">
-								No products available at this time
-							</div>
+							<EmptyState
+								illustration={<EmptyShelfIllustration className="w-40 h-40" />}
+								title="No products yet"
+								description="We're stocking up on fresh organic goodness. Check back soon!"
+							/>
 						)}
 					</AnimatedSection>
 
@@ -242,8 +246,8 @@ const HomePage: React.FC = () => {
 								/>
 								<Button
 									variant="filled"
-									size="lg"
-									className="bg-white text-primary-700 hover:bg-gray-100 active:bg-gray-200 shrink-0"
+									size="md"
+									className="bg-white text-primary-700 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(34,197,94,0.4)] active:bg-gray-200 dark:bg-white dark:text-primary-700 dark:hover:bg-primary-50 dark:hover:shadow-[0_0_12px_rgba(34,197,94,0.5)] shrink-0 transition-all"
 								>
 									Subscribe
 								</Button>

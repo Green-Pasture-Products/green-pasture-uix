@@ -15,12 +15,13 @@ import {
 	removeFromWishlist,
 } from "@/_redux/reducers/wishlist.reducer";
 import { usePathname } from "next/navigation";
+import { appConstants } from "@/_redux/constants";
 
 interface ProductCardProps {
 	product: Product;
 }
 
-const ADMIN_ROLES = ["STAFF", "ADMIN", "SUPER_ADMIN", "MANAGER"];
+const ADMIN_ROLES: readonly string[] = appConstants.ADMIN_ROLES;
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const pathname = usePathname();

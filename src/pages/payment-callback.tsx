@@ -56,12 +56,18 @@ const PaymentCallback: React.FC = () => {
 		}
 	}, [paymentStatus, retryCount, timedOut, dispatch, router.query.reference]);
 
-	// Clear cart on success
+	// Clear cart on success and redirect to order confirmation
 	useEffect(() => {
 		if (paymentStatus === "success") {
 			dispatch(clearCart());
+			const orderId = router.query.orderId as string;
+			if (orderId) {
+				router.push(`/order-confirmation/${orderId}`);
+			} else {
+				router.push("/my-orders");
+			}
 		}
-	}, [paymentStatus, dispatch]);
+	}, [paymentStatus, dispatch, router]);
 
 	const handleContinueShopping = () => {
 		dispatch(resetCheckout());
