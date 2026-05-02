@@ -92,8 +92,10 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
 			if (value !== undefined && value !== "") {
 				const cleaned = stripCommas(String(value));
 				setDisplayValue(formatWithCommas(cleaned));
-			}
-		}, []); // eslint-disable-line react-hooks/exhaustive-deps
+			} else {
+			setDisplayValue("");
+		}
+	}, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 
 		const rawNumber = parseFloat(stripCommas(displayValue)) || 0;
 		const wordsText =

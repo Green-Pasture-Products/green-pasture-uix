@@ -53,7 +53,7 @@ const updateItemAsync = createAsyncThunk<any, { id: number; data: any }, { rejec
 	}
 );
 
-const deleteItemAsync = createAsyncThunk<any, number, { rejectValue: string }>(
+const deleteItemAsync = createAsyncThunk<any, string | number, { rejectValue: string }>(
 	"product/deleteItem",
 	async (id, { rejectWithValue }) => {
 		try {

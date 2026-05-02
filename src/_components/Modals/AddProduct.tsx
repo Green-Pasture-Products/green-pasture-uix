@@ -82,11 +82,12 @@ const AddProduct: React.FC<{
 			formData.append("price", String(data.price));
 			formData.append("unit", String(data.unit));
 			if (data.description) formData.append("description", data.description);
-			images.forEach((file) => formData.append("images", file));
-
+			if (images.length > 0) {
+				images.forEach((file) => formData.append("images", file));
+			}
 			await dispatch(productsAction.createItemAsync(formData)).unwrap();
 			toast.success("Product created successfully");
-			dispatch(productsAction.fetchAllProducts());
+			await dispatch(productsAction.fetchAllProducts()).unwrap();
 			handleClose();
 		} catch (err: any) {
 			toast.error(err || "Failed to create product");

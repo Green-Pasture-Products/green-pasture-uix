@@ -3,6 +3,23 @@ import { productsAction } from "../actions";
 import { Product, ProductsState } from "@/types";
 import { categoryAction } from "../actions/category.action";
 
+// Transform API response to Product type
+const transformApiProduct = (item: any): Product => {
+	return {
+		id: String(item.id),
+		name: item.name || "",
+		price: Number(item.price || 0),
+		originalPrice: item.originalPrice ? Number(item.originalPrice) : undefined,
+		image: item.photos?.[0]?.url || item.image || "",
+		category: item.product?.name || item.category || "",
+		description: item.description || "",
+		quantity: Number(item.unit || item.quantity || 0),
+		inStock: (item.unit || item.quantity || 0) > 0,
+		rating: item.ratingStats?.average || item.rating || 0,
+		reviews: item.ratingStats?.count || item.reviews || 0,
+	};
+};
+
 const initialState: ProductsState = {
 	isFetchingAllProducts: false,
 	isFetchingProduct: false,
@@ -32,14 +49,16 @@ const productsSlice = createSlice({
 			.addCase(
 				productsAction.fetchAllProducts.fulfilled,
 				(state, action: PayloadAction<Product[]>) => {
-					state.products = action.payload;
+					// Transform API response items to Product type
+					state.products = action.payload.map(item => 
+						typeof item.name === 'undefined' ? transformApiProduct(item as any) : item
+					);
 					state.isFetchingAllProducts = false;
 
 					// Derive categories from product data
 					const productCategories = new Set<string>();
-					action.payload.forEach((p: any) => {
-						const catName = p.product?.name || p.category;
-						if (catName) productCategories.add(catName);
+					state.products.forEach((p: any) => {
+						if (p.category) productCategories.add(p.category);
 					});
 					state.categories = [
 						"All",
@@ -65,6 +84,43 @@ const productsSlice = createSlice({
 					state.products = state.products.filter(
 						(p) => String(p.id) !== String(deletedId)
 					);
+				}
+			)
+			// Create Item
+			.addCase(
+				productsAction.createItemAsync.fulfilled,
+				(state, action) => {
+					const newProductData = action.payload?.data || action.payload;
+					if (newProductData) {
+						// Transform API response to Product type
+						const newProduct = typeof newProductData.name === 'undefined' 
+							? transformApiProduct(newProductData) 
+							: newProductData;
+						
+						// Check if product already exists (avoid duplicates)
+						const exists = state.products.some(p => String(p.id) === String(newProduct.id));
+						if (!exists) {
+							state.products.unshift(newProduct); // Add to beginning of array
+						}
+					}
+				}
+			)
+			// Update Item
+			.addCase(
+				productsAction.updateItemAsync.fulfilled,
+				(state, action) => {
+					const updatedProductData = action.payload?.data || action.payload;
+					if (updatedProductData) {
+						// Transform API response to Product type
+						const updatedProduct = typeof updatedProductData.name === 'undefined' 
+							? transformApiProduct(updatedProductData) 
+							: updatedProductData;
+						
+						const index = state.products.findIndex(p => String(p.id) === String(updatedProduct.id || updatedProductData.itemId));
+						if (index !== -1) {
+							state.products[index] = updatedProduct;
+						}
+					}
 				}
 			)
 			// Also populate categories from the category API

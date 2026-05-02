@@ -109,7 +109,8 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
 					<button
 						key={i}
 						role="menuitem"
-						onClick={() => {
+						onClick={(e) => {
+							e.stopPropagation();
 							setOpen(false);
 							item.onClick();
 						}}

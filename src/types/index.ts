@@ -243,6 +243,7 @@ export interface PaginatedData<T> {
 // ─── Backend Entity Types ───────────────────────────────────────────────
 
 export interface BackendItem {
+	category: string;
 	id: number;
 	name: string;
 	description?: string;

@@ -39,7 +39,15 @@ const AdminProducts: React.FC = () => {
 		dispatch(productsAction.fetchAllProducts());
 	}, []);
 
-	const filteredProducts = filterAndSortProducts(products, query || searchTerm, filters);
+	const filteredProducts = products.filter((product: any) => {
+  		const term = (query || searchTerm).toLowerCase().trim();
+  		if (!term) return true;
+  		return (
+    		product.name?.toLowerCase().includes(term) ||
+    		product.description?.toLowerCase().includes(term) ||
+    		product.product?.name?.toLowerCase().includes(term)
+  		);
+	});
 
 	const handleSearch = useCallback((searchQuery: string) => {
 		setSearchTerm(searchQuery);
@@ -53,9 +61,9 @@ const AdminProducts: React.FC = () => {
 		if (!deleteTarget) return;
 		setIsDeleting(true);
 		try {
-			await dispatch(productsAction.deleteItemAsync(Number(deleteTarget.id))).unwrap();
+			await dispatch(productsAction.deleteItemAsync(deleteTarget.id as string | number)).unwrap();
 			toast.success("Product deleted successfully");
-			dispatch(productsAction.fetchAllProducts());
+			await dispatch(productsAction.fetchAllProducts()).unwrap();
 		} catch (error: any) {
 			toast.error(error || "Failed to delete product");
 		} finally {

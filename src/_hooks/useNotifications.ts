@@ -58,13 +58,16 @@ export function useNotifications() {
 
   // WebSocket connection for real-time notifications
   useEffect(() => {
-    if (!isAuthenticated || !user?.id) return;
+    const token = localStorage.getItem("token");
+    if (!isAuthenticated || !user?.id || !token) return;
 
     const baseUrl = appConstants.API_BASE_URL.replace("/api/v1/", "").replace("/api/v1", "");
 
     const socket = io(`${baseUrl}/notifications`, {
+      auth: { token },
       query: { profileId: user.id },
       transports: ["websocket", "polling"],
+      reconnectionAttempts: 3,
     });
 
     socket.on("new-notification", (notification: Notification) => {
