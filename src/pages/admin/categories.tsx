@@ -34,6 +34,8 @@ const AdminCategories: React.FC = () => {
 	const isDeletingCategory = useAppSelector((state) => state.category.isDeletingCategory);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [deleteTarget, setDeleteTarget] = useState<ProductCategory | null>(null);
+	const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
+	const [viewingCategory, setViewingCategory] = useState<ProductCategory | null>(null);
 
 	useEffect(() => {
 		dispatch(categoryAction.fetchAllCategories());
@@ -48,8 +50,12 @@ const AdminCategories: React.FC = () => {
 		setSearchTerm(query);
 	}, []);
 
+	const handleViewCategory = (row: ProductCategory) => {
+		setViewingCategory(row);
+	};
+
 	const handleEditCategory = (row: ProductCategory) => {
-		dispatch(selectCategory(row));
+		setEditingCategory(row);
 	};
 
 	const handleDeleteCategory = (row: ProductCategory) => {
@@ -96,7 +102,7 @@ const AdminCategories: React.FC = () => {
 			align: "center" as const,
 			render: (_: any, row: ProductCategory) => (
 				<ActionMenu items={[
-					{ label: "View", icon: VIEW_ICON, onClick: () => {} },
+					{ label: "View", icon: VIEW_ICON, onClick: () => handleViewCategory(row) },
 					{ label: "Edit", icon: EDIT_ICON, onClick: () => handleEditCategory(row) },
 					{ label: "Delete", icon: DELETE_ICON, onClick: () => handleDeleteCategory(row), variant: "danger" as const },
 				]} />
@@ -134,6 +140,37 @@ const AdminCategories: React.FC = () => {
 					emptyMessage="No categories found"
 				/>
 
+				{/* View Category Modal */}
+				<Modal
+					isOpen={!!viewingCategory}
+					onClose={() => setViewingCategory(null)}
+					title="View Category"
+					size="md"
+				>
+					{viewingCategory && (
+						<div className="space-y-4 max-h-[80vh]">
+							<div>
+								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name: {viewingCategory.name}</label>
+								{/* <p className="mt-1 text-sm text-gray-900 dark:text-white">{viewingCategory.name}</p> */}
+							</div>
+							<div>
+								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description:</label>
+								<p className="mt-1 text-sm text-gray-900 dark:text-white">{viewingCategory.description || "No description"}</p>
+							</div>
+							<div className="flex justify-end">
+								<Button
+									variant="outlined"
+									color="secondary"
+									size="sm"
+									onClick={() => setViewingCategory(null)}
+								>
+									Close
+								</Button>
+							</div>
+						</div>
+					)}
+				</Modal>
+
 				{/* Delete Confirmation Modal */}
 				<Modal
 					isOpen={!!deleteTarget}
@@ -168,6 +205,13 @@ const AdminCategories: React.FC = () => {
 						</div>
 					</div>
 				</Modal>
+
+				{/* Edit Category Modal */}
+				<AddCategory
+					category={editingCategory || undefined}
+					isOpen={!!editingCategory}
+					onClose={() => setEditingCategory(null)}
+					title="Edit Category" children={undefined}				/>
 			</div>
 		</AdminLayout>
 	);

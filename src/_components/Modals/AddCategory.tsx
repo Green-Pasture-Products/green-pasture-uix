@@ -22,10 +22,25 @@ const AddCategory: React.FC<{
 	children: React.ReactNode;
 	className?: string;
 	title?: string;
-}> = ({ category, children, className = "", title = "Add Category" }) => {
-	const [isOpen, setIsOpen] = useState(false);
+	isOpen?: boolean;
+	onClose?: () => void;
+}> = ({ category, children, className = "", title = "Add Category", isOpen: externalIsOpen, onClose: externalOnClose }) => {
+	const [internalIsOpen, setInternalIsOpen] = useState(false);
+	const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+	const setIsOpen = externalIsOpen !== undefined ? () => {} : setInternalIsOpen;
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const dispatch = useAppDispatch();
+
+	const handleClose = () => {
+		if (externalOnClose) {
+			externalOnClose();
+		} else {
+			setIsOpen(false);
+		}
+		if (!category) {
+			reset({ name: "", description: "" });
+		}
+	};
 
 	const {
 		register,
@@ -78,22 +93,17 @@ const AddCategory: React.FC<{
 		}
 	};
 
-	const handleClose = () => {
-		setIsOpen(false);
-		if (!category) {
-			reset({ name: "", description: "" });
-		}
-	};
-
 	return (
 		<>
-			<button
-				title={title}
-				onClick={() => setIsOpen(true)}
-				className={className}
-			>
-				{children}
-			</button>
+			{externalIsOpen === undefined && (
+				<button
+					title={title}
+					onClick={() => setIsOpen(true)}
+					className={className}
+				>
+					{children}
+				</button>
+			)}
 
 			<Modal
 				isOpen={isOpen}
