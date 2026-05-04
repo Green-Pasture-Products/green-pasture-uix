@@ -25,23 +25,23 @@ jobs:
         run: npm run build
 
       - name: Create Deployment Package
-        # Standalone mode puts everything needed into .next/standalone
         run: |
           mkdir deploy_package
           
-          # 1. Copy the standalone files (this includes a minimal node_modules)
+          # Copy EVERYTHING from standalone to the package root
+          # This includes the standalone server.js and its internal node_modules
           xcopy /E /I .next\standalone deploy_package\
           
-          # 2. Static files and public assets MUST be copied manually in standalone mode
+          # Copy the static assets into the correct subfolder
+          mkdir deploy_package\.next\static
           xcopy /E /I .next\static deploy_package\.next\static
+          
+          # Copy public folder
           xcopy /E /I public deploy_package\public
           
-          # 3. Copy your IIS-specific files for MonsterASP
+          # Copy the web.config to the ROOT of deploy_package
           copy web.config deploy_package\
-          # Note: Next.js standalone creates its own server.js, 
-          # but if you prefer your custom one, copy it last to overwrite.
-          copy server.js deploy_package\ 
-
+          
       - name: Deploy via WebDeploy
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
