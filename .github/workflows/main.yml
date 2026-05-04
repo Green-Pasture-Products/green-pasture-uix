@@ -25,16 +25,22 @@ jobs:
         run: npm run build
 
       - name: Create Deployment Package
-        # We copy only what is needed to run: .next, public, next.config, package.json, and your server files
+        # Standalone mode puts everything needed into .next/standalone
         run: |
           mkdir deploy_package
-          xcopy /E /I .next deploy_package\.next
+          
+          # 1. Copy the standalone files (this includes a minimal node_modules)
+          xcopy /E /I .next\standalone deploy_package\
+          
+          # 2. Static files and public assets MUST be copied manually in standalone mode
+          xcopy /E /I .next\static deploy_package\.next\static
           xcopy /E /I public deploy_package\public
-          copy package.json deploy_package\
-          copy package-lock.json deploy_package\
-          copy next.config.ts deploy_package\
-          copy server.js deploy_package\
+          
+          # 3. Copy your IIS-specific files for MonsterASP
           copy web.config deploy_package\
+          # Note: Next.js standalone creates its own server.js, 
+          # but if you prefer your custom one, copy it last to overwrite.
+          copy server.js deploy_package\ 
 
       - name: Deploy via WebDeploy
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
@@ -43,6 +49,6 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          source-path: deploy_package  # No more dots, use the explicit folder name
+          source-path: deploy_package 
           target-path: /
-          target-delete: false
+          target-delete: true # Clean up old files to ensure standalone structure is correct
