@@ -20,7 +20,7 @@ jobs:
         # --foreground-scripts ensures native builds (like oxide) show logs and complete properly
         run: npm ci --foreground-scripts
 
-      - name: Build and Export Next.js
+      - name: Build Next.js
         # One build command is enough. It generates the /out folder.
         run: npm run build
 
@@ -31,7 +31,7 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          source-path: out/
+          # Deploy the whole root so the server has the .next folder and package.json
+          source-path: . 
           target-path: /
-          target-delete: true
-        timeout-minutes: 10
+          target-delete: false # Set to false to avoid deleting your node_modules
