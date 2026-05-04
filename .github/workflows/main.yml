@@ -31,7 +31,8 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          # Use the environment variable for the full path
-          source-path: ${{ github.workspace }} 
+          # Use a simple relative dot. 
+          # The script will combine this with its internal base path correctly.
+          source-path: .
           target-path: /
           target-delete: false
