@@ -1,41 +1,29 @@
 name: Deploy Next.js via WebDeploy
-
 on:
   push:
     branches: [main]
 
 jobs:
   deploy:
-    runs-on: windows-latest    # Must be Windows for WebDeploy
-
+    runs-on: windows-latest
     steps:
-      # 1️⃣ Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Setup Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20 # Upgrading to 20 is highly recommended for Next.js 15/Tailwind 4
+          cache: 'npm'
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
-        run: npm install
+        # --foreground-scripts ensures native builds (like oxide) show logs and complete properly
+        run: npm ci --foreground-scripts
 
-      # 4️⃣ Build Next.js (production build)
-      - name: Build Next.js
-        run: |
-          npm run build
+      - name: Build and Export Next.js
+        # One build command is enough. It generates the /out folder.
+        run: npm run build
 
-      # 5️⃣ Export static site
-      - name: Export Next.js static site
-        run: |
-          npm run build
-          # Next.js 15 uses output: 'export' in next.config.js, no need for next export
-          # Output will be in 'out/' folder
-
-      # 6️⃣ Deploy via WebDeploy
       - name: Deploy via WebDeploy
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
@@ -43,6 +31,7 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          source-path: out/       # ✅ Deploy the exported static folder
-          target-path: /          # ✅ Root of your site (wwwroot)
-          target-delete: true     # Delete old files before deploying
+          source-path: out/
+          target-path: /
+          target-delete: true
+        timeout-minutes: 10
