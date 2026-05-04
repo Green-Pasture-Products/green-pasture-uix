@@ -34,3 +34,4 @@ jobs:
           source-path: out/
           target-path: /
           target-delete: true
+        timeout-minutes: 10
