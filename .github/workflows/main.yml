@@ -31,7 +31,7 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          # Deploy the whole root so the server has the .next folder and package.json
-          source-path: . 
+          # Use the environment variable for the full path
+          source-path: ${{ github.workspace }} 
           target-path: /
-          target-delete: false # Set to false to avoid deleting your node_modules
+          target-delete: false
