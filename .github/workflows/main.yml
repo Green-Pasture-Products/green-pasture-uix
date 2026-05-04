@@ -24,6 +24,18 @@ jobs:
         # One build command is enough. It generates the /out folder.
         run: npm run build
 
+      - name: Create Deployment Package
+        # We copy only what is needed to run: .next, public, next.config, package.json, and your server files
+        run: |
+          mkdir deploy_package
+          xcopy /E /I .next deploy_package\.next
+          xcopy /E /I public deploy_package\public
+          copy package.json deploy_package\
+          copy package-lock.json deploy_package\
+          copy next.config.ts deploy_package\
+          copy server.js deploy_package\
+          copy web.config deploy_package\
+
       - name: Deploy via WebDeploy
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
@@ -31,8 +43,6 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          # Use a simple relative dot. 
-          # The script will combine this with its internal base path correctly.
-          source-path: .
+          source-path: deploy_package  # No more dots, use the explicit folder name
           target-path: /
           target-delete: false
