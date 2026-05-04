@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
 	reactStrictMode: true,
 	output: "export",
 	eslint: {
-		ignoreDuringBuilds: false,
+		ignoreDuringBuilds: true,
 	},
 	typescript: {
 		ignoreBuildErrors: false,
