@@ -48,14 +48,15 @@ interface PhoneInputProps {
 	required?: boolean;
 	error?: string;
 	value?: string;
-	onChange?: (internationalNumber: string) => void;
+	onChange?: (localDigits: string) => void;
+	onCountryChange?: (dialCode: string) => void;
 	defaultCountry?: string;
 	className?: string;
 	name?: string;
 }
 
 const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
-	({ label, required, error, value, onChange, defaultCountry = "NG", className = "", name }, ref) => {
+	({ label, required, error, value, onChange, onCountryChange, defaultCountry = "NG", className = "", name }, ref) => {
 		const [country, setCountry] = useState<Country>(
 			() => COUNTRIES.find((c) => c.code === defaultCountry) ?? COUNTRIES[0]
 		);
@@ -67,11 +68,9 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
 		useEffect(() => {
 			if (value) {
 				const raw = stripFormat(String(value));
-				// If starts with country dial digits, strip them
-				const dialDigits = country.dial.replace("+", "");
-				const cleaned = raw.startsWith(dialDigits) ? raw.slice(dialDigits.length) : raw;
-				setDisplayValue(formatPhone(cleaned, country));
+				setDisplayValue(formatPhone(raw, country));
 			}
+			onCountryChange?.(country.dial);
 		}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 		useEffect(() => {
@@ -90,9 +89,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
 				const raw = stripFormat(e.target.value);
 				const formatted = formatPhone(raw, country);
 				setDisplayValue(formatted);
-				// Output in international format: +234XXXXXXXXXX
-				const international = raw ? `${country.dial}${raw}` : "";
-				onChange?.(international);
+				onChange?.(raw);
 			},
 			[country, onChange]
 		);
@@ -104,8 +101,8 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
 			const raw = stripFormat(displayValue);
 			const formatted = formatPhone(raw, c);
 			setDisplayValue(formatted);
-			const international = raw ? `${c.dial}${raw}` : "";
-			onChange?.(international);
+			onChange?.(raw);
+			onCountryChange?.(c.dial);
 		};
 
 		const filteredCountries = useMemo(() => {
@@ -126,15 +123,15 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
 					ref={ref}
 					type="hidden"
 					name={name}
-					value={digits ? `${country.dial}${digits}` : ""}
+					value={digits}
 				/>
 
 				{label && (
 					<label
-						className="block text-xs md:text-sm mb-1"
+						className="block text-xs md:text-sm font-semibold mb-1"
 						style={{ color: "var(--text-secondary)" }}
 					>
-						{required ? `${label}*` : label}
+						{required ? `${label}` : label}
 					</label>
 				)}
 

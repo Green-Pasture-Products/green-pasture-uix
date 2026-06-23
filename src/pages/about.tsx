@@ -69,10 +69,10 @@ const About = () => {
 									return (
 										<Card
 											key={index}
-											elevation={1}
+											elevation={2}
 											hoverable
 											padding="lg"
-											className="text-center"
+											className="text-center border-gray-300 dark:border-white/[0.12]"
 										>
 											<div className="bg-primary-100 dark:bg-primary-900/30 rounded-radius-lg p-4 w-16 h-16 flex items-center justify-center mx-auto mb-5">
 												<Icon className="h-8 w-8 text-primary-600 dark:text-primary-400" />

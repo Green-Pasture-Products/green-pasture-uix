@@ -12,22 +12,22 @@ const EmptyShelfIllustration: React.FC<Props> = ({ className = "w-40 h-40" }) =>
 		xmlns="http://www.w3.org/2000/svg"
 	>
 		{/* Shelf */}
-		<rect x="30" y="140" width="140" height="6" rx="3" fill="currentColor" className="text-gray-200 dark:text-white/10" />
-		<rect x="50" y="146" width="4" height="24" rx="2" fill="currentColor" className="text-gray-200 dark:text-white/10" />
-		<rect x="146" y="146" width="4" height="24" rx="2" fill="currentColor" className="text-gray-200 dark:text-white/10" />
+		<rect x="30" y="140" width="140" height="6" rx="3" fill="currentColor" className="text-gray-400 dark:text-white/10" />
+		<rect x="50" y="146" width="4" height="24" rx="2" fill="currentColor" className="text-gray-400 dark:text-white/10" />
+		<rect x="146" y="146" width="4" height="24" rx="2" fill="currentColor" className="text-gray-400 dark:text-white/10" />
 
 		{/* Empty box left */}
-		<g className="text-gray-300 dark:text-white/15">
+		<g className="text-gray-200 dark:text-white/15">
 			<rect x="48" y="100" width="40" height="40" rx="4" fill="currentColor" />
-			<path d="M48 108a4 4 0 014-4h32a4 4 0 014 4v4H48v-4z" fill="currentColor" className="text-gray-200 dark:text-white/10" />
+			<path d="M48 108a4 4 0 014-4h32a4 4 0 014 4v4H48v-4z" fill="currentColor" className="text-gray-300 dark:text-white/10" />
 		</g>
-		<rect x="48" y="100" width="40" height="40" rx="4" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 3" className="text-gray-300 dark:text-white/20" fill="none" />
+		<rect x="48" y="100" width="40" height="40" rx="4" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 3" className="text-gray-400 dark:text-white/20" fill="none" />
 
 		{/* Empty box right */}
-		<g className="text-gray-300 dark:text-white/15">
+		<g className="text-gray-200 dark:text-white/15">
 			<rect x="112" y="108" width="36" height="32" rx="4" fill="currentColor" />
 		</g>
-		<rect x="112" y="108" width="36" height="32" rx="4" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 3" className="text-gray-300 dark:text-white/20" fill="none" />
+		<rect x="112" y="108" width="36" height="32" rx="4" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 3" className="text-gray-400 dark:text-white/20" fill="none" />
 
 		{/* Leaf accent */}
 		<g className="text-primary-400 dark:text-primary-600">

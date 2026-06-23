@@ -32,6 +32,7 @@ const Contact = () => {
 	const [formData, setFormData] = useState({
 		name: "",
 		email: "",
+		phone: "",
 		subject: "",
 		message: "",
 	});
@@ -80,9 +81,9 @@ const Contact = () => {
 									<form onSubmit={handleSubmit} className="space-y-5">
 										<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 											<Input
-												label="Your Name"
+												label="Full Name"
 												name="name"
-												placeholder="Full name"
+												placeholder="Type your full name"
 												value={formData.name}
 												onChange={handleChange}
 												required
@@ -98,16 +99,27 @@ const Contact = () => {
 												required
 											/>
 										</div>
-										<Input
-											label="Subject"
-											name="subject"
-											placeholder="What is this about?"
-											value={formData.subject}
-											onChange={handleChange}
-											required
-										/>
+										<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+											<Input
+												label="Phone Number"
+												name="phone"
+												type="tel"
+												placeholder="+234 800 000 0000"
+												leftIcon={Phone}
+												value={formData.phone}
+												onChange={handleChange}
+											/>
+											<Input
+												label="Subject"
+												name="subject"
+												placeholder="What is this about?"
+												value={formData.subject}
+												onChange={handleChange}
+												required
+											/>
+										</div>
 										<div>
-											<label className="block text-sm font-medium text-on-surface dark:text-gray-200 mb-1.5">
+											<label className="block text-xs md:text-sm font-semibold mb-1.5" style={{ color: "var(--text-secondary)" }}>
 												Message
 											</label>
 											<textarea
@@ -117,17 +129,20 @@ const Contact = () => {
 												value={formData.message}
 												onChange={handleChange}
 												required
-												className="w-full px-3 py-2.5 rounded-radius-md border border-outline dark:border-white/15 bg-white dark:bg-white/[0.04] text-on-surface dark:text-white placeholder:text-gray-400 transition-colors outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-600/20 dark:focus:ring-primary-400/20 resize-none"
+												className="w-full px-3 py-2.5 rounded-radius-md bg-white dark:bg-white/[0.04] text-on-surface dark:text-white placeholder:text-gray-400 transition-colors outline-none focus:ring-2 focus:ring-primary-600/20 dark:focus:ring-primary-400/20 resize-none border"
+												style={{ borderColor: "var(--border-medium)" }}
 											/>
 										</div>
-										<Button
-											type="submit"
-											variant="filled"
-											size="lg"
-											rightIcon={Send}
-										>
-											Send Message
-										</Button>
+										<div className="flex justify-center">
+											<Button
+												type="submit"
+												variant="filled"
+												size="lg"
+												rightIcon={Send}
+											>
+												Send Message
+											</Button>
+										</div>
 									</form>
 								</Card>
 							</AnimatedSection>
@@ -137,9 +152,9 @@ const Contact = () => {
 								{contactInfo.map((info, index) => {
 									const Icon = info.icon;
 									return (
-										<Card key={index} elevation={1} padding="md" hoverable>
-											<div className="flex items-start space-x-4">
-												<div className="bg-primary-100 dark:bg-primary-900/30 rounded-radius-lg p-3 shrink-0">
+										<Card key={index} elevation={2} padding="md" hoverable className="border-gray-300 dark:border-white/[0.12]">
+											<div className="flex items-center space-x-4">
+												<div className="bg-primary-100 dark:bg-primary-900/30 rounded-radius-lg p-3 shrink-0 flex items-center justify-center">
 													<Icon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
 												</div>
 												<div>

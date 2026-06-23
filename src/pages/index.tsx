@@ -226,12 +226,12 @@ const HomePage: React.FC = () => {
 						<Card
 							elevation={0}
 							padding="lg"
-							className="bg-primary-600 dark:bg-primary-800 border-none text-center max-w-3xl mx-auto rounded-radius-xl"
+							className="bg-white dark:bg-primary-800 border-2 border-gray-200 dark:border-primary-700 text-center max-w-3xl mx-auto rounded-radius-xl shadow-[0_8px_30px_rgba(0,0,0,0.15)]"
 						>
-							<h2 className="text-3xl font-bold mb-4 text-white">
+							<h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
 								Stay Updated
 							</h2>
-							<p className="text-primary-100 dark:text-primary-200 mb-8 max-w-lg mx-auto">
+							<p className="text-primary-700 dark:text-primary-200 mb-8 max-w-lg mx-auto">
 								Subscribe to our newsletter for the latest organic products,
 								health tips, and exclusive offers.
 							</p>
@@ -247,7 +247,7 @@ const HomePage: React.FC = () => {
 								<Button
 									variant="filled"
 									size="md"
-									className="bg-white text-primary-700 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(34,197,94,0.4)] active:bg-gray-200 dark:bg-white dark:text-primary-700 dark:hover:bg-primary-50 dark:hover:shadow-[0_0_12px_rgba(34,197,94,0.5)] shrink-0 transition-all"
+									className="bg-primary-600 text-white border-0 hover:bg-primary-700 hover:shadow-[0_0_12px_rgba(34,197,94,0.4)] active:bg-primary-800 dark:bg-white dark:text-primary-700 dark:border-0 dark:hover:bg-primary-50 dark:hover:shadow-[0_0_12px_rgba(34,197,94,0.5)] shrink-0 transition-all"
 								>
 									Subscribe
 								</Button>

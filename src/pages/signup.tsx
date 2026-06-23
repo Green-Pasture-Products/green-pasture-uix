@@ -40,6 +40,7 @@ const SignupPage: React.FC = () => {
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [step, setStep] = useState(1);
 	const [direction, setDirection] = useState(1);
+	const phoneDialCodeRef = React.useRef("+234");
 
 	const {
 		register,
@@ -66,7 +67,7 @@ const SignupPage: React.FC = () => {
 					firstName: data.firstName,
 					lastName: data.lastName,
 					email: data.email,
-					phoneNumber: data.phoneNumber,
+					phoneNumber: `${phoneDialCodeRef.current}${data.phoneNumber}`,
 					password: data.password,
 					gender: data.gender,
 					profileType: "CLIENT",
@@ -278,14 +279,14 @@ const SignupPage: React.FC = () => {
 								>
 									<div className="grid grid-cols-2 gap-3">
 										<FormInput
-											label="First name"
+											label="First Name"
 											placeholder="John"
 											required
 											{...register("firstName")}
 											error={errors.firstName?.message}
 										/>
 										<FormInput
-											label="Last name"
+											label="Last Name"
 											placeholder="Doe"
 											required
 											{...register("lastName")}
@@ -318,7 +319,7 @@ const SignupPage: React.FC = () => {
 									className="space-y-4"
 								>
 									<FormInput
-										label="Email address"
+										label="Email Address"
 										type="email"
 										placeholder="john@example.com"
 										required
@@ -330,10 +331,11 @@ const SignupPage: React.FC = () => {
 										control={control}
 										render={({ field }) => (
 											<PhoneInput
-												label="Phone number"
+												label="Phone Number"
 												required
 												value={field.value}
 												onChange={(val) => field.onChange(val)}
+												onCountryChange={(dial) => { phoneDialCodeRef.current = dial; }}
 												error={errors.phoneNumber?.message}
 											/>
 										)}
