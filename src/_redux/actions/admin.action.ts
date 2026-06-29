@@ -19,7 +19,7 @@ const cancelOrderAsync = createAsyncThunk<any, number, { rejectValue: string }>(
 	"admin/cancelOrder",
 	async (orderId, { rejectWithValue }) => {
 		try {
-			const response = await axiosInstance.patch(`order/cancel/${orderId}`);
+			const response = await axiosInstance.patch(`order/admin/cancel/${orderId}`);
 			return { ...response.data, orderId };
 		} catch (error: any) {
 			return rejectWithValue(extractErrorMessage(error));
