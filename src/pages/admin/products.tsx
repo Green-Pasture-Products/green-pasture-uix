@@ -149,6 +149,15 @@ const AdminProducts: React.FC = () => {
 			},
 		},
 		{
+			key: "status",
+			header: "Status",
+			render: (value: any) => (
+				<Badge variant={value === "A" ? "success" : "error"} dot>
+					{value === "A" ? "Active" : "Inactive"}
+				</Badge>
+			),
+		},
+		{
 			key: "id",
 			header: "",
 			width: "50px",

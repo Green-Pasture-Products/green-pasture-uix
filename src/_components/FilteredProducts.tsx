@@ -54,7 +54,7 @@ const FilteredProducts: React.FC = () => {
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
 	useEffect(() => {
-		dispatch(productsAction.fetchAllProducts());
+		dispatch(productsAction.fetchAllProducts({ activeOnly: true }));
 	}, [dispatch]);
 
 	useEffect(() => {

@@ -45,6 +45,7 @@ const ProductDetail: React.FC = () => {
 		price: "",
 		unit: "",
 		category: "",
+		status: "A",
 	});
 
 	const fetchItem = () => {
@@ -62,6 +63,7 @@ const ProductDetail: React.FC = () => {
 						price: String(data.price || ""),
 						unit: String(data.unit ?? data.availableQuantity ?? ""),
 						category: String(data.product?.id ?? data.category ?? ""),
+						status: data.status ?? "A",
 					});
 				}
 			})
@@ -87,7 +89,6 @@ const ProductDetail: React.FC = () => {
 				price: Number(editForm.price),
 				unit: Number(editForm.unit),
 			};
-			console.log('Sending payload:', payload);
 
 			if (editForm.category) {
 				const categoryId = Number(editForm.category);
@@ -97,6 +98,12 @@ const ProductDetail: React.FC = () => {
 			}
 
 			await axiosInstance.patch(`items/${id}`, payload);
+
+			if (editForm.status !== item?.status) {
+				const endpoint = editForm.status === "A" ? "items/activate" : "items/deactivate";
+				await axiosInstance.patch(endpoint, { ids: [Number(id)] });
+			}
+
 			toast.success("Product updated");
 
 			// Upload new images if any
@@ -179,6 +186,7 @@ const ProductDetail: React.FC = () => {
 				price: String(item.price || ""),
 				unit: String(item.unit ?? (item as any).availableQuantity ?? ""),
 				category: String(item.product?.id ?? item.category ?? ""),
+				status: item.status ?? "A",
 			});
 		}
 		setNewImages([]);
@@ -303,13 +311,21 @@ const ProductDetail: React.FC = () => {
 								prefix="Qty"
 								min={0}
 							/>
-							{/* include category edit */}
 							<FormSelectDropdown
 								label="Category"
 								value={editForm.category}
 								onChange={(val) => setEditForm((f) => ({ ...f, category: val }))}
 								options={productCategories.map((cat) => ({ value: String(cat.id), label: cat.name }))}
 								placeholder="Select category"
+							/>
+							<FormSelectDropdown
+								label="Status"
+								value={editForm.status}
+								onChange={(val) => setEditForm((f) => ({ ...f, status: val }))}
+								options={[
+									{ value: "A", label: "Active — visible to customers" },
+									{ value: "I", label: "Inactive — hidden from customers" },
+								]}
 							/>
 							
 							<div className="sm:col-span-2">
@@ -352,8 +368,8 @@ const ProductDetail: React.FC = () => {
 						<DetailRow
 							label="Status"
 							value={
-								<Badge variant={item.status === "ACTIVE" ? "success" : "neutral"} dot>
-									{item.status}
+								<Badge variant={item.status === "A" ? "success" : "error"} dot>
+									{item.status === "A" ? "Active" : "Inactive"}
 								</Badge>
 							}
 						/>

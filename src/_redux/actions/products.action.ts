@@ -3,11 +3,14 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/_utils/axiosInstance";
 import { extractErrorMessage } from "@/_utils/apiHelpers";
 
-const fetchAllProducts = createAsyncThunk<Product[]>(
+const fetchAllProducts = createAsyncThunk<Product[], { activeOnly?: boolean } | undefined>(
 	"product/fetchAll",
-	async (_, { rejectWithValue }) => {
+	async (args, { rejectWithValue }) => {
 		try {
-			const response = await axiosInstance.get("/items?page=1&limit=100");
+			const url = args?.activeOnly
+				? "/items?page=1&limit=100&filter=A"
+				: "/items?page=1&limit=100";
+			const response = await axiosInstance.get(url);
 			return response.data?.data?.items ?? [];
 		} catch (error: any) {
 			return rejectWithValue(

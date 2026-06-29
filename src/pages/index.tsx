@@ -47,7 +47,7 @@ const HomePage: React.FC = () => {
 	const [email, setEmail] = useState("");
 
 	useEffect(() => {
-		dispatch(productsAction.fetchAllProducts());
+		dispatch(productsAction.fetchAllProducts({ activeOnly: true }));
 	}, []);
 
 	return (
