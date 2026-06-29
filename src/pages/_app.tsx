@@ -1,14 +1,24 @@
 import { ErrorBoundary } from "@/_errorBoundaries/ErrorBoundary";
-import { persistor, store } from "@/_redux/store";
+import { persistor, store, useAppDispatch } from "@/_redux/store";
 import { ThemeProvider } from "@/_hooks/useTheme";
 import { CurrencyProvider } from "@/_hooks/useCurrency";
 import PageTransition from "@/_UI/PageTransition";
+import { initAuth } from "@/_utils/authInit";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
+
+// Reconciles auth state against the cookie once persist has rehydrated.
+function AuthBootstrap({ children }: { children: React.ReactNode }) {
+	const dispatch = useAppDispatch();
+	useEffect(() => {
+		initAuth(dispatch);
+	}, [dispatch]);
+	return <>{children}</>;
+}
 
 // Clean up old localStorage keys from previous persist versions
 if (typeof window !== "undefined") {
@@ -25,13 +35,15 @@ export default function App({ Component, pageProps }: AppProps) {
 		<ErrorBoundary>
 			<Provider store={store}>
 				<PersistGate loading={null} persistor={persistor}>
-					<ThemeProvider>
-						<CurrencyProvider>
-							<PageTransition>
-								<Component {...pageProps} />
-							</PageTransition>
-						</CurrencyProvider>
-					</ThemeProvider>
+					<AuthBootstrap>
+						<ThemeProvider>
+							<CurrencyProvider>
+								<PageTransition>
+									<Component {...pageProps} />
+								</PageTransition>
+							</CurrencyProvider>
+						</ThemeProvider>
+					</AuthBootstrap>
 
 					<Toaster
 						position="top-right"

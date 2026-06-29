@@ -5,7 +5,8 @@ import axios, {
 	InternalAxiosRequestConfig,
 	AxiosError,
 } from "axios";
-import { secureTokenStorage } from "./secureStorage";
+import Cookies from "js-cookie";
+import { authCookies, AUTH_COOKIES } from "./authCookies";
 import { logger } from "./logger";
 
 let cachedIpInfo: any = null;
@@ -66,8 +67,8 @@ axiosInstance.interceptors.request.use(
 			// 	config.data = { ...(config.data || {}), country: ipInfo?.country };
 			// }
 
-			// ✅ CHANGED: Get token from encrypted storage
-			const tokenData = secureTokenStorage.getTokens();
+			// Get access token from the auth cookie
+			const tokenData = authCookies.getTokens();
 			const token = tokenData?.accessToken;
 
 			if (token && !config.headers.Authorization) {
@@ -107,8 +108,9 @@ axiosInstance.interceptors.response.use(
 			isRefreshing = true;
 
 			try {
-				const tokenData = secureTokenStorage.getTokens();
-				const refreshToken = tokenData?.refreshToken;
+				// Read the refresh token directly — getTokens() returns null once
+				// the access JWT has expired, which is exactly when we refresh.
+				const refreshToken = Cookies.get(AUTH_COOKIES.refreshToken);
 
 				if (!refreshToken) {
 					throw new Error("No refresh token available");
@@ -128,12 +130,8 @@ axiosInstance.interceptors.response.use(
 				const { accessToken, refreshToken: newRefreshToken } =
 					response.data.data;
 
-				// Update tokens in encrypted storage
-				secureTokenStorage.setTokens(
-					accessToken,
-					newRefreshToken || refreshToken,
-					tokenData?.user
-				);
+				// Update tokens in cookies (role cookie is left untouched)
+				authCookies.setTokens(accessToken, newRefreshToken || refreshToken);
 
 				// Update the failed request with new token
 				if (originalRequest.headers) {
@@ -154,7 +152,7 @@ axiosInstance.interceptors.response.use(
 
 				// Clear tokens and logout — but DON'T redirect
 				// Protected pages handle their own redirect to /login
-				secureTokenStorage.clearTokens();
+				authCookies.clearTokens();
 
 				try {
 					const { logout } = await import("@/_redux/reducers/auth.reducer");

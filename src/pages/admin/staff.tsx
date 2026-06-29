@@ -16,6 +16,7 @@ import Modal from "@/_UI/Modal";
 import { FormInput, FormSelect } from "@/_UI/FormField";
 import PageLoader from "@/_UI/PageLoader";
 import axiosInstance from "@/_utils/axiosInstance";
+import * as changeCase from "change-case";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -138,7 +139,7 @@ const Staff: React.FC = () => {
 			header: "Role",
 			render: (_value: any, row: BackendStaff) => (
 				<Badge variant="info">
-					{row.profile?.profileType ?? "Staff"}
+					{changeCase.capitalCase(row.profile?.role?.name ?? "Staff")}
 				</Badge>
 			),
 		},

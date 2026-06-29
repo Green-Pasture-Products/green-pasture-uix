@@ -3,7 +3,7 @@ import { appConstants } from "../constants";
 import axios from "axios";
 import axiosInstance from "@/_utils/axiosInstance";
 import { extractErrorMessage } from "@/_utils/apiHelpers";
-import { secureTokenStorage } from "@/_utils/secureStorage";
+import { authCookies } from "@/_utils/authCookies";
 
 interface Address {
 	latitude: string;
@@ -72,9 +72,9 @@ export const logoutAsync = createAsyncThunk<void, void, { rejectValue: string }>
 	async (_, { rejectWithValue }) => {
 		try {
 			await axiosInstance.post("auth/logout");
-			secureTokenStorage.clearTokens();
+			authCookies.clearTokens();
 		} catch {
-			secureTokenStorage.clearTokens(); // Always clear tokens even on error
+			authCookies.clearTokens(); // Always clear tokens even on error
 		}
 	}
 );
