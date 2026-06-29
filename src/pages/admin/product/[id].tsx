@@ -323,9 +323,10 @@ const ProductDetail: React.FC = () => {
 								value={editForm.status}
 								onChange={(val) => setEditForm((f) => ({ ...f, status: val }))}
 								options={[
-									{ value: "A", label: "Active — visible to customers" },
-									{ value: "I", label: "Inactive — hidden from customers" },
+									{ value: "A", label: "Active" },
+									{ value: "I", label: "Inactive" },
 								]}
+								searchable={false}
 							/>
 							
 							<div className="sm:col-span-2">
