@@ -3,11 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-import { ChevronLeft, ChevronRight, Sun, Moon } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
 import { usePathname } from "next/navigation";
 import { sidebarNavigation } from "./routes";
-import { useTheme } from "@/_hooks/useTheme";
 import { useAppSelector } from "@/_redux/store";
 
 interface SidebarProps {
@@ -17,14 +16,36 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
 	const pathname = usePathname();
-	const { toggleTheme, isDark } = useTheme();
 	const { user } = useAppSelector((state) => state.auth);
 
 	return (
 		<aside className="bg-[#14532d] dark:bg-[#0e0e1a] h-full flex flex-col animate-sidebar-enter overflow-hidden">
 			{/* Header */}
-			<div className="flex items-center h-16 md:h-[72px] px-4 border-b border-white/10 flex-shrink-0">
-				{!isCollapsed && (
+			{isCollapsed ? (
+				<div className="flex flex-col items-center py-3 gap-1 border-b border-white/10 flex-shrink-0">
+					<Link href="/admin/dashboard" className="p-1">
+						<div className="relative w-8 h-8">
+							<Image
+								src="/images/GP Organic Logo (Primary).png"
+								alt="Green Pastures Logo"
+								height={100}
+								width={100}
+								priority
+								sizes="36px"
+								className="object-contain"
+							/>
+						</div>
+					</Link>
+					<button
+						onClick={onToggle}
+						className="p-1.5 rounded-radius-md text-white/50 hover:bg-white/5 hover:text-white transition-colors duration-200 press-effect"
+						aria-label="Expand sidebar"
+					>
+						<ChevronLeft className="h-5 w-5 rotate-180 transition-transform duration-300" />
+					</button>
+				</div>
+			) : (
+				<div className="flex items-center h-16 md:h-[72px] px-4 border-b border-white/10 flex-shrink-0">
 					<Link
 						href="/admin/dashboard"
 						className="flex items-center gap-2.5 flex-1 min-w-0"
@@ -44,28 +65,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
 							Admin Panel
 						</span>
 					</Link>
-				)}
-				<button
-					onClick={onToggle}
-					className={`p-2 rounded-radius-md text-white/50 hover:bg-white/5 hover:text-white transition-colors duration-200 press-effect flex-shrink-0 ${
-						isCollapsed ? "mx-auto" : "ml-auto"
-					}`}
-					aria-label={
-						isCollapsed ? "Expand sidebar" : "Collapse sidebar"
-					}
-				>
-					<div
-						className="transition-transform duration-300"
-						style={{
-							transform: isCollapsed
-								? "rotate(180deg)"
-								: "rotate(0deg)",
-						}}
+					<button
+						onClick={onToggle}
+						className="ml-auto p-2 rounded-radius-md text-white/50 hover:bg-white/5 hover:text-white transition-colors duration-200 press-effect flex-shrink-0"
+						aria-label="Collapse sidebar"
 					>
-						<ChevronLeft className="h-5 w-5" />
-					</div>
-				</button>
-			</div>
+						<ChevronLeft className="h-5 w-5 transition-transform duration-300" />
+					</button>
+				</div>
+			)}
 
 			{/* Navigation */}
 			<nav className="flex-1 overflow-y-auto py-4">
@@ -106,51 +114,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
 			{/* Bottom Section */}
 			<div className="mt-auto border-t border-white/10 p-4 flex-shrink-0">
 				{isCollapsed ? (
-					<div className="flex flex-col items-center gap-3">
+					<div className="flex flex-col items-center">
 						<div className="w-8 h-8 rounded-full bg-primary-600 text-white text-sm font-semibold flex items-center justify-center">
 							{user?.firstName?.charAt(0)?.toUpperCase() || "A"}
 						</div>
-						<button
-							onClick={toggleTheme}
-							className="p-2 rounded-radius-md text-white/50 hover:bg-white/5 hover:text-white transition-colors duration-200"
-							aria-label="Toggle theme"
-						>
-							{isDark ? (
-								<Sun className="h-4 w-4" />
-							) : (
-								<Moon className="h-4 w-4" />
-							)}
-						</button>
 					</div>
 				) : (
-					<div className="space-y-3">
-						<div className="flex items-center gap-3">
-							<div className="w-9 h-9 rounded-full bg-primary-600 text-white text-sm font-semibold flex items-center justify-center flex-shrink-0">
-								{user?.firstName?.charAt(0)?.toUpperCase() ||
-									"A"}
-							</div>
-							<div className="min-w-0">
-								<p className="text-sm font-medium text-white truncate">
-									{user?.firstName} {user?.lastName}
-								</p>
-								<p className="text-xs text-white/50 capitalize truncate">
-									{user?.profileType || "Admin"}
-								</p>
-							</div>
+					<div className="flex items-center gap-3">
+						<div className="w-9 h-9 rounded-full bg-primary-600 text-white text-sm font-semibold flex items-center justify-center flex-shrink-0">
+							{user?.firstName?.charAt(0)?.toUpperCase() || "A"}
 						</div>
-						<button
-							onClick={toggleTheme}
-							className="flex items-center gap-3 w-full px-2 py-2 rounded-radius-md text-white/50 hover:bg-white/5 hover:text-white transition-colors duration-200 text-sm"
-						>
-							{isDark ? (
-								<Sun className="h-4 w-4" />
-							) : (
-								<Moon className="h-4 w-4" />
-							)}
-							<span>
-								{isDark ? "Light Mode" : "Dark Mode"}
-							</span>
-						</button>
+						<div className="min-w-0">
+							<p className="text-sm font-medium text-white truncate">
+								{user?.firstName} {user?.lastName}
+							</p>
+							<p className="text-xs text-white/50 capitalize truncate">
+								{user?.profileType || "Admin"}
+							</p>
+						</div>
 					</div>
 				)}
 			</div>

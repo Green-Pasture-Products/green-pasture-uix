@@ -94,7 +94,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 					{onMenuClick && (
 						<button
 							onClick={onMenuClick}
-							className="p-2 -ml-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect"
+							className="lg:hidden p-2 -ml-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect"
 							aria-label="Toggle sidebar"
 						>
 							<Menu className="h-5 w-5" />
