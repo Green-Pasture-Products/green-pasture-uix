@@ -173,7 +173,7 @@ const AdminOrders: React.FC = () => {
 			align: "center" as const,
 			render: (_: any, row: BackendOrder) => (
 				<ActionMenu items={[
-					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/order/${row.id}`) },
+					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/order/${row.orderReference}`) },
 					{ label: "Cancel", icon: DELETE_ICON, onClick: () => setCancelTarget(row), variant: "danger" as const, hidden: row.orderStatus === "CANCELLED" },
 				]} />
 			),
@@ -203,7 +203,7 @@ const AdminOrders: React.FC = () => {
 					onFilterChange={handleFilterChange}
 					pagination={ordersPagination ?? undefined}
 					onPageChange={handlePageChange}
-					onRowClick={(row) => router.push(`/admin/order/${row.id}`)}
+					onRowClick={(row) => router.push(`/admin/order/${row.orderReference}`)}
 					emptyMessage="No orders found"
 				/>
 

@@ -60,9 +60,9 @@ const PaymentCallback: React.FC = () => {
 	useEffect(() => {
 		if (paymentStatus === "success") {
 			dispatch(clearCart());
-			const orderId = router.query.orderId as string;
-			if (orderId) {
-				router.push(`/order-confirmation/${orderId}`);
+			const orderRef = (router.query.orderReference ?? router.query.orderId) as string | undefined;
+			if (orderRef) {
+				router.push(`/order-confirmation/${orderRef}`);
 			} else {
 				router.push("/my-orders");
 			}

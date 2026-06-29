@@ -446,6 +446,7 @@ const CheckoutPage: React.FC = () => {
 				).unwrap();
 
 				const orderId = orderResult?.data?.id;
+				const orderReference = orderResult?.data?.orderReference;
 				if (!orderId) {
 					toast.error("Failed to create order");
 					return;
@@ -458,7 +459,7 @@ const CheckoutPage: React.FC = () => {
 					dispatch(clearCart());
 					dispatch(resetCheckout());
 					toast.success("Order placed successfully!");
-					router.push(`/order-confirmation/${orderId}`);
+					router.push(`/order-confirmation/${orderReference ?? orderId}`);
 					return;
 				}
 
@@ -521,6 +522,7 @@ const CheckoutPage: React.FC = () => {
 				});
 
 				const orderId = guestRes.data?.data?.orderId;
+				const guestOrderReference = guestRes.data?.data?.orderReference;
 				if (!orderId) {
 					toast.error("Failed to create order");
 					return;
@@ -529,7 +531,7 @@ const CheckoutPage: React.FC = () => {
 				if (data.paymentMethod === "CASH_ON_DELIVERY") {
 					dispatch(clearCart());
 					toast.success("Order placed successfully!");
-					router.push(`/order-confirmation/${orderId}`);
+					router.push(`/order-confirmation/${guestOrderReference ?? orderId}`);
 					return;
 				}
 

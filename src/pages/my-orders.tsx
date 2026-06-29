@@ -154,7 +154,7 @@ const MyOrders: React.FC = () => {
 					items={[
 						{
 							label: "View Details",
-							onClick: () => router.push(`/my-orders/${row.id}`),
+							onClick: () => router.push(`/my-orders/${row.orderReference}`),
 						},
 						{
 							label: "Buy Again",
