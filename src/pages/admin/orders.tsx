@@ -33,6 +33,7 @@ const ORDER_STATUS_FILTERS: FilterDef[] = [
 			{ value: "DELIVERED", label: "Delivered" },
 			{ value: "CANCELLED", label: "Cancelled" },
 			{ value: "COMPLETED", label: "Completed" },
+			{ value: "FAILED", label: "Failed" },
 		],
 	},
 ];
