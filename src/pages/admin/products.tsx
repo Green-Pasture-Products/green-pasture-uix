@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
-import AddProduct from "@/_components/Modals/AddProduct";
 import { DataTable, Column } from "@/_UI/DataTable";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
@@ -206,14 +205,9 @@ const AdminProducts: React.FC = () => {
 					onPageSizeChange={handlePageSizeChange}
 					onRowClick={(row) => router.push(`/admin/product/${row.id}`)}
 					actions={
-						<AddProduct
-							title="add product"
-							className="inline-flex"
-						>
-							<Button variant="filled" leftIcon={Plus}>
-								Add Product
-							</Button>
-						</AddProduct>
+						<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/products/new")}>
+							Add Product
+						</Button>
 					}
 					emptyMessage="No products found"
 				/>
