@@ -137,6 +137,19 @@ const adminSlice = createSlice({
 			.addCase(adminAction.fetchStaffAsync.rejected, (state) => {
 				state.staffLoading = false;
 			})
+			// Update Staff Status
+			.addCase(adminAction.updateStaffStatusAsync.fulfilled, (state, action) => {
+				const { staffId, activate } = action.payload;
+				const staff = state.staffList.find((s: any) => s.id === staffId);
+				if (staff) {
+					(staff as any).status = activate ? "ACTIVE" : "INACTIVE";
+				}
+			})
+			// Delete Staff
+			.addCase(adminAction.deleteStaffAsync.fulfilled, (state, action) => {
+				const id = action.payload.staffId;
+				state.staffList = state.staffList.filter((s: any) => s.id !== id);
+			})
 			// Update Item Status
 			.addCase(adminAction.updateItemStatusAsync.fulfilled, (state, action) => {
 				const { itemId, activate } = action.payload;

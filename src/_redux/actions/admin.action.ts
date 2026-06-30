@@ -90,6 +90,31 @@ const updateCustomerStatusAsync = createAsyncThunk<any, { id: number; activate: 
 	}
 );
 
+const updateStaffStatusAsync = createAsyncThunk<any, { id: number; activate: boolean }, { rejectValue: string }>(
+	"admin/updateStaffStatus",
+	async ({ id, activate }, { rejectWithValue }) => {
+		try {
+			const endpoint = activate ? "staff/activate" : "staff/deactivate";
+			const response = await axiosInstance.patch(endpoint, { ids: [id] });
+			return { ...response.data, staffId: id, activate };
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
+const deleteStaffAsync = createAsyncThunk<any, number, { rejectValue: string }>(
+	"admin/deleteStaff",
+	async (id, { rejectWithValue }) => {
+		try {
+			const response = await axiosInstance.delete(`staff/${id}`);
+			return { ...response.data, staffId: id };
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
 const updateItemStatusAsync = createAsyncThunk<any, { id: number; activate: boolean }, { rejectValue: string }>(
 	"admin/updateItemStatus",
 	async ({ id, activate }, { rejectWithValue }) => {
@@ -116,4 +141,4 @@ const fetchAdminItemsAsync = createAsyncThunk<any, { page?: number; limit?: numb
 	}
 );
 
-export const adminAction = { fetchOrdersAsync, cancelOrderAsync, fetchCustomersAsync, deleteCustomerAsync, updateCustomerStatusAsync, fetchStaffAsync, updateStaffAsync, fetchAdminItemsAsync, updateItemStatusAsync };
+export const adminAction = { fetchOrdersAsync, cancelOrderAsync, fetchCustomersAsync, deleteCustomerAsync, updateCustomerStatusAsync, fetchStaffAsync, updateStaffAsync, updateStaffStatusAsync, deleteStaffAsync, fetchAdminItemsAsync, updateItemStatusAsync };
