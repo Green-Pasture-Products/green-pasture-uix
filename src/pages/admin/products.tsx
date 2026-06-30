@@ -24,6 +24,10 @@ const DELETE_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
 );
 
+const STATUS_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.36 6.64A9 9 0 1 1 5.64 5.64"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+);
+
 const AdminProducts: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
@@ -32,6 +36,8 @@ const AdminProducts: React.FC = () => {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [statusTarget, setStatusTarget] = useState<any | null>(null);
+	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
 	useEffect(() => {
 		dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
@@ -45,6 +51,21 @@ const AdminProducts: React.FC = () => {
 	const handlePageChange = useCallback((page: number) => {
 		setCurrentPage(page);
 	}, []);
+
+	const handleStatusUpdate = async () => {
+		if (!statusTarget) return;
+		const isActive = statusTarget.status === "A";
+		setIsUpdatingStatus(true);
+		try {
+			await dispatch(adminAction.updateItemStatusAsync({ id: statusTarget.id, activate: !isActive })).unwrap();
+			toast.success(`Product ${isActive ? "deactivated" : "activated"} successfully`);
+			setStatusTarget(null);
+		} catch (error: any) {
+			toast.error(error || "Failed to update product status");
+		} finally {
+			setIsUpdatingStatus(false);
+		}
+	};
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
@@ -154,6 +175,11 @@ const AdminProducts: React.FC = () => {
 			render: (_: any, row: any) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/product/${row.id}`) },
+					{
+						label: row.status === "A" ? "Deactivate" : "Activate",
+						icon: STATUS_ICON,
+						onClick: () => setStatusTarget(row),
+					},
 					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: "danger" as const },
 				]} />
 			),
@@ -214,6 +240,34 @@ const AdminProducts: React.FC = () => {
 								onClick={handleDelete}
 							>
 								Delete
+							</Button>
+						</div>
+					</div>
+				</Modal>
+
+				<Modal
+					isOpen={!!statusTarget}
+					onClose={() => setStatusTarget(null)}
+					title={`${statusTarget?.status === "A" ? "Deactivate" : "Activate"} Product`}
+					size="sm"
+				>
+					<div className="space-y-4">
+						<p className="text-sm text-gray-600 dark:text-gray-300">
+							Are you sure you want to {statusTarget?.status === "A" ? "deactivate" : "activate"}{" "}
+							<span className="font-semibold text-on-surface dark:text-white">{statusTarget?.name}</span>?
+						</p>
+						<div className="flex justify-end gap-3">
+							<Button variant="outlined" color="secondary" size="sm" onClick={() => setStatusTarget(null)}>
+								Cancel
+							</Button>
+							<Button
+								variant="filled"
+								color={statusTarget?.status === "A" ? "error" : "primary"}
+								size="sm"
+								loading={isUpdatingStatus}
+								onClick={handleStatusUpdate}
+							>
+								{statusTarget?.status === "A" ? "Deactivate" : "Activate"}
 							</Button>
 						</div>
 					</div>

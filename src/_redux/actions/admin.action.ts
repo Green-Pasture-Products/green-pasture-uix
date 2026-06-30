@@ -65,6 +65,44 @@ const updateStaffAsync = createAsyncThunk<any, { id: number; data: any }, { reje
 	}
 );
 
+const deleteCustomerAsync = createAsyncThunk<any, number, { rejectValue: string }>(
+	"admin/deleteCustomer",
+	async (id, { rejectWithValue }) => {
+		try {
+			const response = await axiosInstance.delete(`customers/${id}`);
+			return { ...response.data, customerId: id };
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
+const updateCustomerStatusAsync = createAsyncThunk<any, { id: number; activate: boolean }, { rejectValue: string }>(
+	"admin/updateCustomerStatus",
+	async ({ id, activate }, { rejectWithValue }) => {
+		try {
+			const endpoint = activate ? "customers/activate" : "customers/deactivate";
+			const response = await axiosInstance.patch(endpoint, { ids: [id] });
+			return { ...response.data, customerId: id, activate };
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
+const updateItemStatusAsync = createAsyncThunk<any, { id: number; activate: boolean }, { rejectValue: string }>(
+	"admin/updateItemStatus",
+	async ({ id, activate }, { rejectWithValue }) => {
+		try {
+			const endpoint = activate ? "items/activate" : "items/deactivate";
+			const response = await axiosInstance.patch(endpoint, { ids: [id] });
+			return { ...response.data, itemId: id, activate };
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
 const fetchAdminItemsAsync = createAsyncThunk<any, { page?: number; limit?: number; search?: string; filter?: string }, { rejectValue: string }>(
 	"admin/fetchAdminItems",
 	async ({ page = 1, limit = 50, search, filter } = {}, { rejectWithValue }) => {
@@ -78,4 +116,4 @@ const fetchAdminItemsAsync = createAsyncThunk<any, { page?: number; limit?: numb
 	}
 );
 
-export const adminAction = { fetchOrdersAsync, cancelOrderAsync, fetchCustomersAsync, fetchStaffAsync, updateStaffAsync, fetchAdminItemsAsync };
+export const adminAction = { fetchOrdersAsync, cancelOrderAsync, fetchCustomersAsync, deleteCustomerAsync, updateCustomerStatusAsync, fetchStaffAsync, updateStaffAsync, fetchAdminItemsAsync, updateItemStatusAsync };

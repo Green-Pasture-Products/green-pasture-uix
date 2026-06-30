@@ -112,6 +112,19 @@ const adminSlice = createSlice({
 			.addCase(adminAction.fetchCustomersAsync.rejected, (state) => {
 				state.customersLoading = false;
 			})
+			// Delete Customer
+			.addCase(adminAction.deleteCustomerAsync.fulfilled, (state, action) => {
+				const id = action.payload.customerId;
+				state.customers = state.customers.filter((c: any) => c.id !== id);
+			})
+			// Update Customer Status
+			.addCase(adminAction.updateCustomerStatusAsync.fulfilled, (state, action) => {
+				const { customerId, activate } = action.payload;
+				const customer = state.customers.find((c: any) => c.id === customerId);
+				if (customer) {
+					(customer as any).status = activate ? "A" : "I";
+				}
+			})
 			// Fetch Staff
 			.addCase(adminAction.fetchStaffAsync.pending, (state) => {
 				state.staffLoading = true;
@@ -123,6 +136,14 @@ const adminSlice = createSlice({
 			})
 			.addCase(adminAction.fetchStaffAsync.rejected, (state) => {
 				state.staffLoading = false;
+			})
+			// Update Item Status
+			.addCase(adminAction.updateItemStatusAsync.fulfilled, (state, action) => {
+				const { itemId, activate } = action.payload;
+				const item = state.adminItems.find((i: any) => i.id === itemId);
+				if (item) {
+					(item as any).status = activate ? "A" : "I";
+				}
 			})
 			// Fetch Admin Items
 			.addCase(adminAction.fetchAdminItemsAsync.pending, (state) => {
