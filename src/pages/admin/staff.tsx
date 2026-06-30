@@ -32,6 +32,7 @@ const Staff: React.FC = () => {
 	const { staffList, staffLoading, staffPagination } = useAppSelector((state) => state.admin);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [searchTerm, setSearchTerm] = useState("");
+	const [pageSize, setPageSize] = useState(50);
 
 	// Onboard modal state
 	const [showOnboard, setShowOnboard] = useState(false);
@@ -47,8 +48,8 @@ const Staff: React.FC = () => {
 	const [onboardErrors, setOnboardErrors] = useState<Record<string, string>>({});
 
 	useEffect(() => {
-		dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
-	}, [currentPage, searchTerm]);
+		dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm, pageSize]);
 
 	// Fetch roles on mount
 	useEffect(() => {
@@ -90,7 +91,7 @@ const Staff: React.FC = () => {
 			setShowOnboard(false);
 			setOnboardForm({ firstName: "", lastName: "", email: "", phoneNumber: "", roleId: "" });
 			setOnboardErrors({});
-			dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
+			dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 		} catch (err: any) {
 			toast.error(err?.response?.data?.message || "Failed to onboard staff");
 		} finally {
@@ -105,6 +106,11 @@ const Staff: React.FC = () => {
 
 	const handlePageChange = useCallback((page: number) => {
 		setCurrentPage(page);
+	}, []);
+
+	const handlePageSizeChange = useCallback((size: number) => {
+		setPageSize(size);
+		setCurrentPage(1);
 	}, []);
 
 	const columns: Column<BackendStaff>[] = [
@@ -185,6 +191,7 @@ const Staff: React.FC = () => {
 					searchPlaceholder="Search staff..."
 					pagination={staffPagination ?? undefined}
 					onPageChange={handlePageChange}
+					onPageSizeChange={handlePageSizeChange}
 					onRowClick={(row) => router.push(`/admin/staff/${row.id}`)}
 					actions={
 						<Button variant="filled" leftIcon={Plus} onClick={() => setShowOnboard(true)}>

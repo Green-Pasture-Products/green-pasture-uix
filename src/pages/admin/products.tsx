@@ -33,6 +33,7 @@ const AdminProducts: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const { adminItems, adminItemsLoading, adminItemsPagination } = useAppSelector((state) => state.admin);
 	const [currentPage, setCurrentPage] = useState(1);
+	const [pageSize, setPageSize] = useState(50);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
@@ -40,8 +41,8 @@ const AdminProducts: React.FC = () => {
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
 	useEffect(() => {
-		dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
-	}, [currentPage, searchTerm]);
+		dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm, pageSize]);
 
 	const handleSearch = useCallback((query: string) => {
 		setSearchTerm(query);
@@ -50,6 +51,11 @@ const AdminProducts: React.FC = () => {
 
 	const handlePageChange = useCallback((page: number) => {
 		setCurrentPage(page);
+	}, []);
+
+	const handlePageSizeChange = useCallback((size: number) => {
+		setPageSize(size);
+		setCurrentPage(1);
 	}, []);
 
 	const handleStatusUpdate = async () => {
@@ -73,7 +79,7 @@ const AdminProducts: React.FC = () => {
 		try {
 			await dispatch(productsAction.deleteItemAsync(deleteTarget.id)).unwrap();
 			toast.success("Product deleted successfully");
-			dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
+			dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 		} catch (error: any) {
 			toast.error(error || "Failed to delete product");
 		} finally {
@@ -197,6 +203,7 @@ const AdminProducts: React.FC = () => {
 					searchPlaceholder="Search products..."
 					pagination={adminItemsPagination ?? undefined}
 					onPageChange={handlePageChange}
+					onPageSizeChange={handlePageSizeChange}
 					onRowClick={(row) => router.push(`/admin/product/${row.id}`)}
 					actions={
 						<AddProduct

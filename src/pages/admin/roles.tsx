@@ -16,6 +16,7 @@ const Roles: React.FC = () => {
 	const [roles, setRoles] = useState<BackendRole[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [currentPage, setCurrentPage] = useState(1);
+	const [pageSize, setPageSize] = useState(50);
 	const [pagination, setPagination] = useState<any>(null);
 	const [searchTerm, setSearchTerm] = useState('');
 
@@ -23,7 +24,7 @@ const Roles: React.FC = () => {
 		setLoading(true);
 		const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
 		axiosInstance
-			.get(`role?page=${currentPage}&limit=50${searchParam}`)
+			.get(`role?page=${currentPage}&limit=${pageSize}${searchParam}`)
 			.then((res) => {
 				const data = res.data?.data ?? res.data;
 				setRoles(data?.items ?? data ?? []);
@@ -35,7 +36,7 @@ const Roles: React.FC = () => {
 			.finally(() => {
 				setLoading(false);
 			});
-	}, [currentPage, searchTerm]);
+	}, [currentPage, searchTerm, pageSize]);
 
 	useEffect(() => {
 		fetchRoles();
@@ -48,6 +49,11 @@ const Roles: React.FC = () => {
 
 	const handlePageChange = useCallback((page: number) => {
 		setCurrentPage(page);
+	}, []);
+
+	const handlePageSizeChange = useCallback((size: number) => {
+		setPageSize(size);
+		setCurrentPage(1);
 	}, []);
 
 	const columns: Column<BackendRole>[] = [
@@ -107,6 +113,7 @@ const Roles: React.FC = () => {
 					searchPlaceholder="Search roles..."
 					pagination={pagination ?? undefined}
 					onPageChange={handlePageChange}
+					onPageSizeChange={handlePageSizeChange}
 					onRowClick={(row) => router.push(`/admin/role/${row.id}`)}
 					actions={
 						<Button variant="filled" leftIcon={Plus} onClick={() => router.push('/admin/roles/new')}>

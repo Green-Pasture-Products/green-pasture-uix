@@ -64,13 +64,14 @@ const AdminOrders: React.FC = () => {
 	const { orders, ordersLoading, ordersPagination } = useAppSelector((state) => state.admin);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
+	const [pageSize, setPageSize] = useState(50);
 	const [filterValues, setFilterValues] = useState<Record<string, string>>({});
 	const [cancelTarget, setCancelTarget] = useState<BackendOrder | null>(null);
 	const [isCancelling, setIsCancelling] = useState(false);
 
 	useEffect(() => {
-		dispatch(adminAction.fetchOrdersAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
-	}, [currentPage, searchTerm]);
+		dispatch(adminAction.fetchOrdersAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm, pageSize]);
 
 	const filteredOrders = orders?.filter((order: any) => {
 		const statusFilter = filterValues.status;
@@ -89,6 +90,11 @@ const AdminOrders: React.FC = () => {
 
 	const handlePageChange = useCallback((page: number) => {
 		setCurrentPage(page);
+	}, []);
+
+	const handlePageSizeChange = useCallback((size: number) => {
+		setPageSize(size);
+		setCurrentPage(1);
 	}, []);
 
 	const handleCancelOrder = async () => {
@@ -195,6 +201,7 @@ const AdminOrders: React.FC = () => {
 					onFilterChange={handleFilterChange}
 					pagination={ordersPagination ?? undefined}
 					onPageChange={handlePageChange}
+					onPageSizeChange={handlePageSizeChange}
 					onRowClick={(row) => router.push(`/admin/order/${row.orderReference}`)}
 					emptyMessage="No orders found"
 				/>

@@ -5,7 +5,8 @@ import {
 	Settings,
 	Shield,
 	ShoppingCart,
-	Users,
+	UserRound,
+	UserCog,
 	ShoppingBasket
 } from "lucide-react";
 
@@ -71,12 +72,12 @@ export const sidebarNavigation = [
 	{
 		name: "Customers",
 		href: "/admin/customers",
-		icon: Users,
+		icon: UserRound,
 	},
 	{
 		name: "Staff",
 		href: "/admin/staff",
-		icon: Users,
+		icon: UserCog,
 	},
 	{
 		name: "Roles",

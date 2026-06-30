@@ -34,13 +34,14 @@ const AdminCategories: React.FC = () => {
 	const pagination = useAppSelector((state) => (state.category as any).pagination ?? null);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [searchTerm, setSearchTerm] = useState("");
+	const [pageSize, setPageSize] = useState(50);
 	const [deleteTarget, setDeleteTarget] = useState<ProductCategory | null>(null);
 	const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
 	const [viewingCategory, setViewingCategory] = useState<ProductCategory | null>(null);
 
 	useEffect(() => {
-		dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 50, search: searchTerm || undefined }));
-	}, [currentPage, searchTerm]);
+		dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm, pageSize]);
 
 	const handleSearch = useCallback((query: string) => {
 		setSearchTerm(query);
@@ -51,13 +52,18 @@ const AdminCategories: React.FC = () => {
 		setCurrentPage(page);
 	}, []);
 
+	const handlePageSizeChange = useCallback((size: number) => {
+		setPageSize(size);
+		setCurrentPage(1);
+	}, []);
+
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
 		try {
 			await dispatch(categoryAction.deleteCategory(deleteTarget.id)).unwrap();
 			toast.success("Category deleted successfully");
 			setDeleteTarget(null);
-			dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 50, search: searchTerm || undefined }));
+			dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 		} catch (error) {
 			toast.error(error as string);
 		}
@@ -111,6 +117,7 @@ const AdminCategories: React.FC = () => {
 					searchPlaceholder="Search categories..."
 					pagination={pagination ?? undefined}
 					onPageChange={handlePageChange}
+					onPageSizeChange={handlePageSizeChange}
 					actions={
 						<AddCategory
 							title="add category"
@@ -195,7 +202,7 @@ const AdminCategories: React.FC = () => {
 					isOpen={!!editingCategory}
 					onClose={() => {
 						setEditingCategory(null);
-						dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 50, search: searchTerm || undefined }));
+						dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 					}}
 					title="Edit Category" children={undefined}
 				/>

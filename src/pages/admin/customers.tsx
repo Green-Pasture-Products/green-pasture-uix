@@ -41,6 +41,7 @@ const AdminCustomers: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const { customers, customersLoading, customersPagination } = useAppSelector((state) => state.admin);
 	const [currentPage, setCurrentPage] = useState(1);
+	const [pageSize, setPageSize] = useState(50);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [filterValues, setFilterValues] = useState<Record<string, string>>({});
 	const [deleteTarget, setDeleteTarget] = useState<BackendCustomer | null>(null);
@@ -51,11 +52,11 @@ const AdminCustomers: React.FC = () => {
 	useEffect(() => {
 		dispatch(adminAction.fetchCustomersAsync({
 			page: currentPage,
-			limit: 50,
+			limit: pageSize,
 			search: searchTerm || undefined,
 			filter: filterValues.filter || undefined,
 		}));
-	}, [currentPage, searchTerm, filterValues]);
+	}, [currentPage, searchTerm, filterValues, pageSize]);
 
 	const handleSearch = useCallback((query: string) => {
 		setSearchTerm(query);
@@ -69,6 +70,11 @@ const AdminCustomers: React.FC = () => {
 
 	const handlePageChange = useCallback((page: number) => {
 		setCurrentPage(page);
+	}, []);
+
+	const handlePageSizeChange = useCallback((size: number) => {
+		setPageSize(size);
+		setCurrentPage(1);
 	}, []);
 
 	const handleDelete = async () => {
@@ -180,6 +186,7 @@ const AdminCustomers: React.FC = () => {
 					onFilterChange={handleFilterChange}
 					pagination={customersPagination ?? undefined}
 					onPageChange={handlePageChange}
+					onPageSizeChange={handlePageSizeChange}
 					onRowClick={(row) => router.push(`/admin/customer/${row.id}`)}
 					emptyMessage="No customers found"
 				/>
