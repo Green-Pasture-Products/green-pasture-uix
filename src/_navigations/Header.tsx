@@ -68,16 +68,27 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 	};
 
 	// Build breadcrumb segments from pathname
+	const SEGMENT_OVERRIDES: Record<string, { label: string; href: string }> = {
+		"/admin/role":     { label: "Roles",     href: "/admin/roles" },
+		"/admin/product":  { label: "Products",  href: "/admin/products" },
+		"/admin/customer": { label: "Customers", href: "/admin/customers" },
+		"/admin/order":    { label: "Orders",    href: "/admin/orders" },
+		"/admin/category": { label: "Categories", href: "/admin/category" },
+	};
+
 	const buildBreadcrumbs = () => {
 		const segments = pathname?.split("/").filter(Boolean) || [];
 		const crumbs: { label: string; href: string }[] = [];
 		let path = "";
 		for (const segment of segments) {
 			path += `/${segment}`;
-			crumbs.push({
-				label: segment.charAt(0).toUpperCase() + segment.slice(1),
-				href: path,
-			});
+			const override = SEGMENT_OVERRIDES[path];
+			crumbs.push(
+				override ?? {
+					label: segment.charAt(0).toUpperCase() + segment.slice(1),
+					href: path,
+				}
+			);
 		}
 		return crumbs;
 	};

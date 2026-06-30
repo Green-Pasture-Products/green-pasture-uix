@@ -9,7 +9,7 @@ import PageLoader from '@/_UI/PageLoader';
 import toast from 'react-hot-toast';
 import axiosInstance from '@/_utils/axiosInstance';
 import { BackendPermission } from '@/types';
-import { Search, ChevronsRight, ChevronRight, ChevronLeft, ChevronsLeft, Shield } from 'lucide-react';
+import { Search, Shield } from 'lucide-react';
 
 const formatPermissionName = (name: string) => {
 	return name
@@ -35,12 +35,8 @@ const RoleForm: React.FC = () => {
 	const [selectedPermissions, setSelectedPermissions] = useState<BackendPermission[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
-
-	// Transfer list state
-	const [availableSearch, setAvailableSearch] = useState('');
-	const [selectedSearch, setSelectedSearch] = useState('');
-	const [checkedAvailable, setCheckedAvailable] = useState<Set<number>>(new Set());
-	const [checkedSelected, setCheckedSelected] = useState<Set<number>>(new Set());
+	const [search, setSearch] = useState('');
+	const [errors, setErrors] = useState<Record<string, string>>({});
 
 	useEffect(() => {
 		if (!router.isReady) return;
@@ -72,84 +68,38 @@ const RoleForm: React.FC = () => {
 
 	const selectedIds = useMemo(() => new Set(selectedPermissions.map((p) => p.id)), [selectedPermissions]);
 
-	const availablePermissions = useMemo(() => allPermissions.filter((p) => !selectedIds.has(p.id)), [allPermissions, selectedIds]);
+	const filtered = useMemo(() => {
+		if (!search) return allPermissions;
+		const q = search.toLowerCase();
+		return allPermissions.filter((p) => formatPermissionName(p.name).toLowerCase().includes(q));
+	}, [allPermissions, search]);
 
-	const filteredAvailable = useMemo(() => {
-		if (!availableSearch) return availablePermissions;
-		const q = availableSearch.toLowerCase();
-		return availablePermissions.filter((p) => formatPermissionName(p.name).toLowerCase().includes(q));
-	}, [availablePermissions, availableSearch]);
+	const allFilteredSelected = filtered.length > 0 && filtered.every((p) => selectedIds.has(p.id));
 
-	const filteredSelected = useMemo(() => {
-		if (!selectedSearch) return selectedPermissions;
-		const q = selectedSearch.toLowerCase();
-		return selectedPermissions.filter((p) => formatPermissionName(p.name).toLowerCase().includes(q));
-	}, [selectedPermissions, selectedSearch]);
-
-	// Transfer actions
-	const moveSelectedRight = () => {
-		const toMove = availablePermissions.filter((p) => checkedAvailable.has(p.id));
-		if (!toMove.length) return;
-		setSelectedPermissions((prev) => [...prev, ...toMove]);
-		setCheckedAvailable(new Set());
+	const togglePermission = (perm: BackendPermission) => {
+		setSelectedPermissions((prev) =>
+			selectedIds.has(perm.id) ? prev.filter((p) => p.id !== perm.id) : [...prev, perm]
+		);
 	};
 
-	const moveAllRight = () => {
-		setSelectedPermissions((prev) => [...prev, ...availablePermissions]);
-		setCheckedAvailable(new Set());
-	};
-
-	const moveSelectedLeft = () => {
-		const toRemoveIds = checkedSelected;
-		if (!toRemoveIds.size) return;
-		setSelectedPermissions((prev) => prev.filter((p) => !toRemoveIds.has(p.id)));
-		setCheckedSelected(new Set());
-	};
-
-	const moveAllLeft = () => {
-		setSelectedPermissions([]);
-		setCheckedSelected(new Set());
-	};
-
-	const toggleAvailableCheck = (id: number) => {
-		setCheckedAvailable((prev) => {
-			const next = new Set(prev);
-			if (next.has(id)) next.delete(id);
-			else next.add(id);
-			return next;
-		});
-	};
-
-	const toggleSelectedCheck = (id: number) => {
-		setCheckedSelected((prev) => {
-			const next = new Set(prev);
-			if (next.has(id)) next.delete(id);
-			else next.add(id);
-			return next;
-		});
-	};
-
-	const toggleAllAvailable = () => {
-		if (checkedAvailable.size === filteredAvailable.length && filteredAvailable.length > 0) {
-			setCheckedAvailable(new Set());
+	const toggleAll = () => {
+		if (allFilteredSelected) {
+			setSelectedPermissions((prev) => prev.filter((p) => !filtered.find((f) => f.id === p.id)));
 		} else {
-			setCheckedAvailable(new Set(filteredAvailable.map((p) => p.id)));
+			const toAdd = filtered.filter((p) => !selectedIds.has(p.id));
+			setSelectedPermissions((prev) => [...prev, ...toAdd]);
 		}
 	};
 
-	const toggleAllSelected = () => {
-		if (checkedSelected.size === filteredSelected.length && filteredSelected.length > 0) {
-			setCheckedSelected(new Set());
-		} else {
-			setCheckedSelected(new Set(filteredSelected.map((p) => p.id)));
-		}
+	const validate = () => {
+		const newErrors: Record<string, string> = {};
+		if (!name.trim()) newErrors.name = 'Role name is required';
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0;
 	};
 
 	const handleSubmit = async () => {
-		if (!name.trim()) {
-			toast.error('Role name is required');
-			return;
-		}
+		if (!validate()) return;
 		setSaving(true);
 		try {
 			const payload = {
@@ -204,7 +154,7 @@ const RoleForm: React.FC = () => {
 				</div>
 
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-					{/* Left Column - Role Form */}
+					{/* Left Column — Role Details */}
 					<div className="lg:col-span-1">
 						<div
 							className="rounded-xl overflow-hidden"
@@ -224,8 +174,12 @@ const RoleForm: React.FC = () => {
 									label="Role Name"
 									required
 									value={name}
-									onChange={(e) => setName(e.target.value)}
+									onChange={(e) => {
+										setName(e.target.value);
+										if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
+									}}
 									placeholder="e.g. INVENTORY_MANAGER"
+									error={errors.name}
 								/>
 								<FormTextarea
 									label="Description"
@@ -257,239 +211,113 @@ const RoleForm: React.FC = () => {
 						</div>
 					</div>
 
-					{/* Right Column - Transfer List */}
+					{/* Right Column — Assign Privileges */}
 					<div className="lg:col-span-2">
 						<div
-							className="rounded-xl overflow-hidden"
+							className="rounded-xl overflow-hidden flex flex-col"
 							style={{
 								background: 'var(--surface-paper)',
 								border: '1px solid var(--border-light)',
 								boxShadow: 'var(--shadow-sm)',
 							}}
 						>
-							<div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
+							{/* Header */}
+							<div
+								className="px-5 py-4 flex items-center justify-between"
+								style={{ borderBottom: '1px solid var(--border-light)' }}
+							>
 								<h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
 									Assign Privileges
 								</h3>
+								{selectedPermissions.length > 0 && (
+									<span
+										className="text-xs font-medium px-2 py-0.5 rounded-full"
+										style={{
+											background: 'rgba(22,163,74,0.1)',
+											color: 'var(--color-primary)',
+										}}
+									>
+										{selectedPermissions.length} selected
+									</span>
+								)}
 							</div>
-							<div className="p-5">
-								<div className="flex flex-col md:flex-row gap-3 items-stretch">
-									{/* Available Pane */}
-									<div
-										className="flex-1 rounded-lg overflow-hidden flex flex-col"
-										style={{
-											border: '1px solid var(--border-light)',
-											background: 'var(--surface-paper)',
-											minHeight: '400px',
-										}}
-									>
-										<div className="px-3 py-3 space-y-2" style={{ borderBottom: '1px solid var(--border-light)' }}>
-											<div className="flex items-center justify-between">
-												<span className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
-													Available Privileges ({availablePermissions.length})
-												</span>
-											</div>
-											<div className="relative">
-												<Search
-													size={14}
-													className="absolute left-2.5 top-1/2 -translate-y-1/2"
-													style={{ color: 'var(--text-hint)' }}
-												/>
-												<input
-													type="text"
-													value={availableSearch}
-													onChange={(e) => setAvailableSearch(e.target.value)}
-													placeholder="Search..."
-													className="w-full rounded-md pl-8 pr-3 py-1.5 text-xs outline-none transition-colors"
-													style={inputStyle}
-													onFocus={(e) => {
-														e.currentTarget.style.borderColor = 'var(--color-primary)';
-													}}
-													onBlur={(e) => {
-														e.currentTarget.style.borderColor = 'var(--border-light)';
-													}}
-												/>
-											</div>
-											<label className="flex items-center gap-2 cursor-pointer">
-												<input
-													type="checkbox"
-													checked={checkedAvailable.size === filteredAvailable.length && filteredAvailable.length > 0}
-													onChange={toggleAllAvailable}
-													className="shrink-0 w-3.5 h-3.5 rounded cursor-pointer"
-													style={{ accentColor: 'var(--color-primary)' }}
-												/>
-												<span className="text-xs" style={{ color: 'var(--text-hint)' }}>
-													Select All
-												</span>
-											</label>
-										</div>
-										<div className="flex-1 overflow-y-auto" style={{ maxHeight: '320px' }}>
-											{filteredAvailable.length === 0 ? (
-												<div className="flex items-center justify-center h-full py-8">
-													<span className="text-xs" style={{ color: 'var(--text-hint)' }}>
-														No available privileges
-													</span>
-												</div>
-											) : (
-												filteredAvailable.map((perm) => (
-													<label
-														key={perm.id}
-														className="flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors"
-														style={{
-															borderBottom: '1px solid var(--border-light)',
-															background: checkedAvailable.has(perm.id) ? 'var(--surface-low)' : 'transparent',
-														}}
-														onMouseEnter={(e) => {
-															if (!checkedAvailable.has(perm.id)) e.currentTarget.style.background = 'var(--surface-low)';
-														}}
-														onMouseLeave={(e) => {
-															if (!checkedAvailable.has(perm.id)) e.currentTarget.style.background = 'transparent';
-														}}
-													>
-														<input
-															type="checkbox"
-															checked={checkedAvailable.has(perm.id)}
-															onChange={() => toggleAvailableCheck(perm.id)}
-															className="shrink-0 w-3.5 h-3.5 rounded cursor-pointer"
-															style={{ accentColor: 'var(--color-primary)' }}
-														/>
-														<span className="text-xs" style={{ color: 'var(--text-primary)' }}>
-															{formatPermissionName(perm.name)}
-														</span>
-													</label>
-												))
-											)}
-										</div>
-									</div>
 
-									{/* Center Transfer Buttons */}
-									<div className="flex md:flex-col items-center justify-center gap-2 py-2 md:py-0 md:px-1">
-										<Button
-											variant="outlined"
-											size="sm"
-											onClick={moveAllRight}
-											disabled={availablePermissions.length === 0}
-											title="Move all right"
-										>
-											<ChevronsRight size={14} />
-										</Button>
-										<Button
-											variant="outlined"
-											size="sm"
-											onClick={moveSelectedRight}
-											disabled={checkedAvailable.size === 0}
-											title="Move selected right"
-										>
-											<ChevronRight size={14} />
-										</Button>
-										<Button
-											variant="outlined"
-											size="sm"
-											onClick={moveSelectedLeft}
-											disabled={checkedSelected.size === 0}
-											title="Move selected left"
-										>
-											<ChevronLeft size={14} />
-										</Button>
-										<Button
-											variant="outlined"
-											size="sm"
-											onClick={moveAllLeft}
-											disabled={selectedPermissions.length === 0}
-											title="Move all left"
-										>
-											<ChevronsLeft size={14} />
-										</Button>
-									</div>
-
-									{/* Selected Pane */}
-									<div
-										className="flex-1 rounded-lg overflow-hidden flex flex-col"
-										style={{
-											border: '1px solid var(--border-light)',
-											background: 'var(--surface-paper)',
-											minHeight: '400px',
-										}}
-									>
-										<div className="px-3 py-3 space-y-2" style={{ borderBottom: '1px solid var(--border-light)' }}>
-											<div className="flex items-center justify-between">
-												<span className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
-													Selected Privileges ({selectedPermissions.length})
-												</span>
-											</div>
-											<div className="relative">
-												<Search
-													size={14}
-													className="absolute left-2.5 top-1/2 -translate-y-1/2"
-													style={{ color: 'var(--text-hint)' }}
-												/>
-												<input
-													type="text"
-													value={selectedSearch}
-													onChange={(e) => setSelectedSearch(e.target.value)}
-													placeholder="Search..."
-													className="w-full rounded-md pl-8 pr-3 py-1.5 text-xs outline-none transition-colors"
-													style={inputStyle}
-													onFocus={(e) => {
-														e.currentTarget.style.borderColor = 'var(--color-primary)';
-													}}
-													onBlur={(e) => {
-														e.currentTarget.style.borderColor = 'var(--border-light)';
-													}}
-												/>
-											</div>
-											<label className="flex items-center gap-2 cursor-pointer">
-												<input
-													type="checkbox"
-													checked={checkedSelected.size === filteredSelected.length && filteredSelected.length > 0}
-													onChange={toggleAllSelected}
-													className="shrink-0 w-3.5 h-3.5 rounded cursor-pointer"
-													style={{ accentColor: 'var(--color-primary)' }}
-												/>
-												<span className="text-xs" style={{ color: 'var(--text-hint)' }}>
-													Select All
-												</span>
-											</label>
-										</div>
-										<div className="flex-1 overflow-y-auto" style={{ maxHeight: '320px' }}>
-											{filteredSelected.length === 0 ? (
-												<div className="flex items-center justify-center h-full py-8">
-													<span className="text-xs" style={{ color: 'var(--text-hint)' }}>
-														No privileges selected
-													</span>
-												</div>
-											) : (
-												filteredSelected.map((perm) => (
-													<label
-														key={perm.id}
-														className="flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors"
-														style={{
-															borderBottom: '1px solid var(--border-light)',
-															background: checkedSelected.has(perm.id) ? 'var(--surface-low)' : 'transparent',
-														}}
-														onMouseEnter={(e) => {
-															if (!checkedSelected.has(perm.id)) e.currentTarget.style.background = 'var(--surface-low)';
-														}}
-														onMouseLeave={(e) => {
-															if (!checkedSelected.has(perm.id)) e.currentTarget.style.background = 'transparent';
-														}}
-													>
-														<input
-															type="checkbox"
-															checked={checkedSelected.has(perm.id)}
-															onChange={() => toggleSelectedCheck(perm.id)}
-															className="shrink-0 w-3.5 h-3.5 rounded cursor-pointer"
-															style={{ accentColor: 'var(--color-primary)' }}
-														/>
-														<span className="text-xs" style={{ color: 'var(--text-primary)' }}>
-															{formatPermissionName(perm.name)}
-														</span>
-													</label>
-												))
-											)}
-										</div>
-									</div>
+							{/* Search + Select All */}
+							<div className="px-4 py-3 space-y-2" style={{ borderBottom: '1px solid var(--border-light)' }}>
+								<div className="relative">
+									<Search
+										size={14}
+										className="absolute left-2.5 top-1/2 -translate-y-1/2"
+										style={{ color: 'var(--text-hint)' }}
+									/>
+									<input
+										type="text"
+										value={search}
+										onChange={(e) => setSearch(e.target.value)}
+										placeholder="Search privileges..."
+										className="w-full rounded-md pl-8 pr-3 py-1.5 text-xs outline-none transition-colors"
+										style={inputStyle}
+										onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; }}
+										onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
+									/>
 								</div>
+								<label className="flex items-center gap-2 cursor-pointer select-none">
+									<input
+										type="checkbox"
+										checked={allFilteredSelected}
+										onChange={toggleAll}
+										className="shrink-0 w-3.5 h-3.5 rounded cursor-pointer"
+										style={{ accentColor: 'var(--color-primary)' }}
+									/>
+									<span className="text-xs" style={{ color: 'var(--text-hint)' }}>
+										Select All {search ? `(${filtered.length} visible)` : ''}
+									</span>
+								</label>
+							</div>
+
+							{/* Permissions list */}
+							<div className="overflow-y-auto" style={{ maxHeight: '420px' }}>
+								{filtered.length === 0 ? (
+									<div className="flex items-center justify-center py-12">
+										<span className="text-xs" style={{ color: 'var(--text-hint)' }}>
+											No privileges found
+										</span>
+									</div>
+								) : (
+									filtered.map((perm) => {
+										const checked = selectedIds.has(perm.id);
+										return (
+											<label
+												key={perm.id}
+												className="flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors"
+												style={{
+													borderBottom: '1px solid var(--border-light)',
+													background: checked ? 'rgba(22,163,74,0.04)' : 'transparent',
+												}}
+												onMouseEnter={(e) => {
+													if (!checked) e.currentTarget.style.background = 'var(--surface-low)';
+												}}
+												onMouseLeave={(e) => {
+													e.currentTarget.style.background = checked ? 'rgba(22,163,74,0.04)' : 'transparent';
+												}}
+											>
+												<input
+													type="checkbox"
+													checked={checked}
+													onChange={() => togglePermission(perm)}
+													className="shrink-0 w-3.5 h-3.5 rounded cursor-pointer"
+													style={{ accentColor: 'var(--color-primary)' }}
+												/>
+												<span
+													className="text-xs"
+													style={{ color: checked ? 'var(--color-primary)' : 'var(--text-primary)' }}
+												>
+													{formatPermissionName(perm.name)}
+												</span>
+											</label>
+										);
+									})
+								)}
 							</div>
 						</div>
 					</div>

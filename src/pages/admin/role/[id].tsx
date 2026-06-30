@@ -5,11 +5,12 @@ import AdminLayout from '@/_components/AdminLayout';
 import { BackButton, DetailHeader, DetailSection, DetailRow } from '@/_UI/DetailField';
 import Badge from '@/_UI/Badge';
 import Button from '@/_UI/Button';
+import Modal from '@/_UI/Modal';
 import PageLoader from '@/_UI/PageLoader';
 import toast from 'react-hot-toast';
 import axiosInstance from '@/_utils/axiosInstance';
 import { BackendRole, BackendPermission } from '@/types';
-import { Pencil, Shield } from 'lucide-react';
+import { Pencil, Shield, Power } from 'lucide-react';
 
 const formatPermissionName = (name: string) => {
 	return name
@@ -24,6 +25,8 @@ const RoleDetail: React.FC = () => {
 	const [role, setRole] = useState<BackendRole | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [activeTab, setActiveTab] = useState<'details' | 'privileges'>('details');
+	const [statusModalOpen, setStatusModalOpen] = useState(false);
+	const [toggling, setToggling] = useState(false);
 
 	useEffect(() => {
 		if (!router.isReady || !id) return;
@@ -42,6 +45,23 @@ const RoleDetail: React.FC = () => {
 				setLoading(false);
 			});
 	}, [id, router.isReady]);
+
+	const handleToggleStatus = async () => {
+		if (!role) return;
+		setToggling(true);
+		const endpoint = role.status === 'A' ? 'role/deactivate' : 'role/activate';
+		try {
+			await axiosInstance.patch(endpoint, [role.id]);
+			toast.success(role.status === 'A' ? 'Role deactivated' : 'Role activated');
+			setStatusModalOpen(false);
+			const res = await axiosInstance.post(`role/details/${id}`);
+			setRole(res.data?.data ?? res.data);
+		} catch (err: any) {
+			toast.error(err?.response?.data?.message || 'Failed to update status');
+		} finally {
+			setToggling(false);
+		}
+	};
 
 	if (loading) {
 		return (
@@ -77,14 +97,27 @@ const RoleDetail: React.FC = () => {
 	return (
 		<AdminLayout>
 			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
-				<BackButton />
+				<div className="flex items-center justify-between">
+					<BackButton />
+					<Button
+						variant="outlined"
+						size="sm"
+						color={role.status === 'A' ? 'error' : 'primary'}
+						onClick={() => setStatusModalOpen(true)}
+						loading={toggling}
+						disabled={toggling}
+					>
+						<Power className="w-4 h-4 mr-1.5" />
+						{role.status === 'A' ? 'Deactivate' : 'Activate'}
+					</Button>
+				</div>
 
 				<DetailHeader
 					title={formatPermissionName(role.name)}
 					subtitle="Role"
 					status={
-						<Badge variant={role.status === 'ACTIVE' ? 'success' : 'neutral'} dot>
-							{role.status}
+						<Badge variant={role.status === 'A' ? 'success' : 'neutral'} dot>
+							{role.status === 'A' ? 'Active' : 'Inactive'}
 						</Badge>
 					}
 				/>
@@ -143,16 +176,8 @@ const RoleDetail: React.FC = () => {
 							</Button>
 						}
 					>
-						<DetailRow label="Name" value={role.name} />
+						<DetailRow label="Name" value={formatPermissionName(role.name)} />
 						<DetailRow label="Description" value={role.description || '\u2014'} />
-						<DetailRow
-							label="Status"
-							value={
-								<Badge variant={role.status === 'ACTIVE' ? 'success' : 'neutral'} dot>
-									{role.status}
-								</Badge>
-							}
-						/>
 						<DetailRow
 							label="Permissions"
 							value={<Badge variant="info">{role.permissions?.length ?? 0}</Badge>}
@@ -237,6 +262,36 @@ const RoleDetail: React.FC = () => {
 					</DetailSection>
 				)}
 			</div>
+			{/* Status Confirmation Modal */}
+			<Modal
+				isOpen={statusModalOpen}
+				onClose={() => setStatusModalOpen(false)}
+				title={`${role?.status === 'A' ? 'Deactivate' : 'Activate'} Role`}
+				size="sm"
+			>
+				<div className="space-y-4">
+					<p className="text-sm text-gray-600 dark:text-gray-300">
+						Are you sure you want to {role?.status === 'A' ? 'deactivate' : 'activate'}{' '}
+						<span className="font-semibold text-on-surface dark:text-white">
+							{role?.name?.replace(/_/g, ' ')}
+						</span>?
+					</p>
+					<div className="flex justify-end gap-3">
+						<Button variant="outlined" color="secondary" size="sm" onClick={() => setStatusModalOpen(false)}>
+							Cancel
+						</Button>
+						<Button
+							variant="filled"
+							color={role?.status === 'A' ? 'error' : 'primary'}
+							size="sm"
+							loading={toggling}
+							onClick={handleToggleStatus}
+						>
+							{role?.status === 'A' ? 'Deactivate' : 'Activate'}
+						</Button>
+					</div>
+				</div>
+			</Modal>
 		</AdminLayout>
 	);
 };
