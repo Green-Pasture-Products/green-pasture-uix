@@ -12,18 +12,45 @@ const config: Config = {
 				sans: ['"DM Sans"', "system-ui", "sans-serif"],
 			},
 			colors: {
+				// Brand primary — re-anchored on Deep Teal #103630
 				primary: {
-					DEFAULT: "#16a34a",
-					50: "#f0fdf4",
-					100: "#dcfce7",
-					200: "#bbf7d0",
-					300: "#86efac",
-					400: "#4ade80",
-					500: "#22c55e",
-					600: "#16a34a",
-					700: "#15803d",
-					800: "#166534",
-					900: "#14532d",
+					DEFAULT: "#1f6554",
+					50: "#eef7f4",
+					100: "#d4ebe4",
+					200: "#aad7ca",
+					300: "#76bba8",
+					400: "#469a85",
+					500: "#2a7e69",
+					600: "#1f6554",
+					700: "#184e42",
+					800: "#143f37",
+					900: "#103630",
+				},
+				// Brand accent — Lime Green #9ACA3C
+				lime: {
+					DEFAULT: "#9aca3c",
+					50: "#f4fae8",
+					100: "#e6f3ca",
+					200: "#d2e9a0",
+					300: "#bbdd72",
+					400: "#a7d44f",
+					500: "#9aca3c",
+					600: "#7fac2d",
+					700: "#608123",
+					800: "#4c651f",
+					900: "#40531e",
+				},
+				// Brand soft background — Pale Mint (cream)
+				mint: {
+					DEFAULT: "#f6f8eb",
+					50: "#fbfcf4",
+					100: "#eef2da",
+				},
+				// Brand deep neutral — Brown #261711
+				brown: {
+					DEFAULT: "#261711",
+					700: "#3a261d",
+					800: "#2f1d15",
 				},
 				surface: {
 					DEFAULT: "#ffffff",

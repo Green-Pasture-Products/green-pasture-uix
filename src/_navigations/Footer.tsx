@@ -58,7 +58,7 @@ const customerServiceLinks = [
 
 const Footer = () => {
 	return (
-		<footer className="bg-gray-900 dark:bg-black text-gray-300">
+		<footer className="bg-primary-900 dark:bg-black text-gray-300">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
 					{/* Column 1: Brand */}
@@ -86,7 +86,7 @@ const Footer = () => {
 										target="_blank"
 										aria-label={label}
 										rel="noopener noreferrer"
-										className="w-10 h-10 rounded-full border border-gray-700 flex items-center justify-center text-gray-400 hover:scale-110 hover:text-primary-400 hover:border-primary-400 transition-all duration-200"
+										className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center text-gray-400 hover:scale-110 hover:text-lime-400 hover:border-lime-400 transition-all duration-200"
 									>
 										<Icon size={18} />
 									</a>
@@ -105,7 +105,7 @@ const Footer = () => {
 								<li key={href}>
 									<Link
 										href={href}
-										className="text-gray-400 hover:text-primary-400 transition-colors duration-200 text-sm"
+										className="text-gray-400 hover:text-lime-400 transition-colors duration-200 text-sm"
 									>
 										{label}
 									</Link>
@@ -124,7 +124,7 @@ const Footer = () => {
 								<li key={href}>
 									<Link
 										href={href}
-										className="text-gray-400 hover:text-primary-400 transition-colors duration-200 text-sm"
+										className="text-gray-400 hover:text-lime-400 transition-colors duration-200 text-sm"
 									>
 										{label}
 									</Link>
@@ -140,25 +140,25 @@ const Footer = () => {
 						</h3>
 						<ul className="space-y-3">
 							<li className="flex items-start gap-3">
-								<Phone className="h-4 w-4 text-primary-400 mt-0.5 flex-shrink-0" />
+								<Phone className="h-4 w-4 text-lime-400 mt-0.5 flex-shrink-0" />
 								<Link
 									href={appConstants.CONTACT.PHONE_HREF}
-									className="text-gray-400 hover:text-primary-400 transition-colors duration-200 text-sm"
+									className="text-gray-400 hover:text-lime-400 transition-colors duration-200 text-sm"
 								>
 									{appConstants.CONTACT.PHONE}
 								</Link>
 							</li>
 							<li className="flex items-start gap-3">
-								<Mail className="h-4 w-4 text-primary-400 mt-0.5 flex-shrink-0" />
+								<Mail className="h-4 w-4 text-lime-400 mt-0.5 flex-shrink-0" />
 								<Link
 									href={appConstants.CONTACT.EMAIL_HREF}
-									className="text-gray-400 hover:text-primary-400 transition-colors duration-200 text-sm"
+									className="text-gray-400 hover:text-lime-400 transition-colors duration-200 text-sm"
 								>
 									{appConstants.CONTACT.EMAIL}
 								</Link>
 							</li>
 							<li className="flex items-start gap-3">
-								<MapPin className="h-4 w-4 text-primary-400 mt-0.5 flex-shrink-0" />
+								<MapPin className="h-4 w-4 text-lime-400 mt-0.5 flex-shrink-0" />
 								<span className="text-gray-400 text-sm">
 									{appConstants.CONTACT.ADDRESS}
 								</span>
@@ -176,14 +176,14 @@ const Footer = () => {
 					<div className="flex items-center gap-4">
 						<Link
 							href="/privacy"
-							className="hover:text-primary-400 transition-colors duration-200"
+							className="hover:text-lime-400 transition-colors duration-200"
 						>
 							Privacy Policy
 						</Link>
 						<span className="text-gray-700">|</span>
 						<Link
 							href="/terms"
-							className="hover:text-primary-400 transition-colors duration-200"
+							className="hover:text-lime-400 transition-colors duration-200"
 						>
 							Terms of Service
 						</Link>

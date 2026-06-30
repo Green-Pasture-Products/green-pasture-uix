@@ -1,28 +1,27 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useNotifications } from "@/_hooks/useNotifications";
+import { useTheme } from "@/_hooks/useTheme";
+import { getBio } from "@/_redux/actions/user.action";
+import { logout } from "@/_redux/reducers/auth.reducer";
+import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import NotificationDrawer from "@/_UI/NotificationDrawer";
 import {
-	Search,
-	User,
+	Bell,
+	ChevronRight,
+	Home,
 	LogOut,
 	Menu,
-	Sun,
 	Moon,
-	Bell,
-	Home,
-	ChevronRight,
 	Settings,
+	Sun,
+	User
 } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useRouter } from "next/router";
-import { logout } from "@/_redux/reducers/auth.reducer";
+import React, { useEffect, useRef, useState } from "react";
 import { getPageNames } from "./routes";
-import { getBio } from "@/_redux/actions/user.action";
-import { useTheme } from "@/_hooks/useTheme";
-import { useNotifications } from "@/_hooks/useNotifications";
-import NotificationDrawer from "@/_UI/NotificationDrawer";
 
 interface HeaderProps {
 	onMenuClick?: () => void;

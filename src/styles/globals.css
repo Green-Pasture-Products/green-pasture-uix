@@ -6,11 +6,11 @@
 /* ─── CSS Custom Properties ───────────────────────────────────────────── */
 
 :root {
-	--color-primary: #16a34a;
-	--color-primary-light: #22c55e;
-	--color-primary-dark: #15803d;
+	--color-primary: #1f6554;
+	--color-primary-light: #2a7e69;
+	--color-primary-dark: #103630;
 	--color-secondary: #0f766e;
-	--color-accent: #f59e0b;
+	--color-accent: #9aca3c;
 
 	--background: #ffffff;
 	--foreground: #0f172a;
@@ -34,9 +34,9 @@
 }
 
 .dark {
-	--color-primary: #4ade80;
-	--color-primary-light: #86efac;
-	--color-primary-dark: #22c55e;
+	--color-primary: #469a85;
+	--color-primary-light: #76bba8;
+	--color-primary-dark: #2a7e69;
 
 	--background: #0a0f1a;
 	--foreground: #f1f5f9;
@@ -330,7 +330,7 @@ a {
 
 .auth-field input:focus {
 	border-color: var(--color-primary);
-	box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+	box-shadow: 0 0 0 3px rgba(31, 101, 84, 0.18);
 }
 
 .dark .auth-field input:focus {

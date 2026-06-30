@@ -144,7 +144,7 @@ const Navbar: React.FC = () => {
 					{/* Theme Toggle */}
 					<button
 						onClick={toggleTheme}
-						className="p-2 rounded-radius-md text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect"
+						className="p-2 rounded-radius-md text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect cursor-pointer"
 						aria-label="Toggle theme"
 					>
 						{isDark ? (
@@ -195,7 +195,7 @@ const Navbar: React.FC = () => {
 								onClick={() =>
 									setIsUserMenuOpen(!isUserMenuOpen)
 								}
-								className="flex items-center gap-2 p-1.5 rounded-radius-md text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect"
+								className="flex items-center gap-2 p-1.5 rounded-radius-md text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect cursor-pointer"
 							>
 								<div className="w-8 h-8 rounded-full bg-primary-600 dark:bg-primary-500 text-white text-sm font-semibold flex items-center justify-center">
 									{bio.firstName?.charAt(0)?.toUpperCase() ||
@@ -285,7 +285,7 @@ const Navbar: React.FC = () => {
 								onClick={() =>
 									setIsUserMenuOpen(!isUserMenuOpen)
 								}
-								className="p-2 rounded-radius-md text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect"
+								className="p-2 rounded-radius-md text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect cursor-pointer"
 							>
 								<User className="h-5 w-5" />
 							</button>
@@ -331,7 +331,7 @@ const Navbar: React.FC = () => {
 						onClick={() =>
 							setIsMobileMenuOpen(!isMobileMenuOpen)
 						}
-						className="md:hidden p-2 rounded-radius-md text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect"
+						className="md:hidden p-2 rounded-radius-md text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect cursor-pointer"
 						aria-label="Toggle mobile menu"
 					>
 						{isMobileMenuOpen ? (
