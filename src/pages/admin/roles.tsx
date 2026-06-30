@@ -86,8 +86,8 @@ const Roles: React.FC = () => {
 			key: 'status',
 			header: 'Status',
 			render: (value: any) => (
-				<Badge variant={String(value) === 'ACTIVE' ? 'success' : 'neutral'} dot>
-					{String(value)}
+				<Badge variant={value === 'A' ? 'success' : 'error'} dot>
+					{value === 'A' ? 'Active' : 'Inactive'}
 				</Badge>
 			),
 		},

@@ -69,11 +69,11 @@ const Staff: React.FC = () => {
 	// Fetch roles on mount
 	useEffect(() => {
 		axiosInstance
-			.get("role?page=1&limit=50")
+			.get("role/all")
 			.then((res) => {
-				const data = res.data?.data?.data ?? res.data?.data ?? res.data;
+				const data = res.data?.data;
 				if (Array.isArray(data)) {
-					setRoles(data.map((r: any) => ({ id: r.id, name: r.name })));
+					setRoles(data.map((r: any) => ({ id: r.id, name: changeCase.capitalCase(r.name) })));
 				}
 			})
 			.catch(() => {});
