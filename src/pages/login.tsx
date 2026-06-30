@@ -14,6 +14,7 @@ import { LoginFormData, loginSchema } from "@/_validations/auth";
 import Image from "next/image";
 import { loginAsync } from "@/_redux/actions/auth.action";
 import { appConstants } from "@/_redux/constants";
+import { safeRedirectTarget } from "@/_utils/redirect";
 import { logger } from "@/_utils";
 import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
@@ -54,10 +55,11 @@ const LoginPage: React.FC = () => {
 				user?.profileType?.toUpperCase() as any || ""
 			);
 
+			const redirect = safeRedirectTarget(router.query.redirect as string);
+
 			if (isAdminUser) {
 				// Admins go straight to admin dashboard
-				const redirect = router.query.redirect as string;
-				router.push(redirect?.startsWith("/admin") ? redirect : "/admin/dashboard");
+				router.push(redirect.startsWith("/admin") ? redirect : "/admin/dashboard");
 				return;
 			}
 
@@ -70,8 +72,7 @@ const LoginPage: React.FC = () => {
 			};
 			syncCart();
 
-			const redirect = router.query.redirect as string;
-			router.push(redirect || "/");
+			router.push(redirect);
 		}
 	}, [isAuthenticated, user, dispatch, router]);
 

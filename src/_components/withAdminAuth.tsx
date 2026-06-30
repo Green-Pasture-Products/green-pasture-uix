@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useAppSelector } from "@/_redux/store";
 import PageLoader from "@/_UI/PageLoader";
 import { appConstants } from "@/_redux/constants";
+import { loginUrlFor } from "@/_utils/redirect";
 
 const ADMIN_ROLES: readonly string[] = appConstants.ADMIN_ROLES;
 
@@ -25,8 +26,13 @@ export default function withAdminAuth<P extends object>(
 			isAuthenticated && !!userRole && ADMIN_ROLES.includes(userRole);
 
 		useEffect(() => {
+			// Already heading to (or on) an auth page — don't re-wrap the path,
+			// which would nest `/login?redirect=/login?redirect=…`.
+			if (router.asPath.startsWith("/login") || router.asPath.startsWith("/signup")) {
+				return;
+			}
 			if (!isAuthenticated) {
-				router.replace(`/login?redirect=${router.asPath}`);
+				router.replace(loginUrlFor(router.asPath));
 			} else if (!authorized) {
 				router.replace("/");
 			}

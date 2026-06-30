@@ -15,6 +15,7 @@ import Router from "next/router";
 
 import { appConstants } from "@/_redux/constants";
 import { authCookies, AUTH_COOKIES, getTokenExpiry } from "./authCookies";
+import { loginUrlFor } from "./redirect";
 
 // Refresh ~60s before expiry to absorb clock skew / in-flight requests.
 const REFRESH_SKEW_MS = 60_000;
@@ -109,8 +110,7 @@ export async function forceLogout(
 		const { pathname, search } = window.location;
 		const onAuthPage = /^\/(login|signup)/.test(pathname);
 		if (!onAuthPage) {
-			const dest = pathname + search;
-			Router.replace(`/login?redirect=${encodeURIComponent(dest)}`).catch(() => {});
+			Router.replace(loginUrlFor(pathname + search)).catch(() => {});
 		}
 	}
 }

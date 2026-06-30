@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIES } from "@/_utils/authCookies";
 import { appConstants } from "@/_redux/constants";
+import { safeRedirectTarget } from "@/_utils/redirect";
 
 // Roles allowed into /admin/*, normalized to lowercase to match the gp_role cookie.
 const ADMIN_ROLES = appConstants.ADMIN_ROLES.map((r) => r.toLowerCase());
@@ -12,9 +13,10 @@ export function middleware(req: NextRequest) {
 
 	// Not logged in → send to login, preserving where they were headed.
 	if (!hasToken) {
+		const target = safeRedirectTarget(pathname + search);
 		const loginUrl = req.nextUrl.clone();
 		loginUrl.pathname = "/login";
-		loginUrl.search = `?redirect=${encodeURIComponent(pathname + search)}`;
+		loginUrl.search = target === "/" ? "" : `?redirect=${encodeURIComponent(target)}`;
 		return NextResponse.redirect(loginUrl);
 	}
 
