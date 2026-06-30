@@ -34,7 +34,7 @@ const AdminProducts: React.FC = () => {
 	const [isDeleting, setIsDeleting] = useState(false);
 
 	useEffect(() => {
-		dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+		dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm]);
 
 	const handleSearch = useCallback((query: string) => {
@@ -52,7 +52,7 @@ const AdminProducts: React.FC = () => {
 		try {
 			await dispatch(productsAction.deleteItemAsync(deleteTarget.id)).unwrap();
 			toast.success("Product deleted successfully");
-			dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+			dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 		} catch (error: any) {
 			toast.error(error || "Failed to delete product");
 		} finally {

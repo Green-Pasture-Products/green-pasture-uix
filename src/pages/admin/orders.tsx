@@ -69,7 +69,7 @@ const AdminOrders: React.FC = () => {
 	const [isCancelling, setIsCancelling] = useState(false);
 
 	useEffect(() => {
-		dispatch(adminAction.fetchOrdersAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+		dispatch(adminAction.fetchOrdersAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm]);
 
 	const filteredOrders = orders?.filter((order: any) => {

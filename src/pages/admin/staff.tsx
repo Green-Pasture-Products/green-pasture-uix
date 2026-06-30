@@ -47,7 +47,7 @@ const Staff: React.FC = () => {
 	const [onboardErrors, setOnboardErrors] = useState<Record<string, string>>({});
 
 	useEffect(() => {
-		dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+		dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm]);
 
 	// Fetch roles on mount
@@ -90,7 +90,7 @@ const Staff: React.FC = () => {
 			setShowOnboard(false);
 			setOnboardForm({ firstName: "", lastName: "", email: "", phoneNumber: "", roleId: "" });
 			setOnboardErrors({});
-			dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+			dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 		} catch (err: any) {
 			toast.error(err?.response?.data?.message || "Failed to onboard staff");
 		} finally {

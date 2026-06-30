@@ -13,7 +13,7 @@ const fetchAllCategories = createAsyncThunk<
       const response = await axiosInstance.get("products", {
         params: {
           page: args?.page ?? 1,
-          limit: args?.limit ?? 10,
+          limit: args?.limit ?? 50,
           ...(args?.search ? { search: args.search } : {}),
         },
       });

@@ -39,7 +39,7 @@ const AdminCategories: React.FC = () => {
 	const [viewingCategory, setViewingCategory] = useState<ProductCategory | null>(null);
 
 	useEffect(() => {
-		dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+		dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm]);
 
 	const handleSearch = useCallback((query: string) => {
@@ -57,7 +57,7 @@ const AdminCategories: React.FC = () => {
 			await dispatch(categoryAction.deleteCategory(deleteTarget.id)).unwrap();
 			toast.success("Category deleted successfully");
 			setDeleteTarget(null);
-			dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+			dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 		} catch (error) {
 			toast.error(error as string);
 		}
@@ -195,7 +195,7 @@ const AdminCategories: React.FC = () => {
 					isOpen={!!editingCategory}
 					onClose={() => {
 						setEditingCategory(null);
-						dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+						dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 					}}
 					title="Edit Category" children={undefined}
 				/>

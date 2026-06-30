@@ -34,7 +34,7 @@ const AdminCustomers: React.FC = () => {
 	const [filterValues, setFilterValues] = useState<Record<string, string>>({});
 
 	useEffect(() => {
-		dispatch(adminAction.fetchCustomersAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+		dispatch(adminAction.fetchCustomersAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm]);
 
 	const handleSearch = useCallback((query: string) => {

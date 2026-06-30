@@ -35,7 +35,7 @@ const Users: React.FC = () => {
 	const [searchTerm, setSearchTerm] = useState("");
 
 	useEffect(() => {
-		dispatch(adminAction.fetchCustomersAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+		dispatch(adminAction.fetchCustomersAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm]);
 
 	const handleSearch = useCallback((query: string) => {

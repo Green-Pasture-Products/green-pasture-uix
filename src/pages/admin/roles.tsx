@@ -23,7 +23,7 @@ const Roles: React.FC = () => {
 		setLoading(true);
 		const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
 		axiosInstance
-			.get(`role?page=${currentPage}&limit=10${searchParam}`)
+			.get(`role?page=${currentPage}&limit=50${searchParam}`)
 			.then((res) => {
 				const data = res.data?.data ?? res.data;
 				setRoles(data?.items ?? data ?? []);
