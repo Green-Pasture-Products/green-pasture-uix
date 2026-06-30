@@ -271,8 +271,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 								exit={{ opacity: 0 }}
 								onClick={handleAddToCart}
 								disabled={!inStock}
-								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-								style={{ background: "var(--color-primary)" }}
+								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-white bg-primary-600 hover:bg-gradient-to-r hover:from-primary-700 hover:via-primary-600 hover:to-lime-600 hover:shadow-[0_0_16px_rgba(154,202,60,0.45)] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
 								whileHover={{ scale: 1.02 }}
 								whileTap={{ scale: 0.95 }}
 							>

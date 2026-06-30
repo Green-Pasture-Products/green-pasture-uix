@@ -101,7 +101,7 @@ const HomePage: React.FC = () => {
 							>
 								<Link href="/products">
 									<button
-										className="group inline-flex items-center gap-2 px-6 py-3 text-base font-medium rounded-radius-md bg-white text-primary-700 hover:bg-gray-100 active:bg-gray-200 shadow-elevation-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
+										className="group inline-flex items-center gap-2 px-6 py-3 text-base font-medium rounded-radius-md bg-white text-primary-700 hover:bg-gray-100 active:bg-gray-200 shadow-elevation-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97] cursor-pointer"
 									>
 										Shop Now
 										<ArrowRight className="h-5 w-5 text-lime-600 transition-transform duration-200 group-hover:translate-x-1" />
@@ -109,7 +109,7 @@ const HomePage: React.FC = () => {
 								</Link>
 								<Link href="/about">
 									<button
-										className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium rounded-radius-md border border-white/50 text-white hover:bg-white/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
+										className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium rounded-radius-md border border-white/50 text-white hover:bg-white/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97] cursor-pointer"
 									>
 										Learn More
 									</button>

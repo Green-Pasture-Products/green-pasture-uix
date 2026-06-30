@@ -218,7 +218,7 @@ const Navbar: React.FC = () => {
 									</div>
 									<Link
 										href="/profile"
-										className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+										className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
 										onClick={() =>
 											setIsUserMenuOpen(false)
 										}
@@ -229,7 +229,7 @@ const Navbar: React.FC = () => {
 									{!isAdmin && (
 										<Link
 											href="/my-orders"
-											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
 											onClick={() =>
 												setIsUserMenuOpen(false)
 											}
@@ -243,7 +243,7 @@ const Navbar: React.FC = () => {
 									) && (
 										<Link
 											href="/admin/dashboard"
-											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
 											onClick={() =>
 												setIsUserMenuOpen(false)
 											}
@@ -294,7 +294,7 @@ const Navbar: React.FC = () => {
 								<div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 py-1 z-50 animate-dropdown-enter">
 									<Link
 										href="/login"
-										className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+										className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
 										onClick={() =>
 											setIsUserMenuOpen(false)
 										}
