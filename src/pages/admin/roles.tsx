@@ -21,6 +21,10 @@ const STATUS_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
 );
 
+const DELETE_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+);
+
 const ROLE_STATUS_FILTERS: FilterDef[] = [
 	{
 		key: 'filter',
@@ -43,6 +47,8 @@ const Roles: React.FC = () => {
 	const [filterValues, setFilterValues] = useState<Record<string, string>>({});
 	const [statusTarget, setStatusTarget] = useState<BackendRole | null>(null);
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+	const [deleteTarget, setDeleteTarget] = useState<BackendRole | null>(null);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	const fetchRoles = useCallback(() => {
 		setLoading(true);
@@ -103,6 +109,21 @@ const Roles: React.FC = () => {
 		}
 	};
 
+	const handleDelete = async () => {
+		if (!deleteTarget) return;
+		setIsDeleting(true);
+		try {
+			await axiosInstance.delete(`role/${deleteTarget.id}`);
+			toast.success('Role deleted successfully');
+			setDeleteTarget(null);
+			fetchRoles();
+		} catch (err: any) {
+			toast.error(err?.response?.data?.message || 'Failed to delete role');
+		} finally {
+			setIsDeleting(false);
+		}
+	};
+
 	const columns: Column<BackendRole>[] = [
 		{
 			key: 'name',
@@ -160,6 +181,7 @@ const Roles: React.FC = () => {
 						icon: STATUS_ICON,
 						onClick: () => setStatusTarget(row),
 					},
+					{ label: 'Delete', icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: 'danger' as const },
 				]} />
 			),
 		},
@@ -215,6 +237,31 @@ const Roles: React.FC = () => {
 								onClick={handleStatusUpdate}
 							>
 								{statusTarget?.status === 'A' ? 'Deactivate' : 'Activate'}
+							</Button>
+						</div>
+					</div>
+				</Modal>
+
+				{/* Delete Confirmation Modal */}
+				<Modal
+					isOpen={!!deleteTarget}
+					onClose={() => setDeleteTarget(null)}
+					title="Delete Role"
+					size="sm"
+				>
+					<div className="space-y-4">
+						<p className="text-sm text-gray-600 dark:text-gray-300">
+							Are you sure you want to delete{' '}
+							<span className="font-semibold text-on-surface dark:text-white">
+								{deleteTarget?.name?.replace(/_/g, ' ')}
+							</span>? This action cannot be undone.
+						</p>
+						<div className="flex justify-end gap-3">
+							<Button variant="outlined" color="secondary" size="sm" onClick={() => setDeleteTarget(null)}>
+								Cancel
+							</Button>
+							<Button variant="filled" color="error" size="sm" loading={isDeleting} onClick={handleDelete}>
+								Delete
 							</Button>
 						</div>
 					</div>
