@@ -8,7 +8,6 @@ import AdminLayout from '@/_components/AdminLayout';
 import { DataTable, Column } from '@/_UI/DataTable';
 import Badge from '@/_UI/Badge';
 import Button from '@/_UI/Button';
-import PageLoader from '@/_UI/PageLoader';
 import toast from 'react-hot-toast';
 import axiosInstance from '@/_utils/axiosInstance';
 
@@ -22,8 +21,9 @@ const Roles: React.FC = () => {
 
 	const fetchRoles = useCallback(() => {
 		setLoading(true);
+		const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
 		axiosInstance
-			.get(`role?page=${currentPage}&limit=50`)
+			.get(`role?page=${currentPage}&limit=10${searchParam}`)
 			.then((res) => {
 				const data = res.data?.data ?? res.data;
 				setRoles(data?.items ?? data ?? []);
@@ -35,7 +35,7 @@ const Roles: React.FC = () => {
 			.finally(() => {
 				setLoading(false);
 			});
-	}, [currentPage]);
+	}, [currentPage, searchTerm]);
 
 	useEffect(() => {
 		fetchRoles();
@@ -49,14 +49,6 @@ const Roles: React.FC = () => {
 	const handlePageChange = useCallback((page: number) => {
 		setCurrentPage(page);
 	}, []);
-
-	const filteredRoles = searchTerm
-		? roles.filter(
-				(r) =>
-					r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					r.description?.toLowerCase().includes(searchTerm.toLowerCase()),
-		  )
-		: roles;
 
 	const columns: Column<BackendRole>[] = [
 		{
@@ -104,20 +96,12 @@ const Roles: React.FC = () => {
 		},
 	];
 
-	if (loading && !roles?.length) {
-		return (
-			<AdminLayout>
-				<PageLoader fullScreen={false} message="Loading roles..." />
-			</AdminLayout>
-		);
-	}
-
 	return (
 		<AdminLayout>
 			<div className="animate-page-enter space-y-6">
 				<DataTable
 					columns={columns}
-					data={filteredRoles}
+					data={roles}
 					isLoading={loading}
 					onSearch={handleSearch}
 					searchPlaceholder="Search roles..."

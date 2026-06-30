@@ -11,7 +11,6 @@ import { DataTable, Column } from "@/_UI/DataTable";
 import ActionMenu from "@/_UI/ActionMenu";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
-import PageLoader from "@/_UI/PageLoader";
 import { ProductCategory } from "@/types";
 import { categoryAction } from "@/_redux/actions/category.action";
 
@@ -32,35 +31,25 @@ const AdminCategories: React.FC = () => {
 	const categories = useAppSelector((state) => state.category.productCategories);
 	const isFetchingCategories = useAppSelector((state) => state.category.isFetchingAllCategories);
 	const isDeletingCategory = useAppSelector((state) => state.category.isDeletingCategory);
+	const pagination = useAppSelector((state) => (state.category as any).pagination ?? null);
+	const [currentPage, setCurrentPage] = useState(1);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [deleteTarget, setDeleteTarget] = useState<ProductCategory | null>(null);
 	const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
 	const [viewingCategory, setViewingCategory] = useState<ProductCategory | null>(null);
 
 	useEffect(() => {
-		dispatch(categoryAction.fetchAllCategories());
-	}, []);
-
-	const filteredCategories = categories?.filter((cat) =>
-		cat.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		cat.description?.toLowerCase().includes(searchTerm.toLowerCase())
-	);
+		dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm]);
 
 	const handleSearch = useCallback((query: string) => {
 		setSearchTerm(query);
+		setCurrentPage(1);
 	}, []);
 
-	const handleViewCategory = (row: ProductCategory) => {
-		setViewingCategory(row);
-	};
-
-	const handleEditCategory = (row: ProductCategory) => {
-		setEditingCategory(row);
-	};
-
-	const handleDeleteCategory = (row: ProductCategory) => {
-		setDeleteTarget(row);
-	};
+	const handlePageChange = useCallback((page: number) => {
+		setCurrentPage(page);
+	}, []);
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
@@ -68,6 +57,7 @@ const AdminCategories: React.FC = () => {
 			await dispatch(categoryAction.deleteCategory(deleteTarget.id)).unwrap();
 			toast.success("Category deleted successfully");
 			setDeleteTarget(null);
+			dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 10, search: searchTerm || undefined }));
 		} catch (error) {
 			toast.error(error as string);
 		}
@@ -102,31 +92,25 @@ const AdminCategories: React.FC = () => {
 			align: "center" as const,
 			render: (_: any, row: ProductCategory) => (
 				<ActionMenu items={[
-					{ label: "View", icon: VIEW_ICON, onClick: () => handleViewCategory(row) },
-					{ label: "Edit", icon: EDIT_ICON, onClick: () => handleEditCategory(row) },
-					{ label: "Delete", icon: DELETE_ICON, onClick: () => handleDeleteCategory(row), variant: "danger" as const },
+					{ label: "View", icon: VIEW_ICON, onClick: () => setViewingCategory(row) },
+					{ label: "Edit", icon: EDIT_ICON, onClick: () => setEditingCategory(row) },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: "danger" as const },
 				]} />
 			),
 		},
 	];
 
-	if (isFetchingCategories && !categories?.length) {
-		return (
-			<AdminLayout>
-				<PageLoader fullScreen={false} message="Loading categories..." />
-			</AdminLayout>
-		);
-	}
-
 	return (
 		<AdminLayout>
 			<div className="animate-page-enter space-y-6">
-				{/* Categories Table */}
 				<DataTable
 					columns={columns}
-					data={filteredCategories ?? []}
+					data={categories ?? []}
+					isLoading={isFetchingCategories}
 					onSearch={handleSearch}
 					searchPlaceholder="Search categories..."
+					pagination={pagination ?? undefined}
+					onPageChange={handlePageChange}
 					actions={
 						<AddCategory
 							title="add category"
@@ -151,7 +135,6 @@ const AdminCategories: React.FC = () => {
 						<div className="space-y-4 max-h-[80vh]">
 							<div>
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name: {viewingCategory.name}</label>
-								{/* <p className="mt-1 text-sm text-gray-900 dark:text-white">{viewingCategory.name}</p> */}
 							</div>
 							<div>
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description:</label>
@@ -210,8 +193,12 @@ const AdminCategories: React.FC = () => {
 				<AddCategory
 					category={editingCategory || undefined}
 					isOpen={!!editingCategory}
-					onClose={() => setEditingCategory(null)}
-					title="Edit Category" children={undefined}				/>
+					onClose={() => {
+						setEditingCategory(null);
+						dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+					}}
+					title="Edit Category" children={undefined}
+				/>
 			</div>
 		</AdminLayout>
 	);

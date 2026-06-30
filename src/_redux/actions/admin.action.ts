@@ -65,4 +65,17 @@ const updateStaffAsync = createAsyncThunk<any, { id: number; data: any }, { reje
 	}
 );
 
-export const adminAction = { fetchOrdersAsync, cancelOrderAsync, fetchCustomersAsync, fetchStaffAsync, updateStaffAsync };
+const fetchAdminItemsAsync = createAsyncThunk<any, { page?: number; limit?: number; search?: string; filter?: string }, { rejectValue: string }>(
+	"admin/fetchAdminItems",
+	async ({ page = 1, limit = 10, search, filter } = {}, { rejectWithValue }) => {
+		try {
+			const params = buildPaginationParams(page, limit, search, filter);
+			const response = await axiosInstance.get(`items?${params}`);
+			return response.data;
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
+export const adminAction = { fetchOrdersAsync, cancelOrderAsync, fetchCustomersAsync, fetchStaffAsync, updateStaffAsync, fetchAdminItemsAsync };

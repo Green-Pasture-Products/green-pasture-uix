@@ -13,7 +13,6 @@ import Modal from "@/_UI/Modal";
 import Button from "@/_UI/Button";
 import { BackendOrder } from "@/types";
 import { formatCurrency } from "@/_UI/FormatValue";
-import PageLoader from "@/_UI/PageLoader";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -180,14 +179,6 @@ const AdminOrders: React.FC = () => {
 			),
 		},
 	];
-
-	if (ordersLoading && !orders?.length) {
-		return (
-			<AdminLayout>
-				<PageLoader fullScreen={false} message="Loading orders..." />
-			</AdminLayout>
-		);
-	}
 
 	return (
 		<AdminLayout>

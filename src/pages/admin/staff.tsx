@@ -14,7 +14,6 @@ import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
 import { FormInput, FormSelect } from "@/_UI/FormField";
-import PageLoader from "@/_UI/PageLoader";
 import axiosInstance from "@/_utils/axiosInstance";
 import * as changeCase from "change-case";
 
@@ -173,14 +172,6 @@ const Staff: React.FC = () => {
 			),
 		},
 	];
-
-	if (staffLoading && !staffList?.length) {
-		return (
-			<AdminLayout>
-				<PageLoader fullScreen={false} message="Loading staff..." />
-			</AdminLayout>
-		);
-	}
 
 	return (
 		<AdminLayout>

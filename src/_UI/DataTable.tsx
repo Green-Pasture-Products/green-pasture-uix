@@ -137,21 +137,25 @@ export function DataTable<T extends Record<string, any>>({
 	const [searchValue, setSearchValue] = useState("");
 	const [showFilters, setShowFilters] = useState(false);
 	const [localPage, setLocalPage] = useState(1);
-	const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+	const onSearchRef = useRef(onSearch);
 	const visibleColumns = columns.filter((c) => !c.hidden);
+
+	useEffect(() => {
+		onSearchRef.current = onSearch;
+	});
 
 	const activeFilterCount = Object.values(filterValues).filter(
 		(v) => v && v !== ""
 	).length;
 
-	// Debounced search
+	// Debounced search — only resets timer when the user types, not on parent re-renders
 	useEffect(() => {
-		if (!onSearch) return;
-		debounceRef.current = setTimeout(() => {
-			onSearch(searchValue);
+		if (!onSearchRef.current) return;
+		const timer = setTimeout(() => {
+			onSearchRef.current?.(searchValue);
 		}, 400);
-		return () => clearTimeout(debounceRef.current);
-	}, [searchValue, onSearch]);
+		return () => clearTimeout(timer);
+	}, [searchValue]);
 
 	const getValue = useCallback((row: T, key: string) => {
 		const parts = key.split(".");

@@ -12,10 +12,8 @@ import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
-import PageLoader from "@/_UI/PageLoader";
-import { Product } from "@/types";
 import { productsAction } from "@/_redux/actions";
-import { filterAndSortProducts } from "@/_utils";
+import { adminAction } from "@/_redux/actions/admin.action";
 import { formatCurrency } from "@/_UI/FormatValue";
 
 const VIEW_ICON = (
@@ -29,41 +27,32 @@ const DELETE_ICON = (
 const AdminProducts: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
-	const { products, isFetchingAllProducts } = useAppSelector((state) => state.product);
-	const { query, filters } = useAppSelector((state) => state.search);
+	const { adminItems, adminItemsLoading, adminItemsPagination } = useAppSelector((state) => state.admin);
+	const [currentPage, setCurrentPage] = useState(1);
 	const [searchTerm, setSearchTerm] = useState("");
-	const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+	const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
 
 	useEffect(() => {
-		dispatch(productsAction.fetchAllProducts());
+		dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm]);
+
+	const handleSearch = useCallback((query: string) => {
+		setSearchTerm(query);
+		setCurrentPage(1);
 	}, []);
 
-	const filteredProducts = products.filter((product: any) => {
-  		const term = (query || searchTerm).toLowerCase().trim();
-  		if (!term) return true;
-  		return (
-    		product.name?.toLowerCase().includes(term) ||
-    		product.description?.toLowerCase().includes(term) ||
-    		product.product?.name?.toLowerCase().includes(term)
-  		);
-	});
-
-	const handleSearch = useCallback((searchQuery: string) => {
-		setSearchTerm(searchQuery);
+	const handlePageChange = useCallback((page: number) => {
+		setCurrentPage(page);
 	}, []);
-
-	const handleDeleteClick = (row: Product) => {
-		setDeleteTarget(row);
-	};
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
 		setIsDeleting(true);
 		try {
-			await dispatch(productsAction.deleteItemAsync(deleteTarget.id as string | number)).unwrap();
+			await dispatch(productsAction.deleteItemAsync(deleteTarget.id)).unwrap();
 			toast.success("Product deleted successfully");
-			await dispatch(productsAction.fetchAllProducts()).unwrap();
+			dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
 		} catch (error: any) {
 			toast.error(error || "Failed to delete product");
 		} finally {
@@ -72,7 +61,7 @@ const AdminProducts: React.FC = () => {
 		}
 	};
 
-	const columns: Column<Product>[] = [
+	const columns: Column<any>[] = [
 		{
 			key: "name",
 			header: "Product",
@@ -125,7 +114,7 @@ const AdminProducts: React.FC = () => {
 			render: (value: any, row: any) => {
 				const qty = Number(value ?? row.unit ?? 0);
 				return (
-					<Badge variant={qty > 0 ? "success" : qty === 0 ? "error" : "warning"} dot>
+					<Badge variant={qty > 0 ? "success" : "error"} dot>
 						{qty > 0 ? `${qty} units` : "Out of Stock"}
 					</Badge>
 				);
@@ -171,23 +160,17 @@ const AdminProducts: React.FC = () => {
 		},
 	];
 
-	if (isFetchingAllProducts && !products?.length) {
-		return (
-			<AdminLayout>
-				<PageLoader fullScreen={false} message="Loading products..." />
-			</AdminLayout>
-		);
-	}
-
 	return (
 		<AdminLayout>
 			<div className="animate-page-enter space-y-6">
-				{/* Products Table */}
 				<DataTable
 					columns={columns}
-					data={filteredProducts}
+					data={adminItems}
+					isLoading={adminItemsLoading}
 					onSearch={handleSearch}
 					searchPlaceholder="Search products..."
+					pagination={adminItemsPagination ?? undefined}
+					onPageChange={handlePageChange}
 					onRowClick={(row) => router.push(`/admin/product/${row.id}`)}
 					actions={
 						<AddProduct
@@ -202,7 +185,6 @@ const AdminProducts: React.FC = () => {
 					emptyMessage="No products found"
 				/>
 
-				{/* Delete Confirmation Modal */}
 				<Modal
 					isOpen={!!deleteTarget}
 					onClose={() => setDeleteTarget(null)}

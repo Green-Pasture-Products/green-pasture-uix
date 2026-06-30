@@ -10,6 +10,9 @@ const initialState: AdminState & {
 	staffList: any[];
 	staffLoading: boolean;
 	staffPagination: PaginationMeta | null;
+	adminItems: any[];
+	adminItemsLoading: boolean;
+	adminItemsPagination: PaginationMeta | null;
 } = {
 	isAuthenticated: false,
 	user: null,
@@ -36,6 +39,9 @@ const initialState: AdminState & {
 	staffList: [],
 	staffLoading: false,
 	staffPagination: null,
+	adminItems: [],
+	adminItemsLoading: false,
+	adminItemsPagination: null,
 };
 
 const adminSlice = createSlice({
@@ -117,6 +123,18 @@ const adminSlice = createSlice({
 			})
 			.addCase(adminAction.fetchStaffAsync.rejected, (state) => {
 				state.staffLoading = false;
+			})
+			// Fetch Admin Items
+			.addCase(adminAction.fetchAdminItemsAsync.pending, (state) => {
+				state.adminItemsLoading = true;
+			})
+			.addCase(adminAction.fetchAdminItemsAsync.fulfilled, (state, action) => {
+				state.adminItemsLoading = false;
+				state.adminItems = action.payload?.data?.items ?? [];
+				state.adminItemsPagination = action.payload?.data?.meta ?? null;
+			})
+			.addCase(adminAction.fetchAdminItemsAsync.rejected, (state) => {
+				state.adminItemsLoading = false;
 			})
 			// Update Staff
 			.addCase(adminAction.updateStaffAsync.fulfilled, (state, action) => {

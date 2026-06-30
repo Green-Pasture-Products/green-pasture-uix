@@ -186,7 +186,7 @@ const FilteredProducts: React.FC = () => {
 
 				{/* Products */}
 				<div className="lg:col-span-3">
-					{isFetchingAllProducts ? (
+					{isFetchingAllProducts && products.length === 0 ? (
 						<div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
 							{[...Array(6)].map((_, i) => (
 								<div
