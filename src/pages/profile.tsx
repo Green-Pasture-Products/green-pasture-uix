@@ -100,7 +100,7 @@ const Profile = () => {
 				<AuthPrompt
 					isOpen={showAuthPrompt}
 					onClose={() => router.push("/products")}
-					redirectTo="/profile"
+					redirectTo={router.asPath}
 					title="Sign in to manage profile"
 					message="Log in to view and update your personal information."
 				/>

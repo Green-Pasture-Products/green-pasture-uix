@@ -1,9 +1,10 @@
 import { ErrorBoundary } from "@/_errorBoundaries/ErrorBoundary";
-import { persistor, store, useAppDispatch } from "@/_redux/store";
+import { persistor, store, useAppDispatch, useAppSelector } from "@/_redux/store";
 import { ThemeProvider } from "@/_hooks/useTheme";
 import { CurrencyProvider } from "@/_hooks/useCurrency";
 import PageTransition from "@/_UI/PageTransition";
 import { initAuth } from "@/_utils/authInit";
+import { scheduleProactiveRefresh, stopAuthScheduler } from "@/_utils/tokenRefresh";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { useEffect } from "react";
@@ -11,12 +12,28 @@ import { Toaster } from "react-hot-toast";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 
-// Reconciles auth state against the cookie once persist has rehydrated.
+// Reconciles auth state against the cookie once persist has rehydrated, and
+// owns the proactive-refresh timer for the lifetime of the session.
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
 	const dispatch = useAppDispatch();
+	const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+
 	useEffect(() => {
 		initAuth(dispatch);
+		return () => stopAuthScheduler();
 	}, [dispatch]);
+
+	// (Re)arm the silent-refresh timer whenever the user becomes authenticated
+	// (login or boot success); cancel it on logout. Refreshes reschedule
+	// themselves, so this only needs to react to auth state transitions.
+	useEffect(() => {
+		if (isAuthenticated) {
+			scheduleProactiveRefresh();
+		} else {
+			stopAuthScheduler();
+		}
+	}, [isAuthenticated]);
+
 	return <>{children}</>;
 }
 

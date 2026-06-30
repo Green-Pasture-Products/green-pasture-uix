@@ -196,7 +196,7 @@ const MyOrders: React.FC = () => {
 				<AuthPrompt
 					isOpen={showAuthPrompt}
 					onClose={() => router.push("/products")}
-					redirectTo="/my-orders"
+					redirectTo={router.asPath}
 					title="Sign in to view orders"
 					message="Log in to view your order history and track deliveries."
 				/>

@@ -3,7 +3,9 @@
 import { useNotifications } from "@/_hooks/useNotifications";
 import { useTheme } from "@/_hooks/useTheme";
 import { getBio } from "@/_redux/actions/user.action";
+import { logoutAsync } from "@/_redux/actions/auth.action";
 import { logout } from "@/_redux/reducers/auth.reducer";
+import { clearCart } from "@/_redux/reducers/cart.reducer";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import NotificationDrawer from "@/_UI/NotificationDrawer";
 import {
@@ -62,8 +64,14 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 	}, []);
 
 	const handleLogout = () => {
-		dispatch(logout());
-		router.push("/");
+		dispatch(logoutAsync())
+			.unwrap()
+			.catch(() => {})
+			.finally(() => {
+				dispatch(logout());
+				dispatch(clearCart());
+				router.push("/login");
+			});
 	};
 
 	// Build breadcrumb segments from pathname

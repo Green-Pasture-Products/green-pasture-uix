@@ -1,9 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import Cookies from "js-cookie";
 import { appConstants } from "../constants";
 import axios from "axios";
 import axiosInstance from "@/_utils/axiosInstance";
 import { extractErrorMessage } from "@/_utils/apiHelpers";
-import { authCookies } from "@/_utils/authCookies";
+import { authCookies, AUTH_COOKIES } from "@/_utils/authCookies";
+import { stopAuthScheduler } from "@/_utils/tokenRefresh";
 
 interface Address {
 	latitude: string;
@@ -70,8 +72,12 @@ export const loginAsync = createAsyncThunk(
 export const logoutAsync = createAsyncThunk<void, void, { rejectValue: string }>(
 	"auth/logout",
 	async (_, { rejectWithValue }) => {
+		stopAuthScheduler();
+		// Send the refresh token so the API can actually revoke it (the bearer
+		// header carries the access token, which the server can't use to revoke).
+		const refreshToken = Cookies.get(AUTH_COOKIES.refreshToken);
 		try {
-			await axiosInstance.post("auth/logout");
+			await axiosInstance.post("auth/logout", { refreshToken });
 			authCookies.clearTokens();
 		} catch {
 			authCookies.clearTokens(); // Always clear tokens even on error

@@ -1,14 +1,19 @@
 // _utils/authInit.ts - Boot-time auth reconciliation
 //
-// Runs once on app startup. The auth cookie is the single source of truth:
-// `isAuthenticated` is recomputed from the token here, so a stale persisted
-// flag can never linger. Also performs a one-time migration cleanup of the
+// Runs once on app startup. The auth cookies are the single source of truth.
+// If the access token is still valid we stay logged in; if it has expired but
+// a refresh token is present we refresh silently (so a reload after the 15-min
+// access window does NOT log the user out); only when there is no usable token
+// do we drop to logged-out. Also performs a one-time migration cleanup of the
 // legacy encrypted-localStorage tokens.
+import Cookies from "js-cookie";
+
 import type { AppDispatch } from "@/_redux/store";
 import { hydrateAuth } from "@/_redux/reducers/auth.reducer";
-import { authCookies } from "./authCookies";
+import { authCookies, AUTH_COOKIES, isJwtExpired } from "./authCookies";
+import { refreshAccessToken } from "./tokenRefresh";
 
-export const initAuth = (dispatch: AppDispatch) => {
+export const initAuth = async (dispatch: AppDispatch): Promise<void> => {
 	if (typeof window === "undefined") return;
 
 	// One-time migration: drop tokens left behind by the old secureStorage.
@@ -19,6 +24,27 @@ export const initAuth = (dispatch: AppDispatch) => {
 		/* ignore */
 	}
 
-	const tokens = authCookies.getTokens();
-	dispatch(hydrateAuth({ isAuthenticated: !!tokens }));
+	const accessToken = Cookies.get(AUTH_COOKIES.accessToken);
+	const refreshToken = Cookies.get(AUTH_COOKIES.refreshToken);
+
+	// Valid access token → already authenticated.
+	if (accessToken && !isJwtExpired(accessToken)) {
+		dispatch(hydrateAuth({ isAuthenticated: true }));
+		return;
+	}
+
+	// Access token missing/expired but a refresh token exists → refresh silently.
+	if (refreshToken) {
+		try {
+			await refreshAccessToken();
+			dispatch(hydrateAuth({ isAuthenticated: true }));
+			return;
+		} catch {
+			authCookies.clearTokens();
+			dispatch(hydrateAuth({ isAuthenticated: false }));
+			return;
+		}
+	}
+
+	dispatch(hydrateAuth({ isAuthenticated: false }));
 };

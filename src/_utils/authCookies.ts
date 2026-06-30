@@ -57,6 +57,12 @@ export const isJwtExpired = (token: string): boolean => {
 	return payload.exp * 1000 <= Date.now();
 };
 
+/** The JWT `exp` claim in epoch seconds, or null when absent/malformed. */
+export const getTokenExpiry = (token: string): number | null => {
+	const payload = decodeJwtPayload(token);
+	return payload && typeof payload.exp === "number" ? payload.exp : null;
+};
+
 /** Extract a normalized (lowercase) role/profileType from a user object. */
 const roleOf = (user?: any): string | undefined => {
 	const raw = user?.profileType ?? user?.role;
