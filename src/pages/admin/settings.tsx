@@ -493,9 +493,9 @@ const AdminSettings: React.FC = () => {
 									<p className="text-xs mt-0.5" style={{ color: "var(--text-hint)" }}>Update your account password</p>
 								</div>
 								<form onSubmit={passwordForm.handleSubmit(onChangePassword)} className="p-6 space-y-4 max-w-md">
-									<FormInput label="Current Password" type="password" placeholder="Enter current password" required {...passwordForm.register("currentPassword")} error={passwordForm.formState.errors.currentPassword?.message} />
-									<FormInput label="New Password" type="password" placeholder="Enter new password" required {...passwordForm.register("newPassword")} error={passwordForm.formState.errors.newPassword?.message} />
-									<FormInput label="Confirm New Password" type="password" placeholder="Confirm new password" required {...passwordForm.register("confirmPassword")} error={passwordForm.formState.errors.confirmPassword?.message} />
+									<FormInput label="Current Password" type="password" placeholder="Enter current password" required showPasswordToggle {...passwordForm.register("currentPassword")} error={passwordForm.formState.errors.currentPassword?.message} />
+									<FormInput label="New Password" type="password" placeholder="Enter new password" required showPasswordToggle {...passwordForm.register("newPassword")} error={passwordForm.formState.errors.newPassword?.message} />
+									<FormInput label="Confirm New Password" type="password" placeholder="Confirm new password" required showPasswordToggle {...passwordForm.register("confirmPassword")} error={passwordForm.formState.errors.confirmPassword?.message} />
 									<FormActions onCancel={() => passwordForm.reset()} cancelLabel="Cancel" submitLabel="Update Password" isSubmitting={savingPassword} />
 								</form>
 							</div>

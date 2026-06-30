@@ -150,7 +150,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 					{/* Theme Toggle */}
 					<button
 						onClick={toggleTheme}
-						className="p-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect"
+						className="p-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect cursor-pointer"
 						aria-label="Toggle theme"
 					>
 						{isDark ? (
@@ -163,7 +163,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 					{/* Notifications */}
 					<button
 						onClick={() => setNotifOpen(true)}
-						className="relative p-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect"
+						className="relative p-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect cursor-pointer"
 						aria-label="Notifications"
 					>
 						<Bell className="h-5 w-5" />
@@ -181,7 +181,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 								onClick={() =>
 									setIsUserMenuOpen(!isUserMenuOpen)
 								}
-								className="flex items-center gap-2 p-1.5 rounded-radius-md hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect"
+								className="flex items-center gap-2 p-1.5 rounded-radius-md hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect cursor-pointer"
 							>
 								<div className="w-8 h-8 rounded-full bg-primary-600 dark:bg-primary-500 text-white text-sm font-semibold flex items-center justify-center">
 									{user.firstName

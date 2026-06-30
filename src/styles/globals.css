@@ -373,3 +373,10 @@ a {
 	0% { background-position: -200% 0; }
 	100% { background-position: 200% 0; }
 }
+
+/* ─── Suppress browser-native password reveal icons ─────────────────── */
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+	display: none;
+}

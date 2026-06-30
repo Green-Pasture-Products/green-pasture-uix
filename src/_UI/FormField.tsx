@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 // ── Text Input ──
 
@@ -8,10 +9,14 @@ interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 	label?: string;
 	error?: string;
 	required?: boolean;
+	showPasswordToggle?: boolean;
 }
 
 export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
-	({ label, error, required, className = "", ...props }, ref) => {
+	({ label, error, required, className = "", showPasswordToggle, type, ...props }, ref) => {
+		const [showPassword, setShowPassword] = useState(false);
+		const resolvedType = showPasswordToggle ? (showPassword ? "text" : "password") : type;
+
 		return (
 			<div className="w-full">
 				{label && (
@@ -22,19 +27,33 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
 						{required ? `${label}*` : label}
 					</label>
 				)}
-				<input
-					ref={ref}
-					className={`block w-full text-xs md:text-sm rounded-md px-3 py-2.5 bg-transparent placeholder:text-gray-400 dark:placeholder:text-white/25 focus:outline-none focus:ring-2 disabled:opacity-50 transition-colors ${
-						error
-							? "border border-red-500 focus:ring-red-500/40 focus:border-red-500"
-							: "border focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]"
-					} ${className}`}
-					style={{
-						borderColor: error ? undefined : "var(--border-light)",
-						color: "var(--text-primary)",
-					}}
-					{...props}
-				/>
+				<div className="relative">
+					<input
+						ref={ref}
+						type={resolvedType}
+						className={`block w-full text-xs md:text-sm rounded-md px-3 py-2.5 bg-transparent placeholder:text-gray-400 dark:placeholder:text-white/25 focus:outline-none focus:ring-2 disabled:opacity-50 transition-colors ${
+							error
+								? "border border-red-500 focus:ring-red-500/40 focus:border-red-500"
+								: "border focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]"
+						} ${showPasswordToggle ? "pr-10" : ""} ${className}`}
+						style={{
+							borderColor: error ? undefined : "var(--border-light)",
+							color: "var(--text-primary)",
+						}}
+						{...props}
+					/>
+					{showPasswordToggle && (
+						<button
+							type="button"
+							tabIndex={-1}
+							onClick={() => setShowPassword((s) => !s)}
+							className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+							style={{ color: "var(--text-hint)" }}
+						>
+							{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+						</button>
+					)}
+				</div>
 				{error && (
 					<span className="text-red-500 text-xs mt-1 block">
 						{error}
