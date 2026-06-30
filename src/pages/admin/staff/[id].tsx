@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import axiosInstance from "@/_utils/axiosInstance";
 import { BackendStaff } from "@/types";
 import { Pencil, X, Power } from "lucide-react";
+import * as changeCase from "change-case";
 
 interface RoleOption {
 	id: number;
@@ -248,20 +249,12 @@ const StaffDetail: React.FC = () => {
 					<DetailSection title="Profile Information">
 						<DetailRow label="Email" value={profile?.email} />
 						<DetailRow label="Phone" value={formatPhoneDisplay(profile?.phoneNumber)} />
-						<DetailRow label="Gender" value={profile?.gender ?? "\u2014"} />
+						<DetailRow label="Gender" value={profile?.gender ? changeCase.capitalCase(profile.gender) : "\u2014"} />
 						<DetailRow
 							label="Role"
 							value={
 								<Badge variant="info">
-									{profile?.role?.name ?? profile?.profileType ?? "Staff"}
-								</Badge>
-							}
-						/>
-						<DetailRow
-							label="Status"
-							value={
-								<Badge variant={staff.status === "ACTIVE" ? "success" : "neutral"} dot>
-									{staff.status}
+									{changeCase.capitalCase(profile?.role?.name ?? profile?.profileType ?? "Staff")}
 								</Badge>
 							}
 						/>
