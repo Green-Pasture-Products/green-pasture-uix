@@ -128,7 +128,7 @@ const Navbar: React.FC = () => {
 							className={`relative px-4 py-2 text-sm font-medium rounded-radius-md transition-colors duration-200 ${
 								isActive(href)
 									? "text-primary-600 dark:text-primary-400 font-semibold"
-									: "text-on-surface/70 dark:text-white/70 hover:text-on-surface dark:hover:text-white hover:bg-surface-variant/50 dark:hover:bg-white/5"
+									: "text-on-surface/70 dark:text-white/70 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-white/5 dark:hover:text-white"
 							}`}
 						>
 							{label}
@@ -218,7 +218,7 @@ const Navbar: React.FC = () => {
 									</div>
 									<Link
 										href="/profile"
-										className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-100 hover:text-primary-700 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
+										className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
 										onClick={() =>
 											setIsUserMenuOpen(false)
 										}
@@ -229,7 +229,7 @@ const Navbar: React.FC = () => {
 									{!isAdmin && (
 										<Link
 											href="/my-orders"
-											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-100 hover:text-primary-700 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
+											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
 											onClick={() =>
 												setIsUserMenuOpen(false)
 											}
@@ -243,7 +243,7 @@ const Navbar: React.FC = () => {
 									) && (
 										<Link
 											href="/admin/dashboard"
-											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-100 hover:text-primary-700 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
+											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
 											onClick={() =>
 												setIsUserMenuOpen(false)
 											}
@@ -252,19 +252,6 @@ const Navbar: React.FC = () => {
 											Admin Dashboard
 										</Link>
 									)}
-									<div className="flex items-center justify-between px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70">
-										<span>Dark Mode</span>
-										<button
-											onClick={toggleTheme}
-											className="p-1 rounded-radius-sm hover:bg-surface-variant dark:hover:bg-white/10 transition-colors"
-										>
-											{isDark ? (
-												<Sun className="h-4 w-4" />
-											) : (
-												<Moon className="h-4 w-4" />
-											)}
-										</button>
-									</div>
 									<div className="border-t border-outline-variant dark:border-white/8 my-1" />
 									<button
 										onClick={() => {
@@ -294,7 +281,7 @@ const Navbar: React.FC = () => {
 								<div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 py-1 z-50 animate-dropdown-enter overflow-hidden">
 									<Link
 										href="/login"
-										className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-100 hover:text-primary-700 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
+										className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
 										onClick={() =>
 											setIsUserMenuOpen(false)
 										}
