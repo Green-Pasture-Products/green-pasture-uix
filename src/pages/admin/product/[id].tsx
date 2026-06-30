@@ -46,6 +46,7 @@ const ProductDetail: React.FC = () => {
 		name: "",
 		description: "",
 		price: "",
+		originalPrice: "",
 		unit: "",
 		category: "",
 		status: "A",
@@ -64,6 +65,7 @@ const ProductDetail: React.FC = () => {
 						name: data.name || "",
 						description: data.description || "",
 						price: String(data.price || ""),
+						originalPrice: data.originalPrice ? String(data.originalPrice) : "",
 						unit: String(data.unit ?? data.availableQuantity ?? ""),
 						category: String(data.product?.id ?? data.category ?? ""),
 						status: data.status ?? "A",
@@ -106,6 +108,7 @@ const ProductDetail: React.FC = () => {
 				name: editForm.name,
 				description: editForm.description,
 				price: Number(editForm.price),
+				originalPrice: editForm.originalPrice !== "" ? Number(editForm.originalPrice) : null,
 				unit: Number(editForm.unit),
 			};
 
@@ -203,6 +206,7 @@ const ProductDetail: React.FC = () => {
 				name: item.name || "",
 				description: item.description || "",
 				price: String(item.price || ""),
+				originalPrice: item.originalPrice ? String(item.originalPrice) : "",
 				unit: String(item.unit ?? (item as any).availableQuantity ?? ""),
 				category: String(item.product?.id ?? item.category ?? ""),
 				status: item.status ?? "A",
@@ -313,7 +317,8 @@ const ProductDetail: React.FC = () => {
 					title={item.name}
 					// subtitle={item.product?.name ?? "\u2014"}
 					metrics={[
-						{ label: "Price (\u20A6)", value: formatCurrency(item.price) },
+						{ label: "Selling Price (\u20A6)", value: formatCurrency(item.price) },
+						...(item.originalPrice ? [{ label: "Original Price (\u20A6)", value: formatCurrency(item.originalPrice) }] : []),
 						{ label: "Available Stock", value: formatNumber(available) },
 						{ label: "Avg Rating", value: avgRating > 0 ? `${avgRating.toFixed(1)} (${reviewCount})` : "\u2014" },
 					]}
@@ -329,11 +334,17 @@ const ProductDetail: React.FC = () => {
 								onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
 							/>
 							<CurrencyInput
-								label="Price"
+								label="Selling Price"
 								required
 								value={editForm.price}
 								onChange={(val) => setEditForm((f) => ({ ...f, price: val }))}
 								showWords
+							/>
+							<CurrencyInput
+								label="Original price"
+								placeholder="Leave empty if not on sale"
+								value={editForm.originalPrice}
+								onChange={(val) => setEditForm((f) => ({ ...f, originalPrice: val }))}
 							/>
 							<NumberInput
 								label="Available Units"
@@ -396,7 +407,8 @@ const ProductDetail: React.FC = () => {
 						<DetailRow label="Name" value={item.name} />
 						<DetailRow label="Description" value={item.description ?? "\u2014"} />
 						<DetailRow label="Category" value={item.product?.name ?? item.category ?? "\u2014"} />
-						<DetailRow label="Price" value={formatCurrency(item.price)} />
+						<DetailRow label="Selling Price" value={formatCurrency(item.price)} />
+						<DetailRow label="Original Price" value={item.originalPrice ? formatCurrency(item.originalPrice) : "—"} />
 						<DetailRow label="Available" value={formatNumber(available)} />
 						<DetailRow
 							label="Status"

@@ -17,9 +17,16 @@ const schema = z.object({
 	productId: z.coerce.number().positive("Category is required"),
 	name: z.string().min(1, "Name is required"),
 	description: z.string().optional(),
-	price: z.coerce.number().positive("Price must be greater than 0"),
+	price: z.coerce.number().positive("Selling price must be greater than 0"),
+	originalPrice: z.preprocess(
+		(val) => (val === "" || val === null || val === undefined ? undefined : Number(val)),
+		z.number().positive("Original price must be greater than 0").optional(),
+	),
 	unit: z.coerce.number().int().min(0, "Units must be 0 or more"),
-});
+}).refine(
+	(data) => !data.originalPrice || data.originalPrice > data.price,
+	{ message: "Original price must be greater than selling price", path: ["originalPrice"] },
+);
 
 type FormData = z.infer<typeof schema>;
 
@@ -80,6 +87,7 @@ const AddProduct: React.FC<{
 			formData.append("productId", String(data.productId));
 			formData.append("name", data.name);
 			formData.append("price", String(data.price));
+			if (data.originalPrice) formData.append("originalPrice", String(data.originalPrice));
 			formData.append("unit", String(data.unit));
 			if (data.description) formData.append("description", data.description);
 			if (images.length > 0) {
@@ -155,7 +163,7 @@ const AddProduct: React.FC<{
 							control={control}
 							render={({ field }) => (
 								<CurrencyInput
-									label="Price"
+									label="Selling Price"
 									required
 									placeholder="0.00"
 									value={field.value || ""}
@@ -165,6 +173,21 @@ const AddProduct: React.FC<{
 								/>
 							)}
 						/>
+						<Controller
+							name="originalPrice"
+							control={control}
+							render={({ field }) => (
+								<CurrencyInput
+									label="Original price"
+									placeholder="0.00 (leave empty if not on sale)"
+									value={field.value ?? ""}
+									onChange={(val) => field.onChange(val === "" ? undefined : parseFloat(val))}
+									error={(errors as any).originalPrice?.message}
+								/>
+							)}
+						/>
+					</div>
+					<div className="grid grid-cols-2 gap-4">
 						<Controller
 							name="unit"
 							control={control}

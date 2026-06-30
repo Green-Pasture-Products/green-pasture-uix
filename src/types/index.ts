@@ -248,6 +248,9 @@ export interface BackendItem {
 	name: string;
 	description?: string;
 	price: number;
+	originalPrice?: number | null;
+	onSale?: boolean;
+	discountPercent?: number | null;
 	unit: number;
 	product?: { id: number; name: string };
 	photos?: { id: number; url: string; publicId: string }[];
