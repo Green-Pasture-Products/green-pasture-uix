@@ -11,8 +11,9 @@ import PageLoader from "@/_UI/PageLoader";
 import toast from "react-hot-toast";
 import axiosInstance from "@/_utils/axiosInstance";
 import { BackendItem, BackendReview } from "@/types";
-import { Pencil, X, Trash2, Upload } from "lucide-react";
+import { Pencil, X, Trash2, Upload, Power } from "lucide-react";
 import { FormInput, FormTextarea, FormFileUpload } from "@/_UI/FormField";
+import Modal from "@/_UI/Modal";
 import FormSelectDropdown from "@/_UI/FormSelect";
 import CurrencyInput from "@/_UI/CurrencyInput";
 import NumberInput from "@/_UI/NumberInput";
@@ -26,6 +27,8 @@ const ProductDetail: React.FC = () => {
 	const [loading, setLoading] = useState(true);
 	const [editing, setEditing] = useState(false);
 	const [saving, setSaving] = useState(false);
+	const [toggling, setToggling] = useState(false);
+	const [statusModalOpen, setStatusModalOpen] = useState(false);
 	const [deletingImageId, setDeletingImageId] = useState<number | null>(null);
 	const [newImages, setNewImages] = useState<File[]>([]);
 	const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
@@ -78,6 +81,22 @@ const ProductDetail: React.FC = () => {
 		if (!router.isReady || !id) return;
 		fetchItem();
 	}, [id, router.isReady]);
+
+	const handleToggleStatus = async () => {
+		if (!item) return;
+		const isActive = item.status === "A";
+		setToggling(true);
+		try {
+			await axiosInstance.patch(isActive ? "items/deactivate" : "items/activate", { ids: [Number(id)] });
+			toast.success(isActive ? "Product deactivated successfully" : "Product activated successfully");
+			setStatusModalOpen(false);
+			fetchItem();
+		} catch (err: any) {
+			toast.error(err?.response?.data?.message || "Failed to update product status");
+		} finally {
+			setToggling(false);
+		}
+	};
 
 	const handleSave = async () => {
 		if (!id) return;
@@ -264,17 +283,30 @@ const ProductDetail: React.FC = () => {
 			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 				<div className="flex items-center justify-between">
 					<BackButton />
-					{!editing ? (
-						<Button variant="outlined" size="sm" onClick={() => setEditing(true)}>
-							<Pencil className="w-4 h-4 mr-1.5" />
-							Edit
+					<div className="flex items-center gap-2">
+						<Button
+							variant="outlined"
+							size="sm"
+							color={item.status === "A" ? "error" : "primary"}
+							onClick={() => setStatusModalOpen(true)}
+							loading={toggling}
+							disabled={toggling}
+						>
+							<Power className="w-4 h-4 mr-1.5" />
+							{item.status === "A" ? "Deactivate" : "Activate"}
 						</Button>
-					) : (
-						<Button variant="outlined" size="sm" onClick={handleCancelEdit}>
-							<X className="w-4 h-4 mr-1.5" />
-							Cancel
-						</Button>
-					)}
+						{!editing ? (
+							<Button variant="outlined" size="sm" onClick={() => setEditing(true)}>
+								<Pencil className="w-4 h-4 mr-1.5" />
+								Edit
+							</Button>
+						) : (
+							<Button variant="outlined" size="sm" onClick={handleCancelEdit}>
+								<X className="w-4 h-4 mr-1.5" />
+								Cancel
+							</Button>
+						)}
+					</div>
 				</div>
 
 				<DetailHeader
@@ -429,6 +461,40 @@ const ProductDetail: React.FC = () => {
 					</DetailSection>
 				)}
 			</div>
+
+			{/* Status Confirmation Modal */}
+			<Modal
+				isOpen={statusModalOpen}
+				onClose={() => setStatusModalOpen(false)}
+				title={`${item?.status === "A" ? "Deactivate" : "Activate"} Product`}
+				size="sm"
+			>
+				<div className="space-y-4">
+					<p className="text-sm text-gray-600 dark:text-gray-300">
+						Are you sure you want to {item?.status === "A" ? "deactivate" : "activate"}{" "}
+						<span className="font-semibold text-on-surface dark:text-white">{item?.name}</span>?
+					</p>
+					<div className="flex justify-end gap-3">
+						<Button
+							variant="outlined"
+							color="secondary"
+							size="sm"
+							onClick={() => setStatusModalOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="filled"
+							color={item?.status === "A" ? "error" : "primary"}
+							size="sm"
+							loading={toggling}
+							onClick={handleToggleStatus}
+						>
+							{item?.status === "A" ? "Deactivate" : "Activate"}
+						</Button>
+					</div>
+				</div>
+			</Modal>
 		</AdminLayout>
 	);
 };
