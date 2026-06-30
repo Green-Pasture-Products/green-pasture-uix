@@ -73,10 +73,10 @@ export function scheduleProactiveRefresh(accessToken?: string): void {
 	const exp = getTokenExpiry(token);
 	if (!exp) return;
 
-	const delay = Math.min(
-		Math.max(exp * 1000 - Date.now() - REFRESH_SKEW_MS, 0),
-		MAX_TIMEOUT_MS
-	);
+	const remainingMs = exp * 1000 - Date.now();
+	if (remainingMs <= REFRESH_SKEW_MS) return; // token already in skew window — let the 401 interceptor handle it reactively
+
+	const delay = Math.min(remainingMs - REFRESH_SKEW_MS, MAX_TIMEOUT_MS);
 
 	refreshTimer = setTimeout(() => {
 		// On failure, stay quiet: the next authenticated request (or its 401)
