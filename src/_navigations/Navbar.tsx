@@ -207,7 +207,7 @@ const Navbar: React.FC = () => {
 							</button>
 
 							{isUserMenuOpen && (
-								<div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 py-1 z-50 animate-dropdown-enter">
+								<div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 py-1 z-50 animate-dropdown-enter overflow-hidden">
 									<div className="break-all px-4 py-3 border-b border-outline-variant dark:border-white/8">
 										<p className="text-sm font-semibold text-on-surface dark:text-white">
 											{bio.firstName} {bio.lastName}
@@ -291,7 +291,7 @@ const Navbar: React.FC = () => {
 							</button>
 
 							{isUserMenuOpen && (
-								<div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 py-1 z-50 animate-dropdown-enter">
+								<div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 py-1 z-50 animate-dropdown-enter overflow-hidden">
 									<Link
 										href="/login"
 										className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
