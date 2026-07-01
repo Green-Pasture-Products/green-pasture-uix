@@ -258,7 +258,7 @@ const Navbar: React.FC = () => {
 											handleLogout();
 											setIsUserMenuOpen(false);
 										}}
-										className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-error hover:bg-error/5 dark:hover:bg-error/10 transition-colors duration-150"
+										className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-error hover:bg-error/5 dark:hover:bg-error/10 transition-colors duration-150 cursor-pointer"
 									>
 										<LogOut className="h-4 w-4" />
 										Sign out

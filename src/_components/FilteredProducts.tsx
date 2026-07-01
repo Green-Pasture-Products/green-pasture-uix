@@ -284,6 +284,10 @@ const FilteredProducts: React.FC = () => {
 								const imageUrl =
 									p.photos?.[0]?.url || p.image || "";
 								const price = Number(p.price || 0);
+								const originalPrice = p.originalPrice ? Number(p.originalPrice) : null;
+								const discount = originalPrice && originalPrice > price
+									? Math.round(((originalPrice - price) / originalPrice) * 100)
+									: null;
 								const rating =
 									p.ratingStats?.average ??
 									p.rating ??
@@ -320,29 +324,36 @@ const FilteredProducts: React.FC = () => {
 												"none";
 										}}
 									>
-										{imageUrl ? (
-											<img
-												src={imageUrl}
-												alt={product.name}
-												className="w-20 h-20 rounded-lg object-cover shrink-0"
-												style={{
-													border: "1px solid var(--border-light)",
-												}}
-											/>
-										) : (
-											<div
-												className="w-20 h-20 rounded-lg flex items-center justify-center text-xl font-bold shrink-0"
-												style={{
-													background:
-														"var(--surface-medium)",
-													color: "var(--text-disabled)",
-												}}
-											>
-												{product.name
-													?.charAt(0)
-													?.toUpperCase()}
-											</div>
-										)}
+										<div className="relative shrink-0">
+											{imageUrl ? (
+												<img
+													src={imageUrl}
+													alt={product.name}
+													className="w-20 h-20 rounded-lg object-cover"
+													style={{
+														border: "1px solid var(--border-light)",
+													}}
+												/>
+											) : (
+												<div
+													className="w-20 h-20 rounded-lg flex items-center justify-center text-xl font-bold"
+													style={{
+														background:
+															"var(--surface-medium)",
+														color: "var(--text-disabled)",
+													}}
+												>
+													{product.name
+														?.charAt(0)
+														?.toUpperCase()}
+												</div>
+											)}
+											{discount && discount > 0 && (
+												<span className="absolute top-1.5 left-1.5 text-[0.6rem] font-bold px-1 py-0.5 rounded text-white leading-none" style={{ background: '#ef4444' }}>
+													-{discount}%
+												</span>
+											)}
+										</div>
 										<div className="flex-1 min-w-0">
 											<h3
 												className="font-semibold text-sm truncate"
@@ -369,6 +380,11 @@ const FilteredProducts: React.FC = () => {
 												>
 													₦{price.toLocaleString()}
 												</span>
+												{originalPrice && discount && discount > 0 && (
+													<span className="text-xs line-through" style={{ color: 'var(--text-hint)' }}>
+														₦{originalPrice.toLocaleString()}
+													</span>
+												)}
 												<div className="flex items-center gap-0.5">
 													<Star className="h-3 w-3 text-amber-400 fill-amber-400" />
 													<span

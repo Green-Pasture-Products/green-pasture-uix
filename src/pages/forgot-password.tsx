@@ -59,12 +59,13 @@ const ForgotPasswordPage: React.FC = () => {
 						<strong className="text-gray-900 dark:text-white">{submittedEmail}</strong>
 					</p>
 					<p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-						Didn't receive the email? Check your spam folder or try again.
+						Didn't receive it? Check your spam folder or try again.
 					</p>
 
-					<div className="mt-6 space-y-3">
+					<div className="mt-6 flex flex-col gap-4">
 						<Button
-							variant="filled"
+							variant="tonal"
+							color="secondary"
 							size="lg"
 							fullWidth
 							onClick={() => {
@@ -74,10 +75,12 @@ const ForgotPasswordPage: React.FC = () => {
 						>
 							Try again
 						</Button>
-						<Link href="/login">
-							<Button variant="tonal" color="secondary" size="lg" fullWidth>
-								Back to Login
-							</Button>
+						<Link
+							href="/login"
+							className="flex items-center justify-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-500"
+						>
+							<ArrowLeft className="h-4 w-4" />
+							Back to Login
 						</Link>
 					</div>
 				</Card>
