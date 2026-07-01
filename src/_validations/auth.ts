@@ -13,7 +13,10 @@ export const signupStep1Schema = z.object({
 
 export const signupStep2Schema = z.object({
 	email: z.string().email("Please enter a valid email address"),
-	phoneNumber: z.string().min(10, "Enter a valid phone number"),
+	phoneNumber: z
+		.string()
+		.min(1, "Phone number is required")
+		.min(10, "Phone number must have at least 10 digits"),
 });
 
 export const signupSchema = z
@@ -21,7 +24,10 @@ export const signupSchema = z
 		firstName: z.string().min(1, "First name is required"),
 		lastName: z.string().min(1, "Last name is required"),
 		email: z.string().email("Please enter a valid email address"),
-		phoneNumber: z.string().min(10, "Enter a valid phone number"),
+		phoneNumber: z
+			.string()
+			.min(1, "Phone number is required")
+			.min(10, "Phone number must have at least 10 digits"),
 		gender: z.enum(["MALE", "FEMALE", "NOT_SPECIFIED"]).default("NOT_SPECIFIED"),
 		password: z
 			.string()

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Filter, X, Star } from "lucide-react";
+import { Filter, Star } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import {
 	resetFilters,
@@ -174,11 +174,10 @@ const SearchFiltersComponent: React.FC = () => {
 						className="text-xs font-semibold uppercase tracking-wider mb-3"
 						style={{ color: "var(--text-hint)" }}
 					>
-						Price Range
+						Price Range (₦)
 					</h4>
 					<div className="space-y-3">
 						<div className="flex items-center gap-2">
-							<span className="text-xs" style={{ color: "var(--text-hint)" }}>₦</span>
 							<NumberInput
 								value={filters?.priceRange[0] ?? 0}
 								onChange={(val) =>
@@ -187,7 +186,7 @@ const SearchFiltersComponent: React.FC = () => {
 									})
 								}
 							/>
-							<span className="text-xs" style={{ color: "var(--text-hint)" }}>to ₦</span>
+							<span className="text-xs" style={{ color: "var(--text-hint)" }}>to</span>
 							<NumberInput
 								value={filters?.priceRange[1] ?? 40000}
 								onChange={(val) =>
@@ -396,10 +395,10 @@ const SearchFiltersComponent: React.FC = () => {
 						}
 						className="w-full px-3 py-2 rounded-lg text-sm outline-none cursor-pointer transition-all appearance-none"
 						style={{
-							background: "transparent",
-							border: "1px solid var(--border-light)",
+							background: "var(--surface-low)",
+							border: "1px solid var(--border-medium)",
 							color: "var(--text-primary)",
-							backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+							backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
 							backgroundPosition: "right 0.5rem center",
 							backgroundRepeat: "no-repeat",
 							backgroundSize: "1.5em 1.5em",

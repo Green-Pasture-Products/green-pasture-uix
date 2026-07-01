@@ -34,7 +34,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 				{label && (
 					<label
 						htmlFor={inputId}
-						className="block text-xs md:text-sm mb-1"
+						className="block text-xs md:text-sm font-bold mb-1"
 						style={{ color: "var(--text-secondary)" }}
 					>
 						{label}
@@ -63,7 +63,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 							.filter(Boolean)
 							.join(" ")}
 						style={{
-							borderColor: error ? undefined : "var(--border-light)",
+							borderColor: error ? undefined : "var(--border-medium)",
 							color: "var(--text-primary)",
 						}}
 						{...props}
