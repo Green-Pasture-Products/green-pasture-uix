@@ -1,35 +1,35 @@
 import { User } from "@/types";
 
 export const authAPI = {
-	login: async (email: string, password: string): Promise<User> => {
-		await new Promise((resolve) => setTimeout(resolve, 1500));
+	// login: async (email: string, password: string): Promise<User> => {
+	// 	await new Promise((resolve) => setTimeout(resolve, 1500));
 
-		// Simulate login validation
-		if (email === "admin@example.com" && password === "Password@1") {
-			return {
-				id: "1",
-				email,
-				firstName: "Admin",
-				lastName: "John",
-				isVerified: true,
-				role: "admin",
-				createdAt: new Date().toISOString(),
-			};
-		}
-		if (email === "user@example.com" && password === "Password@1") {
-			return {
-				id: "1",
-				email,
-				firstName: "User",
-				lastName: "Daniel",
-				isVerified: true,
-				role: "user",
-				createdAt: new Date().toISOString(),
-			};
-		}
+	// 	// Simulate login validation
+	// 	if (email === "admin@example.com" && password === "Password@1") {
+	// 		return {
+	// 			id: "1",
+	// 			email,
+	// 			firstName: "Admin",
+	// 			lastName: "John",
+	// 			isVerified: true,
+	// 			role: "admin",
+	// 			createdAt: new Date().toISOString(),
+	// 		};
+	// 	}
+	// 	if (email === "user@example.com" && password === "Password@1") {
+	// 		return {
+	// 			id: "1",
+	// 			email,
+	// 			firstName: "User",
+	// 			lastName: "Daniel",
+	// 			isVerified: true,
+	// 			role: "user",
+	// 			createdAt: new Date().toISOString(),
+	// 		};
+	// 	}
 
-		throw new Error("Invalid email or password");
-	},
+	// 	throw new Error("Invalid email or password");
+	// },
 
 	signup: async (data: {
 		firstName: string;
