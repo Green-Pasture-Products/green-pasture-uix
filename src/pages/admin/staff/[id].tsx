@@ -138,9 +138,13 @@ const StaffDetail: React.FC = () => {
 		background: "var(--surface-paper)",
 	};
 
+	const staffTitle = staff
+		? `${staff.profile?.firstName ?? ''} ${staff.profile?.lastName ?? ''}`.trim() || 'Staff Details'
+		: 'Staff Details';
+
 	if (loading) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={staffTitle}>
 				<PageLoader fullScreen={false} message="Loading staff details..." />
 			</AdminLayout>
 		);
@@ -148,7 +152,7 @@ const StaffDetail: React.FC = () => {
 
 	if (!staff) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={staffTitle}>
 				<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 					<BackButton />
 					<div
@@ -167,7 +171,7 @@ const StaffDetail: React.FC = () => {
 	const profile = staff.profile;
 
 	return (
-		<AdminLayout>
+		<AdminLayout pageTitle={staffTitle}>
 			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 				<div className="flex items-center justify-between">
 					<BackButton />

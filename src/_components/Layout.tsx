@@ -12,16 +12,12 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 	const pathnaame = usePathname() || "/";
 	const lastSegment = pathnaame.split("/").filter(Boolean).pop() || "";
 
-	// Capitalize first letter
-	const page_name = lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
+	const page_name = pageTitle || (lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1));
 
 	return (
 		<>
 			<Head>
-				<title className="capitalize">
-					{`${page_name} Page |` || "Home |"} Green Pastures Organics |
-					Living Healthy
-				</title>
+				<title>{page_name} | Green Pastures Organics</title>
 				{/* <meta charset="UTF-8" /> */}
 				<meta
 					name="viewport"

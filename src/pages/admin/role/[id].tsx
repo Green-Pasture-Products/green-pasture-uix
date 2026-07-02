@@ -63,9 +63,11 @@ const RoleDetail: React.FC = () => {
 		}
 	};
 
+	const roleTitle = role ? role.name.replace(/_/g, ' ') : 'Role Details';
+
 	if (loading) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={roleTitle}>
 				<PageLoader fullScreen={false} message="Loading role details..." />
 			</AdminLayout>
 		);
@@ -73,7 +75,7 @@ const RoleDetail: React.FC = () => {
 
 	if (!role) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={roleTitle}>
 				<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 					<BackButton />
 					<div
@@ -95,7 +97,7 @@ const RoleDetail: React.FC = () => {
 	];
 
 	return (
-		<AdminLayout>
+		<AdminLayout pageTitle={roleTitle}>
 			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 				<div className="flex items-center justify-between">
 					<BackButton />

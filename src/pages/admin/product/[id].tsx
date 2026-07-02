@@ -252,9 +252,11 @@ const ProductDetail: React.FC = () => {
 		background: "var(--surface-paper)",
 	};
 
+	const itemTitle = item?.name ?? 'Product Details';
+
 	if (loading) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={itemTitle}>
 				<PageLoader fullScreen={false} message="Loading product details..." />
 			</AdminLayout>
 		);
@@ -262,7 +264,7 @@ const ProductDetail: React.FC = () => {
 
 	if (!item) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={itemTitle}>
 				<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 					<BackButton />
 					<div
@@ -283,7 +285,7 @@ const ProductDetail: React.FC = () => {
 	const reviewCount = item.ratingStats?.count ?? 0;
 
 	return (
-		<AdminLayout>
+		<AdminLayout pageTitle={itemTitle}>
 			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 				<div className="flex items-center justify-between">
 					<BackButton />

@@ -135,7 +135,7 @@ const ProductDetailsPage: React.FC = () => {
 	const detailsTab = ["description", "reviews"];
 
 	return (
-		<Layout pageTitle="Product Details">
+		<Layout pageTitle={product?.name}>
 			<div className="container page-wrapper mx-auto px-4 py-8">
 				{/* Breadcrumb */}
 				<div className="mb-6">

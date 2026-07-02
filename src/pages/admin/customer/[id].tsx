@@ -108,9 +108,13 @@ const CustomerDetail: React.FC = () => {
 		}
 	};
 
+	const customerTitle = customer
+		? `${customer.profile?.firstName ?? ''} ${customer.profile?.lastName ?? ''}`.trim() || 'Customer Details'
+		: 'Customer Details';
+
 	if (loading) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={customerTitle}>
 				<PageLoader fullScreen={false} message="Loading customer details..." />
 			</AdminLayout>
 		);
@@ -118,7 +122,7 @@ const CustomerDetail: React.FC = () => {
 
 	if (!customer) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={customerTitle}>
 				<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 					<BackButton />
 					<div
@@ -139,7 +143,7 @@ const CustomerDetail: React.FC = () => {
 	const status = (customer as any).status;
 
 	return (
-		<AdminLayout>
+		<AdminLayout pageTitle={customerTitle}>
 			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 				<div className="flex items-center justify-between">
 					<BackButton />

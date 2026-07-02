@@ -13,8 +13,7 @@ import { usePathname } from "next/navigation";
 const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 	const pathname = usePathname() || "";
 	const lastSegment = pathname.split("/").filter(Boolean).pop() || "";
-	const page_name =
-		lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
+	const page_name = pageTitle || (lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1));
 
 	const [isCollapsed, setIsCollapsed] = useState(false);
 	const [isMobile, setIsMobile] = useState(false);
@@ -44,10 +43,7 @@ const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 	return (
 		<>
 			<Head>
-				<title className="capitalize">
-					{`${page_name} Page` || "Home"} | Green Pastures Organics |
-					Living Healthy
-				</title>
+				<title>{page_name} | Green Pastures Admin</title>
 				<meta
 					name="viewport"
 					content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"

@@ -131,9 +131,11 @@ const OrderDetail: React.FC = () => {
 		},
 	];
 
+	const orderTitle = order ? `Order #${order.orderReference}` : 'Order Details';
+
 	if (loading) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={orderTitle}>
 				<PageLoader fullScreen={false} message="Loading order details..." />
 			</AdminLayout>
 		);
@@ -141,7 +143,7 @@ const OrderDetail: React.FC = () => {
 
 	if (!order) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={orderTitle}>
 				<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 					<BackButton />
 					<div
@@ -158,7 +160,7 @@ const OrderDetail: React.FC = () => {
 	}
 
 	return (
-		<AdminLayout>
+		<AdminLayout pageTitle={orderTitle}>
 			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 				<BackButton />
 
