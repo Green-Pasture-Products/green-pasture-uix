@@ -226,7 +226,7 @@ const HomePage: React.FC = () => {
 							<h2 className="text-3xl font-bold mb-4 text-white">
 								Stay Updated
 							</h2>
-							<p className="text-primary-700 dark:text-primary-200 mb-8 max-w-lg mx-auto">
+							<p className="text-primary-200 mb-8 max-w-lg mx-auto">
 								Subscribe to our newsletter for the latest organic products,
 								health tips, and exclusive offers.
 							</p>
