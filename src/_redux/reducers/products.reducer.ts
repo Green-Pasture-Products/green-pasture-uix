@@ -54,16 +54,6 @@ const productsSlice = createSlice({
 						typeof item.name === 'undefined' ? transformApiProduct(item as any) : item
 					);
 					state.isFetchingAllProducts = false;
-
-					// Derive categories from product data
-					const productCategories = new Set<string>();
-					state.products.forEach((p: any) => {
-						if (p.category) productCategories.add(p.category);
-					});
-					state.categories = [
-						"All",
-						...Array.from(productCategories).sort(),
-					];
 				}
 			)
 			.addCase(productsAction.fetchAllProducts.rejected, (state) => {
@@ -123,7 +113,8 @@ const productsSlice = createSlice({
 					}
 				}
 			)
-			// Also populate categories from the category API
+			// Categories come exclusively from the category API; "All" is the
+			// UI sentinel for "no category filter".
 			.addCase(
 				categoryAction.fetchAllCategories.fulfilled,
 				(state, action: PayloadAction<any>) => {
