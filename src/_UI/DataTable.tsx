@@ -36,6 +36,8 @@ interface DataTableProps<T> {
 	onPageChange?: (page: number) => void;
 	onPageSizeChange?: (size: number) => void;
 	onSearch?: (query: string) => void;
+	/** Seeds the search input on mount (e.g. from a URL param). Not synced afterwards. */
+	initialSearch?: string;
 	searchPlaceholder?: string;
 	filters?: FilterDef[];
 	filterValues?: Record<string, string>;
@@ -222,6 +224,7 @@ export function DataTable<T extends Record<string, any>>({
 	onPageChange,
 	onPageSizeChange,
 	onSearch,
+	initialSearch,
 	searchPlaceholder = "Search...",
 	filters,
 	filterValues = {},
@@ -236,7 +239,7 @@ export function DataTable<T extends Record<string, any>>({
 	currentPage: legacyCurrentPage,
 	totalPages: legacyTotalPages,
 }: DataTableProps<T>) {
-	const [searchValue, setSearchValue] = useState("");
+	const [searchValue, setSearchValue] = useState(initialSearch ?? "");
 	const [showFilters, setShowFilters] = useState(false);
 	const [localPage, setLocalPage] = useState(1);
 	const onSearchRef = useRef(onSearch);

@@ -1,11 +1,8 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { Filter, Star } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import {
-	resetFilters,
-	SearchFilters,
-	setSearchFilters,
-} from "@/_redux/reducers/search.reducer";
+import { SearchFilters } from "@/_utils/searchUtils";
+import { useProductFilters } from "@/_hooks/useProductFilters";
 import { categoryAction } from "@/_redux/actions/category.action";
 
 // ── Formatted Number Input ──
@@ -54,7 +51,8 @@ const NumberInput: React.FC<{
 
 const SearchFiltersComponent: React.FC = () => {
 	const dispatch = useAppDispatch();
-	const { filters } = useAppSelector((state) => state.search);
+	const { filters, setFilters, resetFilters, hasActiveFilters } =
+		useProductFilters();
 	const { categories } = useAppSelector((state) => state.product);
 
 	useEffect(() => {
@@ -63,21 +61,10 @@ const SearchFiltersComponent: React.FC = () => {
 		}
 	}, [categories.length, dispatch]);
 
-	const handleFilterChange = useCallback(
-		(newFilters: Partial<SearchFilters>) => {
-			dispatch(setSearchFilters(newFilters));
-		},
-		[dispatch]
-	);
+	const handleFilterChange = (newFilters: Partial<SearchFilters>) =>
+		setFilters(newFilters);
 
-	const handleResetFilters = () => dispatch(resetFilters());
-
-	const hasActiveFilters =
-		filters?.category !== "All" ||
-		filters?.inStockOnly ||
-		filters?.rating > 0 ||
-		filters?.priceRange[0] > 0 ||
-		filters?.priceRange[1] < 40000;
+	const handleResetFilters = () => resetFilters();
 
 	return (
 		<div>

@@ -17,6 +17,7 @@ import { FormInput } from "@/_UI/FormField";
 import FormSelectDropdown from "@/_UI/FormSelect";
 import axiosInstance from "@/_utils/axiosInstance";
 import * as changeCase from "change-case";
+import { useListParams } from "@/_hooks/useListParams";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -39,9 +40,7 @@ const Staff: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { staffList, staffLoading, staffPagination } = useAppSelector((state) => state.admin);
-	const [currentPage, setCurrentPage] = useState(1);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [pageSize, setPageSize] = useState(50);
+	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
 
 	// Status / delete modal state
 	const [statusTarget, setStatusTarget] = useState<any>(null);
@@ -146,20 +145,6 @@ const Staff: React.FC = () => {
 		}
 	};
 
-	const handleSearch = useCallback((query: string) => {
-		setSearchTerm(query);
-		setCurrentPage(1);
-	}, []);
-
-	const handlePageChange = useCallback((page: number) => {
-		setCurrentPage(page);
-	}, []);
-
-	const handlePageSizeChange = useCallback((size: number) => {
-		setPageSize(size);
-		setCurrentPage(1);
-	}, []);
-
 	const columns: Column<BackendStaff>[] = [
 		{
 			key: "profile",
@@ -240,11 +225,12 @@ const Staff: React.FC = () => {
 					columns={columns}
 					data={staffList}
 					isLoading={staffLoading}
-					onSearch={handleSearch}
+					onSearch={setSearch}
+					initialSearch={searchTerm}
 					searchPlaceholder="Search staff..."
 					pagination={staffPagination ?? undefined}
-					onPageChange={handlePageChange}
-					onPageSizeChange={handlePageSizeChange}
+					onPageChange={setPage}
+					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/staff/${row.id}`)}
 					actions={
 						<Button variant="filled" leftIcon={Plus} onClick={() => setShowOnboard(true)}>

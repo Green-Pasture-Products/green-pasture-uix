@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { Plus, Star } from "lucide-react";
@@ -14,6 +14,7 @@ import Modal from "@/_UI/Modal";
 import { productsAction } from "@/_redux/actions";
 import { adminAction } from "@/_redux/actions/admin.action";
 import { formatCurrency } from "@/_UI/FormatValue";
+import { useListParams } from "@/_hooks/useListParams";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -31,9 +32,7 @@ const AdminProducts: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { adminItems, adminItemsLoading, adminItemsPagination } = useAppSelector((state) => state.admin);
-	const [currentPage, setCurrentPage] = useState(1);
-	const [pageSize, setPageSize] = useState(50);
-	const [searchTerm, setSearchTerm] = useState("");
+	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
 	const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [statusTarget, setStatusTarget] = useState<any | null>(null);
@@ -42,20 +41,6 @@ const AdminProducts: React.FC = () => {
 	useEffect(() => {
 		dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm, pageSize]);
-
-	const handleSearch = useCallback((query: string) => {
-		setSearchTerm(query);
-		setCurrentPage(1);
-	}, []);
-
-	const handlePageChange = useCallback((page: number) => {
-		setCurrentPage(page);
-	}, []);
-
-	const handlePageSizeChange = useCallback((size: number) => {
-		setPageSize(size);
-		setCurrentPage(1);
-	}, []);
 
 	const handleStatusUpdate = async () => {
 		if (!statusTarget) return;
@@ -198,11 +183,12 @@ const AdminProducts: React.FC = () => {
 					columns={columns}
 					data={adminItems}
 					isLoading={adminItemsLoading}
-					onSearch={handleSearch}
+					onSearch={setSearch}
+					initialSearch={searchTerm}
 					searchPlaceholder="Search products..."
 					pagination={adminItemsPagination ?? undefined}
-					onPageChange={handlePageChange}
-					onPageSizeChange={handlePageSizeChange}
+					onPageChange={setPage}
+					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/product/${row.id}`)}
 					actions={
 						<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/products/new")}>

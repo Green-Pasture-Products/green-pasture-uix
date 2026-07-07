@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
+import { parseAsString, useQueryState } from "nuqs";
 import { Search, Clock, X, TrendingUp } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { Product } from "@/types";
 import {
 	addRecentSearch,
-	setSearchQuery,
 	setSuggestions,
 } from "@/_redux/reducers/search.reducer";
 
@@ -24,8 +24,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const products = useAppSelector((state) => state.product.products);
-	const { query, recentSearches, suggestions } = useAppSelector(
+	const { recentSearches, suggestions } = useAppSelector(
 		(state) => state.search
+	);
+	const [query, setQuery] = useQueryState(
+		"q",
+		parseAsString.withDefault("").withOptions({ history: "replace" })
 	);
 
 	const [localQuery, setLocalQuery] = useState(query);
@@ -40,19 +44,19 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
 	useEffect(() => {
 		if (localQuery?.length > 0) {
+			const q = localQuery.toLowerCase();
 			const productSuggestions = products
-				.filter(
-					(product: Product) =>
-						product.name
-							.toLowerCase()
-							.includes(localQuery.toLowerCase()) ||
-						product.category
-							.toLowerCase()
-							.includes(localQuery.toLowerCase()) ||
-						product.description
-							.toLowerCase()
-							.includes(localQuery.toLowerCase())
-				)
+				.filter((product: Product) => {
+					const p = product as any;
+					const name = p.name || "";
+					const category = p.product?.name || p.category || "";
+					const description = p.description || "";
+					return (
+						name.toLowerCase().includes(q) ||
+						category.toLowerCase().includes(q) ||
+						description.toLowerCase().includes(q)
+					);
+				})
 				.map((product: Product) => product.name)
 				.slice(0, 5);
 
@@ -65,7 +69,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
 	const handleSearch = (searchQuery: string) => {
 		const trimmedQuery = searchQuery?.trim();
 		if (trimmedQuery) {
-			dispatch(setSearchQuery(trimmedQuery));
 			dispatch(addRecentSearch(trimmedQuery));
 			setShowSuggestions(false);
 
@@ -129,7 +132,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
 	const clearSearch = () => {
 		setLocalQuery("");
-		dispatch(setSearchQuery(""));
+		setQuery(null);
 		setShowSuggestions(false);
 		searchRef.current?.focus();
 	};

@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
+import { parseAsString } from "nuqs";
 import toast from "react-hot-toast";
 
 import { BackendCustomer } from "@/types";
@@ -12,6 +13,7 @@ import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
+import { useListParams } from "@/_hooks/useListParams";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -40,10 +42,16 @@ const AdminCustomers: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { customers, customersLoading, customersPagination } = useAppSelector((state) => state.admin);
-	const [currentPage, setCurrentPage] = useState(1);
-	const [pageSize, setPageSize] = useState(50);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+	const {
+		page: currentPage,
+		pageSize,
+		search: searchTerm,
+		filterValues,
+		setPage,
+		setSearch,
+		setPageSize,
+		setFilter,
+	} = useListParams({ extraFilters: { filter: parseAsString.withDefault("") } });
 	const [deleteTarget, setDeleteTarget] = useState<BackendCustomer | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [statusTarget, setStatusTarget] = useState<BackendCustomer | null>(null);
@@ -56,26 +64,7 @@ const AdminCustomers: React.FC = () => {
 			search: searchTerm || undefined,
 			filter: filterValues.filter || undefined,
 		}));
-	}, [currentPage, searchTerm, filterValues, pageSize]);
-
-	const handleSearch = useCallback((query: string) => {
-		setSearchTerm(query);
-		setCurrentPage(1);
-	}, []);
-
-	const handleFilterChange = useCallback((key: string, value: string) => {
-		setFilterValues((prev) => ({ ...prev, [key]: value }));
-		setCurrentPage(1);
-	}, []);
-
-	const handlePageChange = useCallback((page: number) => {
-		setCurrentPage(page);
-	}, []);
-
-	const handlePageSizeChange = useCallback((size: number) => {
-		setPageSize(size);
-		setCurrentPage(1);
-	}, []);
+	}, [currentPage, searchTerm, filterValues.filter, pageSize]);
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
@@ -179,14 +168,15 @@ const AdminCustomers: React.FC = () => {
 					columns={columns}
 					data={customers ?? []}
 					isLoading={customersLoading}
-					onSearch={handleSearch}
+					onSearch={setSearch}
+					initialSearch={searchTerm}
 					searchPlaceholder="Search customers..."
 					filters={CUSTOMER_STATUS_FILTERS}
 					filterValues={filterValues}
-					onFilterChange={handleFilterChange}
+					onFilterChange={setFilter}
 					pagination={customersPagination ?? undefined}
-					onPageChange={handlePageChange}
-					onPageSizeChange={handlePageSizeChange}
+					onPageChange={setPage}
+					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/customer/${row.id}`)}
 					emptyMessage="No customers found"
 				/>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
@@ -13,6 +13,7 @@ import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
 import { ProductCategory } from "@/types";
 import { categoryAction } from "@/_redux/actions/category.action";
+import { useListParams } from "@/_hooks/useListParams";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -32,9 +33,7 @@ const AdminCategories: React.FC = () => {
 	const isFetchingCategories = useAppSelector((state) => state.category.isFetchingAllCategories);
 	const isDeletingCategory = useAppSelector((state) => state.category.isDeletingCategory);
 	const pagination = useAppSelector((state) => (state.category as any).pagination ?? null);
-	const [currentPage, setCurrentPage] = useState(1);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [pageSize, setPageSize] = useState(50);
+	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
 	const [deleteTarget, setDeleteTarget] = useState<ProductCategory | null>(null);
 	const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
 	const [viewingCategory, setViewingCategory] = useState<ProductCategory | null>(null);
@@ -42,20 +41,6 @@ const AdminCategories: React.FC = () => {
 	useEffect(() => {
 		dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm, pageSize]);
-
-	const handleSearch = useCallback((query: string) => {
-		setSearchTerm(query);
-		setCurrentPage(1);
-	}, []);
-
-	const handlePageChange = useCallback((page: number) => {
-		setCurrentPage(page);
-	}, []);
-
-	const handlePageSizeChange = useCallback((size: number) => {
-		setPageSize(size);
-		setCurrentPage(1);
-	}, []);
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
@@ -113,11 +98,12 @@ const AdminCategories: React.FC = () => {
 					columns={columns}
 					data={categories ?? []}
 					isLoading={isFetchingCategories}
-					onSearch={handleSearch}
+					onSearch={setSearch}
+					initialSearch={searchTerm}
 					searchPlaceholder="Search categories..."
 					pagination={pagination ?? undefined}
-					onPageChange={handlePageChange}
-					onPageSizeChange={handlePageSizeChange}
+					onPageChange={setPage}
+					onPageSizeChange={setPageSize}
 					actions={
 						<AddCategory
 							title="add category"

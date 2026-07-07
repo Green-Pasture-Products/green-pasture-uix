@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 
@@ -9,6 +9,7 @@ import { DataTable, Column } from "@/_UI/DataTable";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import PageLoader from "@/_UI/PageLoader";
+import { useListParams } from "@/_hooks/useListParams";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -31,21 +32,11 @@ const Users: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { customers, customersLoading, customersPagination } = useAppSelector((state) => state.admin);
-	const [currentPage, setCurrentPage] = useState(1);
-	const [searchTerm, setSearchTerm] = useState("");
+	const { page: currentPage, search: searchTerm, setPage, setSearch } = useListParams();
 
 	useEffect(() => {
 		dispatch(adminAction.fetchCustomersAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm]);
-
-	const handleSearch = useCallback((query: string) => {
-		setSearchTerm(query);
-		setCurrentPage(1);
-	}, []);
-
-	const handlePageChange = useCallback((page: number) => {
-		setCurrentPage(page);
-	}, []);
 
 	const columns: Column<UserRecord>[] = [
 		{
@@ -129,10 +120,11 @@ const Users: React.FC = () => {
 					columns={columns}
 					data={customers as unknown as UserRecord[]}
 					isLoading={customersLoading}
-					onSearch={handleSearch}
+					onSearch={setSearch}
+					initialSearch={searchTerm}
 					searchPlaceholder="Search users..."
 					pagination={customersPagination ?? undefined}
-					onPageChange={handlePageChange}
+					onPageChange={setPage}
 					emptyMessage="No users found"
 				/>
 			</div>

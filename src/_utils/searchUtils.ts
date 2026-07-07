@@ -1,5 +1,13 @@
-import { SearchFilters } from "@/_redux/reducers/search.reducer";
 import { Product } from "../types";
+
+export interface SearchFilters {
+	category: string;
+	priceRange: [number, number];
+	inStockOnly: boolean;
+	organicOnly: boolean;
+	rating: number;
+	sortBy: "name" | "price-low" | "price-high" | "rating" | "newest";
+}
 
 export const filterAndSortProducts = (
 	products: Product[],

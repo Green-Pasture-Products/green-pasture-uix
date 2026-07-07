@@ -7,6 +7,8 @@ import { initAuth } from "@/_utils/authInit";
 import { scheduleProactiveRefresh, stopAuthScheduler } from "@/_utils/tokenRefresh";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
+import { useRouter } from "next/router";
+import { NuqsAdapter } from "nuqs/adapters/next/pages";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { Provider } from "react-redux";
@@ -48,6 +50,15 @@ if (typeof window !== "undefined") {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
+	const router = useRouter();
+	// Dev-only: Next's dev-mode hydration leaves nuqs hooks stuck on their
+	// defaults for deep-linked URLs (works fine in production builds).
+	// Remounting the page once the router exposes the real query fixes the
+	// initial read. Keep the key stable in production.
+	const nuqsDevKey =
+		process.env.NODE_ENV === "development"
+			? String(router.isReady)
+			: undefined;
 	return (
 		<ErrorBoundary>
 			<Provider store={store}>
@@ -55,9 +66,11 @@ export default function App({ Component, pageProps }: AppProps) {
 					<AuthBootstrap>
 						<ThemeProvider>
 							<CurrencyProvider>
-								<PageTransition>
-									<Component {...pageProps} />
-								</PageTransition>
+								<NuqsAdapter>
+									<PageTransition>
+										<Component key={nuqsDevKey} {...pageProps} />
+									</PageTransition>
+								</NuqsAdapter>
 							</CurrencyProvider>
 						</ThemeProvider>
 					</AuthBootstrap>

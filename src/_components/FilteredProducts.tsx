@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-	Search as SearchIcon,
 	Grid,
 	List,
 	SlidersHorizontal,
@@ -12,10 +11,10 @@ import {
 
 import EmptyState from "@/_UI/EmptyState";
 import EmptySearchIllustration from "@/_UI/illustrations/EmptySearchIllustration";
-import { resetFilters, setSearchQuery } from "@/_redux/reducers/search.reducer";
 import SearchFiltersComponent from "@/_components/SearchFilters";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { filterAndSortProducts } from "@/_utils";
+import { useProductFilters } from "@/_hooks/useProductFilters";
 import ProductCard from "@/_components/ProductCard";
 import SearchBar from "@/_components/SearchBar";
 import { usePathname } from "next/navigation";
@@ -40,12 +39,11 @@ const gridItemVariants = {
 
 const FilteredProducts: React.FC = () => {
 	const router = useRouter();
-	const { q } = router.query;
 	const pathname = usePathname();
 	const dispatch = useAppDispatch();
 	const isSearchPage = pathname.includes("/search");
 
-	const { query, filters } = useAppSelector((state) => state.search);
+	const { query, filters } = useProductFilters();
 	const { products, isFetchingAllProducts } = useAppSelector(
 		(state) => state.product
 	);
@@ -56,14 +54,6 @@ const FilteredProducts: React.FC = () => {
 	useEffect(() => {
 		dispatch(productsAction.fetchAllProducts({ activeOnly: true }));
 	}, [dispatch]);
-
-	useEffect(() => {
-		if (!isSearchPage) {
-			dispatch(resetFilters());
-		} else if (q && typeof q === "string" && q !== query) {
-			dispatch(setSearchQuery(q));
-		}
-	}, [q, query, dispatch, isSearchPage]);
 
 	const filteredProducts = filterAndSortProducts(products, query, filters);
 
