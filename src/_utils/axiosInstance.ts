@@ -5,23 +5,12 @@ import axios, {
 	InternalAxiosRequestConfig,
 	AxiosError,
 } from "axios";
-import { secureTokenStorage } from "./secureStorage";
+import Cookies from "js-cookie";
+import { authCookies, AUTH_COOKIES } from "./authCookies";
+import { refreshAccessToken, forceLogout } from "./tokenRefresh";
 import { logger } from "./logger";
 
 let cachedIpInfo: any = null;
-// ✅ CHANGE 2: Add refresh management variables
-let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
-
-// ✅ CHANGE 3: Add helper functions for refresh queue
-const onRefreshed = (token: string) => {
-	refreshSubscribers.forEach((callback) => callback(token));
-	refreshSubscribers = [];
-};
-
-const addRefreshSubscriber = (callback: (token: string) => void) => {
-	refreshSubscribers.push(callback);
-};
 
 // Fetch IP info only once and cache it (UNCHANGED)
 async function getIpInfo(): Promise<any> {
@@ -66,8 +55,8 @@ axiosInstance.interceptors.request.use(
 			// 	config.data = { ...(config.data || {}), country: ipInfo?.country };
 			// }
 
-			// ✅ CHANGED: Get token from encrypted storage
-			const tokenData = secureTokenStorage.getTokens();
+			// Get access token from the auth cookie
+			const tokenData = authCookies.getTokens();
 			const token = tokenData?.accessToken;
 
 			if (token && !config.headers.Authorization) {
@@ -83,85 +72,32 @@ axiosInstance.interceptors.request.use(
 	(error) => Promise.reject(error)
 );
 
-// ✅ CHANGE 5: Update response interceptor with token refresh
+// Response interceptor: on 401, transparently refresh (single-flight via
+// tokenRefresh) and retry the original request. If refresh genuinely fails,
+// end the session and redirect to /login preserving the current path.
 axiosInstance.interceptors.response.use(
 	(response) => response,
 	async (error: AxiosError) => {
 		const originalRequest: any = error.config;
 
-		// Handle 401 errors (token expired)
-		if (error.response?.status === 401 && !originalRequest._retry) {
-			// If already refreshing, queue this request
-			if (isRefreshing) {
-				return new Promise((resolve) => {
-					addRefreshSubscriber((token: string) => {
-						if (originalRequest.headers) {
-							originalRequest.headers.Authorization = `Bearer ${token}`;
-						}
-						resolve(axiosInstance(originalRequest));
-					});
-				});
+		if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+			// Only attempt a refresh for users who were actually logged in.
+			if (!Cookies.get(AUTH_COOKIES.refreshToken)) {
+				return Promise.reject(error);
 			}
 
 			originalRequest._retry = true;
-			isRefreshing = true;
 
 			try {
-				const tokenData = secureTokenStorage.getTokens();
-				const refreshToken = tokenData?.refreshToken;
-
-				if (!refreshToken) {
-					throw new Error("No refresh token available");
-				}
-
-				// Backend expects refresh token in Authorization header (not body)
-				const response = await axios.post(
-					`${appConstants.API_BASE_URL}auth/refresh`,
-					{},
-					{
-						headers: {
-							Authorization: `Bearer ${refreshToken}`,
-						},
-					}
-				);
-
-				const { accessToken, refreshToken: newRefreshToken } =
-					response.data.data;
-
-				// Update tokens in encrypted storage
-				secureTokenStorage.setTokens(
-					accessToken,
-					newRefreshToken || refreshToken,
-					tokenData?.user
-				);
-
-				// Update the failed request with new token
+				const accessToken = await refreshAccessToken();
 				if (originalRequest.headers) {
 					originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 				}
-
-				// Notify all queued requests
-				//onRefreshed(accessToken);
-				isRefreshing = false;
-				onRefreshed(accessToken);
-
-
-				// Retry the original request
 				return axiosInstance(originalRequest);
 			} catch (refreshError) {
-				isRefreshing = false;
-				refreshSubscribers = [];
-
-				// Clear tokens and logout — but DON'T redirect
-				// Protected pages handle their own redirect to /login
-				secureTokenStorage.clearTokens();
-
-				try {
-					const { logout } = await import("@/_redux/reducers/auth.reducer");
-					const { store } = await import("@/_redux/store");
-					store.dispatch(logout());
-				} catch {}
-
+				// Session truly over: clear state and bounce to login with the
+				// current path captured so the user returns here after re-login.
+				await forceLogout({ redirect: true });
 				return Promise.reject(refreshError);
 			}
 		}

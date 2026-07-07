@@ -50,15 +50,17 @@ const Modal: React.FC<ModalProps> = ({
 			className="fixed inset-0 z-[6001] flex items-center justify-center pt-10 pb-10 animate-modal-backdrop"
 			style={{ background: "rgba(0, 0, 0, 0.5)" }}
 		>
-			{/* Overlay (no click-away — modal closes only via X button) */}
+			{/* Overlay */}
 			<div
 				className="absolute inset-0"
 				aria-hidden="true"
+				onClick={onClose}
 			/>
 
 			{/* Panel */}
 			<div
 				className={`relative max-h-[85vh] w-[92vw] ${sizeStyles[size]} overflow-hidden rounded-xl shadow-xl animate-modal-content flex flex-col`}
+				onClick={(e) => e.stopPropagation()}
 				style={{
 					background: "var(--surface-paper)",
 					border: "1px solid var(--border-light)",

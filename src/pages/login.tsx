@@ -14,6 +14,7 @@ import { LoginFormData, loginSchema } from "@/_validations/auth";
 import Image from "next/image";
 import { loginAsync } from "@/_redux/actions/auth.action";
 import { appConstants } from "@/_redux/constants";
+import { safeRedirectTarget } from "@/_utils/redirect";
 import { logger } from "@/_utils";
 import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
@@ -54,10 +55,11 @@ const LoginPage: React.FC = () => {
 				user?.profileType?.toUpperCase() as any || ""
 			);
 
+			const redirect = safeRedirectTarget(router.query.redirect as string);
+
 			if (isAdminUser) {
 				// Admins go straight to admin dashboard
-				const redirect = router.query.redirect as string;
-				router.push(redirect?.startsWith("/admin") ? redirect : "/admin/dashboard");
+				router.push(redirect.startsWith("/admin") ? redirect : "/admin/dashboard");
 				return;
 			}
 
@@ -70,13 +72,12 @@ const LoginPage: React.FC = () => {
 			};
 			syncCart();
 
-			const redirect = router.query.redirect as string;
-			router.push(redirect || "/");
+			router.push(redirect);
 		}
 	}, [isAuthenticated, user, dispatch, router]);
 
 	return (
-		<div className="min-h-screen bg-[#fafafa] dark:bg-[#0e0e1a] flex items-center justify-center p-4">
+		<div className="min-h-screen bg-mint-50 dark:bg-[#0e0e1a] flex items-center justify-center p-4">
 			<Card
 				elevation={2}
 				padding="lg"
@@ -102,10 +103,10 @@ const LoginPage: React.FC = () => {
 					</Link>
 				</div>
 
-				<h2 className="text-center text-2xl md:text-3xl font-bold text-gray-900 dark:text-white/90 mb-2">
+				<h2 className="text-center text-2xl md:text-3xl font-bold text-on-surface dark:text-white/90 mb-2">
 					Sign in to your account
 				</h2>
-				<p className="text-center text-sm text-gray-600 dark:text-white/50 mb-8">
+				<p className="text-center text-sm text-on-surface-variant dark:text-white/50 mb-8">
 					Or{" "}
 					<Link
 						href="/signup"
@@ -159,7 +160,7 @@ const LoginPage: React.FC = () => {
 							rightElement={
 								<button
 									type="button"
-									className="text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+									className="text-on-surface/50 dark:text-white/30 hover:text-on-surface-variant dark:hover:text-gray-300 transition-colors"
 									onClick={() => setShowPassword(!showPassword)}
 								>
 									{showPassword ? (

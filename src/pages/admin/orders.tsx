@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
+import { parseAsString } from "nuqs";
 import toast from "react-hot-toast";
 
 import AdminLayout from "@/_components/AdminLayout";
@@ -13,7 +14,7 @@ import Modal from "@/_UI/Modal";
 import Button from "@/_UI/Button";
 import { BackendOrder } from "@/types";
 import { formatCurrency } from "@/_UI/FormatValue";
-import PageLoader from "@/_UI/PageLoader";
+import { useListParams } from "@/_hooks/useListParams";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -33,6 +34,7 @@ const ORDER_STATUS_FILTERS: FilterDef[] = [
 			{ value: "DELIVERED", label: "Delivered" },
 			{ value: "CANCELLED", label: "Cancelled" },
 			{ value: "COMPLETED", label: "Completed" },
+			{ value: "FAILED", label: "Failed" },
 		],
 	},
 ];
@@ -62,15 +64,22 @@ const AdminOrders: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { orders, ordersLoading, ordersPagination } = useAppSelector((state) => state.admin);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [currentPage, setCurrentPage] = useState(1);
-	const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+	const {
+		page: currentPage,
+		pageSize,
+		search: searchTerm,
+		filterValues,
+		setPage,
+		setSearch,
+		setPageSize,
+		setFilter,
+	} = useListParams({ extraFilters: { status: parseAsString.withDefault("") } });
 	const [cancelTarget, setCancelTarget] = useState<BackendOrder | null>(null);
 	const [isCancelling, setIsCancelling] = useState(false);
 
 	useEffect(() => {
-		dispatch(adminAction.fetchOrdersAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
-	}, [currentPage, searchTerm]);
+		dispatch(adminAction.fetchOrdersAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm, pageSize]);
 
 	const filteredOrders = orders?.filter((order: any) => {
 		const statusFilter = filterValues.status;
@@ -78,18 +87,9 @@ const AdminOrders: React.FC = () => {
 		return order.orderStatus?.toUpperCase() === statusFilter.toUpperCase();
 	});
 
-	const handleSearch = useCallback((query: string) => {
-		setSearchTerm(query);
-		setCurrentPage(1);
-	}, []);
-
-	const handleFilterChange = useCallback((key: string, value: string) => {
-		setFilterValues((prev) => ({ ...prev, [key]: value }));
-	}, []);
-
-	const handlePageChange = useCallback((page: number) => {
-		setCurrentPage(page);
-	}, []);
+	// Status narrows the already-fetched page client-side, so don't reset the server page
+	const handleFilterChange = (key: string, value: string) =>
+		setFilter(key, value, { resetPage: false });
 
 	const handleCancelOrder = async () => {
 		if (!cancelTarget) return;
@@ -173,20 +173,12 @@ const AdminOrders: React.FC = () => {
 			align: "center" as const,
 			render: (_: any, row: BackendOrder) => (
 				<ActionMenu items={[
-					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/order/${row.id}`) },
+					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/order/${row.orderReference}`) },
 					{ label: "Cancel", icon: DELETE_ICON, onClick: () => setCancelTarget(row), variant: "danger" as const, hidden: row.orderStatus === "CANCELLED" },
 				]} />
 			),
 		},
 	];
-
-	if (ordersLoading && !orders?.length) {
-		return (
-			<AdminLayout>
-				<PageLoader fullScreen={false} message="Loading orders..." />
-			</AdminLayout>
-		);
-	}
 
 	return (
 		<AdminLayout>
@@ -196,14 +188,16 @@ const AdminOrders: React.FC = () => {
 					columns={columns}
 					data={filteredOrders ?? []}
 					isLoading={ordersLoading}
-					onSearch={handleSearch}
+					onSearch={setSearch}
+					initialSearch={searchTerm}
 					searchPlaceholder="Search orders..."
 					filters={ORDER_STATUS_FILTERS}
 					filterValues={filterValues}
 					onFilterChange={handleFilterChange}
 					pagination={ordersPagination ?? undefined}
-					onPageChange={handlePageChange}
-					onRowClick={(row) => router.push(`/admin/order/${row.id}`)}
+					onPageChange={setPage}
+					onPageSizeChange={setPageSize}
+					onRowClick={(row) => router.push(`/admin/order/${row.orderReference}`)}
 					emptyMessage="No orders found"
 				/>
 

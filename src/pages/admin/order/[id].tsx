@@ -52,7 +52,7 @@ const OrderDetail: React.FC = () => {
 		if (!id) return;
 		setLoading(true);
 		axiosInstance
-			.get(`order/admin/${id}`)
+			.get(`order/admin/ref/${id}`)
 			.then((res) => {
 				setOrder(res.data?.data ?? res.data);
 			})
@@ -77,7 +77,7 @@ const OrderDetail: React.FC = () => {
 		if (!selectedStatus || !id) return;
 		setUpdatingStatus(true);
 		try {
-			const res = await axiosInstance.patch(`order/status/${id}`, {
+			const res = await axiosInstance.patch(`order/status/${order?.id}`, {
 				status: selectedStatus,
 				...(statusNote.trim() && { note: statusNote.trim() }),
 			});
@@ -131,9 +131,11 @@ const OrderDetail: React.FC = () => {
 		},
 	];
 
+	const orderTitle = order ? `Order #${order.orderReference}` : 'Order Details';
+
 	if (loading) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={orderTitle}>
 				<PageLoader fullScreen={false} message="Loading order details..." />
 			</AdminLayout>
 		);
@@ -141,7 +143,7 @@ const OrderDetail: React.FC = () => {
 
 	if (!order) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={orderTitle}>
 				<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 					<BackButton />
 					<div
@@ -158,7 +160,7 @@ const OrderDetail: React.FC = () => {
 	}
 
 	return (
-		<AdminLayout>
+		<AdminLayout pageTitle={orderTitle}>
 			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 				<BackButton />
 

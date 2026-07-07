@@ -1,31 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export interface SearchFilters {
-	category: string;
-	priceRange: [number, number];
-	inStockOnly: boolean;
-	organicOnly: boolean;
-	rating: number;
-	sortBy: "name" | "price-low" | "price-high" | "rating" | "newest";
-}
-
+// Search query and filters live in the URL now (see useProductFilters /
+// SearchBar). This slice keeps only session search history and suggestions.
 interface SearchState {
-	query: string;
-	filters: SearchFilters;
 	recentSearches: string[];
 	suggestions: string[];
 }
 
 const initialState: SearchState = {
-	query: "",
-	filters: {
-		category: "All",
-		priceRange: [0, 40000],
-		inStockOnly: false,
-		organicOnly: false,
-		rating: 0,
-		sortBy: "name",
-	},
 	recentSearches: [],
 	suggestions: [],
 };
@@ -34,15 +16,6 @@ const searchSlice = createSlice({
 	name: "search",
 	initialState,
 	reducers: {
-		setSearchQuery: (state, action: PayloadAction<string>) => {
-			state.query = action.payload;
-		},
-		setSearchFilters: (
-			state,
-			action: PayloadAction<Partial<SearchFilters>>
-		) => {
-			state.filters = { ...state.filters, ...action.payload };
-		},
 		addRecentSearch: (state, action: PayloadAction<string>) => {
 			const query = action.payload.trim();
 			if (query && !state?.recentSearches?.includes(query)) {
@@ -58,19 +31,10 @@ const searchSlice = createSlice({
 		setSuggestions: (state, action: PayloadAction<string[]>) => {
 			state.suggestions = action.payload;
 		},
-		resetFilters: (state) => {
-			state.filters = initialState.filters;
-		},
 	},
 });
 
-export const {
-	setSearchQuery,
-	setSearchFilters,
-	addRecentSearch,
-	clearRecentSearches,
-	setSuggestions,
-	resetFilters,
-} = searchSlice.actions;
+export const { addRecentSearch, clearRecentSearches, setSuggestions } =
+	searchSlice.actions;
 
 export default searchSlice.reducer;

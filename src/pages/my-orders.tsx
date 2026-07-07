@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { ShoppingBag } from "lucide-react";
 
 import Layout from "@/_components/Layout";
@@ -45,9 +46,20 @@ const MyOrders: React.FC = () => {
 
 	const [orders, setOrders] = useState<BackendOrder[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [page, setPage] = useState(1);
+	const [params, setParams] = useQueryStates(
+		{
+			page: parseAsInteger.withDefault(1),
+			search: parseAsString.withDefault(""),
+		},
+		{ history: "replace" }
+	);
+	const { page, search } = params;
+	const setPage = (p: number) => setParams({ page: p });
+	const setSearch = (s: string) => {
+		if (s === search) return;
+		setParams({ search: s || null });
+	};
 	const [meta, setMeta] = useState<any>(null);
-	const [search, setSearch] = useState("");
 	const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
 	useEffect(() => {
@@ -154,7 +166,7 @@ const MyOrders: React.FC = () => {
 					items={[
 						{
 							label: "View Details",
-							onClick: () => router.push(`/my-orders/${row.id}`),
+							onClick: () => router.push(`/my-orders/${row.orderReference}`),
 						},
 						{
 							label: "Buy Again",
@@ -196,7 +208,7 @@ const MyOrders: React.FC = () => {
 				<AuthPrompt
 					isOpen={showAuthPrompt}
 					onClose={() => router.push("/products")}
-					redirectTo="/my-orders"
+					redirectTo={router.asPath}
 					title="Sign in to view orders"
 					message="Log in to view your order history and track deliveries."
 				/>
@@ -239,6 +251,7 @@ const MyOrders: React.FC = () => {
 						data={filteredOrders}
 						isLoading={loading}
 						onSearch={setSearch}
+						initialSearch={search}
 						searchPlaceholder="Search by order reference..."
 						pagination={
 							meta

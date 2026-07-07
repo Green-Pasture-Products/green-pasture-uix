@@ -25,19 +25,19 @@ const values = [
 const About = () => {
 	return (
 		<Layout pageTitle="About">
-			<div className="bg-white dark:bg-[#0a0f1a]">
+			<div className="bg-mint-50 dark:bg-[#0a0f1a]">
 				{/* Hero */}
-				<section className="py-16 md:py-24 bg-gradient-to-br from-primary-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
+				<section className="py-16 md:py-24 bg-gradient-to-br from-mint-100 via-mint-50 to-lime-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
 					<div className="container page-wrapper mx-auto px-4">
 						<AnimatedSection>
 							<div className="max-w-3xl mx-auto text-center">
 								<p className="text-primary-600 dark:text-primary-400 uppercase tracking-widest text-xs font-semibold mb-3">
 									ABOUT US
 								</p>
-								<h1 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+								<h1 className="text-3xl md:text-5xl font-bold text-on-surface dark:text-white mb-6 leading-tight">
 									Nurturing Health Through Nature's Finest
 								</h1>
-								<p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+								<p className="text-lg text-on-surface-variant dark:text-gray-400 leading-relaxed">
 									Green Pastures Organics is a premium dietary supplement platform
 									dedicated to elevating immunity and fertility with organically
 									sourced products. We bridge the gap between nature's potent remedies
@@ -49,14 +49,14 @@ const About = () => {
 				</section>
 
 				{/* Mission / Values */}
-				<section className="py-16 md:py-24">
+				<section className="py-16 md:py-24 bg-white dark:bg-transparent">
 					<div className="container page-wrapper mx-auto px-4">
 						<AnimatedSection>
 							<div className="text-center mb-12">
 								<p className="text-primary-600 dark:text-primary-400 uppercase tracking-widest text-xs font-semibold mb-3">
 									OUR VALUES
 								</p>
-								<h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+								<h2 className="text-3xl font-bold text-on-surface dark:text-white">
 									What We Stand For
 								</h2>
 							</div>
@@ -72,15 +72,15 @@ const About = () => {
 											elevation={2}
 											hoverable
 											padding="lg"
-											className="text-center border-gray-300 dark:border-white/[0.12]"
+											className="text-center border-outline dark:border-white/[0.12]"
 										>
 											<div className="bg-primary-100 dark:bg-primary-900/30 rounded-radius-lg p-4 w-16 h-16 flex items-center justify-center mx-auto mb-5">
 												<Icon className="h-8 w-8 text-primary-600 dark:text-primary-400" />
 											</div>
-											<h3 className="font-bold text-xl mb-3 text-gray-900 dark:text-white">
+											<h3 className="font-bold text-xl mb-3 text-on-surface dark:text-white">
 												{value.title}
 											</h3>
-											<p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+											<p className="text-on-surface-variant dark:text-gray-400 leading-relaxed">
 												{value.desc}
 											</p>
 										</Card>
@@ -92,17 +92,17 @@ const About = () => {
 				</section>
 
 				{/* Our Story */}
-				<section className="py-16 md:py-24 bg-gray-50 dark:bg-white/[0.04]">
+				<section className="py-16 md:py-24 bg-mint dark:bg-white/[0.04]">
 					<div className="container page-wrapper mx-auto px-4">
 						<AnimatedSection>
 							<div className="max-w-3xl mx-auto">
 								<p className="text-primary-600 dark:text-primary-400 uppercase tracking-widest text-xs font-semibold mb-3">
 									OUR STORY
 								</p>
-								<h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+								<h2 className="text-3xl font-bold text-on-surface dark:text-white mb-6">
 									From Farm to Your Doorstep
 								</h2>
-								<div className="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+								<div className="space-y-4 text-on-surface/80 dark:text-gray-300 leading-relaxed">
 									<p>
 										Green Pastures Organics was born from a simple belief: that nature
 										provides everything we need to live healthier, more vibrant lives.

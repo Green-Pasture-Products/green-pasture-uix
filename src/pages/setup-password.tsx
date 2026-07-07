@@ -79,10 +79,10 @@ const SetupPasswordPage: React.FC = () => {
 			<div className="min-h-screen bg-white dark:bg-[#0a0f1a] flex items-center justify-center p-4">
 				<Card elevation={2} padding="lg" className="max-w-md w-full text-center animate-page-enter">
 					<CheckCircle className="h-24 w-24 text-primary-600 dark:text-primary-400 mx-auto mb-6" />
-					<h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+					<h2 className="text-3xl font-bold text-on-surface dark:text-white">
 						Account Setup Complete!
 					</h2>
-					<p className="mt-4 text-gray-600 dark:text-gray-400">
+					<p className="mt-4 text-on-surface-variant dark:text-gray-400">
 						Your password has been set and your account is now active.
 						You can now sign in to start shopping.
 					</p>
@@ -125,10 +125,10 @@ const SetupPasswordPage: React.FC = () => {
 
 				<div className="text-center mb-8">
 					<UserCheck className="h-16 w-16 text-primary-600 dark:text-primary-400 mx-auto mb-4" />
-					<h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+					<h2 className="text-2xl md:text-3xl font-bold text-on-surface dark:text-white">
 						Complete your account setup
 					</h2>
-					<p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+					<p className="mt-2 text-sm text-on-surface-variant dark:text-gray-400">
 						Set a secure password to finish creating your account.
 					</p>
 				</div>
@@ -176,14 +176,14 @@ const SetupPasswordPage: React.FC = () => {
 							rightElement={
 								<button
 									type="button"
-									className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+									className="text-on-surface/50 dark:text-gray-500 hover:text-on-surface-variant dark:hover:text-gray-300 transition-colors"
 									onClick={() => setShowPassword(!showPassword)}
 								>
 									{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
 								</button>
 							}
 						/>
-						<p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+						<p className="mt-1 text-xs text-on-surface-variant dark:text-gray-400">
 							Password must contain at least 8 characters with uppercase, lowercase, and number.
 						</p>
 					</div>
@@ -199,7 +199,7 @@ const SetupPasswordPage: React.FC = () => {
 						rightElement={
 							<button
 								type="button"
-								className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+								className="text-on-surface/50 dark:text-gray-500 hover:text-on-surface-variant dark:hover:text-gray-300 transition-colors"
 								onClick={() => setShowConfirmPassword(!showConfirmPassword)}
 							>
 								{showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}

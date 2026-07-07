@@ -70,11 +70,10 @@ const OrderConfirmationPage: React.FC = () => {
 		if (!router.isReady || !router.query.id) return;
 		if (!isAuthenticated || isAdmin) return;
 
-		const orderId = Number(router.query.id);
-		if (isNaN(orderId)) return;
+		const orderReference = router.query.id as string;
 
 		setLoading(true);
-		dispatch(orderAction.fetchMyOrderDetailAsync(orderId))
+		dispatch(orderAction.fetchMyOrderDetailAsync(orderReference))
 			.unwrap()
 			.then((res: any) => {
 				setOrder(res?.data ?? res);

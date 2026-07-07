@@ -97,10 +97,10 @@ const VerifyAccountPage: React.FC = () => {
 			<div className="min-h-screen bg-white dark:bg-[#0a0f1a] flex items-center justify-center p-4">
 				<Card elevation={2} padding="lg" className="max-w-md w-full text-center animate-page-enter">
 					<CheckCircle className="h-24 w-24 text-primary-600 dark:text-primary-400 mx-auto mb-6" />
-					<h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+					<h2 className="text-3xl font-bold text-on-surface dark:text-white">
 						Account Verified!
 					</h2>
-					<p className="mt-4 text-gray-600 dark:text-gray-400">
+					<p className="mt-4 text-on-surface-variant dark:text-gray-400">
 						Your account has been successfully verified. Redirecting
 						you to login...
 					</p>
@@ -141,12 +141,12 @@ const VerifyAccountPage: React.FC = () => {
 					</Link>
 				</div>
 
-				<h2 className="text-center text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+				<h2 className="text-center text-2xl md:text-3xl font-bold text-on-surface dark:text-white mb-2">
 					Verify your account
 				</h2>
-				<p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-8">
+				<p className="text-center text-sm text-on-surface-variant dark:text-gray-400 mb-8">
 					We sent a verification code to{" "}
-					<strong className="text-gray-900 dark:text-white">{email}</strong>. Enter the code below to
+					<strong className="text-on-surface dark:text-white">{email}</strong>. Enter the code below to
 					verify your account.
 				</p>
 
@@ -187,13 +187,13 @@ const VerifyAccountPage: React.FC = () => {
 					</Button>
 
 					<div className="text-center">
-						<p className="text-sm text-gray-600 dark:text-gray-400">
+						<p className="text-sm text-on-surface-variant dark:text-gray-400">
 							Didn't receive the code?{" "}
 							<button
 								type="button"
 								onClick={handleResendOtp}
 								disabled={resendCountdown > 0 || isLoading}
-								className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed"
+								className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500 disabled:text-on-surface/50 dark:disabled:text-gray-600 disabled:cursor-not-allowed"
 							>
 								{resendCountdown > 0
 									? `Resend in ${resendCountdown}s`

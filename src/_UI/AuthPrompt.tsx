@@ -2,6 +2,7 @@ import React from "react";
 import { useRouter } from "next/router";
 import { LogIn, UserPlus, ShoppingBag, X } from "lucide-react";
 import Button from "./Button";
+import { safeRedirectTarget } from "@/_utils/redirect";
 
 interface AuthPromptProps {
 	isOpen: boolean;
@@ -24,8 +25,10 @@ const AuthPrompt: React.FC<AuthPromptProps> = ({
 
 	if (!isOpen) return null;
 
-	const loginUrl = redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : "/login";
-	const signupUrl = redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup";
+	const target = safeRedirectTarget(redirectTo);
+	const suffix = target === "/" ? "" : `?redirect=${encodeURIComponent(target)}`;
+	const loginUrl = `/login${suffix}`;
+	const signupUrl = `/signup${suffix}`;
 
 	return (
 		<>

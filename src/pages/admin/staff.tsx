@@ -13,12 +13,22 @@ import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
-import { FormInput, FormSelect } from "@/_UI/FormField";
-import PageLoader from "@/_UI/PageLoader";
+import { FormInput } from "@/_UI/FormField";
+import FormSelectDropdown from "@/_UI/FormSelect";
 import axiosInstance from "@/_utils/axiosInstance";
+import * as changeCase from "change-case";
+import { useListParams } from "@/_hooks/useListParams";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+);
+
+const STATUS_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+);
+
+const DELETE_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
 );
 
 interface RoleOption {
@@ -30,8 +40,13 @@ const Staff: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { staffList, staffLoading, staffPagination } = useAppSelector((state) => state.admin);
-	const [currentPage, setCurrentPage] = useState(1);
-	const [searchTerm, setSearchTerm] = useState("");
+	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
+
+	// Status / delete modal state
+	const [statusTarget, setStatusTarget] = useState<any>(null);
+	const [deleteTarget, setDeleteTarget] = useState<any>(null);
+	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	// Onboard modal state
 	const [showOnboard, setShowOnboard] = useState(false);
@@ -47,17 +62,17 @@ const Staff: React.FC = () => {
 	const [onboardErrors, setOnboardErrors] = useState<Record<string, string>>({});
 
 	useEffect(() => {
-		dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
-	}, [currentPage, searchTerm]);
+		dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm, pageSize]);
 
 	// Fetch roles on mount
 	useEffect(() => {
 		axiosInstance
-			.get("role?page=1&limit=50")
+			.get("role/all")
 			.then((res) => {
-				const data = res.data?.data?.data ?? res.data?.data ?? res.data;
+				const data = res.data?.data;
 				if (Array.isArray(data)) {
-					setRoles(data.map((r: any) => ({ id: r.id, name: r.name })));
+					setRoles(data.map((r: any) => ({ id: r.id, name: changeCase.capitalCase(r.name) })));
 				}
 			})
 			.catch(() => {});
@@ -90,7 +105,7 @@ const Staff: React.FC = () => {
 			setShowOnboard(false);
 			setOnboardForm({ firstName: "", lastName: "", email: "", phoneNumber: "", roleId: "" });
 			setOnboardErrors({});
-			dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: 10, search: searchTerm || undefined }));
+			dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 		} catch (err: any) {
 			toast.error(err?.response?.data?.message || "Failed to onboard staff");
 		} finally {
@@ -98,14 +113,37 @@ const Staff: React.FC = () => {
 		}
 	};
 
-	const handleSearch = useCallback((query: string) => {
-		setSearchTerm(query);
-		setCurrentPage(1);
-	}, []);
+	const handleStatusUpdate = async () => {
+		if (!statusTarget) return;
+		const isActive = statusTarget.status === "ACTIVE";
+		setIsUpdatingStatus(true);
+		try {
+			await dispatch(adminAction.updateStaffStatusAsync({
+				id: statusTarget.id,
+				activate: !isActive,
+			})).unwrap();
+			toast.success(`Staff ${isActive ? "deactivated" : "activated"} successfully`);
+			setStatusTarget(null);
+		} catch (error: any) {
+			toast.error(error || "Failed to update staff status");
+		} finally {
+			setIsUpdatingStatus(false);
+		}
+	};
 
-	const handlePageChange = useCallback((page: number) => {
-		setCurrentPage(page);
-	}, []);
+	const handleDelete = async () => {
+		if (!deleteTarget) return;
+		setIsDeleting(true);
+		try {
+			await dispatch(adminAction.deleteStaffAsync(deleteTarget.id)).unwrap();
+			toast.success("Staff deleted successfully");
+			setDeleteTarget(null);
+		} catch (error: any) {
+			toast.error(error || "Failed to delete staff");
+		} finally {
+			setIsDeleting(false);
+		}
+	};
 
 	const columns: Column<BackendStaff>[] = [
 		{
@@ -138,7 +176,7 @@ const Staff: React.FC = () => {
 			header: "Role",
 			render: (_value: any, row: BackendStaff) => (
 				<Badge variant="info">
-					{row.profile?.profileType ?? "Staff"}
+					{changeCase.capitalCase(row.profile?.role?.name ?? "Staff")}
 				</Badge>
 			),
 		},
@@ -168,18 +206,16 @@ const Staff: React.FC = () => {
 			render: (_: any, row: any) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/staff/${row.id}`) },
+					{
+						label: row.status === "ACTIVE" ? "Deactivate" : "Activate",
+						icon: STATUS_ICON,
+						onClick: () => setStatusTarget(row),
+					},
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: "danger" as const },
 				]} />
 			),
 		},
 	];
-
-	if (staffLoading && !staffList?.length) {
-		return (
-			<AdminLayout>
-				<PageLoader fullScreen={false} message="Loading staff..." />
-			</AdminLayout>
-		);
-	}
 
 	return (
 		<AdminLayout>
@@ -189,10 +225,12 @@ const Staff: React.FC = () => {
 					columns={columns}
 					data={staffList}
 					isLoading={staffLoading}
-					onSearch={handleSearch}
+					onSearch={setSearch}
+					initialSearch={searchTerm}
 					searchPlaceholder="Search staff..."
 					pagination={staffPagination ?? undefined}
-					onPageChange={handlePageChange}
+					onPageChange={setPage}
+					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/staff/${row.id}`)}
 					actions={
 						<Button variant="filled" leftIcon={Plus} onClick={() => setShowOnboard(true)}>
@@ -210,7 +248,7 @@ const Staff: React.FC = () => {
 					subtitle="Add a new staff member to the team"
 					size="md"
 				>
-					<div className="space-y-4">
+					<div className="space-y-4 pb-56">
 						<div className="grid grid-cols-2 gap-4">
 							<FormInput
 								label="First Name"
@@ -246,13 +284,13 @@ const Staff: React.FC = () => {
 							onChange={(e: any) => setOnboardForm((f) => ({ ...f, phoneNumber: e.target.value }))}
 							error={onboardErrors.phoneNumber}
 						/>
-						<FormSelect
+						<FormSelectDropdown
 							label="Role"
 							required
 							placeholder="Select a role"
 							value={onboardForm.roleId}
-							onChange={(e: any) => setOnboardForm((f) => ({ ...f, roleId: e.target.value }))}
-							options={roles.map((r) => ({ value: r.id, label: r.name }))}
+							onChange={(val) => setOnboardForm((f) => ({ ...f, roleId: val }))}
+							options={roles.map((r) => ({ value: String(r.id), label: r.name }))}
 							error={onboardErrors.roleId}
 						/>
 						<div className="flex justify-end gap-3 pt-4" style={{ borderTop: "1px solid var(--border-light)" }}>
@@ -272,6 +310,63 @@ const Staff: React.FC = () => {
 								onClick={handleOnboard}
 							>
 								Onboard Staff
+							</Button>
+						</div>
+					</div>
+				</Modal>
+
+				{/* Status Confirmation Modal */}
+				<Modal
+					isOpen={!!statusTarget}
+					onClose={() => setStatusTarget(null)}
+					title={`${statusTarget?.status === "ACTIVE" ? "Deactivate" : "Activate"} Staff`}
+					size="sm"
+				>
+					<div className="space-y-4">
+						<p className="text-sm text-gray-600 dark:text-gray-300">
+							Are you sure you want to {statusTarget?.status === "ACTIVE" ? "deactivate" : "activate"}{" "}
+							<span className="font-semibold text-on-surface dark:text-white">
+								{statusTarget?.profile?.firstName} {statusTarget?.profile?.lastName}
+							</span>?
+						</p>
+						<div className="flex justify-end gap-3">
+							<Button variant="outlined" color="secondary" size="sm" onClick={() => setStatusTarget(null)}>
+								Cancel
+							</Button>
+							<Button
+								variant="filled"
+								color={statusTarget?.status === "ACTIVE" ? "error" : "primary"}
+								size="sm"
+								loading={isUpdatingStatus}
+								onClick={handleStatusUpdate}
+							>
+								{statusTarget?.status === "ACTIVE" ? "Deactivate" : "Activate"}
+							</Button>
+						</div>
+					</div>
+				</Modal>
+
+				{/* Delete Confirmation Modal */}
+				<Modal
+					isOpen={!!deleteTarget}
+					onClose={() => setDeleteTarget(null)}
+					title="Delete Staff"
+					size="sm"
+				>
+					<div className="space-y-4">
+						<p className="text-sm text-gray-600 dark:text-gray-300">
+							Are you sure you want to delete{" "}
+							<span className="font-semibold text-on-surface dark:text-white">
+								{deleteTarget?.profile?.firstName} {deleteTarget?.profile?.lastName}
+							</span>?
+							This action cannot be undone.
+						</p>
+						<div className="flex justify-end gap-3">
+							<Button variant="outlined" color="secondary" size="sm" onClick={() => setDeleteTarget(null)}>
+								Cancel
+							</Button>
+							<Button variant="filled" color="error" size="sm" loading={isDeleting} onClick={handleDelete}>
+								Delete
 							</Button>
 						</div>
 					</div>

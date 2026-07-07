@@ -11,7 +11,7 @@ import {
 	googleOAuthSigninAsync,
 } from "../actions/auth.action";
 import { authConstants } from "../constants";
-import {secureTokenStorage } from "@/_utils/secureStorage";
+import { authCookies } from "@/_utils/authCookies";
 
 const initialState: AuthState = {
 	user: null,
@@ -29,14 +29,27 @@ const authSlice = createSlice({
 			state.isAuthenticated = false;
 			state.error = null;
 			state.isLoading = false;
-			//clearObjectFromStorage(authConstants.USER_KEY);
-			secureTokenStorage.clearTokens();
+			authCookies.clearTokens();
 		},
 		clearError: (state) => {
 			state.error = null;
 		},
 		setLoading: (state, action: PayloadAction<boolean>) => {
 			state.isLoading = action.payload;
+		},
+		// Reconcile session state against the auth cookie at startup. The token
+		// cookie is the single source of truth — when it is absent/expired the
+		// user is logged out regardless of any persisted state.
+		hydrateAuth: (
+			state,
+			action: PayloadAction<{ isAuthenticated: boolean; user?: User | null }>
+		) => {
+			state.isAuthenticated = action.payload.isAuthenticated;
+			if (!action.payload.isAuthenticated) {
+				state.user = null;
+			} else if (action.payload.user !== undefined) {
+				state.user = action.payload.user;
+			}
 		},
 	},
 	extraReducers: (builder) => {
@@ -50,7 +63,7 @@ const authSlice = createSlice({
 				state.user = action.payload?.data?.profileInfo;
 				state.isAuthenticated = true;
 				state.error = null;
-				secureTokenStorage.setTokens(
+				authCookies.setTokens(
 				action.payload.data.accessToken,
 				action.payload.data.refreshToken,
 				action.payload.data.profileInfo
@@ -145,7 +158,7 @@ const authSlice = createSlice({
 				state.user = action.payload?.data?.profileInfo;
 				state.isAuthenticated = true;
 				state.error = null;
-				secureTokenStorage.setTokens(
+				authCookies.setTokens(
 					action.payload.data.accessToken,
 					action.payload.data.refreshToken,
 					action.payload.data.profileInfo
@@ -159,5 +172,5 @@ const authSlice = createSlice({
 	},
 });
 
-export const { logout, clearError, setLoading } = authSlice.actions;
+export const { logout, clearError, setLoading, hydrateAuth } = authSlice.actions;
 export default authSlice.reducer;

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Search, ChevronLeft, ChevronRight, Filter, Download, Inbox } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Search, ChevronLeft, ChevronRight, ChevronDown, Filter, Download, Inbox } from "lucide-react";
 
 // ── Types ──
 
@@ -33,7 +34,10 @@ interface DataTableProps<T> {
 	isLoading?: boolean;
 	pagination?: PaginationMeta;
 	onPageChange?: (page: number) => void;
+	onPageSizeChange?: (size: number) => void;
 	onSearch?: (query: string) => void;
+	/** Seeds the search input on mount (e.g. from a URL param). Not synced afterwards. */
+	initialSearch?: string;
 	searchPlaceholder?: string;
 	filters?: FilterDef[];
 	filterValues?: Record<string, string>;
@@ -50,6 +54,105 @@ interface DataTableProps<T> {
 	currentPage?: number;
 	totalPages?: number;
 }
+
+// ── Page Size Picker ──
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+
+const PageSizePicker: React.FC<{ value: number; onChange: (size: number) => void }> = ({ value, onChange }) => {
+	const [open, setOpen] = useState(false);
+	const [pos, setPos] = useState<{ top?: number; bottom?: number; left: number }>({ left: 0 });
+	const btnRef = useRef<HTMLButtonElement>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
+	const [isClient, setIsClient] = useState(false);
+
+	useEffect(() => setIsClient(true), []);
+
+	const openMenu = () => {
+		if (btnRef.current) {
+			const rect = btnRef.current.getBoundingClientRect();
+			const menuHeight = PAGE_SIZE_OPTIONS.length * 36 + 8;
+			const spaceBelow = window.innerHeight - rect.bottom;
+			setPos(
+				spaceBelow < menuHeight && rect.top > menuHeight
+					? { bottom: window.innerHeight - rect.top + 4, left: rect.left }
+					: { top: rect.bottom + 4, left: rect.left }
+			);
+		}
+		setOpen((p) => !p);
+	};
+
+	useEffect(() => {
+		if (!open) return;
+		const handler = (e: MouseEvent) => {
+			if (
+				menuRef.current && !menuRef.current.contains(e.target as Node) &&
+				btnRef.current && !btnRef.current.contains(e.target as Node)
+			) setOpen(false);
+		};
+		document.addEventListener("mousedown", handler);
+		return () => document.removeEventListener("mousedown", handler);
+	}, [open]);
+
+	const menu = (
+		<div
+			ref={menuRef}
+			className="animate-dropdown-enter py-1 rounded-lg"
+			style={{
+				position: "fixed",
+				top: pos.top,
+				bottom: pos.bottom,
+				left: pos.left,
+				zIndex: 9999,
+				minWidth: 80,
+				background: "var(--surface-paper)",
+				border: "1px solid var(--border-light)",
+				boxShadow: "var(--shadow-lg)",
+			}}
+		>
+			{PAGE_SIZE_OPTIONS.map((n) => (
+				<button
+					key={n}
+					type="button"
+					onClick={() => { onChange(n); setOpen(false); }}
+					className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-left transition-colors cursor-pointer"
+					style={{ color: n === value ? "var(--color-primary)" : "var(--text-primary)" }}
+					onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-low)"; }}
+					onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+				>
+					{n}
+					{n === value && (
+						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--color-primary)" }}>
+							<polyline points="20 6 9 17 4 12" />
+						</svg>
+					)}
+				</button>
+			))}
+		</div>
+	);
+
+	return (
+		<>
+			<button
+				ref={btnRef}
+				type="button"
+				onClick={openMenu}
+				className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+				style={{
+					background: open ? "var(--surface-medium)" : "var(--surface-paper)",
+					border: "1px solid var(--border-light)",
+					color: "var(--text-secondary)",
+				}}
+				onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-medium)"; }}
+				onMouseLeave={(e) => { e.currentTarget.style.background = open ? "var(--surface-medium)" : "var(--surface-paper)"; }}
+			>
+				{value}
+				<ChevronDown className="w-3 h-3" style={{ color: "var(--text-hint)" }} />
+			</button>
+			{open && isClient && createPortal(menu, document.body)}
+		</>
+	);
+};
 
 // ── Skeleton Row ──
 
@@ -119,7 +222,9 @@ export function DataTable<T extends Record<string, any>>({
 	isLoading = false,
 	pagination,
 	onPageChange,
+	onPageSizeChange,
 	onSearch,
+	initialSearch,
 	searchPlaceholder = "Search...",
 	filters,
 	filterValues = {},
@@ -134,24 +239,28 @@ export function DataTable<T extends Record<string, any>>({
 	currentPage: legacyCurrentPage,
 	totalPages: legacyTotalPages,
 }: DataTableProps<T>) {
-	const [searchValue, setSearchValue] = useState("");
+	const [searchValue, setSearchValue] = useState(initialSearch ?? "");
 	const [showFilters, setShowFilters] = useState(false);
 	const [localPage, setLocalPage] = useState(1);
-	const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+	const onSearchRef = useRef(onSearch);
 	const visibleColumns = columns.filter((c) => !c.hidden);
+
+	useEffect(() => {
+		onSearchRef.current = onSearch;
+	});
 
 	const activeFilterCount = Object.values(filterValues).filter(
 		(v) => v && v !== ""
 	).length;
 
-	// Debounced search
+	// Debounced search — only resets timer when the user types, not on parent re-renders
 	useEffect(() => {
-		if (!onSearch) return;
-		debounceRef.current = setTimeout(() => {
-			onSearch(searchValue);
+		if (!onSearchRef.current) return;
+		const timer = setTimeout(() => {
+			onSearchRef.current?.(searchValue);
 		}, 400);
-		return () => clearTimeout(debounceRef.current);
-	}, [searchValue, onSearch]);
+		return () => clearTimeout(timer);
+	}, [searchValue]);
 
 	const getValue = useCallback((row: T, key: string) => {
 		const parts = key.split(".");
@@ -574,6 +683,10 @@ export function DataTable<T extends Record<string, any>>({
 						results
 					</span>
 
+					<div className="flex items-center gap-3">
+					{onPageSizeChange && (
+						<PageSizePicker value={itemsPerPage} onChange={onPageSizeChange} />
+					)}
 					<div className="flex items-center gap-1">
 						<button
 							disabled={page <= 1}
@@ -627,6 +740,7 @@ export function DataTable<T extends Record<string, any>>({
 						>
 							<ChevronRight className="w-3.5 h-3.5" />
 						</button>
+					</div>
 					</div>
 				</div>
 			)}

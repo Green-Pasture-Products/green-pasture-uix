@@ -100,7 +100,7 @@ const Profile = () => {
 				<AuthPrompt
 					isOpen={showAuthPrompt}
 					onClose={() => router.push("/products")}
-					redirectTo="/profile"
+					redirectTo={router.asPath}
 					title="Sign in to manage profile"
 					message="Log in to view and update your personal information."
 				/>
@@ -139,10 +139,10 @@ const Profile = () => {
 
 						{/* Name and Email */}
 						<div className="text-center sm:text-left flex-1">
-							<h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+							<h1 className="text-2xl font-bold text-on-surface dark:text-white">
 								{profile?.firstName} {profile?.lastName}
 							</h1>
-							<p className="text-gray-500 dark:text-gray-400">{profile?.email}</p>
+							<p className="text-on-surface-variant dark:text-gray-400">{profile?.email}</p>
 						</div>
 					</div>
 
@@ -182,7 +182,7 @@ const Profile = () => {
 				{/* Profile Info */}
 				<Card elevation={1} padding="lg">
 					<div className="flex items-center justify-between mb-6">
-						<h2 className="text-xl font-semibold text-gray-900 dark:text-white">Profile Information</h2>
+						<h2 className="text-xl font-semibold text-on-surface dark:text-white">Profile Information</h2>
 						{!isEditing && (
 							<Button
 								variant="text"
@@ -220,7 +220,7 @@ const Profile = () => {
 							/>
 
 							<div>
-								<label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">
+								<label className="block text-sm font-medium text-on-surface/80 dark:text-gray-200 mb-1.5">
 									Gender
 								</label>
 								<select
@@ -268,25 +268,25 @@ const Profile = () => {
 						<div className="space-y-4">
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 								<div>
-									<p className="text-sm text-gray-500 dark:text-gray-400">First Name</p>
-									<p className="text-gray-900 dark:text-white font-medium">{profile?.firstName || "-"}</p>
+									<p className="text-sm text-on-surface-variant dark:text-gray-400">First Name</p>
+									<p className="text-on-surface dark:text-white font-medium">{profile?.firstName || "-"}</p>
 								</div>
 								<div>
-									<p className="text-sm text-gray-500 dark:text-gray-400">Last Name</p>
-									<p className="text-gray-900 dark:text-white font-medium">{profile?.lastName || "-"}</p>
+									<p className="text-sm text-on-surface-variant dark:text-gray-400">Last Name</p>
+									<p className="text-on-surface dark:text-white font-medium">{profile?.lastName || "-"}</p>
 								</div>
 							</div>
 							<div>
-								<p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-								<p className="text-gray-900 dark:text-white font-medium">{profile?.email || "-"}</p>
+								<p className="text-sm text-on-surface-variant dark:text-gray-400">Email</p>
+								<p className="text-on-surface dark:text-white font-medium">{profile?.email || "-"}</p>
 							</div>
 							<div>
-								<p className="text-sm text-gray-500 dark:text-gray-400">Phone Number</p>
-								<p className="text-gray-900 dark:text-white font-medium">{profile?.phoneNumber || "-"}</p>
+								<p className="text-sm text-on-surface-variant dark:text-gray-400">Phone Number</p>
+								<p className="text-on-surface dark:text-white font-medium">{profile?.phoneNumber || "-"}</p>
 							</div>
 							<div>
-								<p className="text-sm text-gray-500 dark:text-gray-400">Gender</p>
-								<p className="text-gray-900 dark:text-white font-medium">{profile?.gender || "-"}</p>
+								<p className="text-sm text-on-surface-variant dark:text-gray-400">Gender</p>
+								<p className="text-on-surface dark:text-white font-medium">{profile?.gender || "-"}</p>
 							</div>
 						</div>
 					)}

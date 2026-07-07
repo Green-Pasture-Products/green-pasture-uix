@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
@@ -11,9 +11,9 @@ import { DataTable, Column } from "@/_UI/DataTable";
 import ActionMenu from "@/_UI/ActionMenu";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
-import PageLoader from "@/_UI/PageLoader";
 import { ProductCategory } from "@/types";
 import { categoryAction } from "@/_redux/actions/category.action";
+import { useListParams } from "@/_hooks/useListParams";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -32,35 +32,15 @@ const AdminCategories: React.FC = () => {
 	const categories = useAppSelector((state) => state.category.productCategories);
 	const isFetchingCategories = useAppSelector((state) => state.category.isFetchingAllCategories);
 	const isDeletingCategory = useAppSelector((state) => state.category.isDeletingCategory);
-	const [searchTerm, setSearchTerm] = useState("");
+	const pagination = useAppSelector((state) => (state.category as any).pagination ?? null);
+	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
 	const [deleteTarget, setDeleteTarget] = useState<ProductCategory | null>(null);
 	const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
 	const [viewingCategory, setViewingCategory] = useState<ProductCategory | null>(null);
 
 	useEffect(() => {
-		dispatch(categoryAction.fetchAllCategories());
-	}, []);
-
-	const filteredCategories = categories?.filter((cat) =>
-		cat.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		cat.description?.toLowerCase().includes(searchTerm.toLowerCase())
-	);
-
-	const handleSearch = useCallback((query: string) => {
-		setSearchTerm(query);
-	}, []);
-
-	const handleViewCategory = (row: ProductCategory) => {
-		setViewingCategory(row);
-	};
-
-	const handleEditCategory = (row: ProductCategory) => {
-		setEditingCategory(row);
-	};
-
-	const handleDeleteCategory = (row: ProductCategory) => {
-		setDeleteTarget(row);
-	};
+		dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm, pageSize]);
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
@@ -68,6 +48,7 @@ const AdminCategories: React.FC = () => {
 			await dispatch(categoryAction.deleteCategory(deleteTarget.id)).unwrap();
 			toast.success("Category deleted successfully");
 			setDeleteTarget(null);
+			dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 		} catch (error) {
 			toast.error(error as string);
 		}
@@ -102,31 +83,27 @@ const AdminCategories: React.FC = () => {
 			align: "center" as const,
 			render: (_: any, row: ProductCategory) => (
 				<ActionMenu items={[
-					{ label: "View", icon: VIEW_ICON, onClick: () => handleViewCategory(row) },
-					{ label: "Edit", icon: EDIT_ICON, onClick: () => handleEditCategory(row) },
-					{ label: "Delete", icon: DELETE_ICON, onClick: () => handleDeleteCategory(row), variant: "danger" as const },
+					{ label: "View", icon: VIEW_ICON, onClick: () => setViewingCategory(row) },
+					{ label: "Edit", icon: EDIT_ICON, onClick: () => setEditingCategory(row) },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: "danger" as const },
 				]} />
 			),
 		},
 	];
 
-	if (isFetchingCategories && !categories?.length) {
-		return (
-			<AdminLayout>
-				<PageLoader fullScreen={false} message="Loading categories..." />
-			</AdminLayout>
-		);
-	}
-
 	return (
 		<AdminLayout>
 			<div className="animate-page-enter space-y-6">
-				{/* Categories Table */}
 				<DataTable
 					columns={columns}
-					data={filteredCategories ?? []}
-					onSearch={handleSearch}
+					data={categories ?? []}
+					isLoading={isFetchingCategories}
+					onSearch={setSearch}
+					initialSearch={searchTerm}
 					searchPlaceholder="Search categories..."
+					pagination={pagination ?? undefined}
+					onPageChange={setPage}
+					onPageSizeChange={setPageSize}
 					actions={
 						<AddCategory
 							title="add category"
@@ -151,7 +128,6 @@ const AdminCategories: React.FC = () => {
 						<div className="space-y-4 max-h-[80vh]">
 							<div>
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name: {viewingCategory.name}</label>
-								{/* <p className="mt-1 text-sm text-gray-900 dark:text-white">{viewingCategory.name}</p> */}
 							</div>
 							<div>
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description:</label>
@@ -210,8 +186,12 @@ const AdminCategories: React.FC = () => {
 				<AddCategory
 					category={editingCategory || undefined}
 					isOpen={!!editingCategory}
-					onClose={() => setEditingCategory(null)}
-					title="Edit Category" children={undefined}				/>
+					onClose={() => {
+						setEditingCategory(null);
+						dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
+					}}
+					title="Edit Category" children={undefined}
+				/>
 			</div>
 		</AdminLayout>
 	);

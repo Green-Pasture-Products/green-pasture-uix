@@ -5,7 +5,8 @@ import {
 	Settings,
 	Shield,
 	ShoppingCart,
-	Users,
+	UserRound,
+	UserCog,
 	ShoppingBasket
 } from "lucide-react";
 
@@ -20,15 +21,15 @@ export const getPageNames = (link: string) => {
 		case "/admin/products":
 			return "products";
 		case "/admin/product/[id]":
-			return "product";
+			return "products";
 		case "/admin/orders":
 			return "orders";
 		case "/admin/order/[id]":
-			return "order";
+			return "orders";
 		case "/admin/customers":
 			return "customers";
 		case "/admin/customer/[id]":
-			return "customer";
+			return "customers";
 		case "/admin/staff":
 			return "staff";
 		case "/admin/staff/[id]":
@@ -36,7 +37,7 @@ export const getPageNames = (link: string) => {
 		case "/admin/roles":
 			return "roles";
 		case "/admin/role/[id]":
-			return "role";
+			return "roles";
 		// case "/admin/analytics":
 		// 	return "analytics";
 		case "/admin/settings":
@@ -71,12 +72,12 @@ export const sidebarNavigation = [
 	{
 		name: "Customers",
 		href: "/admin/customers",
-		icon: Users,
+		icon: UserRound,
 	},
 	{
 		name: "Staff",
 		href: "/admin/staff",
-		icon: Users,
+		icon: UserCog,
 	},
 	{
 		name: "Roles",

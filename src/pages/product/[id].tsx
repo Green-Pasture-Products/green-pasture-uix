@@ -135,7 +135,7 @@ const ProductDetailsPage: React.FC = () => {
 	const detailsTab = ["description", "reviews"];
 
 	return (
-		<Layout pageTitle="Product Details">
+		<Layout pageTitle={product?.name}>
 			<div className="container page-wrapper mx-auto px-4 py-8">
 				{/* Breadcrumb */}
 				<div className="mb-6">
@@ -162,7 +162,7 @@ const ProductDetailsPage: React.FC = () => {
 					{/* Image Column */}
 					<div className="space-y-4">
 						<Card elevation={1} padding="none" className="overflow-hidden">
-							<div className="aspect-square bg-gray-50 dark:bg-white/[0.04]">
+							<div className="aspect-square bg-mint-100 dark:bg-white/[0.04]">
 								<img
 									src={productImages[selectedImage]}
 									alt={product?.name}
@@ -179,7 +179,7 @@ const ProductDetailsPage: React.FC = () => {
 									className={`w-20 h-20 rounded-radius-md overflow-hidden border-2 transition-all ${
 										selectedImage === index
 											? "border-primary-600 dark:border-primary-400 shadow-elevation-1"
-											: "border-gray-200 dark:border-white/15 hover:border-primary-300 dark:hover:border-primary-600"
+											: "border-outline-variant dark:border-white/15 hover:border-primary-300 dark:hover:border-primary-600"
 									}`}
 								>
 									<img
@@ -195,10 +195,10 @@ const ProductDetailsPage: React.FC = () => {
 					{/* Info Column */}
 					<div className="space-y-6">
 						<div>
-							<h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+							<h1 className="text-2xl md:text-3xl font-bold text-on-surface dark:text-white mb-2">
 								{product?.name}
 							</h1>
-							<p className="text-gray-500 dark:text-gray-400">{productCategory}</p>
+							<p className="text-on-surface-variant dark:text-gray-400">{productCategory}</p>
 						</div>
 
 						{/* Rating */}
@@ -210,15 +210,15 @@ const ProductDetailsPage: React.FC = () => {
 										className={`h-5 w-5 ${
 											i < Math.floor(itemRating)
 												? "text-amber-400 fill-amber-400"
-												: "text-gray-300 dark:text-gray-600"
+												: "text-on-surface/30 dark:text-gray-600"
 										}`}
 									/>
 								))}
 							</div>
-							<span className="text-lg font-medium text-gray-900 dark:text-white">
+							<span className="text-lg font-medium text-on-surface dark:text-white">
 								{itemRating}
 							</span>
-							<span className="text-gray-500 dark:text-gray-400">
+							<span className="text-on-surface-variant dark:text-gray-400">
 								({itemReviewCount} reviews)
 							</span>
 						</div>
@@ -230,7 +230,7 @@ const ProductDetailsPage: React.FC = () => {
 							</span>
 							{itemOriginalPrice && (
 								<div className="flex items-center space-x-2">
-									<span className="text-xl text-gray-400 dark:text-gray-500 line-through">
+									<span className="text-xl text-on-surface/50 dark:text-gray-500 line-through">
 										&#8358;{itemOriginalPrice.toLocaleString()}
 									</span>
 									<Badge variant="error">
@@ -256,7 +256,7 @@ const ProductDetailsPage: React.FC = () => {
 						{/* Quantity & Actions */}
 						<div className="space-y-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+								<label className="block text-sm font-medium text-on-surface/80 dark:text-gray-300 mb-2">
 									Quantity
 								</label>
 								<div className="flex items-center space-x-3">
@@ -266,9 +266,9 @@ const ProductDetailsPage: React.FC = () => {
 										style={{ borderColor: "var(--border-light)" }}
 										disabled={quantity <= 1}
 									>
-										<Minus className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+										<Minus className="h-4 w-4 text-on-surface-variant dark:text-gray-300" />
 									</button>
-									<span className="text-xl font-semibold w-12 text-center text-gray-900 dark:text-white">
+									<span className="text-xl font-semibold w-12 text-center text-on-surface dark:text-white">
 										{quantity}
 									</span>
 									<button
@@ -277,11 +277,11 @@ const ProductDetailsPage: React.FC = () => {
 										style={{ borderColor: "var(--border-light)" }}
 										disabled={quantity >= itemMaxQuantity}
 									>
-										<Plus className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+										<Plus className="h-4 w-4 text-on-surface-variant dark:text-gray-300" />
 									</button>
 								</div>
 								{isInCart && (
-									<p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+									<p className="text-sm text-on-surface-variant dark:text-gray-400 mt-2">
 										Already in cart
 									</p>
 								)}
@@ -326,7 +326,7 @@ const ProductDetailsPage: React.FC = () => {
 										className={`h-5 w-5 ${
 											isInWishlist
 												? "text-white fill-white"
-												: "text-gray-600 dark:text-gray-300"
+												: "text-on-surface-variant dark:text-gray-300"
 										}`}
 									/>
 								</button>
@@ -336,14 +336,14 @@ const ProductDetailsPage: React.FC = () => {
 						{/* Features */}
 						{productFeatures.length > 0 && (
 							<div className="space-y-3">
-								<h3 className="font-semibold text-gray-900 dark:text-white">
+								<h3 className="font-semibold text-on-surface dark:text-white">
 									Product Features:
 								</h3>
 								<ul className="space-y-2">
 									{productFeatures.map((feature, index) => (
 										<li
 											key={index}
-											className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400"
+											className="flex items-center space-x-2 text-sm text-on-surface-variant dark:text-gray-400"
 										>
 											<Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
 											<span>{feature}</span>
@@ -374,7 +374,7 @@ const ProductDetailsPage: React.FC = () => {
 
 				{/* Tabs Section */}
 				<div className="mb-16">
-					<div className="border-b border-gray-200 dark:border-white/15 relative">
+					<div className="border-b border-outline-variant dark:border-white/15 relative">
 						<nav className="flex space-x-8">
 							{detailsTab.map((tab) => (
 								<button
@@ -383,7 +383,7 @@ const ProductDetailsPage: React.FC = () => {
 									className={`py-4 px-2 font-medium text-sm capitalize relative transition-colors ${
 										activeTab === tab
 											? "text-primary-600 dark:text-primary-400"
-											: "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+											: "text-on-surface-variant dark:text-gray-400 hover:text-on-surface/80 dark:hover:text-gray-300"
 									}`}
 								>
 									{tab}
@@ -403,10 +403,10 @@ const ProductDetailsPage: React.FC = () => {
 						{activeTab === "description" && (
 							<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
 								<div className="prose max-w-none dark:prose-invert">
-									<h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+									<h3 className="text-xl font-semibold text-on-surface dark:text-white mb-4">
 										About this product
 									</h3>
-									<p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+									<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed whitespace-pre-line">
 										{product?.description || "No description available."}
 									</p>
 								</div>
@@ -415,7 +415,7 @@ const ProductDetailsPage: React.FC = () => {
 
 						{activeTab === "reviews" && (
 							<div className="space-y-8">
-								<h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+								<h3 className="text-xl font-semibold text-on-surface dark:text-white">
 									Customer Reviews
 								</h3>
 								<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
@@ -432,7 +432,7 @@ const ProductDetailsPage: React.FC = () => {
 				{/* Related Products */}
 				{relatedProducts?.length > 0 && (
 					<div>
-						<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+						<h2 className="text-2xl font-bold text-on-surface dark:text-white mb-8">
 							Related Products
 						</h2>
 						<Products products={relatedProducts} />

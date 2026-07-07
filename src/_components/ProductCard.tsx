@@ -159,10 +159,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 					{/* Quick view on hover — bottom of image */}
 					<div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
-						<div
-							className="text-center text-[0.65rem] font-medium py-1.5 rounded-md backdrop-blur-md"
-							style={{ background: "rgba(255,255,255,0.85)", color: "#15803d" }}
-						>
+						<div className="text-center text-[0.65rem] font-medium py-1.5 rounded-md backdrop-blur-md bg-white text-primary-700 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] dark:hover:shadow-[0_0_10px_rgba(154,202,60,0.25)] transition-all">
 							View Details →
 						</div>
 					</div>
@@ -228,10 +225,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 					{isAdmin ? (
 						<Link
 							href={`/product/${product.id}`}
-							className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all"
-							style={{ border: "1px solid var(--border-light)", color: "var(--text-secondary)" }}
-							onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-low)"; }}
-							onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+							className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold border border-outline dark:border-white/15 text-primary-700 dark:text-primary-400 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] dark:hover:bg-white/5 dark:hover:shadow-[0_0_10px_rgba(154,202,60,0.25)] transition-all"
 						>
 							View Details
 						</Link>
@@ -271,8 +265,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 								exit={{ opacity: 0 }}
 								onClick={handleAddToCart}
 								disabled={!inStock}
-								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-								style={{ background: "var(--color-primary)" }}
+								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-white bg-primary-600 hover:bg-gradient-to-r hover:from-primary-700 hover:via-primary-600 hover:to-lime-600 hover:shadow-[0_0_16px_rgba(154,202,60,0.45)] dark:hover:to-lime-700 dark:hover:shadow-[0_0_12px_rgba(154,202,60,0.25)] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
 								whileHover={{ scale: 1.02 }}
 								whileTap={{ scale: 0.95 }}
 							>

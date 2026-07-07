@@ -1,28 +1,29 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useNotifications } from "@/_hooks/useNotifications";
+import { useTheme } from "@/_hooks/useTheme";
+import { getBio } from "@/_redux/actions/user.action";
+import { logoutAsync } from "@/_redux/actions/auth.action";
+import { logout } from "@/_redux/reducers/auth.reducer";
+import { clearCart } from "@/_redux/reducers/cart.reducer";
+import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import NotificationDrawer from "@/_UI/NotificationDrawer";
 import {
-	Search,
-	User,
+	Bell,
+	ChevronRight,
+	Home,
 	LogOut,
 	Menu,
-	Sun,
 	Moon,
-	Bell,
-	Home,
-	ChevronRight,
 	Settings,
+	Sun,
+	User
 } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useRouter } from "next/router";
-import { logout } from "@/_redux/reducers/auth.reducer";
+import React, { useEffect, useRef, useState } from "react";
 import { getPageNames } from "./routes";
-import { getBio } from "@/_redux/actions/user.action";
-import { useTheme } from "@/_hooks/useTheme";
-import { useNotifications } from "@/_hooks/useNotifications";
-import NotificationDrawer from "@/_UI/NotificationDrawer";
 
 interface HeaderProps {
 	onMenuClick?: () => void;
@@ -63,21 +64,38 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 	}, []);
 
 	const handleLogout = () => {
-		dispatch(logout());
-		router.push("/");
+		dispatch(logoutAsync())
+			.unwrap()
+			.catch(() => {})
+			.finally(() => {
+				dispatch(logout());
+				dispatch(clearCart());
+				router.push("/login");
+			});
 	};
 
 	// Build breadcrumb segments from pathname
+	const SEGMENT_OVERRIDES: Record<string, { label: string; href: string }> = {
+		"/admin/role":     { label: "Roles",     href: "/admin/roles" },
+		"/admin/product":  { label: "Products",  href: "/admin/products" },
+		"/admin/customer": { label: "Customers", href: "/admin/customers" },
+		"/admin/order":    { label: "Orders",    href: "/admin/orders" },
+		"/admin/category": { label: "Categories", href: "/admin/category" },
+	};
+
 	const buildBreadcrumbs = () => {
 		const segments = pathname?.split("/").filter(Boolean) || [];
 		const crumbs: { label: string; href: string }[] = [];
 		let path = "";
 		for (const segment of segments) {
 			path += `/${segment}`;
-			crumbs.push({
-				label: segment.charAt(0).toUpperCase() + segment.slice(1),
-				href: path,
-			});
+			const override = SEGMENT_OVERRIDES[path];
+			crumbs.push(
+				override ?? {
+					label: segment.charAt(0).toUpperCase() + segment.slice(1),
+					href: path,
+				}
+			);
 		}
 		return crumbs;
 	};
@@ -94,7 +112,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 					{onMenuClick && (
 						<button
 							onClick={onMenuClick}
-							className="p-2 -ml-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect"
+							className="lg:hidden p-2 -ml-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect"
 							aria-label="Toggle sidebar"
 						>
 							<Menu className="h-5 w-5" />
@@ -139,7 +157,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 					{/* Theme Toggle */}
 					<button
 						onClick={toggleTheme}
-						className="p-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect"
+						className="p-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect cursor-pointer"
 						aria-label="Toggle theme"
 					>
 						{isDark ? (
@@ -152,7 +170,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 					{/* Notifications */}
 					<button
 						onClick={() => setNotifOpen(true)}
-						className="relative p-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect"
+						className="relative p-2 rounded-radius-md text-on-surface/60 dark:text-gray-400 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect cursor-pointer"
 						aria-label="Notifications"
 					>
 						<Bell className="h-5 w-5" />
@@ -170,7 +188,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 								onClick={() =>
 									setIsUserMenuOpen(!isUserMenuOpen)
 								}
-								className="flex items-center gap-2 p-1.5 rounded-radius-md hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect"
+								className="flex items-center gap-2 p-1.5 rounded-radius-md hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect cursor-pointer"
 							>
 								<div className="w-8 h-8 rounded-full bg-primary-600 dark:bg-primary-500 text-white text-sm font-semibold flex items-center justify-center">
 									{user.firstName

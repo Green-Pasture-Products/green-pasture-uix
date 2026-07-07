@@ -4,14 +4,18 @@ import axiosInstance from "@/_utils/axiosInstance"; // Import your axios instanc
 
 const fetchAllCategories = createAsyncThunk<
   PaginatedProducts,
-  void,
+  { page?: number; limit?: number; search?: string } | undefined,
   { rejectValue: string }
 >(
   "products/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (args, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get("products", {
-        params: { page: 1, limit: 10 },
+        params: {
+          page: args?.page ?? 1,
+          limit: args?.limit ?? 50,
+          ...(args?.search ? { search: args.search } : {}),
+        },
       });
 
       return {

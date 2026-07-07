@@ -1,6 +1,8 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { Bell, Package, CreditCard, XCircle, AlertTriangle, CheckCircle, X } from "lucide-react";
+import { useAppSelector } from "@/_redux/store";
+import { appConstants } from "@/_redux/constants";
 
 interface Notification {
   id: number;
@@ -68,18 +70,19 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
   loading,
 }) => {
   const router = useRouter();
+  const { user } = useAppSelector((state) => state.auth);
+  const isAdmin = appConstants.ADMIN_ROLES.includes(
+    (user?.profileType?.toUpperCase() ?? "") as any
+  );
 
   const handleClick = (notification: Notification) => {
     if (!notification.isRead) {
       onMarkAsRead(notification.id);
     }
-    // Navigate to relevant page
-    const orderId = notification.metadata?.orderId;
-    if (orderId) {
+    const orderReference = notification.metadata?.orderReference;
+    if (orderReference) {
       onClose();
-      // Check if admin or customer
-      const isAdmin = notification.type === "LOW_STOCK";
-      router.push(isAdmin ? `/admin/order/${orderId}` : `/my-orders/${orderId}`);
+      router.push(isAdmin ? `/admin/order/${orderReference}` : `/my-orders/${orderReference}`);
     }
   };
 

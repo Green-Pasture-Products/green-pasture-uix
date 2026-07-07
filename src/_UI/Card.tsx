@@ -35,7 +35,7 @@ const Card: React.FC<CardProps> = ({
 	return (
 		<div
 			className={[
-				"bg-white dark:bg-white/[0.04] rounded-xl border border-gray-200 dark:border-white/8 transition-all duration-300",
+				"bg-white dark:bg-white/[0.04] rounded-xl border border-[rgba(16,54,48,0.08)] dark:border-white/8 transition-all duration-300",
 				elevationStyles[elevation],
 				paddingStyles[padding],
 				hoverable

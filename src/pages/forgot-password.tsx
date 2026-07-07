@@ -51,20 +51,21 @@ const ForgotPasswordPage: React.FC = () => {
 			<div className="min-h-screen bg-white dark:bg-[#0a0f1a] flex items-center justify-center p-4">
 				<Card elevation={2} padding="lg" className="max-w-md w-full text-center animate-page-enter">
 					<CheckCircle className="h-24 w-24 text-primary-600 dark:text-primary-400 mx-auto mb-6" />
-					<h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+					<h2 className="text-3xl font-bold text-on-surface dark:text-white">
 						Check your email
 					</h2>
-					<p className="mt-4 text-gray-600 dark:text-gray-400">
+					<p className="mt-4 text-on-surface-variant dark:text-gray-400">
 						We've sent a password reset link to{" "}
-						<strong className="text-gray-900 dark:text-white">{submittedEmail}</strong>
+						<strong className="text-on-surface dark:text-white">{submittedEmail}</strong>
 					</p>
-					<p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-						Didn't receive the email? Check your spam folder or try again.
+					<p className="mt-2 text-sm text-on-surface-variant dark:text-gray-400">
+						Didn't receive it? Check your spam folder or try again.
 					</p>
 
-					<div className="mt-6 space-y-3">
+					<div className="mt-6 flex flex-col gap-4">
 						<Button
-							variant="filled"
+							variant="tonal"
+							color="secondary"
 							size="lg"
 							fullWidth
 							onClick={() => {
@@ -74,10 +75,12 @@ const ForgotPasswordPage: React.FC = () => {
 						>
 							Try again
 						</Button>
-						<Link href="/login">
-							<Button variant="tonal" color="secondary" size="lg" fullWidth>
-								Back to Login
-							</Button>
+						<Link
+							href="/login"
+							className="flex items-center justify-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-500"
+						>
+							<ArrowLeft className="h-4 w-4" />
+							Back to Login
 						</Link>
 					</div>
 				</Card>
@@ -112,10 +115,10 @@ const ForgotPasswordPage: React.FC = () => {
 					</Link>
 				</div>
 
-				<h2 className="text-center text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+				<h2 className="text-center text-2xl md:text-3xl font-bold text-on-surface dark:text-white mb-2">
 					Reset your password
 				</h2>
-				<p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-8">
+				<p className="text-center text-sm text-on-surface-variant dark:text-gray-400 mb-8">
 					Enter your email address and we'll send you a link to reset your password.
 				</p>
 

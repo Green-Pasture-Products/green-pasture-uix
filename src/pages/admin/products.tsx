@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { Plus, Star } from "lucide-react";
@@ -6,17 +6,15 @@ import toast from "react-hot-toast";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
-import AddProduct from "@/_components/Modals/AddProduct";
 import { DataTable, Column } from "@/_UI/DataTable";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
-import PageLoader from "@/_UI/PageLoader";
-import { Product } from "@/types";
 import { productsAction } from "@/_redux/actions";
-import { filterAndSortProducts } from "@/_utils";
+import { adminAction } from "@/_redux/actions/admin.action";
 import { formatCurrency } from "@/_UI/FormatValue";
+import { useListParams } from "@/_hooks/useListParams";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -26,44 +24,46 @@ const DELETE_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
 );
 
+const STATUS_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.36 6.64A9 9 0 1 1 5.64 5.64"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+);
+
 const AdminProducts: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
-	const { products, isFetchingAllProducts } = useAppSelector((state) => state.product);
-	const { query, filters } = useAppSelector((state) => state.search);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+	const { adminItems, adminItemsLoading, adminItemsPagination } = useAppSelector((state) => state.admin);
+	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
+	const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [statusTarget, setStatusTarget] = useState<any | null>(null);
+	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
 	useEffect(() => {
-		dispatch(productsAction.fetchAllProducts());
-	}, []);
+		dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
+	}, [currentPage, searchTerm, pageSize]);
 
-	const filteredProducts = products.filter((product: any) => {
-  		const term = (query || searchTerm).toLowerCase().trim();
-  		if (!term) return true;
-  		return (
-    		product.name?.toLowerCase().includes(term) ||
-    		product.description?.toLowerCase().includes(term) ||
-    		product.product?.name?.toLowerCase().includes(term)
-  		);
-	});
-
-	const handleSearch = useCallback((searchQuery: string) => {
-		setSearchTerm(searchQuery);
-	}, []);
-
-	const handleDeleteClick = (row: Product) => {
-		setDeleteTarget(row);
+	const handleStatusUpdate = async () => {
+		if (!statusTarget) return;
+		const isActive = statusTarget.status === "A";
+		setIsUpdatingStatus(true);
+		try {
+			await dispatch(adminAction.updateItemStatusAsync({ id: statusTarget.id, activate: !isActive })).unwrap();
+			toast.success(`Product ${isActive ? "deactivated" : "activated"} successfully`);
+			setStatusTarget(null);
+		} catch (error: any) {
+			toast.error(error || "Failed to update product status");
+		} finally {
+			setIsUpdatingStatus(false);
+		}
 	};
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
 		setIsDeleting(true);
 		try {
-			await dispatch(productsAction.deleteItemAsync(deleteTarget.id as string | number)).unwrap();
+			await dispatch(productsAction.deleteItemAsync(deleteTarget.id)).unwrap();
 			toast.success("Product deleted successfully");
-			await dispatch(productsAction.fetchAllProducts()).unwrap();
+			dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 		} catch (error: any) {
 			toast.error(error || "Failed to delete product");
 		} finally {
@@ -72,7 +72,7 @@ const AdminProducts: React.FC = () => {
 		}
 	};
 
-	const columns: Column<Product>[] = [
+	const columns: Column<any>[] = [
 		{
 			key: "name",
 			header: "Product",
@@ -125,7 +125,7 @@ const AdminProducts: React.FC = () => {
 			render: (value: any, row: any) => {
 				const qty = Number(value ?? row.unit ?? 0);
 				return (
-					<Badge variant={qty > 0 ? "success" : qty === 0 ? "error" : "warning"} dot>
+					<Badge variant={qty > 0 ? "success" : "error"} dot>
 						{qty > 0 ? `${qty} units` : "Out of Stock"}
 					</Badge>
 				);
@@ -149,6 +149,15 @@ const AdminProducts: React.FC = () => {
 			},
 		},
 		{
+			key: "status",
+			header: "Status",
+			render: (value: any) => (
+				<Badge variant={value === "A" ? "success" : "error"} dot>
+					{value === "A" ? "Active" : "Inactive"}
+				</Badge>
+			),
+		},
+		{
 			key: "id",
 			header: "",
 			width: "50px",
@@ -156,44 +165,39 @@ const AdminProducts: React.FC = () => {
 			render: (_: any, row: any) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/product/${row.id}`) },
+					{
+						label: row.status === "A" ? "Deactivate" : "Activate",
+						icon: STATUS_ICON,
+						onClick: () => setStatusTarget(row),
+					},
 					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: "danger" as const },
 				]} />
 			),
 		},
 	];
 
-	if (isFetchingAllProducts && !products?.length) {
-		return (
-			<AdminLayout>
-				<PageLoader fullScreen={false} message="Loading products..." />
-			</AdminLayout>
-		);
-	}
-
 	return (
 		<AdminLayout>
 			<div className="animate-page-enter space-y-6">
-				{/* Products Table */}
 				<DataTable
 					columns={columns}
-					data={filteredProducts}
-					onSearch={handleSearch}
+					data={adminItems}
+					isLoading={adminItemsLoading}
+					onSearch={setSearch}
+					initialSearch={searchTerm}
 					searchPlaceholder="Search products..."
+					pagination={adminItemsPagination ?? undefined}
+					onPageChange={setPage}
+					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/product/${row.id}`)}
 					actions={
-						<AddProduct
-							title="add product"
-							className="inline-flex"
-						>
-							<Button variant="filled" leftIcon={Plus}>
-								Add Product
-							</Button>
-						</AddProduct>
+						<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/products/new")}>
+							Add Product
+						</Button>
 					}
 					emptyMessage="No products found"
 				/>
 
-				{/* Delete Confirmation Modal */}
 				<Modal
 					isOpen={!!deleteTarget}
 					onClose={() => setDeleteTarget(null)}
@@ -223,6 +227,34 @@ const AdminProducts: React.FC = () => {
 								onClick={handleDelete}
 							>
 								Delete
+							</Button>
+						</div>
+					</div>
+				</Modal>
+
+				<Modal
+					isOpen={!!statusTarget}
+					onClose={() => setStatusTarget(null)}
+					title={`${statusTarget?.status === "A" ? "Deactivate" : "Activate"} Product`}
+					size="sm"
+				>
+					<div className="space-y-4">
+						<p className="text-sm text-gray-600 dark:text-gray-300">
+							Are you sure you want to {statusTarget?.status === "A" ? "deactivate" : "activate"}{" "}
+							<span className="font-semibold text-on-surface dark:text-white">{statusTarget?.name}</span>?
+						</p>
+						<div className="flex justify-end gap-3">
+							<Button variant="outlined" color="secondary" size="sm" onClick={() => setStatusTarget(null)}>
+								Cancel
+							</Button>
+							<Button
+								variant="filled"
+								color={statusTarget?.status === "A" ? "error" : "primary"}
+								size="sm"
+								loading={isUpdatingStatus}
+								onClick={handleStatusUpdate}
+							>
+								{statusTarget?.status === "A" ? "Deactivate" : "Activate"}
 							</Button>
 						</div>
 					</div>

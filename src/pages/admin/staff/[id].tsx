@@ -5,13 +5,16 @@ import AdminLayout from "@/_components/AdminLayout";
 import { BackButton, DetailHeader, DetailSection, DetailRow } from "@/_UI/DetailField";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
-import { FormInput, FormSelect } from "@/_UI/FormField";
+import Modal from "@/_UI/Modal";
+import { FormInput } from "@/_UI/FormField";
+import FormSelectDropdown from "@/_UI/FormSelect";
 import { formatPhoneDisplay } from "@/_UI/FormatValue";
 import PageLoader from "@/_UI/PageLoader";
 import toast from "react-hot-toast";
 import axiosInstance from "@/_utils/axiosInstance";
 import { BackendStaff } from "@/types";
 import { Pencil, X, Power } from "lucide-react";
+import * as changeCase from "change-case";
 
 interface RoleOption {
 	id: number;
@@ -26,6 +29,7 @@ const StaffDetail: React.FC = () => {
 	const [editing, setEditing] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [toggling, setToggling] = useState(false);
+	const [statusModalOpen, setStatusModalOpen] = useState(false);
 	const [roles, setRoles] = useState<RoleOption[]>([]);
 
 	// Edit form state
@@ -70,11 +74,11 @@ const StaffDetail: React.FC = () => {
 	// Fetch roles on mount
 	useEffect(() => {
 		axiosInstance
-			.get("role?page=1&limit=50")
+			.get("role/all")
 			.then((res) => {
-				const data = res.data?.data?.data ?? res.data?.data ?? res.data;
+				const data = res.data?.data;
 				if (Array.isArray(data)) {
-					setRoles(data.map((r: any) => ({ id: r.id, name: r.name })));
+					setRoles(data.map((r: any) => ({ id: r.id, name: changeCase.capitalCase(r.name) })));
 				}
 			})
 			.catch(() => {});
@@ -119,6 +123,7 @@ const StaffDetail: React.FC = () => {
 		try {
 			await axiosInstance.patch(endpoint, { ids: [staff.id] });
 			toast.success(staff.status === "ACTIVE" ? "Staff deactivated" : "Staff activated");
+			setStatusModalOpen(false);
 			fetchStaff();
 		} catch (err: any) {
 			toast.error(err?.response?.data?.message || "Failed to update status");
@@ -133,9 +138,13 @@ const StaffDetail: React.FC = () => {
 		background: "var(--surface-paper)",
 	};
 
+	const staffTitle = staff
+		? `${staff.profile?.firstName ?? ''} ${staff.profile?.lastName ?? ''}`.trim() || 'Staff Details'
+		: 'Staff Details';
+
 	if (loading) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={staffTitle}>
 				<PageLoader fullScreen={false} message="Loading staff details..." />
 			</AdminLayout>
 		);
@@ -143,7 +152,7 @@ const StaffDetail: React.FC = () => {
 
 	if (!staff) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={staffTitle}>
 				<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 					<BackButton />
 					<div
@@ -162,7 +171,7 @@ const StaffDetail: React.FC = () => {
 	const profile = staff.profile;
 
 	return (
-		<AdminLayout>
+		<AdminLayout pageTitle={staffTitle}>
 			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 				<div className="flex items-center justify-between">
 					<BackButton />
@@ -171,7 +180,7 @@ const StaffDetail: React.FC = () => {
 							variant="outlined"
 							size="sm"
 							color={staff.status === "ACTIVE" ? "error" : "primary"}
-							onClick={handleToggleStatus}
+							onClick={() => setStatusModalOpen(true)}
 							loading={toggling}
 							disabled={toggling}
 						>
@@ -229,11 +238,11 @@ const StaffDetail: React.FC = () => {
 								onChange={(e) => setEditForm((f) => ({ ...f, phoneNumber: e.target.value }))}
 							/>
 							<div className="sm:col-span-2">
-								<FormSelect
+								<FormSelectDropdown
 									label="Role"
 									value={editForm.roleId}
-									onChange={(e: any) => setEditForm((f) => ({ ...f, roleId: e.target.value }))}
-									options={roles.map((r) => ({ value: r.id, label: r.name }))}
+									onChange={(val) => setEditForm((f) => ({ ...f, roleId: val }))}
+									options={roles.map((r) => ({ value: String(r.id), label: r.name }))}
 									placeholder="Select a role"
 								/>
 							</div>
@@ -248,20 +257,12 @@ const StaffDetail: React.FC = () => {
 					<DetailSection title="Profile Information">
 						<DetailRow label="Email" value={profile?.email} />
 						<DetailRow label="Phone" value={formatPhoneDisplay(profile?.phoneNumber)} />
-						<DetailRow label="Gender" value={profile?.gender ?? "\u2014"} />
+						<DetailRow label="Gender" value={profile?.gender ? changeCase.capitalCase(profile.gender) : "\u2014"} />
 						<DetailRow
 							label="Role"
 							value={
 								<Badge variant="info">
-									{profile?.role?.name ?? profile?.profileType ?? "Staff"}
-								</Badge>
-							}
-						/>
-						<DetailRow
-							label="Status"
-							value={
-								<Badge variant={staff.status === "ACTIVE" ? "success" : "neutral"} dot>
-									{staff.status}
+									{changeCase.capitalCase(profile?.role?.name ?? profile?.profileType ?? "Staff")}
 								</Badge>
 							}
 						/>
@@ -276,6 +277,37 @@ const StaffDetail: React.FC = () => {
 					</DetailSection>
 				)}
 			</div>
+
+			{/* Status Confirmation Modal */}
+			<Modal
+				isOpen={statusModalOpen}
+				onClose={() => setStatusModalOpen(false)}
+				title={`${staff?.status === "ACTIVE" ? "Deactivate" : "Activate"} Staff`}
+				size="sm"
+			>
+				<div className="space-y-4">
+					<p className="text-sm text-gray-600 dark:text-gray-300">
+						Are you sure you want to {staff?.status === "ACTIVE" ? "deactivate" : "activate"}{" "}
+						<span className="font-semibold text-on-surface dark:text-white">
+							{profile?.firstName} {profile?.lastName}
+						</span>?
+					</p>
+					<div className="flex justify-end gap-3">
+						<Button variant="outlined" color="secondary" size="sm" onClick={() => setStatusModalOpen(false)}>
+							Cancel
+						</Button>
+						<Button
+							variant="filled"
+							color={staff?.status === "ACTIVE" ? "error" : "primary"}
+							size="sm"
+							loading={toggling}
+							onClick={handleToggleStatus}
+						>
+							{staff?.status === "ACTIVE" ? "Deactivate" : "Activate"}
+						</Button>
+					</div>
+				</div>
+			</Modal>
 		</AdminLayout>
 	);
 };

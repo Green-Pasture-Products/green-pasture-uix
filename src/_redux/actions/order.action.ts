@@ -15,11 +15,11 @@ const fetchMyOrdersAsync = createAsyncThunk<any, { page?: number; limit?: number
 	}
 );
 
-const fetchMyOrderDetailAsync = createAsyncThunk<any, number, { rejectValue: string }>(
+const fetchMyOrderDetailAsync = createAsyncThunk<any, string, { rejectValue: string }>(
 	"order/fetchMyOrderDetail",
-	async (orderId, { rejectWithValue }) => {
+	async (orderReference, { rejectWithValue }) => {
 		try {
-			const response = await axiosInstance.get(`order/my-orders/${orderId}`);
+			const response = await axiosInstance.get(`order/my-orders/ref/${orderReference}`);
 			return response.data;
 		} catch (error: any) {
 			return rejectWithValue(extractErrorMessage(error));

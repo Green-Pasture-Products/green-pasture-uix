@@ -12,16 +12,12 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 	const pathnaame = usePathname() || "/";
 	const lastSegment = pathnaame.split("/").filter(Boolean).pop() || "";
 
-	// Capitalize first letter
-	const page_name = lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
+	const page_name = pageTitle || (lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1));
 
 	return (
 		<>
 			<Head>
-				<title className="capitalize">
-					{`${page_name} Page |` || "Home |"} Green Pastures Organics |
-					Living Healthy
-				</title>
+				<title>{page_name} | Green Pastures Organics</title>
 				{/* <meta charset="UTF-8" /> */}
 				<meta
 					name="viewport"
@@ -58,7 +54,7 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 				{/* Favicons are in _document.tsx */}
 			</Head>
 
-			<div className="min-h-screen overflow-x-hidden bg-white dark:bg-[#0a0f1a] transition-colors duration-300">
+			<div className="min-h-screen overflow-x-hidden bg-mint-50 dark:bg-[#0a0f1a] transition-colors duration-300">
 				{/* <PromoBanner /> */}
 				<Navbar />
 				<main className="flex-1 pt-16 md:pt-[72px]">{children}</main>

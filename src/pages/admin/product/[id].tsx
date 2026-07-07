@@ -11,8 +11,9 @@ import PageLoader from "@/_UI/PageLoader";
 import toast from "react-hot-toast";
 import axiosInstance from "@/_utils/axiosInstance";
 import { BackendItem, BackendReview } from "@/types";
-import { Pencil, X, Trash2, Upload } from "lucide-react";
+import { Pencil, X, Trash2, Upload, Power } from "lucide-react";
 import { FormInput, FormTextarea, FormFileUpload } from "@/_UI/FormField";
+import Modal from "@/_UI/Modal";
 import FormSelectDropdown from "@/_UI/FormSelect";
 import CurrencyInput from "@/_UI/CurrencyInput";
 import NumberInput from "@/_UI/NumberInput";
@@ -26,6 +27,8 @@ const ProductDetail: React.FC = () => {
 	const [loading, setLoading] = useState(true);
 	const [editing, setEditing] = useState(false);
 	const [saving, setSaving] = useState(false);
+	const [toggling, setToggling] = useState(false);
+	const [statusModalOpen, setStatusModalOpen] = useState(false);
 	const [deletingImageId, setDeletingImageId] = useState<number | null>(null);
 	const [newImages, setNewImages] = useState<File[]>([]);
 	const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
@@ -43,8 +46,10 @@ const ProductDetail: React.FC = () => {
 		name: "",
 		description: "",
 		price: "",
+		originalPrice: "",
 		unit: "",
 		category: "",
+		status: "A",
 	});
 
 	const fetchItem = () => {
@@ -60,8 +65,10 @@ const ProductDetail: React.FC = () => {
 						name: data.name || "",
 						description: data.description || "",
 						price: String(data.price || ""),
+						originalPrice: data.originalPrice ? String(data.originalPrice) : "",
 						unit: String(data.unit ?? data.availableQuantity ?? ""),
 						category: String(data.product?.id ?? data.category ?? ""),
+						status: data.status ?? "A",
 					});
 				}
 			})
@@ -77,6 +84,22 @@ const ProductDetail: React.FC = () => {
 		fetchItem();
 	}, [id, router.isReady]);
 
+	const handleToggleStatus = async () => {
+		if (!item) return;
+		const isActive = item.status === "A";
+		setToggling(true);
+		try {
+			await axiosInstance.patch(isActive ? "items/deactivate" : "items/activate", { ids: [Number(id)] });
+			toast.success(isActive ? "Product deactivated successfully" : "Product activated successfully");
+			setStatusModalOpen(false);
+			fetchItem();
+		} catch (err: any) {
+			toast.error(err?.response?.data?.message || "Failed to update product status");
+		} finally {
+			setToggling(false);
+		}
+	};
+
 	const handleSave = async () => {
 		if (!id) return;
 		setSaving(true);
@@ -85,9 +108,9 @@ const ProductDetail: React.FC = () => {
 				name: editForm.name,
 				description: editForm.description,
 				price: Number(editForm.price),
+				originalPrice: editForm.originalPrice !== "" ? Number(editForm.originalPrice) : null,
 				unit: Number(editForm.unit),
 			};
-			console.log('Sending payload:', payload);
 
 			if (editForm.category) {
 				const categoryId = Number(editForm.category);
@@ -97,6 +120,12 @@ const ProductDetail: React.FC = () => {
 			}
 
 			await axiosInstance.patch(`items/${id}`, payload);
+
+			if (editForm.status !== item?.status) {
+				const endpoint = editForm.status === "A" ? "items/activate" : "items/deactivate";
+				await axiosInstance.patch(endpoint, { ids: [Number(id)] });
+			}
+
 			toast.success("Product updated");
 
 			// Upload new images if any
@@ -177,8 +206,10 @@ const ProductDetail: React.FC = () => {
 				name: item.name || "",
 				description: item.description || "",
 				price: String(item.price || ""),
+				originalPrice: item.originalPrice ? String(item.originalPrice) : "",
 				unit: String(item.unit ?? (item as any).availableQuantity ?? ""),
 				category: String(item.product?.id ?? item.category ?? ""),
+				status: item.status ?? "A",
 			});
 		}
 		setNewImages([]);
@@ -221,9 +252,11 @@ const ProductDetail: React.FC = () => {
 		background: "var(--surface-paper)",
 	};
 
+	const itemTitle = item?.name ?? 'Product Details';
+
 	if (loading) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={itemTitle}>
 				<PageLoader fullScreen={false} message="Loading product details..." />
 			</AdminLayout>
 		);
@@ -231,7 +264,7 @@ const ProductDetail: React.FC = () => {
 
 	if (!item) {
 		return (
-			<AdminLayout>
+			<AdminLayout pageTitle={itemTitle}>
 				<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 					<BackButton />
 					<div
@@ -252,28 +285,42 @@ const ProductDetail: React.FC = () => {
 	const reviewCount = item.ratingStats?.count ?? 0;
 
 	return (
-		<AdminLayout>
+		<AdminLayout pageTitle={itemTitle}>
 			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
 				<div className="flex items-center justify-between">
 					<BackButton />
-					{!editing ? (
-						<Button variant="outlined" size="sm" onClick={() => setEditing(true)}>
-							<Pencil className="w-4 h-4 mr-1.5" />
-							Edit
+					<div className="flex items-center gap-2">
+						<Button
+							variant="outlined"
+							size="sm"
+							color={item.status === "A" ? "error" : "primary"}
+							onClick={() => setStatusModalOpen(true)}
+							loading={toggling}
+							disabled={toggling}
+						>
+							<Power className="w-4 h-4 mr-1.5" />
+							{item.status === "A" ? "Deactivate" : "Activate"}
 						</Button>
-					) : (
-						<Button variant="outlined" size="sm" onClick={handleCancelEdit}>
-							<X className="w-4 h-4 mr-1.5" />
-							Cancel
-						</Button>
-					)}
+						{!editing ? (
+							<Button variant="outlined" size="sm" onClick={() => setEditing(true)}>
+								<Pencil className="w-4 h-4 mr-1.5" />
+								Edit
+							</Button>
+						) : (
+							<Button variant="outlined" size="sm" onClick={handleCancelEdit}>
+								<X className="w-4 h-4 mr-1.5" />
+								Cancel
+							</Button>
+						)}
+					</div>
 				</div>
 
 				<DetailHeader
 					title={item.name}
 					// subtitle={item.product?.name ?? "\u2014"}
 					metrics={[
-						{ label: "Price (\u20A6)", value: formatCurrency(item.price) },
+						{ label: "Selling Price (\u20A6)", value: formatCurrency(item.price) },
+						...(item.originalPrice ? [{ label: "Original Price (\u20A6)", value: formatCurrency(item.originalPrice) }] : []),
 						{ label: "Available Stock", value: formatNumber(available) },
 						{ label: "Avg Rating", value: avgRating > 0 ? `${avgRating.toFixed(1)} (${reviewCount})` : "\u2014" },
 					]}
@@ -289,11 +336,17 @@ const ProductDetail: React.FC = () => {
 								onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
 							/>
 							<CurrencyInput
-								label="Price"
+								label="Selling Price"
 								required
 								value={editForm.price}
 								onChange={(val) => setEditForm((f) => ({ ...f, price: val }))}
 								showWords
+							/>
+							<CurrencyInput
+								label="Original price"
+								placeholder="Leave empty if not on sale"
+								value={editForm.originalPrice}
+								onChange={(val) => setEditForm((f) => ({ ...f, originalPrice: val }))}
 							/>
 							<NumberInput
 								label="Available Units"
@@ -303,13 +356,22 @@ const ProductDetail: React.FC = () => {
 								prefix="Qty"
 								min={0}
 							/>
-							{/* include category edit */}
 							<FormSelectDropdown
 								label="Category"
 								value={editForm.category}
 								onChange={(val) => setEditForm((f) => ({ ...f, category: val }))}
 								options={productCategories.map((cat) => ({ value: String(cat.id), label: cat.name }))}
 								placeholder="Select category"
+							/>
+							<FormSelectDropdown
+								label="Status"
+								value={editForm.status}
+								onChange={(val) => setEditForm((f) => ({ ...f, status: val }))}
+								options={[
+									{ value: "A", label: "Active" },
+									{ value: "I", label: "Inactive" },
+								]}
+								searchable={false}
 							/>
 							
 							<div className="sm:col-span-2">
@@ -347,13 +409,14 @@ const ProductDetail: React.FC = () => {
 						<DetailRow label="Name" value={item.name} />
 						<DetailRow label="Description" value={item.description ?? "\u2014"} />
 						<DetailRow label="Category" value={item.product?.name ?? item.category ?? "\u2014"} />
-						<DetailRow label="Price" value={formatCurrency(item.price)} />
+						<DetailRow label="Selling Price" value={formatCurrency(item.price)} />
+						<DetailRow label="Original Price" value={item.originalPrice ? formatCurrency(item.originalPrice) : "—"} />
 						<DetailRow label="Available" value={formatNumber(available)} />
 						<DetailRow
 							label="Status"
 							value={
-								<Badge variant={item.status === "ACTIVE" ? "success" : "neutral"} dot>
-									{item.status}
+								<Badge variant={item.status === "A" ? "success" : "error"} dot>
+									{item.status === "A" ? "Active" : "Inactive"}
 								</Badge>
 							}
 						/>
@@ -412,6 +475,40 @@ const ProductDetail: React.FC = () => {
 					</DetailSection>
 				)}
 			</div>
+
+			{/* Status Confirmation Modal */}
+			<Modal
+				isOpen={statusModalOpen}
+				onClose={() => setStatusModalOpen(false)}
+				title={`${item?.status === "A" ? "Deactivate" : "Activate"} Product`}
+				size="sm"
+			>
+				<div className="space-y-4">
+					<p className="text-sm text-gray-600 dark:text-gray-300">
+						Are you sure you want to {item?.status === "A" ? "deactivate" : "activate"}{" "}
+						<span className="font-semibold text-on-surface dark:text-white">{item?.name}</span>?
+					</p>
+					<div className="flex justify-end gap-3">
+						<Button
+							variant="outlined"
+							color="secondary"
+							size="sm"
+							onClick={() => setStatusModalOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="filled"
+							color={item?.status === "A" ? "error" : "primary"}
+							size="sm"
+							loading={toggling}
+							onClick={handleToggleStatus}
+						>
+							{item?.status === "A" ? "Deactivate" : "Activate"}
+						</Button>
+					</div>
+				</div>
+			</Modal>
 		</AdminLayout>
 	);
 };
