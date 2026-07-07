@@ -111,7 +111,7 @@ const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 			</Head>
 
-			<div className="flex h-screen overflow-hidden bg-[#fafafa] dark:bg-[#0e0e1a] transition-colors duration-300">
+			<div className="flex h-screen overflow-hidden bg-mint-50 dark:bg-[#0e0e1a] transition-colors duration-300">
 				{/* Mobile backdrop overlay */}
 				{!isCollapsed && isMobile && (
 					<div

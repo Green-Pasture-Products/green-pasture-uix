@@ -101,7 +101,7 @@ const HomePage: React.FC = () => {
 							>
 								<Link href="/products">
 									<button
-										className="group inline-flex items-center gap-2 px-6 py-3 text-base font-medium rounded-radius-md bg-white text-primary-700 hover:bg-gray-100 active:bg-gray-200 shadow-elevation-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97] cursor-pointer"
+										className="group inline-flex items-center gap-2 px-6 py-3 text-base font-medium rounded-radius-md bg-white text-primary-700 hover:bg-mint-100 active:bg-gray-200 shadow-elevation-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97] cursor-pointer"
 									>
 										Shop Now
 										<ArrowRight className="h-5 w-5 text-lime-600 transition-transform duration-200 group-hover:translate-x-1" />
@@ -142,7 +142,7 @@ const HomePage: React.FC = () => {
 			</section>
 
 			{/* Features Section */}
-			<section className="py-16 md:py-24 bg-white dark:bg-[#0e0e1a]">
+			<section className="py-16 md:py-24 bg-mint-50 dark:bg-[#0e0e1a]">
 				<div className="page-wrapper">
 					<AnimatedSection>
 						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
@@ -159,10 +159,10 @@ const HomePage: React.FC = () => {
 										<div className="bg-lime-100 dark:bg-lime-500/10 rounded-radius-lg p-4 w-16 h-16 flex items-center justify-center mx-auto mb-4">
 											<Icon className="h-8 w-8 text-primary-700 dark:text-lime-400" />
 										</div>
-										<h3 className="font-semibold text-lg mb-2 text-gray-900 dark:text-white/90">
+										<h3 className="font-semibold text-lg mb-2 text-on-surface dark:text-white/90">
 											{feature.title}
 										</h3>
-										<p className="text-gray-600 dark:text-white/50 text-sm leading-relaxed">
+										<p className="text-on-surface-variant dark:text-white/50 text-sm leading-relaxed">
 											{feature.desc}
 										</p>
 									</Card>
@@ -181,10 +181,10 @@ const HomePage: React.FC = () => {
 							<p className="text-lime-600 dark:text-lime-400 uppercase tracking-widest text-xs font-semibold mb-3">
 								OUR PRODUCTS
 							</p>
-							<h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white/90 mb-4">
+							<h2 className="text-3xl lg:text-4xl font-bold text-on-surface dark:text-white/90 mb-4">
 								Featured Products
 							</h2>
-							<p className="text-gray-600 dark:text-white/50 max-w-2xl mx-auto">
+							<p className="text-on-surface-variant dark:text-white/50 max-w-2xl mx-auto">
 								Discover our most popular organic products, carefully
 								selected for their exceptional quality and nutritional
 								value.
@@ -232,13 +232,13 @@ const HomePage: React.FC = () => {
 							</p>
 							<div className="flex flex-col sm:flex-row max-w-md mx-auto gap-3">
 								<div className="relative flex-1">
-									<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+									<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-on-surface/50 pointer-events-none" />
 									<input
 										type="email"
 										placeholder="Enter your email"
 										value={email}
 										onChange={(e) => setEmail(e.target.value)}
-										className="w-full rounded-radius-md bg-white text-gray-900 placeholder-gray-400 pl-10 pr-3 py-2.5 text-sm border border-transparent outline-none focus:ring-2 focus:ring-lime-400/60 transition"
+										className="w-full rounded-radius-md bg-white text-on-surface placeholder-gray-400 pl-10 pr-3 py-2.5 text-sm border border-transparent outline-none focus:ring-2 focus:ring-lime-400/60 transition"
 									/>
 								</div>
 								<button className="rounded-radius-md bg-white text-primary-700 font-medium px-5 py-2.5 text-sm hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] active:bg-gray-200 shrink-0 transition-all cursor-pointer">

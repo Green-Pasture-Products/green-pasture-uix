@@ -4,22 +4,22 @@ import Layout from "@/_components/Layout";
 const RefundPolicy = () => {
 	return (
 		<Layout pageTitle="Return & Refund Policy">
-			<div className="bg-white dark:bg-[#0a0f1a] animate-page-enter">
+			<div className="bg-mint-50 dark:bg-[#0a0f1a] animate-page-enter">
 				<div className="container page-wrapper mx-auto px-4 py-16 md:py-24">
-					<div className="max-w-3xl mx-auto">
-						<h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+					<div className="max-w-3xl mx-auto bg-white rounded-radius-lg border border-outline-variant shadow-elevation-1 p-8 md:p-12 dark:bg-transparent dark:border-transparent dark:shadow-none dark:p-0">
+						<h1 className="text-3xl md:text-4xl font-bold text-on-surface dark:text-white mb-2">
 							Return & Refund Policy
 						</h1>
-						<p className="text-sm text-gray-500 dark:text-gray-400 mb-10">
+						<p className="text-sm text-on-surface-variant dark:text-gray-400 mb-10">
 							Last updated: March 24, 2026
 						</p>
 
 						{/* 1. Overview */}
-						<section className="mb-10 pb-8 border-b border-gray-200 dark:border-gray-800">
-							<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+						<section className="mb-10 pb-8 border-b border-outline-variant dark:border-gray-800">
+							<h2 className="text-xl font-semibold text-on-surface dark:text-white mb-4">
 								1. Overview
 							</h2>
-							<p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+							<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed">
 								At Green Pasture Organics, your satisfaction is our priority. We are committed to
 								providing high-quality dietary supplements and organic products. If you are not entirely
 								satisfied with your purchase, we are here to help.
@@ -27,14 +27,14 @@ const RefundPolicy = () => {
 						</section>
 
 						{/* 2. Eligibility */}
-						<section className="mb-10 pb-8 border-b border-gray-200 dark:border-gray-800">
-							<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+						<section className="mb-10 pb-8 border-b border-outline-variant dark:border-gray-800">
+							<h2 className="text-xl font-semibold text-on-surface dark:text-white mb-4">
 								2. Eligibility for Returns
 							</h2>
-							<p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+							<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed mb-3">
 								To be eligible for a return, the following conditions must be met:
 							</p>
-							<ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
+							<ul className="list-disc pl-6 space-y-2 text-on-surface/80 dark:text-gray-300">
 								<li>The return request must be made within 14 days of receiving your order.</li>
 								<li>The product must be unused, unopened, and in its original packaging.</li>
 								<li>The product must be in the same condition as when you received it.</li>
@@ -43,14 +43,14 @@ const RefundPolicy = () => {
 						</section>
 
 						{/* 3. Non-Returnable Items */}
-						<section className="mb-10 pb-8 border-b border-gray-200 dark:border-gray-800">
-							<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+						<section className="mb-10 pb-8 border-b border-outline-variant dark:border-gray-800">
+							<h2 className="text-xl font-semibold text-on-surface dark:text-white mb-4">
 								3. Non-Returnable Items
 							</h2>
-							<p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+							<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed mb-3">
 								The following items cannot be returned:
 							</p>
-							<ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
+							<ul className="list-disc pl-6 space-y-2 text-on-surface/80 dark:text-gray-300">
 								<li>Supplements and health products that have been opened or have broken seals.</li>
 								<li>Perishable goods, including fresh produce and items with a short shelf life.</li>
 								<li>Gift cards and promotional vouchers.</li>
@@ -59,14 +59,14 @@ const RefundPolicy = () => {
 						</section>
 
 						{/* 4. How to Request a Return */}
-						<section className="mb-10 pb-8 border-b border-gray-200 dark:border-gray-800">
-							<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+						<section className="mb-10 pb-8 border-b border-outline-variant dark:border-gray-800">
+							<h2 className="text-xl font-semibold text-on-surface dark:text-white mb-4">
 								4. How to Request a Return
 							</h2>
-							<p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+							<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed mb-3">
 								To initiate a return, please follow these steps:
 							</p>
-							<ol className="list-decimal pl-6 space-y-2 text-gray-700 dark:text-gray-300">
+							<ol className="list-decimal pl-6 space-y-2 text-on-surface/80 dark:text-gray-300">
 								<li>
 									Send an email to{" "}
 									<a
@@ -86,15 +86,15 @@ const RefundPolicy = () => {
 						</section>
 
 						{/* 5. Refund Process */}
-						<section className="mb-10 pb-8 border-b border-gray-200 dark:border-gray-800">
-							<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+						<section className="mb-10 pb-8 border-b border-outline-variant dark:border-gray-800">
+							<h2 className="text-xl font-semibold text-on-surface dark:text-white mb-4">
 								5. Refund Process
 							</h2>
-							<p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+							<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed mb-3">
 								Once we receive and inspect your returned item, we will notify you of the approval or
 								rejection of your refund.
 							</p>
-							<ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
+							<ul className="list-disc pl-6 space-y-2 text-on-surface/80 dark:text-gray-300">
 								<li>
 									Approved refunds will be processed to your original payment method within 5-10
 									business days.
@@ -110,11 +110,11 @@ const RefundPolicy = () => {
 						</section>
 
 						{/* 6. Shipping Costs */}
-						<section className="mb-10 pb-8 border-b border-gray-200 dark:border-gray-800">
-							<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+						<section className="mb-10 pb-8 border-b border-outline-variant dark:border-gray-800">
+							<h2 className="text-xl font-semibold text-on-surface dark:text-white mb-4">
 								6. Shipping Costs
 							</h2>
-							<p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+							<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed">
 								The customer is responsible for return shipping costs unless the item received was
 								defective, damaged, or incorrect. In such cases, Green Pasture Organics will cover the
 								return shipping costs and arrange for a prepaid shipping label where applicable.
@@ -123,11 +123,11 @@ const RefundPolicy = () => {
 						</section>
 
 						{/* 7. Exchanges */}
-						<section className="mb-10 pb-8 border-b border-gray-200 dark:border-gray-800">
-							<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+						<section className="mb-10 pb-8 border-b border-outline-variant dark:border-gray-800">
+							<h2 className="text-xl font-semibold text-on-surface dark:text-white mb-4">
 								7. Exchanges
 							</h2>
-							<p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+							<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed">
 								We offer exchanges for items of equal or lesser value, subject to product availability.
 								If you wish to exchange an item, please follow the return process outlined above and
 								specify the product you would like as a replacement. If the replacement item is of
@@ -137,15 +137,15 @@ const RefundPolicy = () => {
 						</section>
 
 						{/* 8. Damaged or Defective Items */}
-						<section className="mb-10 pb-8 border-b border-gray-200 dark:border-gray-800">
-							<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+						<section className="mb-10 pb-8 border-b border-outline-variant dark:border-gray-800">
+							<h2 className="text-xl font-semibold text-on-surface dark:text-white mb-4">
 								8. Damaged or Defective Items
 							</h2>
-							<p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+							<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed mb-3">
 								If you receive a damaged or defective item, please contact us within 48 hours of
 								delivery. To expedite the process:
 							</p>
-							<ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
+							<ul className="list-disc pl-6 space-y-2 text-on-surface/80 dark:text-gray-300">
 								<li>
 									Provide clear photographs of the damaged or defective product and its packaging.
 								</li>
@@ -159,13 +159,13 @@ const RefundPolicy = () => {
 
 						{/* 9. Contact Information */}
 						<section className="mb-4">
-							<h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+							<h2 className="text-xl font-semibold text-on-surface dark:text-white mb-4">
 								9. Contact Information
 							</h2>
-							<p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+							<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed mb-3">
 								If you have any questions about our Return & Refund Policy, please reach out to us:
 							</p>
-							<ul className="space-y-2 text-gray-700 dark:text-gray-300">
+							<ul className="space-y-2 text-on-surface/80 dark:text-gray-300">
 								<li>
 									<strong>Email:</strong>{" "}
 									<a

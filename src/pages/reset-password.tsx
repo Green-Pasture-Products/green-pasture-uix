@@ -79,10 +79,10 @@ const ResetPasswordPage: React.FC = () => {
 			<div className="min-h-screen bg-white dark:bg-[#0a0f1a] flex items-center justify-center p-4">
 				<Card elevation={2} padding="lg" className="max-w-md w-full text-center animate-page-enter">
 					<CheckCircle className="h-24 w-24 text-primary-600 dark:text-primary-400 mx-auto mb-6" />
-					<h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+					<h2 className="text-3xl font-bold text-on-surface dark:text-white">
 						Password Reset!
 					</h2>
-					<p className="mt-4 text-gray-600 dark:text-gray-400">
+					<p className="mt-4 text-on-surface-variant dark:text-gray-400">
 						Your password has been successfully reset. You can now sign
 						in with your new password.
 					</p>
@@ -123,10 +123,10 @@ const ResetPasswordPage: React.FC = () => {
 					</Link>
 				</div>
 
-				<h2 className="text-center text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+				<h2 className="text-center text-2xl md:text-3xl font-bold text-on-surface dark:text-white mb-2">
 					Set new password
 				</h2>
-				<p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-8">
+				<p className="text-center text-sm text-on-surface-variant dark:text-gray-400 mb-8">
 					Enter the OTP sent to your email and your new password.
 				</p>
 
@@ -173,7 +173,7 @@ const ResetPasswordPage: React.FC = () => {
 						rightElement={
 							<button
 								type="button"
-								className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+								className="text-on-surface/50 dark:text-gray-500 hover:text-on-surface-variant dark:hover:text-gray-300 transition-colors"
 								onClick={() => setShowPassword(!showPassword)}
 							>
 								{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -192,7 +192,7 @@ const ResetPasswordPage: React.FC = () => {
 						rightElement={
 							<button
 								type="button"
-								className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+								className="text-on-surface/50 dark:text-gray-500 hover:text-on-surface-variant dark:hover:text-gray-300 transition-colors"
 								onClick={() => setShowConfirmPassword(!showConfirmPassword)}
 							>
 								{showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}

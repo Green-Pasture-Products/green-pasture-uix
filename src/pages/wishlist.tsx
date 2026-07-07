@@ -58,7 +58,7 @@ const WishlistPage: React.FC = () => {
 			<div className="container page-wrapper mx-auto px-4 py-8">
 				<div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
 					<div>
-						<h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+						<h1 className="text-2xl md:text-3xl font-bold text-on-surface dark:text-white flex items-center gap-3">
 							My Wishlist
 							<Badge variant="neutral">{wishlistItemCount} {wishlistItemCount === 1 ? "item" : "items"}</Badge>
 						</h1>

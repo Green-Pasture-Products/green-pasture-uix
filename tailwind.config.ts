@@ -45,6 +45,8 @@ const config: Config = {
 					DEFAULT: "#f6f8eb",
 					50: "#fbfcf4",
 					100: "#eef2da",
+					200: "#e0e8c9",
+					300: "#cbd8a9",
 				},
 				// Brand deep neutral — Brown #261711
 				brown: {
@@ -54,16 +56,16 @@ const config: Config = {
 				},
 				surface: {
 					DEFAULT: "#ffffff",
-					variant: "#f8fafc",
-					container: "#f1f5f9",
+					variant: "#f6f8eb",
+					container: "#eef2da",
 				},
 				"on-surface": {
-					DEFAULT: "#0f172a",
-					variant: "#475569",
+					DEFAULT: "#10231f",
+					variant: "#3f5a53",
 				},
 				outline: {
-					DEFAULT: "#cbd5e1",
-					variant: "#e2e8f0",
+					DEFAULT: "#a9bfb7",
+					variant: "#dce6df",
 				},
 				error: {
 					DEFAULT: "#dc2626",

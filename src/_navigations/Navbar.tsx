@@ -96,7 +96,7 @@ const Navbar: React.FC = () => {
 	const isActive = (path: string) => pathname === path;
 
 	return (
-		<header className="fixed top-0 left-0 right-0 z-50 h-16 md:h-[72px] bg-white/95 dark:bg-[#0e0e1a]/95 backdrop-blur-md shadow-elevation-1 dark:shadow-none border-b border-transparent dark:border-white/8 animate-header-enter">
+		<header className="fixed top-0 left-0 right-0 z-50 h-16 md:h-[72px] bg-mint-50/90 dark:bg-[#0e0e1a]/95 backdrop-blur-md shadow-elevation-1 dark:shadow-none border-b border-transparent dark:border-white/8 animate-header-enter">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-full">
 				{/* Left: Logo */}
 				<Link

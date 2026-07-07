@@ -48,19 +48,19 @@ const Contact = () => {
 
 	return (
 		<Layout pageTitle="Contact us">
-			<div className="bg-white dark:bg-[#0a0f1a]">
+			<div className="bg-mint-50 dark:bg-[#0a0f1a]">
 				{/* Header */}
-				<section className="py-16 md:py-24 bg-gradient-to-br from-primary-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
+				<section className="py-16 md:py-24 bg-gradient-to-br from-mint-100 via-mint-50 to-lime-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
 					<div className="container page-wrapper mx-auto px-4">
 						<AnimatedSection>
 							<div className="max-w-3xl mx-auto text-center">
 								<p className="text-primary-600 dark:text-primary-400 uppercase tracking-widest text-xs font-semibold mb-3">
 									GET IN TOUCH
 								</p>
-								<h1 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+								<h1 className="text-3xl md:text-5xl font-bold text-on-surface dark:text-white mb-6">
 									We'd Love to Hear From You
 								</h1>
-								<p className="text-lg text-gray-600 dark:text-gray-400">
+								<p className="text-lg text-on-surface-variant dark:text-gray-400">
 									Have questions about our products or need assistance? Reach out and we'll get back to you as soon as possible.
 								</p>
 							</div>
@@ -75,7 +75,7 @@ const Contact = () => {
 							{/* Contact Form */}
 							<AnimatedSection delay={0.1} className="lg:col-span-2">
 								<Card elevation={1} padding="lg">
-									<h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+									<h2 className="text-2xl font-bold text-on-surface dark:text-white mb-6">
 										Send us a message
 									</h2>
 									<form onSubmit={handleSubmit} className="space-y-5">
@@ -129,7 +129,7 @@ const Contact = () => {
 												value={formData.message}
 												onChange={handleChange}
 												required
-												className="w-full px-3 py-2.5 rounded-radius-md bg-white dark:bg-white/[0.04] text-on-surface dark:text-white placeholder:text-gray-400 transition-colors outline-none focus:ring-2 focus:ring-primary-600/20 dark:focus:ring-primary-400/20 resize-none border"
+												className="w-full px-3 py-2.5 rounded-radius-md bg-white dark:bg-white/[0.04] text-on-surface dark:text-white placeholder:text-on-surface/50 transition-colors outline-none focus:ring-2 focus:ring-primary-600/20 dark:focus:ring-primary-400/20 resize-none border"
 												style={{ borderColor: "var(--border-medium)" }}
 											/>
 										</div>
@@ -152,19 +152,19 @@ const Contact = () => {
 								{contactInfo.map((info, index) => {
 									const Icon = info.icon;
 									return (
-										<Card key={index} elevation={2} padding="md" hoverable className="border-gray-300 dark:border-white/[0.12]">
+										<Card key={index} elevation={2} padding="md" hoverable className="border-outline dark:border-white/[0.12]">
 											<div className="flex items-center space-x-4">
 												<div className="bg-primary-100 dark:bg-primary-900/30 rounded-radius-lg p-3 shrink-0 flex items-center justify-center">
 													<Icon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
 												</div>
 												<div>
-													<h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+													<h3 className="font-semibold text-on-surface dark:text-white mb-1">
 														{info.title}
 													</h3>
-													<p className="text-gray-700 dark:text-gray-300 font-medium">
+													<p className="text-on-surface/80 dark:text-gray-300 font-medium">
 														{info.detail}
 													</p>
-													<p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+													<p className="text-sm text-on-surface-variant dark:text-gray-400 mt-0.5">
 														{info.subtitle}
 													</p>
 												</div>

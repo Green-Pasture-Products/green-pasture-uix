@@ -71,13 +71,13 @@ const SetPasswordPage: React.FC = () => {
 
 	if (complete) {
 		return (
-			<div className="min-h-screen bg-[#fafafa] dark:bg-[#0e0e1a] flex items-center justify-center p-4">
+			<div className="min-h-screen bg-mint-50 dark:bg-[#0e0e1a] flex items-center justify-center p-4">
 				<Card elevation={2} padding="lg" className="max-w-md w-full text-center animate-page-enter">
 					<CheckCircle className="h-24 w-24 text-primary-600 dark:text-primary-400 mx-auto mb-6" />
-					<h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+					<h2 className="text-3xl font-bold text-on-surface dark:text-white">
 						Password Set!
 					</h2>
-					<p className="mt-4 text-gray-600 dark:text-gray-400">
+					<p className="mt-4 text-on-surface-variant dark:text-gray-400">
 						Password set successfully! You can now log in.
 					</p>
 					<div className="mt-6">
@@ -91,7 +91,7 @@ const SetPasswordPage: React.FC = () => {
 	}
 
 	return (
-		<div className="min-h-screen bg-[#fafafa] dark:bg-[#0e0e1a] flex items-center justify-center p-4">
+		<div className="min-h-screen bg-mint-50 dark:bg-[#0e0e1a] flex items-center justify-center p-4">
 			<Card
 				elevation={2}
 				padding="lg"
@@ -117,10 +117,10 @@ const SetPasswordPage: React.FC = () => {
 					</Link>
 				</div>
 
-				<h2 className="text-center text-2xl md:text-3xl font-bold text-gray-900 dark:text-white/90 mb-2">
+				<h2 className="text-center text-2xl md:text-3xl font-bold text-on-surface dark:text-white/90 mb-2">
 					Set your password
 				</h2>
-				<p className="text-center text-sm text-gray-600 dark:text-white/50 mb-8">
+				<p className="text-center text-sm text-on-surface-variant dark:text-white/50 mb-8">
 					Create a password for your new account
 				</p>
 
@@ -147,7 +147,7 @@ const SetPasswordPage: React.FC = () => {
 						rightElement={
 							<button
 								type="button"
-								className="text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+								className="text-on-surface/50 dark:text-white/30 hover:text-on-surface-variant dark:hover:text-gray-300 transition-colors"
 								onClick={() => setShowPassword(!showPassword)}
 							>
 								{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -166,7 +166,7 @@ const SetPasswordPage: React.FC = () => {
 						rightElement={
 							<button
 								type="button"
-								className="text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+								className="text-on-surface/50 dark:text-white/30 hover:text-on-surface-variant dark:hover:text-gray-300 transition-colors"
 								onClick={() => setShowConfirmPassword(!showConfirmPassword)}
 							>
 								{showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -186,7 +186,7 @@ const SetPasswordPage: React.FC = () => {
 					</Button>
 				</form>
 
-				<p className="text-center text-sm text-gray-600 dark:text-white/50 mt-6">
+				<p className="text-center text-sm text-on-surface-variant dark:text-white/50 mt-6">
 					Already have an account?{" "}
 					<Link
 						href="/login"
