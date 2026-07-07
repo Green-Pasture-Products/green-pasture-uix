@@ -82,13 +82,13 @@ const config: Config = {
 			boxShadow: {
 				"elevation-0": "none",
 				"elevation-1":
-					"0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06)",
+					"0 1px 3px 0 rgb(0 0 0 / 0.10), 0 1px 2px -1px rgb(0 0 0 / 0.08)",
 				"elevation-2":
-					"0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05)",
+					"0 4px 8px -1px rgb(0 0 0 / 0.12), 0 2px 4px -2px rgb(0 0 0 / 0.08)",
 				"elevation-3":
-					"0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.05)",
+					"0 10px 20px -3px rgb(0 0 0 / 0.14), 0 4px 8px -4px rgb(0 0 0 / 0.10)",
 				"elevation-4":
-					"0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05)",
+					"0 20px 30px -5px rgb(0 0 0 / 0.16), 0 8px 12px -6px rgb(0 0 0 / 0.10)",
 			},
 			borderRadius: {
 				"radius-sm": "8px",

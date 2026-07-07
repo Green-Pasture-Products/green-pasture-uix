@@ -129,7 +129,7 @@ const LoginPage: React.FC = () => {
 					)}
 
 					<Input
-						label="Email address"
+						label="Email Address"
 						{...register("email")}
 						type="email"
 						autoComplete="email"
@@ -138,38 +138,39 @@ const LoginPage: React.FC = () => {
 						error={errors.email?.message}
 					/>
 
-					<Input
-						label="Password"
-						{...register("password")}
-						type={showPassword ? "text" : "password"}
-						autoComplete="current-password"
-						placeholder="Enter your password"
-						leftIcon={Lock}
-						error={errors.password?.message}
-						rightElement={
-							<button
-								type="button"
-								className="text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-								onClick={() => setShowPassword(!showPassword)}
-							>
-								{showPassword ? (
-									<EyeOff className="h-5 w-5" />
-								) : (
-									<Eye className="h-5 w-5" />
-								)}
-							</button>
-						}
-					/>
-
-					<div className="flex items-center justify-end">
-						<div className="text-sm">
+					<div>
+						<div className="flex items-center justify-between mb-1">
+							<label className="block text-xs md:text-sm font-bold" style={{ color: "var(--text-secondary)" }}>
+								Password
+							</label>
 							<Link
 								href="/forgot-password"
-								className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
+								className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
 							>
-								Forgot your password?
+								Forgot password?
 							</Link>
 						</div>
+						<Input
+							{...register("password")}
+							type={showPassword ? "text" : "password"}
+							autoComplete="current-password"
+							placeholder="Enter your password"
+							leftIcon={Lock}
+							error={errors.password?.message}
+							rightElement={
+								<button
+									type="button"
+									className="text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+									onClick={() => setShowPassword(!showPassword)}
+								>
+									{showPassword ? (
+										<EyeOff className="h-5 w-5" />
+									) : (
+										<Eye className="h-5 w-5" />
+									)}
+								</button>
+							}
+						/>
 					</div>
 
 					<Button

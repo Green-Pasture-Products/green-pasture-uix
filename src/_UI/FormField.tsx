@@ -21,10 +21,10 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
 			<div className="w-full">
 				{label && (
 					<label
-						className="block text-xs md:text-sm mb-1"
+						className="block text-xs md:text-sm font-semibold mb-1"
 						style={{ color: "var(--text-secondary)" }}
 					>
-						{required ? `${label}*` : label}
+						{required ? `${label}` : label}
 					</label>
 				)}
 				<div className="relative">
@@ -82,7 +82,7 @@ export const FormTextarea = React.forwardRef<
 		<div className="w-full">
 			{label && (
 				<label
-					className="block text-xs md:text-sm mb-1"
+					className="block text-xs md:text-sm font-semibold mb-1"
 					style={{ color: "var(--text-secondary)" }}
 				>
 					{required ? `${label}*` : label}
@@ -139,7 +139,7 @@ export const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
 			<div className="w-full">
 				{label && (
 					<label
-						className="block text-xs md:text-sm mb-1"
+						className="block text-xs md:text-sm font-semibold mb-1"
 						style={{ color: "var(--text-secondary)" }}
 					>
 						{required ? `${label}*` : label}
@@ -157,7 +157,8 @@ export const FormSelect = React.forwardRef<HTMLSelectElement, FormSelectProps>(
 							? undefined
 							: "var(--border-light)",
 						color: "var(--text-primary)",
-						backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+						background: "var(--surface-low)",
+						backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
 						backgroundPosition: "right 0.5rem center",
 						backgroundRepeat: "no-repeat",
 						backgroundSize: "1.5em 1.5em",
@@ -222,7 +223,7 @@ export const FormFileUpload: React.FC<FormFileUploadProps> = ({
 		<div className="w-full">
 			{label && (
 				<label
-					className="block text-xs md:text-sm mb-1"
+					className="block text-xs md:text-sm font-semibold mb-1"
 					style={{ color: "var(--text-secondary)" }}
 				>
 					{label}
