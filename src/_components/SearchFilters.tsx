@@ -54,6 +54,12 @@ const SearchFiltersComponent: React.FC = () => {
 	const { filters, setFilters, resetFilters, hasActiveFilters } =
 		useProductFilters();
 	const { categories } = useAppSelector((state) => state.product);
+	const isFetchingCategories = useAppSelector(
+		(state) => state.category.isFetchingAllCategories
+	);
+	// Only skeleton the very first load — during background refreshes the
+	// previously fetched options stay visible and usable.
+	const showCategorySkeleton = isFetchingCategories && categories.length <= 1;
 
 	useEffect(() => {
 		if (categories.length <= 1) {
@@ -99,6 +105,28 @@ const SearchFiltersComponent: React.FC = () => {
 					>
 						Category
 					</h4>
+					{showCategorySkeleton ? (
+						<div className="space-y-1">
+							{[...Array(5)].map((_, i) => (
+								<div
+									key={i}
+									className="flex items-center px-2.5 py-2 animate-pulse"
+								>
+									<span
+										className="w-3.5 h-3.5 rounded-full mr-2.5 shrink-0"
+										style={{ background: "var(--surface-medium)" }}
+									/>
+									<span
+										className="h-3.5 rounded-full"
+										style={{
+											background: "var(--surface-medium)",
+											width: `${55 + (i % 3) * 15}%`,
+										}}
+									/>
+								</div>
+							))}
+						</div>
+					) : (
 					<div className="space-y-1">
 						{categories?.map((category) => (
 							<label
@@ -153,6 +181,7 @@ const SearchFiltersComponent: React.FC = () => {
 							</label>
 						))}
 					</div>
+					)}
 				</div>
 
 				{/* Price Range */}
