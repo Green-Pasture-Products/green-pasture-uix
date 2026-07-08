@@ -44,6 +44,9 @@ jobs:
           
           # Copy the web.config to the ROOT of deploy_package
           copy web.config deploy_package\
+
+          # Create logs folder so httpPlatform can write stdout (it won't mkdir it)
+          mkdir deploy_package\logs
           
       - name: Deploy via WebDeploy
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
