@@ -1,41 +1,41 @@
 import React, { useState } from "react";
-import { Phone, Mail, MapPin, Send } from "lucide-react";
+import { Phone, Mail, MapPin, Send, Clock, PackageSearch, Sprout } from "lucide-react";
+import { motion } from "framer-motion";
+
 import Layout from "@/_components/Layout";
 import AnimatedSection from "@/_UI/AnimatedSection";
-import Card from "@/_UI/Card";
+import SectionHeading from "@/_UI/SectionHeading";
 import Input from "@/_UI/Input";
 import Button from "@/_UI/Button";
 import { appConstants } from "@/_redux/constants";
 
 const contactInfo = [
+	{ icon: Phone, title: "Phone", detail: appConstants.CONTACT.PHONE, subtitle: "Mon–Fri, 9am–5pm WAT" },
+	{ icon: Mail, title: "Email", detail: appConstants.CONTACT.EMAIL, subtitle: "We reply within 24 hours" },
+	{ icon: MapPin, title: "Office", detail: appConstants.CONTACT.ADDRESS, subtitle: "Visit by appointment" },
+];
+
+/** Answers the three questions support actually receives, before they're asked. */
+const quickAnswers = [
 	{
-		icon: Phone,
-		title: "Phone",
-		detail: appConstants.CONTACT.PHONE,
-		subtitle: "Mon-Fri, 9am-5pm WAT",
+		icon: PackageSearch,
+		q: "Where is my order?",
+		a: "Track it from your account under My Orders — you'll also get an email the moment it's dispatched.",
 	},
 	{
-		icon: Mail,
-		title: "Email",
-		detail: appConstants.CONTACT.EMAIL,
-		subtitle: "We reply within 24 hours",
+		icon: Sprout,
+		q: "Which product is right for me?",
+		a: "Tell us your goal in the form and we'll point you to the right preparation and dosage. No upselling.",
 	},
 	{
-		icon: MapPin,
-		title: "Office",
-		detail: appConstants.CONTACT.ADDRESS,
-		subtitle: "Visit by appointment",
+		icon: Clock,
+		q: "How fresh is it really?",
+		a: "Every jar carries a harvest date and batch certificate. If yours doesn't, tell us and we'll replace it.",
 	},
 ];
 
 const Contact = () => {
-	const [formData, setFormData] = useState({
-		name: "",
-		email: "",
-		phone: "",
-		subject: "",
-		message: "",
-	});
+	const [formData, setFormData] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -48,135 +48,220 @@ const Contact = () => {
 
 	return (
 		<Layout pageTitle="Contact us">
-			<div className="bg-mint-50 dark:bg-[#0a0f1a]">
-				{/* Header */}
-				<section className="py-16 md:py-24 bg-gradient-to-br from-mint-100 via-mint-50 to-lime-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
-					<div className="container page-wrapper mx-auto px-4">
-						<AnimatedSection>
-							<div className="max-w-3xl mx-auto text-center">
-								<p className="text-primary-600 dark:text-primary-400 uppercase tracking-widest text-xs font-semibold mb-3">
-									GET IN TOUCH
+			{/* ── Header ───────────────────────────────────────────── */}
+			<section className="relative overflow-hidden" style={{ background: "var(--background)" }}>
+				<div
+					aria-hidden
+					className="pointer-events-none absolute -left-40 -top-32 h-[32rem] w-[32rem] rounded-full opacity-70"
+					style={{ background: "radial-gradient(circle,rgba(154,202,60,0.15),transparent 66%)" }}
+				/>
+				<div className="page-wrapper relative py-20 md:py-24">
+					<motion.p
+						initial={{ opacity: 0, y: 16 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.6 }}
+						className="mb-5 text-[0.68rem] font-semibold uppercase tracking-[0.22em]"
+						style={{ color: "#7fac2d" }}
+					>
+						Get in touch
+					</motion.p>
+					<motion.h1
+						initial={{ opacity: 0, y: 24 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.75, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+						className="max-w-3xl font-display text-4xl leading-[1.05] tracking-[-0.02em] sm:text-5xl lg:text-[3.4rem]"
+						style={{ color: "var(--text-primary)", fontWeight: 300 }}
+					>
+						A real person reads every message —{" "}
+						<span className="italic" style={{ color: "var(--color-primary)", fontWeight: 500 }}>
+							usually the same day.
+						</span>
+					</motion.h1>
+					<motion.p
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.7, delay: 0.2 }}
+						className="mt-7 max-w-xl text-base leading-relaxed sm:text-lg"
+						style={{ color: "var(--text-secondary)" }}
+					>
+						Questions about a product, a dosage, or an order in transit — ask directly.
+						We would rather talk you out of the wrong product than sell you it.
+					</motion.p>
+				</div>
+			</section>
+
+			{/* ── Form + details ───────────────────────────────────── */}
+			<section className="pb-20 md:pb-28" style={{ background: "var(--background)" }}>
+				<div className="page-wrapper">
+					<div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.6fr_1fr]">
+						{/* Form */}
+						<AnimatedSection delay={0.1}>
+							<div
+								className="rounded-3xl p-7 md:p-10"
+								style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)", boxShadow: "var(--shadow-lg)" }}
+							>
+								<h2 className="font-display text-2xl" style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+									Send us a message
+								</h2>
+								<p className="mt-2 text-sm" style={{ color: "var(--text-hint)" }}>
+									The more detail you give, the more useful our reply.
 								</p>
-								<h1 className="text-3xl md:text-5xl font-bold text-on-surface dark:text-white mb-6">
-									We'd Love to Hear From You
-								</h1>
-								<p className="text-lg text-on-surface-variant dark:text-gray-400">
-									Have questions about our products or need assistance? Reach out and we'll get back to you as soon as possible.
-								</p>
+
+								<form onSubmit={handleSubmit} className="mt-8 space-y-5">
+									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+										<Input
+											label="Full Name"
+											name="name"
+											placeholder="Type your full name"
+											value={formData.name}
+											onChange={handleChange}
+											required
+										/>
+										<Input
+											label="Email Address"
+											name="email"
+											type="email"
+											placeholder="your@email.com"
+											leftIcon={Mail}
+											value={formData.email}
+											onChange={handleChange}
+											required
+										/>
+									</div>
+									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+										<Input
+											label="Phone Number"
+											name="phone"
+											type="tel"
+											placeholder="+234 800 000 0000"
+											leftIcon={Phone}
+											value={formData.phone}
+											onChange={handleChange}
+										/>
+										<Input
+											label="Subject"
+											name="subject"
+											placeholder="What is this about?"
+											value={formData.subject}
+											onChange={handleChange}
+											required
+										/>
+									</div>
+									<div>
+										<label
+											className="mb-1.5 block text-xs font-semibold md:text-sm"
+											style={{ color: "var(--text-secondary)" }}
+										>
+											Message
+										</label>
+										<textarea
+											name="message"
+											rows={6}
+											placeholder="Tell us more…"
+											value={formData.message}
+											onChange={handleChange}
+											required
+											className="w-full resize-none rounded-xl px-3.5 py-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-lime-400/40"
+											style={{
+												background: "var(--surface-low)",
+												border: "1px solid var(--border-light)",
+												color: "var(--text-primary)",
+											}}
+										/>
+									</div>
+									<Button type="submit" variant="filled" size="lg" rightIcon={Send} fullWidth>
+										Send Message
+									</Button>
+								</form>
 							</div>
 						</AnimatedSection>
-					</div>
-				</section>
 
-				{/* Content */}
-				<section className="py-16 md:py-24">
-					<div className="container page-wrapper mx-auto px-4">
-						<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-							{/* Contact Form */}
-							<AnimatedSection delay={0.1} className="lg:col-span-2">
-								<Card elevation={1} padding="lg">
-									<h2 className="text-2xl font-bold text-on-surface dark:text-white mb-6">
-										Send us a message
-									</h2>
-									<form onSubmit={handleSubmit} className="space-y-5">
-										<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-											<Input
-												label="Full Name"
-												name="name"
-												placeholder="Type your full name"
-												value={formData.name}
-												onChange={handleChange}
-												required
-											/>
-											<Input
-												label="Email Address"
-												name="email"
-												type="email"
-												placeholder="your@email.com"
-												leftIcon={Mail}
-												value={formData.email}
-												onChange={handleChange}
-												required
-											/>
-										</div>
-										<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-											<Input
-												label="Phone Number"
-												name="phone"
-												type="tel"
-												placeholder="+234 800 000 0000"
-												leftIcon={Phone}
-												value={formData.phone}
-												onChange={handleChange}
-											/>
-											<Input
-												label="Subject"
-												name="subject"
-												placeholder="What is this about?"
-												value={formData.subject}
-												onChange={handleChange}
-												required
-											/>
-										</div>
-										<div>
-											<label className="block text-xs md:text-sm font-semibold mb-1.5" style={{ color: "var(--text-secondary)" }}>
-												Message
-											</label>
-											<textarea
-												name="message"
-												rows={5}
-												placeholder="Tell us more..."
-												value={formData.message}
-												onChange={handleChange}
-												required
-												className="w-full px-3 py-2.5 rounded-radius-md bg-white dark:bg-white/[0.04] text-on-surface dark:text-white placeholder:text-on-surface/50 transition-colors outline-none focus:ring-2 focus:ring-primary-600/20 dark:focus:ring-primary-400/20 resize-none border"
-												style={{ borderColor: "var(--border-medium)" }}
-											/>
-										</div>
-										<div className="flex justify-center">
-											<Button
-												type="submit"
-												variant="filled"
-												size="lg"
-												rightIcon={Send}
-											>
-												Send Message
-											</Button>
-										</div>
-									</form>
-								</Card>
-							</AnimatedSection>
-
-							{/* Contact Info */}
-							<AnimatedSection delay={0.3} className="space-y-4">
+						{/* Details */}
+						<AnimatedSection delay={0.22}>
+							<div className="space-y-4">
 								{contactInfo.map((info, index) => {
 									const Icon = info.icon;
 									return (
-										<Card key={index} elevation={2} padding="md" hoverable className="border-outline dark:border-white/[0.12]">
-											<div className="flex items-center space-x-4">
-												<div className="bg-primary-100 dark:bg-primary-900/30 rounded-radius-lg p-3 shrink-0 flex items-center justify-center">
-													<Icon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-												</div>
-												<div>
-													<h3 className="font-semibold text-on-surface dark:text-white mb-1">
-														{info.title}
-													</h3>
-													<p className="text-on-surface/80 dark:text-gray-300 font-medium">
-														{info.detail}
-													</p>
-													<p className="text-sm text-on-surface-variant dark:text-gray-400 mt-0.5">
-														{info.subtitle}
-													</p>
-												</div>
+										<motion.div
+											key={info.title}
+											initial={{ opacity: 0, x: 20 }}
+											whileInView={{ opacity: 1, x: 0 }}
+											viewport={{ once: true }}
+											transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+											className="group flex items-start gap-4 rounded-2xl p-6 transition-colors duration-300"
+											style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}
+										>
+											<span
+												className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
+												style={{ background: "rgba(154,202,60,0.12)" }}
+											>
+												<Icon className="h-5 w-5" style={{ color: "var(--color-primary)" }} strokeWidth={1.6} />
+											</span>
+											<div className="min-w-0">
+												<p className="text-[0.68rem] uppercase tracking-[0.16em]" style={{ color: "var(--text-hint)" }}>
+													{info.title}
+												</p>
+												<p className="mt-1 break-words font-medium" style={{ color: "var(--text-primary)" }}>
+													{info.detail}
+												</p>
+												<p className="mt-1 text-xs" style={{ color: "var(--text-hint)" }}>
+													{info.subtitle}
+												</p>
 											</div>
-										</Card>
+										</motion.div>
 									);
 								})}
-							</AnimatedSection>
-						</div>
+
+								{/* Response promise */}
+								<div
+									className="rounded-2xl p-6"
+									style={{ background: "linear-gradient(150deg,#0c2b25,#1f6554)" }}
+								>
+									<p className="font-display text-lg text-[#f4f8e8]" style={{ fontWeight: 500 }}>
+										Under 24 hours
+									</p>
+									<p className="mt-1.5 text-sm leading-relaxed" style={{ color: "rgba(226,238,206,0.72)" }}>
+										That's our reply window on weekdays — and we hold ourselves to it.
+									</p>
+								</div>
+							</div>
+						</AnimatedSection>
 					</div>
-				</section>
-			</div>
+				</div>
+			</section>
+
+			{/* ── Quick answers ────────────────────────────────────── */}
+			<section className="py-20 md:py-24" style={{ background: "var(--surface-low)" }}>
+				<div className="page-wrapper">
+					<AnimatedSection>
+						<SectionHeading eyebrow="Before you write" title="Three things people" accent="usually ask." centered />
+					</AnimatedSection>
+					<div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+						{quickAnswers.map((item, index) => {
+							const Icon = item.icon;
+							return (
+								<motion.div
+									key={item.q}
+									initial={{ opacity: 0, y: 24 }}
+									whileInView={{ opacity: 1, y: 0 }}
+									viewport={{ once: true, margin: "-60px" }}
+									transition={{ duration: 0.6, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+									className="rounded-2xl p-7"
+									style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}
+								>
+									<Icon className="h-5 w-5" style={{ color: "var(--color-primary)" }} strokeWidth={1.6} />
+									<h3 className="mt-5 font-display text-lg" style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+										{item.q}
+									</h3>
+									<p className="mt-2.5 text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+										{item.a}
+									</p>
+								</motion.div>
+							);
+						})}
+					</div>
+				</div>
+			</section>
 		</Layout>
 	);
 };

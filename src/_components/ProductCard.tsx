@@ -75,21 +75,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	return (
 		<motion.div
 			layout
-			className="group rounded-xl overflow-hidden"
+			className="group relative overflow-hidden rounded-2xl"
 			style={{
 				background: "var(--surface-paper)",
 				border: "1px solid var(--border-light)",
 			}}
 			whileHover={{
-				y: -4,
-				boxShadow: "0 12px 24px -8px rgba(0,0,0,0.12)",
-				transition: { duration: 0.25, ease: "easeOut" },
+				y: -6,
+				boxShadow: "0 22px 44px -18px rgba(12,43,37,0.30)",
+				transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
 			}}
 		>
 			{/* Image */}
 			<Link href={`/product/${product?.id}`}>
 				<div
-					className="relative aspect-[4/3] overflow-hidden"
+					className="relative aspect-[4/5] overflow-hidden"
 					style={{ background: "var(--surface-medium)" }}
 				>
 					{imageUrl ? (
@@ -126,7 +126,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 						<motion.div
 							initial={{ scale: 0, rotate: -12 }}
 							animate={{ scale: 1, rotate: 0 }}
-							className="absolute top-3 left-3 px-2 py-0.5 rounded-md text-[0.6rem] font-bold text-white"
+							className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[0.6rem] font-bold text-white"
 							style={{ background: "#ef4444" }}
 						>
 							-{discount}%
@@ -159,7 +159,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 					{/* Quick view on hover — bottom of image */}
 					<div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
-						<div className="text-center text-[0.65rem] font-medium py-1.5 rounded-md backdrop-blur-md bg-white text-primary-700 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] dark:hover:shadow-[0_0_10px_rgba(154,202,60,0.25)] transition-all">
+						<div className="text-center text-[0.65rem] font-medium py-2 rounded-full backdrop-blur-md bg-white text-primary-700 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] dark:hover:shadow-[0_0_10px_rgba(154,202,60,0.25)] transition-all">
 							View Details →
 						</div>
 					</div>
@@ -167,11 +167,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 			</Link>
 
 			{/* Details */}
-			<div className="p-4">
+			<div className="p-5">
 				<Link href={`/product/${product.id}`}>
 					<h3
-						className="font-semibold text-sm leading-snug mb-1 transition-colors line-clamp-1"
-						style={{ color: "var(--text-primary)" }}
+						className="font-display text-base leading-snug mb-1 line-clamp-1 transition-colors"
+						style={{ color: "var(--text-primary)", fontWeight: 500 }}
 					>
 						{product.name}
 					</h3>
@@ -210,7 +210,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 				{/* Price */}
 				<div className="flex items-baseline gap-2 mb-3">
-					<span className="text-lg font-bold tabular-nums" style={{ color: "var(--color-primary)" }}>
+					<span className="font-display text-xl tabular-nums" style={{ color: "var(--color-primary)", fontWeight: 600 }}>
 						{formatPrice(price)}
 					</span>
 					{originalPrice && originalPrice > price && (
@@ -225,7 +225,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 					{isAdmin ? (
 						<Link
 							href={`/product/${product.id}`}
-							className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold border border-outline dark:border-white/15 text-primary-700 dark:text-primary-400 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] dark:hover:bg-white/5 dark:hover:shadow-[0_0_10px_rgba(154,202,60,0.25)] transition-all"
+							className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold border border-outline dark:border-white/15 text-primary-700 dark:text-primary-400 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] dark:hover:bg-white/5 dark:hover:shadow-[0_0_10px_rgba(154,202,60,0.25)] transition-all"
 						>
 							View Details
 						</Link>
@@ -237,8 +237,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 								initial={{ opacity: 0, scale: 0.8 }}
 								animate={{ opacity: 1, scale: 1 }}
 								exit={{ opacity: 0, scale: 0.8 }}
-								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold"
-								style={{ background: "rgba(22,163,74,0.1)", color: "var(--color-primary)" }}
+								className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold"
+								style={{ background: "rgba(154,202,60,0.14)", color: "var(--color-primary)" }}
 							>
 								<Check className="h-3.5 w-3.5" />
 								Added!
@@ -250,7 +250,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 								animate={{ opacity: 1 }}
 								exit={{ opacity: 0 }}
 								onClick={handleAddToCart}
-								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+								className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer"
 								style={{ border: "1px solid #ef4444", color: "#ef4444" }}
 								whileTap={{ scale: 0.95 }}
 							>
@@ -265,7 +265,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 								exit={{ opacity: 0 }}
 								onClick={handleAddToCart}
 								disabled={!inStock}
-								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-white bg-primary-600 hover:bg-gradient-to-r hover:from-primary-700 hover:via-primary-600 hover:to-lime-600 hover:shadow-[0_0_16px_rgba(154,202,60,0.45)] dark:hover:to-lime-700 dark:hover:shadow-[0_0_12px_rgba(154,202,60,0.25)] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+								className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold text-white bg-primary-600 hover:bg-gradient-to-r hover:from-primary-700 hover:via-primary-600 hover:to-lime-600 hover:shadow-[0_0_16px_rgba(154,202,60,0.45)] dark:hover:to-lime-700 dark:hover:shadow-[0_0_12px_rgba(154,202,60,0.25)] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
 								whileHover={{ scale: 1.02 }}
 								whileTap={{ scale: 0.95 }}
 							>

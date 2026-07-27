@@ -2,6 +2,10 @@
 @config "../../tailwind.config.ts";
 @custom-variant dark (&:where(.dark, .dark *));
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap");
+/* Fraunces — an old-style serif with a SOFT axis and optical sizing. Its
+   slightly irregular, botanical letterforms carry the "grown, not manufactured"
+   idea that a neutral geometric sans cannot. Display only; DM Sans stays for UI. */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap");
 
 /* ─── CSS Custom Properties ───────────────────────────────────────────── */
 

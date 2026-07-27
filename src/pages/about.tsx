@@ -1,135 +1,248 @@
 import React from "react";
-import { Leaf, Heart, Shield } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Leaf, Heart, Shield, ArrowRight, Handshake, Map, Microscope, Users } from "lucide-react";
+
 import Layout from "@/_components/Layout";
 import AnimatedSection from "@/_UI/AnimatedSection";
-import Card from "@/_UI/Card";
+import SectionHeading from "@/_UI/SectionHeading";
+import Timeline, { TimelineItem } from "@/_UI/Timeline";
 
 const values = [
 	{
 		icon: Leaf,
 		title: "Sustainability",
-		desc: "We source exclusively from certified organic farms that practice regenerative agriculture, ensuring the earth gives back as much as it provides.",
+		desc: "We source exclusively from farms practising regenerative agriculture — rotation, cover cropping, and no synthetic inputs, so the soil is richer each season rather than poorer.",
 	},
 	{
 		icon: Heart,
 		title: "Wellness",
-		desc: "Every product we offer is designed to enhance your body's natural immune system and support reproductive health through the power of nature.",
+		desc: "Every product supports immunity or reproductive health through whole-plant preparations, not isolated compounds reassembled in a lab.",
 	},
 	{
 		icon: Shield,
 		title: "Integrity",
-		desc: "We stand behind every product with full transparency on sourcing, ingredients, and processing. No fillers, no shortcuts, no compromises.",
+		desc: "Full transparency on sourcing, ingredients and processing. If a batch misses its potency threshold, it does not ship — and we say so.",
+	},
+];
+
+const story: TimelineItem[] = [
+	{
+		label: "2019",
+		title: "A question at a market stall",
+		description:
+			"Our founders kept meeting the same problem: potent Nigerian botanicals were being sold with no provenance, no dosage guidance, and no way to know what was actually in the bag.",
+		icon: Map,
+	},
+	{
+		label: "2020",
+		title: "First three farms",
+		description:
+			"We partnered with three smallholder families in Kano, agreeing fixed prices above market rate in exchange for organic practice and harvest-window discipline.",
+		icon: Handshake,
+		meta: "Fixed pricing above market rate",
+	},
+	{
+		label: "2022",
+		title: "Our own assay process",
+		description:
+			"Rather than trust supplier claims, we began testing every batch for potency and contaminants — and publishing the certificate alongside the product.",
+		icon: Microscope,
+	},
+	{
+		label: "2024",
+		title: "Twelve farms, one standard",
+		description:
+			"The network grew to twelve partner farms across Kano and Kaduna, all held to the same harvest, handling and testing standard regardless of size.",
+		icon: Leaf,
+		meta: "12 farms across 2 states",
+	},
+	{
+		label: "Today",
+		title: "Thousands of health journeys",
+		description:
+			"Green Pasture now serves customers nationwide seeking natural support for immunity and fertility — with the batch record still attached to every jar.",
+		icon: Users,
 	},
 ];
 
 const About = () => {
 	return (
 		<Layout pageTitle="About">
-			<div className="bg-mint-50 dark:bg-[#0a0f1a]">
-				{/* Hero */}
-				<section className="py-16 md:py-24 bg-gradient-to-br from-mint-100 via-mint-50 to-lime-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
-					<div className="container page-wrapper mx-auto px-4">
-						<AnimatedSection>
-							<div className="max-w-3xl mx-auto text-center">
-								<p className="text-primary-600 dark:text-primary-400 uppercase tracking-widest text-xs font-semibold mb-3">
-									ABOUT US
-								</p>
-								<h1 className="text-3xl md:text-5xl font-bold text-on-surface dark:text-white mb-6 leading-tight">
-									Nurturing Health Through Nature's Finest
-								</h1>
-								<p className="text-lg text-on-surface-variant dark:text-gray-400 leading-relaxed">
-									Green Pastures Organics is a premium dietary supplement platform
-									dedicated to elevating immunity and fertility with organically
-									sourced products. We bridge the gap between nature's potent remedies
-									and modern wellness needs.
-								</p>
-							</div>
-						</AnimatedSection>
-					</div>
-				</section>
+			{/* ── Editorial hero ───────────────────────────────────── */}
+			<section className="relative overflow-hidden" style={{ background: "var(--background)" }}>
+				<div
+					aria-hidden
+					className="pointer-events-none absolute -right-40 -top-40 h-[36rem] w-[36rem] rounded-full opacity-70"
+					style={{ background: "radial-gradient(circle,rgba(154,202,60,0.16),transparent 66%)" }}
+				/>
+				<div className="page-wrapper relative py-20 md:py-28">
+					<div className="grid items-center gap-14 lg:grid-cols-[1.1fr_0.9fr]">
+						<div>
+							<motion.p
+								initial={{ opacity: 0, y: 16 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.6 }}
+								className="mb-5 text-[0.68rem] font-semibold uppercase tracking-[0.22em]"
+								style={{ color: "#7fac2d" }}
+							>
+								About us
+							</motion.p>
+							<motion.h1
+								initial={{ opacity: 0, y: 24 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.75, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+								className="font-display text-4xl leading-[1.03] tracking-[-0.02em] sm:text-5xl lg:text-[3.6rem]"
+								style={{ color: "var(--text-primary)", fontWeight: 300 }}
+							>
+								We did not invent
+								<br />
+								these remedies.
+								<br />
+								<span className="italic" style={{ color: "var(--color-primary)", fontWeight: 500 }}>
+									We made them traceable.
+								</span>
+							</motion.h1>
+							<motion.p
+								initial={{ opacity: 0, y: 20 }}
+								animate={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.7, delay: 0.22 }}
+								className="mt-8 max-w-lg text-base leading-relaxed sm:text-lg"
+								style={{ color: "var(--text-secondary)" }}
+							>
+								Green Pasture Organics bridges generations of Nigerian agricultural knowledge
+								and the evidence modern buyers deserve — potent botanicals, grown well, tested
+								honestly, and documented from the row to the jar.
+							</motion.p>
+						</div>
 
-				{/* Mission / Values */}
-				<section className="py-16 md:py-24 bg-white dark:bg-transparent">
-					<div className="container page-wrapper mx-auto px-4">
-						<AnimatedSection>
-							<div className="text-center mb-12">
-								<p className="text-primary-600 dark:text-primary-400 uppercase tracking-widest text-xs font-semibold mb-3">
-									OUR VALUES
+						<motion.div
+							initial={{ opacity: 0, scale: 0.94 }}
+							animate={{ opacity: 1, scale: 1 }}
+							transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+							className="relative"
+						>
+							<div
+								className="overflow-hidden rounded-[28px]"
+								style={{ border: "1px solid var(--border-light)", boxShadow: "var(--shadow-xl)" }}
+							>
+								<Image
+									src="/images/Green_vegggies_1.jpeg"
+									alt="Organically farmed produce"
+									width={640}
+									height={720}
+									quality={95}
+									className="h-full w-full object-cover"
+								/>
+							</div>
+							<div
+								className="absolute -bottom-6 -left-6 hidden rounded-2xl px-6 py-5 backdrop-blur-sm sm:block"
+								style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)", boxShadow: "var(--shadow-lg)" }}
+							>
+								<p className="font-display text-3xl tabular-nums" style={{ color: "var(--color-primary)", fontWeight: 500 }}>
+									12
 								</p>
-								<h2 className="text-3xl font-bold text-on-surface dark:text-white">
-									What We Stand For
-								</h2>
-							</div>
-						</AnimatedSection>
-
-						<AnimatedSection delay={0.2}>
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-								{values.map((value, index) => {
-									const Icon = value.icon;
-									return (
-										<Card
-											key={index}
-											elevation={2}
-											hoverable
-											padding="lg"
-											className="text-center border-outline dark:border-white/[0.12]"
-										>
-											<div className="bg-primary-100 dark:bg-primary-900/30 rounded-radius-lg p-4 w-16 h-16 flex items-center justify-center mx-auto mb-5">
-												<Icon className="h-8 w-8 text-primary-600 dark:text-primary-400" />
-											</div>
-											<h3 className="font-bold text-xl mb-3 text-on-surface dark:text-white">
-												{value.title}
-											</h3>
-											<p className="text-on-surface-variant dark:text-gray-400 leading-relaxed">
-												{value.desc}
-											</p>
-										</Card>
-									);
-								})}
-							</div>
-						</AnimatedSection>
-					</div>
-				</section>
-
-				{/* Our Story */}
-				<section className="py-16 md:py-24 bg-mint dark:bg-white/[0.04]">
-					<div className="container page-wrapper mx-auto px-4">
-						<AnimatedSection>
-							<div className="max-w-3xl mx-auto">
-								<p className="text-primary-600 dark:text-primary-400 uppercase tracking-widest text-xs font-semibold mb-3">
-									OUR STORY
+								<p className="mt-0.5 text-[0.68rem] uppercase tracking-[0.14em]" style={{ color: "var(--text-hint)" }}>
+									Partner farms
 								</p>
-								<h2 className="text-3xl font-bold text-on-surface dark:text-white mb-6">
-									From Farm to Your Doorstep
-								</h2>
-								<div className="space-y-4 text-on-surface/80 dark:text-gray-300 leading-relaxed">
-									<p>
-										Green Pastures Organics was born from a simple belief: that nature
-										provides everything we need to live healthier, more vibrant lives.
-										Our founders, drawing from deep roots in Nigerian agricultural
-										traditions, set out to create a platform that connects people
-										directly with the healing power of organic fruits, vegetables, and
-										herbs.
-									</p>
-									<p>
-										We work with trusted organic farms across Northern Nigeria, where
-										ideal growing conditions and generations of farming wisdom combine
-										to produce products of exceptional quality. Every item in our
-										catalogue has been carefully vetted for purity, potency, and
-										sustainability.
-									</p>
-									<p>
-										Today, Green Pastures serves thousands of customers seeking natural
-										solutions for immune support, fertility enhancement, and overall
-										wellness. We are proud to be a part of their health journeys and
-										remain committed to making premium organic products accessible to all.
-									</p>
-								</div>
 							</div>
-						</AnimatedSection>
+						</motion.div>
 					</div>
-				</section>
-			</div>
+				</div>
+			</section>
+
+			{/* ── Values ───────────────────────────────────────────── */}
+			<section className="py-20 md:py-28" style={{ background: "var(--surface-low)" }}>
+				<div className="page-wrapper">
+					<AnimatedSection>
+						<SectionHeading eyebrow="Our values" title="Three things we will not" accent="trade away." />
+					</AnimatedSection>
+
+					<div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+						{values.map((value, index) => {
+							const Icon = value.icon;
+							return (
+								<motion.div
+									key={value.title}
+									initial={{ opacity: 0, y: 26 }}
+									whileInView={{ opacity: 1, y: 0 }}
+									viewport={{ once: true, margin: "-60px" }}
+									transition={{ duration: 0.6, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+									className="group relative overflow-hidden rounded-2xl p-8"
+									style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}
+								>
+									<span
+										aria-hidden
+										className="absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+										style={{ background: "radial-gradient(circle,rgba(154,202,60,0.18),transparent 70%)" }}
+									/>
+									<span
+										className="relative flex h-12 w-12 items-center justify-center rounded-xl"
+										style={{ background: "rgba(154,202,60,0.12)" }}
+									>
+										<Icon className="h-5 w-5" style={{ color: "var(--color-primary)" }} strokeWidth={1.6} />
+									</span>
+									<h3
+										className="relative mt-6 font-display text-2xl"
+										style={{ color: "var(--text-primary)", fontWeight: 500 }}
+									>
+										{value.title}
+									</h3>
+									<p className="relative mt-3 text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+										{value.desc}
+									</p>
+								</motion.div>
+							);
+						})}
+					</div>
+				</div>
+			</section>
+
+			{/* ── Story timeline ───────────────────────────────────── */}
+			<section className="py-20 md:py-28" style={{ background: "var(--background)" }}>
+				<div className="page-wrapper">
+					<AnimatedSection>
+						<SectionHeading eyebrow="Our story" title="How a market-stall question" accent="became a supply chain." centered />
+					</AnimatedSection>
+					<div className="mx-auto mt-16 max-w-4xl">
+						<Timeline items={story} />
+					</div>
+				</div>
+			</section>
+
+			{/* ── Close ────────────────────────────────────────────── */}
+			<section className="pb-24" style={{ background: "var(--background)" }}>
+				<div className="page-wrapper">
+					<AnimatedSection>
+						<div
+							className="relative overflow-hidden rounded-3xl px-8 py-14 text-center md:px-16"
+							style={{ background: "linear-gradient(150deg,#0c2b25,#164438 60%,#1f6554)" }}
+						>
+							<h2 className="font-display text-3xl leading-tight text-[#f4f8e8] md:text-4xl" style={{ fontWeight: 300 }}>
+								Come see what's <span className="italic" style={{ color: "#b9dd72", fontWeight: 500 }}>in season</span>
+							</h2>
+							<div className="mt-8 flex flex-wrap justify-center gap-3">
+								<Link
+									href="/products"
+									className="group inline-flex items-center gap-2.5 rounded-full px-7 py-3.5 text-sm font-semibold transition-all duration-300 hover:shadow-[0_0_34px_rgba(154,202,60,0.45)]"
+									style={{ background: "#9aca3c", color: "#0c2b25" }}
+								>
+									Browse the range
+									<ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+								</Link>
+								<Link
+									href="/contact"
+									className="rounded-full px-7 py-3.5 text-sm font-medium transition-colors duration-300"
+									style={{ border: "1px solid rgba(226,238,206,0.28)", color: "rgba(226,238,206,0.9)" }}
+								>
+									Talk to us
+								</Link>
+							</div>
+						</div>
+					</AnimatedSection>
+				</div>
+			</section>
 		</Layout>
 	);
 };
