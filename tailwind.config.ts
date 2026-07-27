@@ -10,6 +10,7 @@ const config: Config = {
 		extend: {
 			fontFamily: {
 				sans: ['"DM Sans"', "system-ui", "sans-serif"],
+				display: ['"Fraunces"', "Georgia", "serif"],
 			},
 			colors: {
 				// Brand primary — re-anchored on Deep Teal #103630

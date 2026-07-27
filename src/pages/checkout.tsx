@@ -310,12 +310,22 @@ const CheckoutPage: React.FC = () => {
 
 	const taxRate = Number(storeConfig?.orderSettings?.taxRate) || 0;
 	const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold) || 0;
-	const shippingFee = Number(storeConfig?.shippingConfig?.methods?.[0]?.baseCost) || 0;
+
+	// Price the method the customer picked. Reading methods[0] unconditionally
+	// meant express shipping was displayed — and charged — at standard cost.
+	const shippingMethods = storeConfig?.shippingConfig?.methods ?? [];
+	const activeMethod =
+		shippingMethods.find(
+			(m: any) => String(m?.name ?? m?.code ?? "").toUpperCase() === String(selectedShipping ?? "").toUpperCase(),
+		) ?? shippingMethods[0];
+	const shippingFee = Number(activeMethod?.baseCost) || 0;
 
 	const subtotal = total;
 	const shipping = freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : shippingFee;
 	const tax = Math.round(subtotal * taxRate);
-	const finalTotal = subtotal + shipping + tax - couponDiscount;
+	// Display only — the server recomputes all of this at checkout and the
+	// order is charged from its figures, not these.
+	const finalTotal = Math.max(0, subtotal + shipping + tax - couponDiscount);
 
 	const handleApplyCoupon = async () => {
 		if (!couponCode.trim()) return;
@@ -442,7 +452,11 @@ const CheckoutPage: React.FC = () => {
 
 				// Step 4: Create order from cart (idempotent — returns existing if cart already checked out)
 				const orderResult = await dispatch(
-					checkoutAction.checkoutCartAsync(activeCartId)
+					checkoutAction.checkoutCartAsync({
+						cartId: activeCartId,
+						couponCode: couponApplied ? couponCode : undefined,
+						shippingMethod: data.shippingMethod,
+					})
 				).unwrap();
 
 				const orderId = orderResult?.data?.id;
@@ -509,6 +523,7 @@ const CheckoutPage: React.FC = () => {
 					})),
 					shippingMethod: data.shippingMethod,
 					paymentMethod: data.paymentMethod === "CARD" ? "Paystack" : "Cash On Delivery",
+					couponCode: couponApplied ? couponCode : undefined,
 					shippingAddress: {
 						houseAddress: data.shippingAddress.street,
 						city: data.shippingAddress.city,

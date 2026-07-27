@@ -1,7 +1,6 @@
-import { Leaf, Truck, Shield, Award, Mail, ArrowRight } from "lucide-react";
+import { Leaf, Truck, Shield, Award, Mail, ArrowRight, Sprout, FlaskConical, PackageCheck, Home } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
@@ -10,34 +9,59 @@ import { productsAction } from "@/_redux/actions";
 import Products from "@/_components/Products";
 import Layout from "@/_components/Layout";
 import Button from "@/_UI/Button";
-import Card from "@/_UI/Card";
 import EmptyState from "@/_UI/EmptyState";
 import EmptyShelfIllustration from "@/_UI/illustrations/EmptyShelfIllustration";
+import BotanicalHero from "@/_components/BotanicalHero";
+import Timeline, { TimelineItem } from "@/_UI/Timeline";
+import SectionHeading from "@/_UI/SectionHeading";
 
 const features = [
-	{
-		icon: Leaf,
-		title: "100% Organic",
-		desc: "Certified organic products with no harmful chemicals or pesticides.",
-	},
-	{
-		icon: Truck,
-		title: "Fast Delivery",
-		desc: "Fresh products delivered to your door within 24-48 hours.",
-	},
-	{
-		icon: Shield,
-		title: "Quality Guarantee",
-		desc: "100% satisfaction guaranteed or your money back.",
-	},
-	{
-		icon: Award,
-		title: "Premium Quality",
-		desc: "Hand-picked products from trusted organic farms.",
-	},
+	{ icon: Leaf, title: "Certified organic", desc: "No synthetic pesticides, no growth agents, no fillers — verified at the farm gate." },
+	{ icon: Truck, title: "Picked to dispatch in 48h", desc: "Short chains keep potency high. Nothing sits in a warehouse losing its value." },
+	{ icon: Shield, title: "Batch-tested potency", desc: "Every batch is assayed before it ships, and the results travel with the jar." },
+	{ icon: Award, title: "Traceable to the row", desc: "Scan any label to see the farm, the harvest week, and the hands that grew it." },
 ];
 
-const heroWords = ["Your", "Source", "for", "Natural", "Health", "and", "Wellness"];
+/** The supply chain, told as the journey a single root actually takes. */
+const journey: TimelineItem[] = [
+	{
+		label: "Stage 01",
+		title: "Sown in Northern Nigerian soil",
+		description:
+			"We partner with twelve smallholder farms across Kano and Kaduna, chosen for mineral-dense soil and generations of dry-season growing knowledge.",
+		icon: Sprout,
+		meta: "12 partner farms",
+	},
+	{
+		label: "Stage 02",
+		title: "Harvested at peak potency",
+		description:
+			"Roots and leaves come up on a harvest window measured in days, not weeks — timed to when active compounds actually peak rather than when it suits logistics.",
+		icon: Leaf,
+	},
+	{
+		label: "Stage 03",
+		title: "Assayed, then pressed",
+		description:
+			"Each batch is tested for potency and contaminants before processing. Anything that misses the mark never reaches a jar, and the certificate follows the batch.",
+		icon: FlaskConical,
+		meta: "Batch certificate on every label",
+	},
+	{
+		label: "Stage 04",
+		title: "Sealed within 48 hours",
+		description:
+			"Cold-pressed, sealed and boxed inside two days of harvest, so what reaches you is closer to the field than to a shelf.",
+		icon: PackageCheck,
+	},
+	{
+		label: "Stage 05",
+		title: "At your door",
+		description:
+			"Delivered nationwide with the batch record attached — you can trace the jar in your hand back to the row it grew in.",
+		icon: Home,
+	},
+];
 
 const HomePage: React.FC = () => {
 	const dispatch = useAppDispatch();
@@ -51,148 +75,93 @@ const HomePage: React.FC = () => {
 
 	return (
 		<Layout pageTitle={"Home"}>
-			{/* Hero Section */}
-			<section className="relative min-h-[80vh] flex items-center py-16 md:py-24 bg-gradient-to-br from-primary-900 via-primary-700 to-primary-600 dark:from-primary-900 dark:via-[#0e0e1a] dark:to-[#0e0e1a] overflow-hidden">
-				{/* Decorative blurred shapes */}
-				<div className="absolute top-20 right-10 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-				<div className="absolute bottom-10 left-10 w-96 h-96 bg-lime-400/15 rounded-full blur-3xl" />
+			<BotanicalHero />
 
-				<div className="page-wrapper relative z-10">
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-						<div className="order-2 lg:order-1">
-							<motion.p
-								initial={{ opacity: 0, y: 20 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ duration: 0.5 }}
-								className="text-lime-300 dark:text-lime-300 uppercase tracking-widest text-sm font-medium mb-4"
-							>
-								Welcome to Green Pastures
-							</motion.p>
-
-							<h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-								{heroWords.map((word, i) => (
-									<motion.span
-										key={i}
-										initial={{ opacity: 0, y: 30 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ duration: 0.5, delay: 0.1 + i * 0.08 }}
-										className="inline-block mr-3"
-									>
-										{word}
-									</motion.span>
-								))}
-							</h1>
-
-							<motion.p
-								initial={{ opacity: 0, y: 20 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ duration: 0.5, delay: 0.7 }}
-								className="text-lg md:text-xl text-primary-100 dark:text-white/70 mb-8 max-w-lg leading-relaxed"
-							>
-								Elevating immunity and fertility with the power of nature.
-								Discover premium organic supplements crafted with care.
-							</motion.p>
-
-							<motion.div
-								initial={{ opacity: 0, y: 20 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ duration: 0.5, delay: 0.9 }}
-								className="flex flex-wrap gap-4"
-							>
-								<Link href="/products">
-									<button
-										className="group inline-flex items-center gap-2 px-6 py-3 text-base font-medium rounded-radius-md bg-white text-primary-700 hover:bg-mint-100 active:bg-gray-200 shadow-elevation-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97] cursor-pointer"
-									>
-										Shop Now
-										<ArrowRight className="h-5 w-5 text-lime-600 transition-transform duration-200 group-hover:translate-x-1" />
-									</button>
-								</Link>
-								<Link href="/about">
-									<button
-										className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium rounded-radius-md border border-white/50 text-white hover:bg-white/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97] cursor-pointer"
-									>
-										Learn More
-									</button>
-								</Link>
-							</motion.div>
+			{/* ── Why it's different ───────────────────────────────── */}
+			<section className="py-20 md:py-28" style={{ background: "var(--background)" }}>
+				<div className="page-wrapper">
+					<AnimatedSection>
+						<div className="grid gap-10 md:grid-cols-2 md:items-end">
+							<SectionHeading
+								eyebrow="Why Green Pasture"
+								title="Potency is a supply-chain problem."
+								accent="Most supplements lose it in transit."
+							/>
+							<p className="text-base leading-relaxed md:pb-2" style={{ color: "var(--text-secondary)" }}>
+								A root harvested and left in a warehouse for six weeks is a different product to
+								one sealed in two days. We built the chain backwards from that fact — fewer hands,
+								shorter distances, and a test result attached to every batch.
+							</p>
 						</div>
+					</AnimatedSection>
 
-						<motion.div
-							initial={{ opacity: 0, scale: 0.9 }}
-							animate={{ opacity: 1, scale: 1 }}
-							transition={{ duration: 0.8, delay: 0.3 }}
-							className="order-1 lg:order-2 flex justify-center"
-						>
-							<div className="relative w-full max-w-md animate-float">
-								<div className="aspect-square relative">
-									<Image
-										height={500}
-										width={500}
-										priority
-										quality={100}
-										src="/images/Green_vegggies_1.jpeg"
-										alt="Fresh green vegetables"
-										className="w-full h-full object-cover rounded-radius-xl shadow-elevation-4"
+					<div className="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-2xl sm:grid-cols-2 lg:grid-cols-4"
+						style={{ background: "var(--border-light)", border: "1px solid var(--border-light)" }}>
+						{features.map((feature, index) => {
+							const Icon = feature.icon;
+							return (
+								<motion.div
+									key={feature.title}
+									initial={{ opacity: 0, y: 20 }}
+									whileInView={{ opacity: 1, y: 0 }}
+									viewport={{ once: true, margin: "-60px" }}
+									transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+									className="group relative p-7 transition-colors duration-300"
+									style={{ background: "var(--surface-paper)" }}
+								>
+									<span
+										className="absolute inset-x-0 top-0 h-px origin-left scale-x-0 transition-transform duration-500 group-hover:scale-x-100"
+										style={{ background: "linear-gradient(to right,var(--color-primary),#9aca3c)" }}
 									/>
-								</div>
-							</div>
-						</motion.div>
+									<Icon className="h-6 w-6" style={{ color: "var(--color-primary)" }} strokeWidth={1.5} />
+									<h3 className="mt-5 font-display text-lg leading-snug" style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+										{feature.title}
+									</h3>
+									<p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+										{feature.desc}
+									</p>
+								</motion.div>
+							);
+						})}
 					</div>
 				</div>
 			</section>
 
-			{/* Features Section */}
-			<section className="py-16 md:py-24 bg-mint-50 dark:bg-[#0e0e1a]">
+			{/* ── Journey timeline ─────────────────────────────────── */}
+			<section className="py-20 md:py-28" style={{ background: "var(--surface-low)" }}>
 				<div className="page-wrapper">
 					<AnimatedSection>
-						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-							{features.map((feature, index) => {
-								const Icon = feature.icon;
-								return (
-									<Card
-										key={index}
-										elevation={1}
-										hoverable
-										padding="lg"
-										className="text-center animate-card-enter"
-									>
-										<div className="bg-lime-100 dark:bg-lime-500/10 rounded-radius-lg p-4 w-16 h-16 flex items-center justify-center mx-auto mb-4">
-											<Icon className="h-8 w-8 text-primary-700 dark:text-lime-400" />
-										</div>
-										<h3 className="font-semibold text-lg mb-2 text-on-surface dark:text-white/90">
-											{feature.title}
-										</h3>
-										<p className="text-on-surface-variant dark:text-white/50 text-sm leading-relaxed">
-											{feature.desc}
-										</p>
-									</Card>
-								);
-							})}
-						</div>
+						<SectionHeading
+							eyebrow="Soil to shelf"
+							title="Follow a root"
+							accent="from the row to your door."
+							centered
+						/>
 					</AnimatedSection>
+					<div className="mx-auto mt-16 max-w-4xl">
+						<Timeline items={journey} />
+					</div>
 				</div>
 			</section>
 
-			{/* Featured Products */}
-			<section className="py-16 md:py-24 bg-mint dark:bg-white/[0.02]">
+			{/* ── Featured products ────────────────────────────────── */}
+			<section className="py-20 md:py-28" style={{ background: "var(--background)" }}>
 				<div className="page-wrapper">
 					<AnimatedSection>
-						<div className="text-center mb-10 lg:mb-14">
-							<p className="text-lime-600 dark:text-lime-400 uppercase tracking-widest text-xs font-semibold mb-3">
-								OUR PRODUCTS
-							</p>
-							<h2 className="text-3xl lg:text-4xl font-bold text-on-surface dark:text-white/90 mb-4">
-								Featured Products
-							</h2>
-							<p className="text-on-surface-variant dark:text-white/50 max-w-2xl mx-auto">
-								Discover our most popular organic products, carefully
-								selected for their exceptional quality and nutritional
-								value.
-							</p>
+						<div className="mb-12 flex flex-wrap items-end justify-between gap-6">
+							<SectionHeading eyebrow="The range" title="Small catalogue," accent="deliberately." />
+							<Link
+								href="/products"
+								className="group inline-flex items-center gap-2 text-sm font-medium"
+								style={{ color: "var(--color-primary)" }}
+							>
+								Browse everything
+								<ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+							</Link>
 						</div>
 					</AnimatedSection>
 
-					<AnimatedSection delay={0.2}>
+					<AnimatedSection delay={0.15}>
 						{featuredProducts?.length > 0 ? (
 							<Products products={featuredProducts} />
 						) : (
@@ -205,8 +174,8 @@ const HomePage: React.FC = () => {
 					</AnimatedSection>
 
 					{products?.length > 4 && (
-						<AnimatedSection delay={0.3}>
-							<div className="text-center mt-8">
+						<AnimatedSection delay={0.25}>
+							<div className="mt-10 text-center">
 								<Link href="/products">
 									<Button variant="filled" size="lg" rightIcon={ArrowRight}>
 										View All Products
@@ -218,32 +187,53 @@ const HomePage: React.FC = () => {
 				</div>
 			</section>
 
-			{/* Newsletter Section */}
-			<section className="py-16 md:py-24 bg-white dark:bg-[#0e0e1a]">
+			{/* ── Newsletter ───────────────────────────────────────── */}
+			<section className="py-20 md:py-28" style={{ background: "var(--background)" }}>
 				<div className="page-wrapper">
 					<AnimatedSection>
-						<div className="bg-primary-800 dark:bg-primary-900 text-center max-w-3xl mx-auto rounded-radius-xl p-8">
-							<h2 className="text-3xl font-bold mb-4 text-white">
-								Stay Updated
-							</h2>
-							<p className="text-primary-200 mb-8 max-w-lg mx-auto">
-								Subscribe to our newsletter for the latest organic products,
-								health tips, and exclusive offers.
-							</p>
-							<div className="flex flex-col sm:flex-row max-w-md mx-auto gap-3">
-								<div className="relative flex-1">
-									<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-on-surface/50 pointer-events-none" />
-									<input
-										type="email"
-										placeholder="Enter your email"
-										value={email}
-										onChange={(e) => setEmail(e.target.value)}
-										className="w-full rounded-radius-md bg-white text-on-surface placeholder-gray-400 pl-10 pr-3 py-2.5 text-sm border border-transparent outline-none focus:ring-2 focus:ring-lime-400/60 transition"
-									/>
-								</div>
-								<button className="rounded-radius-md bg-white text-primary-700 font-medium px-5 py-2.5 text-sm hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] active:bg-gray-200 shrink-0 transition-all cursor-pointer">
-									Subscribe
-								</button>
+						<div
+							className="relative overflow-hidden rounded-3xl px-8 py-14 text-center md:px-16 md:py-20"
+							style={{ background: "linear-gradient(150deg,#0c2b25,#164438 60%,#1f6554)" }}
+						>
+							<div
+								aria-hidden
+								className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full"
+								style={{ background: "radial-gradient(circle,rgba(154,202,60,0.20),transparent 68%)" }}
+							/>
+							<div className="relative mx-auto max-w-xl">
+								<h2 className="font-display text-3xl leading-tight text-[#f4f8e8] md:text-4xl" style={{ fontWeight: 300 }}>
+									Harvest notes, <span className="italic" style={{ color: "#b9dd72", fontWeight: 500 }}>monthly</span>
+								</h2>
+								<p className="mx-auto mt-4 max-w-md text-sm leading-relaxed" style={{ color: "rgba(226,238,206,0.7)" }}>
+									What came out of the ground this month, what it's good for, and the occasional
+									note from the farms. No filler.
+								</p>
+								<form
+									onSubmit={(e) => e.preventDefault()}
+									className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row"
+								>
+									<div className="relative flex-1">
+										<Mail
+											className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2"
+											style={{ color: "rgba(12,43,37,0.45)" }}
+										/>
+										<input
+											type="email"
+											placeholder="you@example.com"
+											value={email}
+											onChange={(e) => setEmail(e.target.value)}
+											className="w-full rounded-full border border-transparent py-3 pl-11 pr-4 text-sm outline-none transition focus:ring-2"
+											style={{ background: "#f4f8e8", color: "#0c2b25" }}
+										/>
+									</div>
+									<button
+										type="submit"
+										className="shrink-0 rounded-full px-7 py-3 text-sm font-semibold transition-all duration-300 hover:shadow-[0_0_30px_rgba(154,202,60,0.5)]"
+										style={{ background: "#9aca3c", color: "#0c2b25" }}
+									>
+										Subscribe
+									</button>
+								</form>
 							</div>
 						</div>
 					</AnimatedSection>
