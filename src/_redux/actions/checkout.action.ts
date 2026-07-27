@@ -10,13 +10,23 @@ export interface PlaceOrderPayload {
 	shippingAddress: ShippingAddress;
 }
 
+export interface CheckoutCartPayload {
+	cartId: number;
+	/** Server re-validates and prices this; the client's discount figure is ignored. */
+	couponCode?: string;
+	shippingMethod?: ShippingMethodType;
+}
+
 const checkoutCartAsync = createAsyncThunk<
 	any,
-	number,
+	CheckoutCartPayload,
 	{ rejectValue: string }
->("checkout/checkoutCart", async (cartId, { rejectWithValue }) => {
+>("checkout/checkoutCart", async ({ cartId, couponCode, shippingMethod }, { rejectWithValue }) => {
 	try {
-		const response = await axiosInstance.post(`order/checkout/${cartId}`);
+		const response = await axiosInstance.post(`order/checkout/${cartId}`, {
+			...(couponCode ? { couponCode } : {}),
+			...(shippingMethod ? { shippingMethod } : {}),
+		});
 		return response.data;
 	} catch (error: any) {
 		return rejectWithValue(extractErrorMessage(error));
