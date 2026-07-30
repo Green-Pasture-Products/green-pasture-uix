@@ -3,7 +3,9 @@ import { persistor, store, useAppDispatch, useAppSelector } from "@/_redux/store
 import { ThemeProvider } from "@/_hooks/useTheme";
 import { CurrencyProvider } from "@/_hooks/useCurrency";
 import PageTransition from "@/_UI/PageTransition";
+import { OutcomeProvider } from "@/_UI/Outcome";
 import { initAuth } from "@/_utils/authInit";
+import { fetchStoreSettings } from "@/_redux/reducers/settings.reducer";
 import { scheduleProactiveRefresh, stopAuthScheduler } from "@/_utils/tokenRefresh";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
@@ -22,6 +24,9 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		initAuth(dispatch);
+		// Admin-owned storefront settings (free-shipping threshold, tax, discount
+		// kill-switch). Public endpoint, so this runs regardless of auth state.
+		dispatch(fetchStoreSettings());
 		return () => stopAuthScheduler();
 	}, [dispatch]);
 
@@ -66,11 +71,13 @@ export default function App({ Component, pageProps }: AppProps) {
 					<AuthBootstrap>
 						<ThemeProvider>
 							<CurrencyProvider>
-								<NuqsAdapter>
-									<PageTransition>
-										<Component key={nuqsDevKey} {...pageProps} />
-									</PageTransition>
-								</NuqsAdapter>
+								<OutcomeProvider>
+										<NuqsAdapter>
+											<PageTransition>
+												<Component key={nuqsDevKey} {...pageProps} />
+											</PageTransition>
+										</NuqsAdapter>
+									</OutcomeProvider>
 							</CurrencyProvider>
 						</ThemeProvider>
 					</AuthBootstrap>

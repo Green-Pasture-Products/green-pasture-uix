@@ -10,6 +10,7 @@ import searchReducer from "./search.reducer";
 import checkoutReducer from "./checkout.reducer";
 import reviewReducer from "./review.reducer";
 import profileReducer from "./profile.reducer";
+import settingsReducer from "./settings.reducer";
 
 const rootReducer = combineReducers({
 	auth: authReducer,
@@ -23,6 +24,7 @@ const rootReducer = combineReducers({
 	checkout: checkoutReducer,
 	review: reviewReducer,
 	profile: profileReducer,
+	settings: settingsReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

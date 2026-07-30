@@ -172,7 +172,7 @@ const AddProductPage: React.FC = () => {
 							)}
 						/>
 
-						<div className="grid grid-cols-2 gap-4">
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 							<Controller
 								name="price"
 								control={control}
@@ -203,7 +203,7 @@ const AddProductPage: React.FC = () => {
 							/>
 						</div>
 
-						<div className="grid grid-cols-2 gap-4">
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 							<Controller
 								name="unit"
 								control={control}

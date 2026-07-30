@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 interface ModalProps {
@@ -40,6 +40,27 @@ const Modal: React.FC<ModalProps> = ({
 			document.body.style.overflow = "";
 		};
 	}, [isOpen]);
+
+	// Focus returns to whatever opened the modal — otherwise keyboard users are
+	// stranded at the top of the document on close. Keyed on `isOpen` alone and
+	// held in a ref: if this depended on `onClose`, a caller passing an inline
+	// arrow would re-run the effect on every render and the cleanup would yank
+	// focus out of the modal while it is still open.
+	const openerRef = useRef<HTMLElement | null>(null);
+	useEffect(() => {
+		if (!isOpen) return;
+		openerRef.current = document.activeElement as HTMLElement | null;
+		return () => openerRef.current?.focus?.();
+	}, [isOpen]);
+
+	useEffect(() => {
+		if (!isOpen) return;
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") onClose();
+		};
+		document.addEventListener("keydown", onKeyDown);
+		return () => document.removeEventListener("keydown", onKeyDown);
+	}, [isOpen, onClose]);
 
 	if (!isOpen || !isClient) return null;
 

@@ -43,7 +43,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const reviewCount = p.ratingStats?.count ?? p.reviews ?? 0;
 	const inStock = p.unit > 0 || p.inStock;
 	const price = Number(p.price || 0);
-	const originalPrice = p.originalPrice ? Number(p.originalPrice) : null;
+	// Admin kill-switch: hide the sale treatment site-wide without touching the
+	// stored originalPrice, so it can be switched back on unchanged.
+	const showDiscount = useAppSelector((state) => state.settings.showDiscountBadges);
+	const originalPrice =
+		showDiscount && p.originalPrice ? Number(p.originalPrice) : null;
 	const discount = originalPrice && originalPrice > price
 		? Math.round(((originalPrice - price) / originalPrice) * 100)
 		: null;

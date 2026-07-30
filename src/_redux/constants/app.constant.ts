@@ -18,7 +18,6 @@ export const appConstants = {
 
 	ROOT_STORAGE: "Green_Pastures_GlObAl-StAtE_v2" as const,
 
-	FREE_SHIPPING_THRESHOLD: 50000 as const,
 
 	SHIPPING_FEE: 10000 as const,
 

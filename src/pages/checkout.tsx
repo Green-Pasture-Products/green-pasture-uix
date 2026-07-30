@@ -25,6 +25,8 @@ import { resetCheckout, clearCheckoutError } from "@/_redux/reducers/checkout.re
 import Image from "next/image";
 import Layout from "@/_components/Layout";
 import toast from "react-hot-toast";
+import { useOutcome } from "@/_UI/Outcome";
+import { formatRateAsPercent } from "@/_utils/rate";
 import { FormInput } from "@/_UI/FormField";
 import Button from "@/_UI/Button";
 import PageLoader from "@/_UI/PageLoader";
@@ -240,6 +242,9 @@ const StepIndicator: React.FC<{ currentStep: number }> = ({ currentStep }) => (
 /* ------------------------------------------------------------------ */
 
 const CheckoutPage: React.FC = () => {
+	// Money-moment failures get the blocking outcome modal, not a toast that can
+	// scroll away unnoticed while the customer waits for a payment page.
+	const { failure } = useOutcome();
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { items, total, cartId } = useAppSelector((state) => state.cart);
@@ -462,7 +467,12 @@ const CheckoutPage: React.FC = () => {
 				const orderId = orderResult?.data?.id;
 				const orderReference = orderResult?.data?.orderReference;
 				if (!orderId) {
-					toast.error("Failed to create order");
+					failure({
+							title: "We couldn't place your order",
+							message:
+								"Your order was not created and you have not been charged. Your cart is still intact, so you can try again.",
+							action: { label: "Back to cart", href: "/cart" },
+						});
 					return;
 				}
 
@@ -499,7 +509,12 @@ const CheckoutPage: React.FC = () => {
 				if (authUrl) {
 					redirectToPaystack(authUrl);
 				} else {
-					toast.error("Failed to initialize payment. Please try again.");
+					failure({
+							title: "Payment could not be started",
+							message:
+								"Your order was created but we couldn't reach the payment provider, so nothing has been charged. You can retry payment from your orders.",
+							action: { label: "Go to my orders", href: "/my-orders" },
+						});
 				}
 			} else {
 				// ---- Guest checkout flow ----
@@ -539,7 +554,12 @@ const CheckoutPage: React.FC = () => {
 				const orderId = guestRes.data?.data?.orderId;
 				const guestOrderReference = guestRes.data?.data?.orderReference;
 				if (!orderId) {
-					toast.error("Failed to create order");
+					failure({
+							title: "We couldn't place your order",
+							message:
+								"Your order was not created and you have not been charged. Your cart is still intact, so you can try again.",
+							action: { label: "Back to cart", href: "/cart" },
+						});
 					return;
 				}
 
@@ -572,7 +592,11 @@ const CheckoutPage: React.FC = () => {
 				if (authUrl) {
 					redirectToPaystack(authUrl);
 				} else {
-					toast.error("Failed to initialize payment.");
+					failure({
+							title: "Payment could not be started",
+							message:
+								"Your order was created but we couldn't reach the payment provider, so nothing has been charged. Check your email for the order reference.",
+						});
 				}
 			}
 		} catch (err: any) {
@@ -1042,7 +1066,7 @@ const CheckoutPage: React.FC = () => {
 									</span>
 								</div>
 								<div className="flex justify-between text-sm">
-									<span style={{ color: "var(--text-secondary)" }}>Tax ({Math.round(taxRate * 100)}%)</span>
+									<span style={{ color: "var(--text-secondary)" }}>Tax ({formatRateAsPercent(taxRate)})</span>
 									<span className="font-medium" style={{ color: "var(--text-primary)" }}>
 										&#8358;{tax.toLocaleString()}
 									</span>

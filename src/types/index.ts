@@ -159,7 +159,6 @@ export interface CartState {
 	loading: boolean;
 	itemCount: number;
 	taxRate: number;
-	freeShippingThreshold: number;
 	lastUpdated: number | null;
 }
 

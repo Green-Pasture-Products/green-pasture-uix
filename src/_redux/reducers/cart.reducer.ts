@@ -15,7 +15,6 @@ const initialState: CartState & { cartId: number | null } = {
 	total: 0,
 	loading: false,
 	itemCount: 0,
-	freeShippingThreshold: appConstants.FREE_SHIPPING_THRESHOLD,
 	taxRate: 0.08,
 	error: null,
 	lastUpdated: null,
@@ -79,9 +78,6 @@ const cartSlice = createSlice({
 				0
 			);
 			// state.total = Math.max(0, subtotal - state.discountAmount);
-		},
-		setFreeShippingThreshold: (state, action: PayloadAction<number>) => {
-			state.freeShippingThreshold = action.payload;
 		},
 		applyCoupon: (
 			state,
@@ -242,7 +238,6 @@ export const {
 	updateQuantity,
 	clearCart,
 	calculateTotals,
-	setFreeShippingThreshold,
 	applyCoupon,
 	removeCoupon,
 	clearError,

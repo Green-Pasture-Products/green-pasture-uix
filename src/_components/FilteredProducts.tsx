@@ -47,6 +47,7 @@ const FilteredProducts: React.FC = () => {
 	const { products, isFetchingAllProducts } = useAppSelector(
 		(state) => state.product
 	);
+	const showDiscount = useAppSelector((state) => state.settings.showDiscountBadges);
 
 	const [showFilters, setShowFilters] = useState(false);
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -274,7 +275,8 @@ const FilteredProducts: React.FC = () => {
 								const imageUrl =
 									p.photos?.[0]?.url || p.image || "";
 								const price = Number(p.price || 0);
-								const originalPrice = p.originalPrice ? Number(p.originalPrice) : null;
+								const originalPrice =
+										showDiscount && p.originalPrice ? Number(p.originalPrice) : null;
 								const discount = originalPrice && originalPrice > price
 									? Math.round(((originalPrice - price) / originalPrice) * 100)
 									: null;

@@ -240,7 +240,7 @@ export const FormFileUpload: React.FC<FormFileUploadProps> = ({
 
 			{/* Preview grid */}
 			{previews.length > 0 && (
-				<div className="grid grid-cols-5 gap-2 mb-3">
+				<div className="grid grid-cols-3 gap-2 mb-3 sm:grid-cols-5">
 					{previews.map((src, i) => (
 						<div
 							key={i}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import axiosInstance from "@/_utils/axiosInstance";
 import { FormInput, FormActions } from "@/_UI/FormField";
 import PageLoader from "@/_UI/PageLoader";
 import CurrencyInput from "@/_UI/CurrencyInput";
+import { rateToPercent, percentToRate } from "@/_utils/rate";
 import NumberInput from "@/_UI/NumberInput";
 import PhoneInput from "@/_UI/PhoneInput";
 
@@ -27,7 +28,15 @@ const storeSchema = z.object({
 });
 
 const orderShippingSchema = z.object({
-	taxRate: z.string().min(1, "Tax rate is required"),
+	// Entered as a percentage (7.5), persisted as a fraction (0.075). The bound
+	// matters: this field used to show the raw fraction next to a "%" suffix, so
+	// "0.075 %" invited an admin to "correct" it to 7.5 — which saved a rate of
+	// 7.5 and charged 750% tax.
+	taxRate: z
+		.string()
+		.min(1, "Tax rate is required")
+		.refine((v) => !Number.isNaN(Number(v)), "Enter a number")
+		.refine((v) => Number(v) >= 0 && Number(v) <= 100, "Must be between 0 and 100"),
 	freeShippingThreshold: z.string().min(1, "Required"),
 });
 
@@ -76,6 +85,9 @@ const AdminSettings: React.FC = () => {
 	const [savingPassword, setSavingPassword] = useState(false);
 
 	const [savingOrderShipping, setSavingOrderShipping] = useState(false);
+	// Storefront sale-treatment kill-switch. Defaults on so an existing store
+	// with no saved flag keeps showing the discounts it already had live.
+	const [showDiscountBadges, setShowDiscountBadges] = useState(true);
 	const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([
 		{ id: "standard", name: "Standard Shipping", baseCost: "0", estimatedDays: "5-7 business days", enabled: true },
 	]);
@@ -113,9 +125,10 @@ const AdminSettings: React.FC = () => {
 							postalCode: s.address?.postalCode || "",
 						});
 						orderShippingForm.reset({
-							taxRate: String(s.orderSettings?.taxRate ?? "0"),
+							taxRate: String(rateToPercent(Number(s.orderSettings?.taxRate ?? 0))),
 							freeShippingThreshold: String(s.orderSettings?.freeShippingThreshold ?? "0"),
 						});
+						setShowDiscountBadges(s.orderSettings?.showDiscountBadges !== false);
 						if (s.shippingConfig?.methods?.length > 0) {
 							setShippingMethods(
 								s.shippingConfig.methods.map((m: any) => ({
@@ -205,8 +218,9 @@ const AdminSettings: React.FC = () => {
 			await axiosInstance.patch(`store/update/${storeId}`, {
 				orderSettings: {
 					...storeData?.orderSettings,
-					taxRate: Number(data.taxRate),
+					taxRate: percentToRate(Number(data.taxRate)),
 					freeShippingThreshold: Number(data.freeShippingThreshold),
+					showDiscountBadges,
 				},
 				shippingConfig: {
 					...storeData?.shippingConfig,
@@ -226,6 +240,10 @@ const AdminSettings: React.FC = () => {
 			setSavingOrderShipping(false);
 		}
 	};
+
+	const toggleDiscountBadges = useCallback(() => {
+		setShowDiscountBadges((prev) => !prev);
+	}, []);
 
 	const addShippingMethod = () => {
 		setShippingMethods((prev) => [
@@ -321,11 +339,11 @@ const AdminSettings: React.FC = () => {
 								<form onSubmit={storeForm.handleSubmit(onSaveStore)} className="p-6 space-y-4">
 									<FormInput label="Store Name" placeholder="Green Pasture Organics" required {...storeForm.register("name")} error={storeForm.formState.errors.name?.message} />
 									<FormInput label="Street Address" placeholder="123 Main Street" {...storeForm.register("houseAddress")} />
-									<div className="grid grid-cols-2 gap-4">
+									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 										<FormInput label="City" placeholder="Lagos" {...storeForm.register("city")} />
 										<FormInput label="State" placeholder="Lagos" {...storeForm.register("state")} />
 									</div>
-									<div className="grid grid-cols-2 gap-4">
+									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 										<FormInput label="Country" placeholder="Nigeria" {...storeForm.register("country")} />
 										<FormInput label="Postal Code" placeholder="100001" {...storeForm.register("postalCode")} />
 									</div>
@@ -346,13 +364,13 @@ const AdminSettings: React.FC = () => {
 										<h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-hint)" }}>Tax</h4>
 										<NumberInput
 											label="Tax Rate"
-											placeholder="0.08"
+											placeholder="7.5"
 											required
 											suffix="%"
 											value={orderShippingForm.watch("taxRate")}
 											onChange={(val) => orderShippingForm.setValue("taxRate", val)}
 											error={orderShippingForm.formState.errors.taxRate?.message}
-											hint="Enter as decimal (e.g. 0.08 = 8%, 0.075 = 7.5%)"
+											hint="Enter the percentage itself — 7.5 means 7.5% VAT. Applied to the order subtotal."
 										/>
 									</div>
 
@@ -372,6 +390,48 @@ const AdminSettings: React.FC = () => {
 											<p className="text-xs -mt-2" style={{ color: "var(--text-hint)" }}>
 												Orders at or above this amount qualify for free shipping. Set to 0 to always charge shipping.
 											</p>
+										</div>
+									</div>
+
+									<div className="h-px w-full" style={{ background: "var(--border-light)" }} />
+
+									{/* Promotions — storefront sale-treatment kill-switch */}
+									<div>
+										<h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-hint)" }}>Promotions</h4>
+										<div
+											className="flex flex-col gap-3 rounded-lg p-4 sm:flex-row sm:items-center sm:justify-between"
+											style={{ border: "1px solid var(--border-light)", background: "var(--surface-low)" }}
+										>
+											<div className="min-w-0">
+												<label htmlFor="showDiscountBadges" className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+													Show discount badges &amp; slashed prices
+												</label>
+												<p className="text-xs mt-1" style={{ color: "var(--text-hint)" }}>
+													Displays the <b>-%</b> badge and the struck-through original price wherever
+													products appear. Turning this off hides the effect storefront-wide without
+													erasing any product&apos;s original price, so you can switch it back on unchanged.
+												</p>
+											</div>
+											<button
+												id="showDiscountBadges"
+												type="button"
+												role="switch"
+												aria-checked={showDiscountBadges}
+												onClick={toggleDiscountBadges}
+												data-testid="toggle-discount-badges"
+												className="flex shrink-0 cursor-pointer items-center gap-2 self-start rounded-full px-3 py-2 text-xs font-semibold transition-colors sm:self-auto"
+												style={{
+													background: showDiscountBadges ? "rgba(154,202,60,0.14)" : "var(--surface-medium)",
+													color: showDiscountBadges ? "var(--color-primary)" : "var(--text-hint)",
+												}}
+											>
+												{showDiscountBadges ? (
+													<ToggleRight className="h-5 w-5" aria-hidden="true" />
+												) : (
+													<ToggleLeft className="h-5 w-5" aria-hidden="true" />
+												)}
+												{showDiscountBadges ? "On" : "Off"}
+											</button>
 										</div>
 									</div>
 
@@ -431,7 +491,7 @@ const AdminSettings: React.FC = () => {
 															)}
 														</div>
 													</div>
-													<div className="grid grid-cols-3 gap-3">
+													<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 														<FormInput
 															label="Name"
 															placeholder="Standard Shipping"
@@ -469,7 +529,7 @@ const AdminSettings: React.FC = () => {
 									<p className="text-xs mt-0.5" style={{ color: "var(--text-hint)" }}>Update your personal information</p>
 								</div>
 								<form onSubmit={profileForm.handleSubmit(onSaveProfile)} className="p-6 space-y-4">
-									<div className="grid grid-cols-2 gap-4">
+									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 										<FormInput label="First Name" required {...profileForm.register("firstName")} error={profileForm.formState.errors.firstName?.message} />
 										<FormInput label="Last Name" required {...profileForm.register("lastName")} error={profileForm.formState.errors.lastName?.message} />
 									</div>

@@ -23,10 +23,10 @@ import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import {
 	clearCart,
 	clearError,
-	setFreeShippingThreshold,
 } from "@/_redux/reducers/cart.reducer";
 import { clearCartAsync } from "@/_redux/actions/cart.action";
 import { appConstants } from "@/_redux/constants";
+import { formatRateAsPercent } from "@/_utils/rate";
 import Image from "next/image";
 import Layout from "@/_components/Layout";
 import PageLoader from "@/_UI/PageLoader";
@@ -138,13 +138,8 @@ const CartPage: React.FC = () => {
 		};
 	}, [total, taxRate, freeShippingThreshold, shippingFee]);
 
-	useEffect(() => {
-		if (itemCount !== undefined) {
-			dispatch(
-				setFreeShippingThreshold(appConstants.FREE_SHIPPING_THRESHOLD)
-			);
-		}
-	}, [dispatch, itemCount]);
+	// The free-shipping threshold now comes from the admin-owned settings slice
+	// (see useFreeShipping) — nothing to push into the cart slice here.
 
 	const handleClearCart = useCallback(async () => {
 		if (!showClearConfirm) {
@@ -1033,7 +1028,7 @@ const CartPage: React.FC = () => {
 
 								<div className="flex justify-between items-center">
 									<span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-										Tax ({Math.round(calculations.taxRate * 100)}%)
+										Tax ({formatRateAsPercent(calculations.taxRate)})
 									</span>
 									<motion.span
 										key={calculations?.tax}

@@ -8,6 +8,8 @@
 		"start": "next start",
 		"generate-types": "openapi-typescript http://localhost:3800/api-docs-json -o ./src/types/api/generated.ts",
 		"lint": "next lint",
+		"test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test 'src/**/*.test.ts'",
+		"test:watch": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --watch 'src/**/*.test.ts'",
 		"test:e2e": "playwright test",
 		"test:e2e:ui": "playwright test --ui"
 	},

@@ -27,6 +27,7 @@ import {
 } from "@/_redux/reducers/wishlist.reducer";
 import Layout from "@/_components/Layout";
 import { appConstants } from "@/_redux/constants";
+import { useFreeShipping } from "@/_hooks/useStoreSettings";
 import ReviewList from "@/_components/ReviewList";
 import ReviewForm from "@/_components/ReviewForm";
 import Breadcrumb from "@/_UI/Breadcrumb";
@@ -43,6 +44,8 @@ const ProductDetailsPage: React.FC = () => {
 	const { products, isFetchingAllProducts } = useAppSelector((state) => state.product);
 	const cartItems = useAppSelector((state) => state.cart.items);
 	const wishlistItems = useAppSelector((state) => state.wishlist.items);
+	const cartTotal = useAppSelector((state) => state.cart.total);
+	const freeShipping = useFreeShipping(cartTotal || 0);
 	const product = products?.find((p: Product) => String(p.id) === String(id));
 
 	const [quantity, setQuantity] = useState(1);
@@ -356,13 +359,15 @@ const ProductDetailsPage: React.FC = () => {
 						{/* Shipping Info */}
 						<Card elevation={0} padding="md" className="bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800">
 							<div className="space-y-2">
-								<div className="flex items-center space-x-2 text-primary-800 dark:text-primary-300">
-									<Truck className="h-5 w-5" />
-									<span className="font-medium">
-										Free shipping on orders over &#8358;
-										{appConstants.FREE_SHIPPING_THRESHOLD.toLocaleString()}
-									</span>
-								</div>
+								{freeShipping.isActive && (
+									<div className="flex items-center space-x-2 text-primary-800 dark:text-primary-300">
+										<Truck className="h-5 w-5 shrink-0" />
+										<span className="font-medium">
+											Free shipping on orders over &#8358;
+											{freeShipping.threshold.toLocaleString()}
+										</span>
+									</div>
+								)}
 								<div className="flex items-center space-x-2 text-primary-700 dark:text-primary-400 text-sm">
 									<Shield className="h-4 w-4" />
 									<span>100% satisfaction guarantee</span>

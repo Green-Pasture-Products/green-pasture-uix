@@ -249,7 +249,7 @@ const Staff: React.FC = () => {
 					size="md"
 				>
 					<div className="space-y-4 pb-56">
-						<div className="grid grid-cols-2 gap-4">
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 							<FormInput
 								label="First Name"
 								placeholder="Enter first name"
