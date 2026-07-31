@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { uuidv7 } from "uuidv7";
+import { resolveIdempotencyKey, IdempotencyState } from "@/_utils/idempotencyKey";
 import { useRouter } from "next/router";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -397,11 +399,31 @@ const CheckoutPage: React.FC = () => {
 	/* ---- Double-click guard ---- */
 	const submittingRef = React.useRef(false);
 
+	/* ---- Idempotency key: one per checkout attempt ----
+	 * checkoutCart/guest-checkout and placeOrder are two calls that make up a
+	 * single attempt (create order, then start payment), so they share one key —
+	 * the backend scopes the key by endpoint, so reusing the value across the two
+	 * calls isn't a collision. Whether that key is reused or replaced is decided
+	 * by resolveIdempotencyKey — see src/_utils/idempotencyKey.ts. Held in a ref,
+	 * lazily minted (not eagerly via useRef(uuidv7())) so we never generate a
+	 * UUID that's thrown away on render.
+	 */
+	const idempotencyStateRef = useRef<IdempotencyState>({ key: undefined, signature: undefined });
+
 	/* ---- Submit handler ---- */
 	const onSubmit = async (data: CheckoutFormData) => {
 		// Prevent double submission
 		if (submittingRef.current) return;
 		submittingRef.current = true;
+
+		const attemptSignature = JSON.stringify({
+			shippingAddress: data.shippingAddress,
+			shippingMethod: data.shippingMethod,
+			paymentMethod: data.paymentMethod,
+			couponCode: couponApplied ? couponCode : undefined,
+		});
+		idempotencyStateRef.current = resolveIdempotencyKey(idempotencyStateRef.current, attemptSignature, uuidv7);
+		const idempotencyKey = idempotencyStateRef.current.key as string;
 
 		try {
 			if (isAuthenticated) {
@@ -461,6 +483,7 @@ const CheckoutPage: React.FC = () => {
 						cartId: activeCartId,
 						couponCode: couponApplied ? couponCode : undefined,
 						shippingMethod: data.shippingMethod,
+						idempotencyKey,
 					})
 				).unwrap();
 
@@ -500,6 +523,7 @@ const CheckoutPage: React.FC = () => {
 							region: data.shippingAddress.state || "",
 							houseAddress: data.shippingAddress.street,
 						} as any,
+						idempotencyKey,
 					}),
 				).unwrap();
 
@@ -527,29 +551,33 @@ const CheckoutPage: React.FC = () => {
 				const axiosInstance = (await import("@/_utils/axiosInstance")).default;
 
 				// Call guest-checkout endpoint
-				const guestRes = await axiosInstance.post("order/guest-checkout", {
-					firstName: data.guestFirstName,
-					lastName: data.guestLastName || "",
-					email: data.guestEmail,
-					phoneNumber: data.guestPhone,
-					items: items.map((item) => ({
-						itemId: item.id,
-						quantity: item.quantity,
-					})),
-					shippingMethod: data.shippingMethod,
-					paymentMethod: data.paymentMethod === "CARD" ? "Paystack" : "Cash On Delivery",
-					couponCode: couponApplied ? couponCode : undefined,
-					shippingAddress: {
-						houseAddress: data.shippingAddress.street,
-						city: data.shippingAddress.city,
-						region: data.shippingAddress.state || "",
-						state: data.shippingAddress.state || "",
-						country: data.shippingAddress.country,
-						postalCode: data.shippingAddress.postalCode || "",
-						latitude: "0",
-						longitude: "0",
+				const guestRes = await axiosInstance.post(
+					"order/guest-checkout",
+					{
+						firstName: data.guestFirstName,
+						lastName: data.guestLastName || "",
+						email: data.guestEmail,
+						phoneNumber: data.guestPhone,
+						items: items.map((item) => ({
+							itemId: item.id,
+							quantity: item.quantity,
+						})),
+						shippingMethod: data.shippingMethod,
+						paymentMethod: data.paymentMethod === "CARD" ? "Paystack" : "Cash On Delivery",
+						couponCode: couponApplied ? couponCode : undefined,
+						shippingAddress: {
+							houseAddress: data.shippingAddress.street,
+							city: data.shippingAddress.city,
+							region: data.shippingAddress.state || "",
+							state: data.shippingAddress.state || "",
+							country: data.shippingAddress.country,
+							postalCode: data.shippingAddress.postalCode || "",
+							latitude: "0",
+							longitude: "0",
+						},
 					},
-				});
+					{ headers: { "Idempotency-Key": idempotencyKey } },
+				);
 
 				const orderId = guestRes.data?.data?.orderId;
 				const guestOrderReference = guestRes.data?.data?.orderReference;
@@ -571,21 +599,25 @@ const CheckoutPage: React.FC = () => {
 				}
 
 				// Initialize Paystack payment
-				const paymentRes = await axiosInstance.post("transaction/place-order", {
-					orderId,
-					shippingMethod: data.shippingMethod,
-					paymentMethod: "Paystack",
-					shippingAddress: {
-						houseAddress: data.shippingAddress.street,
-						city: data.shippingAddress.city,
-						region: data.shippingAddress.state || "",
-						state: data.shippingAddress.state || "",
-						country: data.shippingAddress.country,
-						postalCode: data.shippingAddress.postalCode || "",
-						latitude: "0",
-						longitude: "0",
+				const paymentRes = await axiosInstance.post(
+					"transaction/place-order",
+					{
+						orderId,
+						shippingMethod: data.shippingMethod,
+						paymentMethod: "Paystack",
+						shippingAddress: {
+							houseAddress: data.shippingAddress.street,
+							city: data.shippingAddress.city,
+							region: data.shippingAddress.state || "",
+							state: data.shippingAddress.state || "",
+							country: data.shippingAddress.country,
+							postalCode: data.shippingAddress.postalCode || "",
+							latitude: "0",
+							longitude: "0",
+						},
 					},
-				});
+					{ headers: { "Idempotency-Key": idempotencyKey } },
+				);
 
 				const paystackData = paymentRes.data?.data?.data ?? paymentRes.data?.data;
 				const authUrl = paystackData?.authorization_url;
