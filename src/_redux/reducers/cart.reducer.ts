@@ -10,7 +10,7 @@ import {
 	fetchCartAsync,
 } from "../actions/cart.action";
 
-const initialState: CartState & { cartId: number | null } = {
+const initialState: CartState & { cartId: string | null } = {
 	items: [],
 	total: 0,
 	loading: false,

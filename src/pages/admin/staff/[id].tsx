@@ -17,7 +17,7 @@ import { Pencil, X, Power } from "lucide-react";
 import * as changeCase from "change-case";
 
 interface RoleOption {
-	id: number;
+	id: string;
 	name: string;
 }
 
@@ -92,7 +92,7 @@ const StaffDetail: React.FC = () => {
 				firstName: editForm.firstName.trim(),
 				lastName: editForm.lastName.trim(),
 				phoneNumber: editForm.phoneNumber.trim(),
-				roleId: editForm.roleId ? Number(editForm.roleId) : undefined,
+				roleId: editForm.roleId || undefined,
 			});
 			toast.success("Staff updated successfully");
 			setEditing(false);

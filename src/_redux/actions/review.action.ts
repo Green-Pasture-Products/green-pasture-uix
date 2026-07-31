@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/_utils/axiosInstance";
 import { extractErrorMessage } from "@/_utils/apiHelpers";
 
-const fetchItemReviewsAsync = createAsyncThunk<any, { itemId: number; page?: number; limit?: number }, { rejectValue: string }>(
+const fetchItemReviewsAsync = createAsyncThunk<any, { itemId: string; page?: number; limit?: number }, { rejectValue: string }>(
 	"review/fetchItemReviews",
 	async ({ itemId, page = 1, limit = 10 }, { rejectWithValue }) => {
 		try {
@@ -14,7 +14,7 @@ const fetchItemReviewsAsync = createAsyncThunk<any, { itemId: number; page?: num
 	}
 );
 
-const submitReviewAsync = createAsyncThunk<any, { rating: number; comment?: string; itemId: number }, { rejectValue: string }>(
+const submitReviewAsync = createAsyncThunk<any, { rating: number; comment?: string; itemId: string }, { rejectValue: string }>(
 	"review/submitReview",
 	async (payload, { rejectWithValue }) => {
 		try {

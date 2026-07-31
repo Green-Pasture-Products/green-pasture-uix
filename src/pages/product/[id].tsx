@@ -424,10 +424,10 @@ const ProductDetailsPage: React.FC = () => {
 									Customer Reviews
 								</h3>
 								<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
-									<ReviewList itemId={Number(id)} />
+									<ReviewList itemId={String(id)} />
 								</Card>
 								<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
-									<ReviewForm itemId={Number(id)} />
+									<ReviewForm itemId={String(id)} />
 								</Card>
 							</div>
 						)}

@@ -32,7 +32,7 @@ const DELETE_ICON = (
 );
 
 interface RoleOption {
-	id: number;
+	id: string;
 	name: string;
 }
 
@@ -99,7 +99,7 @@ const Staff: React.FC = () => {
 				lastName: onboardForm.lastName.trim(),
 				email: onboardForm.email.trim(),
 				phoneNumber: onboardForm.phoneNumber.trim(),
-				roleId: Number(onboardForm.roleId),
+				roleId: onboardForm.roleId,
 			});
 			toast.success("Staff onboarded successfully");
 			setShowOnboard(false);

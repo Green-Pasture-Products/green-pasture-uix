@@ -76,8 +76,8 @@ export const updateCategory = createAsyncThunk<
 );
 
 const deleteCategory = createAsyncThunk<
-  number,
-  number,
+  string,
+  string,
   { rejectValue: string }
 >(
   "products/delete",

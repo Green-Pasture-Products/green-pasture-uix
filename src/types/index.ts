@@ -1,5 +1,5 @@
 export interface ProductCategory{
-id: number;
+id: string;
 name: string;
 description:string
 }
@@ -16,7 +16,7 @@ export interface PaginatedProducts {
 }
 
 export interface UpdateCategoryPayload {
-  id: number | null ;
+  id: string | null;
   name: string;
   description: string;
 }
@@ -119,7 +119,7 @@ export interface IpInfo {
 }
 
 export interface User {
-	id: number;
+	id: string;
 	email: string;
 	firstName: string;
 	lastName: string;
@@ -243,7 +243,7 @@ export interface PaginatedData<T> {
 
 export interface BackendItem {
 	category: string;
-	id: number;
+	id: string;
 	name: string;
 	description?: string;
 	price: number;
@@ -251,8 +251,8 @@ export interface BackendItem {
 	onSale?: boolean;
 	discountPercent?: number | null;
 	unit: number;
-	product?: { id: number; name: string };
-	photos?: { id: number; url: string; publicId: string }[];
+	product?: { id: string; name: string };
+	photos?: { id: string; url: string; publicId: string }[];
 	ratingStats?: { average: number; count: number };
 	reviews?: BackendReview[];
 	status: string;
@@ -261,7 +261,7 @@ export interface BackendItem {
 }
 
 export interface BackendReview {
-	id: number;
+	id: string;
 	rating: number;
 	comment?: string;
 	customer: string;
@@ -272,7 +272,7 @@ export interface BackendReview {
 }
 
 export interface BackendOrder {
-	id: number;
+	id: string;
 	orderReference: string;
 	orderStatus: OrderStatusType;
 	customer?: BackendCustomer;
@@ -284,14 +284,14 @@ export interface BackendOrder {
 }
 
 export interface BackendOrderItem {
-	id: number;
+	id: string;
 	item: BackendItem;
 	quantity: number;
 	unitPrice: number;
 }
 
 export interface BackendCustomer {
-	id: number;
+	id: string;
 	referrerCode?: string;
 	profile: ProfileData;
 	status: string;
@@ -300,7 +300,7 @@ export interface BackendCustomer {
 }
 
 export interface BackendStaff {
-	id: number;
+	id: string;
 	profile: ProfileData;
 	status: string;
 	createdAt: string;
@@ -308,7 +308,7 @@ export interface BackendStaff {
 }
 
 export interface ProfileData {
-	id: number;
+	id: string;
 	firstName: string;
 	lastName: string;
 	email: string;
@@ -321,7 +321,7 @@ export interface ProfileData {
 	status?: string;
 	createdAt?: string;
 	updatedAt?: string;
-	role?: { id: number; name: string; permissions?: BackendPermission[] };
+	role?: { id: string; name: string; permissions?: BackendPermission[] };
 }
 
 export interface ShippingAddress {
@@ -346,7 +346,7 @@ export type PaymentMethodType = "CARD" | "CASH_ON_DELIVERY" | "WALLET";
 // ─── Extended State Types ───────────────────────────────────────────────
 
 export interface CheckoutState {
-	orderId: number | null;
+	orderId: string | null;
 	paymentUrl: string | null;
 	paymentReference: string | null;
 	paymentStatus: "idle" | "pending" | "success" | "failed";
@@ -372,7 +372,7 @@ export interface ProfileState {
 }
 
 export interface BackendRole {
-	id: number;
+	id: string;
 	name: string;
 	description: string;
 	permissions: BackendPermission[];
@@ -381,7 +381,7 @@ export interface BackendRole {
 }
 
 export interface BackendPermission {
-	id: number;
+	id: string;
 	name: string;
 	description: string;
 	status: string;

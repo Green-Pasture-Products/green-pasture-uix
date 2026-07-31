@@ -29,7 +29,7 @@ const ProductDetail: React.FC = () => {
 	const [saving, setSaving] = useState(false);
 	const [toggling, setToggling] = useState(false);
 	const [statusModalOpen, setStatusModalOpen] = useState(false);
-	const [deletingImageId, setDeletingImageId] = useState<number | null>(null);
+	const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
 	const [newImages, setNewImages] = useState<File[]>([]);
 	const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 	const [uploadingImages, setUploadingImages] = useState(false);
@@ -89,7 +89,7 @@ const ProductDetail: React.FC = () => {
 		const isActive = item.status === "A";
 		setToggling(true);
 		try {
-			await axiosInstance.patch(isActive ? "items/deactivate" : "items/activate", { ids: [Number(id)] });
+			await axiosInstance.patch(isActive ? "items/deactivate" : "items/activate", { ids: [id] });
 			toast.success(isActive ? "Product deactivated successfully" : "Product activated successfully");
 			setStatusModalOpen(false);
 			fetchItem();
@@ -113,17 +113,14 @@ const ProductDetail: React.FC = () => {
 			};
 
 			if (editForm.category) {
-				const categoryId = Number(editForm.category);
-				if (!Number.isNaN(categoryId)) {
-					payload.productId = categoryId;
-				}
+				payload.productId = editForm.category;
 			}
 
 			await axiosInstance.patch(`items/${id}`, payload);
 
 			if (editForm.status !== item?.status) {
 				const endpoint = editForm.status === "A" ? "items/activate" : "items/deactivate";
-				await axiosInstance.patch(endpoint, { ids: [Number(id)] });
+				await axiosInstance.patch(endpoint, { ids: [id] });
 			}
 
 			toast.success("Product updated");
@@ -144,7 +141,7 @@ const ProductDetail: React.FC = () => {
 		}
 	};
 
-	const handleDeleteImage = async (imageId: number) => {
+	const handleDeleteImage = async (imageId: string) => {
 		if (!id) return;
 		setDeletingImageId(imageId);
 		try {

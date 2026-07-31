@@ -15,7 +15,7 @@ const fetchOrdersAsync = createAsyncThunk<any, { page?: number; limit?: number; 
 	}
 );
 
-const cancelOrderAsync = createAsyncThunk<any, number, { rejectValue: string }>(
+const cancelOrderAsync = createAsyncThunk<any, string, { rejectValue: string }>(
 	"admin/cancelOrder",
 	async (orderId, { rejectWithValue }) => {
 		try {
@@ -53,7 +53,7 @@ const fetchStaffAsync = createAsyncThunk<any, { page?: number; limit?: number; s
 	}
 );
 
-const updateStaffAsync = createAsyncThunk<any, { id: number; data: any }, { rejectValue: string }>(
+const updateStaffAsync = createAsyncThunk<any, { id: string; data: any }, { rejectValue: string }>(
 	"admin/updateStaff",
 	async ({ id, data }, { rejectWithValue }) => {
 		try {
@@ -65,7 +65,7 @@ const updateStaffAsync = createAsyncThunk<any, { id: number; data: any }, { reje
 	}
 );
 
-const deleteCustomerAsync = createAsyncThunk<any, number, { rejectValue: string }>(
+const deleteCustomerAsync = createAsyncThunk<any, string, { rejectValue: string }>(
 	"admin/deleteCustomer",
 	async (id, { rejectWithValue }) => {
 		try {
@@ -77,7 +77,7 @@ const deleteCustomerAsync = createAsyncThunk<any, number, { rejectValue: string 
 	}
 );
 
-const updateCustomerStatusAsync = createAsyncThunk<any, { id: number; activate: boolean }, { rejectValue: string }>(
+const updateCustomerStatusAsync = createAsyncThunk<any, { id: string; activate: boolean }, { rejectValue: string }>(
 	"admin/updateCustomerStatus",
 	async ({ id, activate }, { rejectWithValue }) => {
 		try {
@@ -90,7 +90,7 @@ const updateCustomerStatusAsync = createAsyncThunk<any, { id: number; activate: 
 	}
 );
 
-const updateStaffStatusAsync = createAsyncThunk<any, { id: number; activate: boolean }, { rejectValue: string }>(
+const updateStaffStatusAsync = createAsyncThunk<any, { id: string; activate: boolean }, { rejectValue: string }>(
 	"admin/updateStaffStatus",
 	async ({ id, activate }, { rejectWithValue }) => {
 		try {
@@ -103,7 +103,7 @@ const updateStaffStatusAsync = createAsyncThunk<any, { id: number; activate: boo
 	}
 );
 
-const deleteStaffAsync = createAsyncThunk<any, number, { rejectValue: string }>(
+const deleteStaffAsync = createAsyncThunk<any, string, { rejectValue: string }>(
 	"admin/deleteStaff",
 	async (id, { rejectWithValue }) => {
 		try {
@@ -115,7 +115,7 @@ const deleteStaffAsync = createAsyncThunk<any, number, { rejectValue: string }>(
 	}
 );
 
-const updateItemStatusAsync = createAsyncThunk<any, { id: number; activate: boolean }, { rejectValue: string }>(
+const updateItemStatusAsync = createAsyncThunk<any, { id: string; activate: boolean }, { rejectValue: string }>(
 	"admin/updateItemStatus",
 	async ({ id, activate }, { rejectWithValue }) => {
 		try {

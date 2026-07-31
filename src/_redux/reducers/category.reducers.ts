@@ -88,7 +88,7 @@ const productCategoriesSlice = createSlice({
             })
             .addCase(
                 categoryAction.deleteCategory.fulfilled,
-                (state, action: PayloadAction<number>) => {
+                (state, action: PayloadAction<string>) => {
                     state.productCategories = state.productCategories.filter(
                         (cat) => cat.id !== action.payload
                     );

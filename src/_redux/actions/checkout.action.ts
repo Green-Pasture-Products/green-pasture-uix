@@ -4,14 +4,14 @@ import { extractErrorMessage } from "@/_utils/apiHelpers";
 import { ShippingMethodType, PaymentMethodType, ShippingAddress } from "@/types";
 
 export interface PlaceOrderPayload {
-	orderId: number;
+	orderId: string;
 	shippingMethod: ShippingMethodType;
 	paymentMethod: PaymentMethodType;
 	shippingAddress: ShippingAddress;
 }
 
 export interface CheckoutCartPayload {
-	cartId: number;
+	cartId: string;
 	/** Server re-validates and prices this; the client's discount figure is ignored. */
 	couponCode?: string;
 	shippingMethod?: ShippingMethodType;

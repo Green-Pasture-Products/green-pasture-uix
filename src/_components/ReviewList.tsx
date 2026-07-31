@@ -6,7 +6,7 @@ import { reviewAction } from "@/_redux/actions/review.action";
 import { BackendReview } from "@/types";
 
 interface ReviewListProps {
-	itemId: number;
+	itemId: string;
 }
 
 const ReviewList: React.FC<ReviewListProps> = ({ itemId }) => {

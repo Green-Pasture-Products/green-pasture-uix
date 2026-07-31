@@ -20,7 +20,7 @@ const fetchAllProducts = createAsyncThunk<Product[], { activeOnly?: boolean } | 
 	}
 );
 
-const fetchItemByIdAsync = createAsyncThunk<any, number, { rejectValue: string }>(
+const fetchItemByIdAsync = createAsyncThunk<any, string, { rejectValue: string }>(
 	"product/fetchItemById",
 	async (id, { rejectWithValue }) => {
 		try {
@@ -44,7 +44,7 @@ const createItemAsync = createAsyncThunk<any, FormData, { rejectValue: string }>
 	}
 );
 
-const updateItemAsync = createAsyncThunk<any, { id: number; data: any }, { rejectValue: string }>(
+const updateItemAsync = createAsyncThunk<any, { id: string; data: any }, { rejectValue: string }>(
 	"product/updateItem",
 	async ({ id, data }, { rejectWithValue }) => {
 		try {
@@ -56,7 +56,7 @@ const updateItemAsync = createAsyncThunk<any, { id: number; data: any }, { rejec
 	}
 );
 
-const deleteItemAsync = createAsyncThunk<any, string | number, { rejectValue: string }>(
+const deleteItemAsync = createAsyncThunk<any, string, { rejectValue: string }>(
 	"product/deleteItem",
 	async (id, { rejectWithValue }) => {
 		try {
@@ -68,7 +68,7 @@ const deleteItemAsync = createAsyncThunk<any, string | number, { rejectValue: st
 	}
 );
 
-const addItemImagesAsync = createAsyncThunk<any, { id: number; formData: FormData }, { rejectValue: string }>(
+const addItemImagesAsync = createAsyncThunk<any, { id: string; formData: FormData }, { rejectValue: string }>(
 	"product/addItemImages",
 	async ({ id, formData }, { rejectWithValue }) => {
 		try {
@@ -80,7 +80,7 @@ const addItemImagesAsync = createAsyncThunk<any, { id: number; formData: FormDat
 	}
 );
 
-const deleteItemImageAsync = createAsyncThunk<any, { itemId: number; imageId: number }, { rejectValue: string }>(
+const deleteItemImageAsync = createAsyncThunk<any, { itemId: string; imageId: string }, { rejectValue: string }>(
 	"product/deleteItemImage",
 	async ({ itemId, imageId }, { rejectWithValue }) => {
 		try {

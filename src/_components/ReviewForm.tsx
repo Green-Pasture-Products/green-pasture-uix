@@ -10,7 +10,7 @@ import { reviewAction } from "@/_redux/actions/review.action";
 import { reviewSchema, ReviewFormData } from "@/_validations/review";
 
 interface ReviewFormProps {
-	itemId: number;
+	itemId: string;
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({ itemId }) => {

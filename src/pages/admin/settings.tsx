@@ -78,7 +78,7 @@ const AdminSettings: React.FC = () => {
 	const { user } = useAppSelector((state) => state.auth);
 	const [activeTab, setActiveTab] = useState("store");
 	const [loading, setLoading] = useState(true);
-	const [storeId, setStoreId] = useState<number | null>(null);
+	const [storeId, setStoreId] = useState<string | null>(null);
 	const [storeData, setStoreData] = useState<any>(null);
 	const [savingStore, setSavingStore] = useState(false);
 	const [savingProfile, setSavingProfile] = useState(false);

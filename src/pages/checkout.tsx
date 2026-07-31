@@ -446,7 +446,7 @@ const CheckoutPage: React.FC = () => {
 						try {
 							await axiosInstance.post("cart-item/create", {
 								cartId: activeCartId,
-								itemId: Number(item.id),
+								itemId: item.id,
 								quantity: item.quantity,
 							});
 						} catch {
@@ -533,7 +533,7 @@ const CheckoutPage: React.FC = () => {
 					email: data.guestEmail,
 					phoneNumber: data.guestPhone,
 					items: items.map((item) => ({
-						itemId: Number(item.id),
+						itemId: item.id,
 						quantity: item.quantity,
 					})),
 					shippingMethod: data.shippingMethod,

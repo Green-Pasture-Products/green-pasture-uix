@@ -4,7 +4,7 @@ import axiosInstance from "@/_utils/axiosInstance";
 import { extractErrorMessage } from "@/_utils/apiHelpers";
 
 interface RootState {
-	cart: CartState & { cartId: number | null };
+	cart: CartState & { cartId: string | null };
 	auth: { isAuthenticated: boolean; user: any };
 }
 
@@ -23,7 +23,7 @@ export const fetchCartAsync = createAsyncThunk<
 
 export const fetchCartItemsAsync = createAsyncThunk<
 	any,
-	number,
+	string,
 	{ rejectValue: string }
 >("cart/fetchCartItems", async (cartId, { rejectWithValue }) => {
 	try {
@@ -60,7 +60,7 @@ export const addToCartAsync = createAsyncThunk(
 			if (state.auth.isAuthenticated && state.cart.cartId) {
 				await axiosInstance.post("cart-item/create", {
 					cartId: state.cart.cartId,
-					itemId: Number(product.id),
+					itemId: product.id,
 					quantity: 1,
 				});
 			}
@@ -86,7 +86,7 @@ export const removeFromCartAsync = createAsyncThunk(
 				await axiosInstance.delete("cart-item/remove", {
 					data: {
 						cartId: state.cart.cartId,
-						itemId: Number(productId),
+						itemId: productId,
 					},
 				});
 			}
@@ -117,7 +117,7 @@ export const updateQuantityAsync = createAsyncThunk(
 			if (state.auth.isAuthenticated && state.cart.cartId) {
 				await axiosInstance.patch("cart-item/update", {
 					cartId: state.cart.cartId,
-					itemId: Number(id),
+					itemId: id,
 					quantity,
 				});
 			}
@@ -181,7 +181,7 @@ export const syncCartOnLoginAsync = createAsyncThunk<
 				try {
 					await axiosInstance.post("cart-item/create", {
 						cartId: cartData.id,
-						itemId: Number(item.id),
+						itemId: item.id,
 						quantity: item.quantity,
 					});
 				} catch {
