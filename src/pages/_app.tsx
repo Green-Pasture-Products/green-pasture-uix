@@ -5,6 +5,8 @@ import { CurrencyProvider } from "@/_hooks/useCurrency";
 import PageTransition from "@/_UI/PageTransition";
 import { OutcomeProvider } from "@/_UI/Outcome";
 import { initAuth } from "@/_utils/authInit";
+import { hydrateAuth } from "@/_redux/reducers/auth.reducer";
+import { profileAction } from "@/_redux/actions/profile.action";
 import { fetchStoreSettings } from "@/_redux/reducers/settings.reducer";
 import { scheduleProactiveRefresh, stopAuthScheduler } from "@/_utils/tokenRefresh";
 import "@/styles/globals.css";
@@ -21,6 +23,7 @@ import { PersistGate } from "redux-persist/integration/react";
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
 	const dispatch = useAppDispatch();
 	const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+	const user = useAppSelector((state) => state.auth.user);
 
 	useEffect(() => {
 		initAuth(dispatch);
@@ -40,6 +43,29 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
 			stopAuthScheduler();
 		}
 	}, [isAuthenticated]);
+
+	// Self-heal: the cookie says authenticated but the persisted profile is
+	// missing (state persisted before the uuid-id migration wiped it, or any
+	// other way `user` and the cookie fell out of sync). Refetch it once so
+	// role guards like withAdminAuth aren't stuck deciding access from a null
+	// user. Deps only flip once user actually becomes non-null (or auth
+	// becomes false), so a failed fetch is not retried — one attempt per
+	// boot, ponytail: no backoff/retry framework for a rare edge case.
+	useEffect(() => {
+		if (!isAuthenticated || user) return;
+		dispatch(profileAction.fetchProfileAsync())
+			.unwrap()
+			.then((res: any) => {
+				if (res?.data) {
+					dispatch(hydrateAuth({ isAuthenticated: true, user: res.data }));
+				}
+			})
+			.catch(() => {
+				// Network blip / genuinely invalid session. A real auth failure
+				// (401) is already handled globally by the axios interceptor,
+				// which force-logs-out and redirects; nothing further to do here.
+			});
+	}, [isAuthenticated, user, dispatch]);
 
 	return <>{children}</>;
 }

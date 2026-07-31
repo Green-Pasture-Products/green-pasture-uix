@@ -24,6 +24,12 @@ export default function withAdminAuth<P extends object>(
 		const userRole = user?.profileType?.toUpperCase();
 		const authorized =
 			isAuthenticated && !!userRole && ADMIN_ROLES.includes(userRole);
+		// Authenticated (per cookie) but the profile hasn't loaded yet — e.g.
+		// AuthBootstrap's self-heal fetch is still in flight after a lost
+		// persisted user. We don't yet know the role, so `authorized` reads
+		// false; don't treat that as a verdict and bounce a valid admin — wait
+		// until `user` actually resolves (or auth itself is false).
+		const verified = !isAuthenticated || !!user;
 
 		useEffect(() => {
 			// Already heading to (or on) an auth page — don't re-wrap the path,
@@ -33,10 +39,10 @@ export default function withAdminAuth<P extends object>(
 			}
 			if (!isAuthenticated) {
 				router.replace(loginUrlFor(router.asPath));
-			} else if (!authorized) {
+			} else if (verified && !authorized) {
 				router.replace("/");
 			}
-		}, [isAuthenticated, authorized, router]);
+		}, [isAuthenticated, authorized, verified, router]);
 
 		if (!authorized) {
 			return <PageLoader message="Verifying access..." />;
