@@ -421,6 +421,12 @@ const CheckoutPage: React.FC = () => {
 			shippingMethod: data.shippingMethod,
 			paymentMethod: data.paymentMethod,
 			couponCode: couponApplied ? couponCode : undefined,
+			// Guest identity is part of the order/guest-checkout body too — a typo
+			// fix here must also rotate the key, or the retry hits the same 422.
+			guestFirstName: data.guestFirstName,
+			guestLastName: data.guestLastName,
+			guestEmail: data.guestEmail,
+			guestPhone: data.guestPhone,
 		});
 		idempotencyStateRef.current = resolveIdempotencyKey(idempotencyStateRef.current, attemptSignature, uuidv7);
 		const idempotencyKey = idempotencyStateRef.current.key as string;
