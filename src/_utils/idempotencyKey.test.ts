@@ -1,7 +1,11 @@
 // Run: pnpm test          (or: node --test src/_utils/idempotencyKey.test.ts)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { resolveIdempotencyKey } from "./idempotencyKey.ts";
+import {
+	resolveIdempotencyKey,
+	buildAuthenticatedAttemptSignature,
+	buildGuestAttemptSignature,
+} from "./idempotencyKey.ts";
 
 test("mints a key on the first attempt", () => {
 	const state = resolveIdempotencyKey({ key: undefined, signature: undefined }, "sig-a", () => "key-1");
@@ -32,4 +36,48 @@ test("a key changed by an edit does not revert on a further retry of the new att
 	const edited = resolveIdempotencyKey(first, "sig-b", () => "key-2");
 	const retryOfEdited = resolveIdempotencyKey(edited, "sig-b", () => "key-3");
 	assert.equal(retryOfEdited.key, "key-2");
+});
+
+const baseAuthenticatedFields = {
+	shippingAddress: { street: "1 Market St", city: "Lagos", state: "LA", country: "NG", postalCode: "100001" },
+	shippingMethod: "STANDARD",
+	paymentMethod: "CARD",
+	couponCode: undefined,
+};
+
+test("authenticated attempt signature differs when the target cart differs", () => {
+	// checkout.tsx silently swaps in a freshly created cart when the stored
+	// cartId 404s (Step 2's stale-cart recovery). The backend's idempotency
+	// scope is keyed by route *pattern* (/order/checkout/:cartId), never the
+	// interpolated cartId, so if cartId isn't part of what we hash here, a cart
+	// swap with everything else unchanged reuses the old key and the
+	// interceptor replays the OLD cart's stored response against the NEW cart.
+	const sigForCartA = buildAuthenticatedAttemptSignature({ ...baseAuthenticatedFields, cartId: "cart-a" });
+	const sigForCartB = buildAuthenticatedAttemptSignature({ ...baseAuthenticatedFields, cartId: "cart-b" });
+	assert.notEqual(sigForCartA, sigForCartB, "cartId must be part of the authenticated attempt signature");
+});
+
+const baseGuestFields = {
+	shippingAddress: { street: "1 Market St", city: "Lagos", state: "LA", country: "NG", postalCode: "100001" },
+	shippingMethod: "STANDARD",
+	paymentMethod: "CARD",
+	couponCode: undefined,
+	guestFirstName: "Ada",
+	guestLastName: "Lovelace",
+	guestEmail: "ada@example.com",
+	guestPhone: "+2340000000",
+};
+
+test("guest attempt signature differs when the cart's items differ", () => {
+	// Guest checkout has no cartId — the item list is what identifies which
+	// cart is being converted into an order, so it needs the same protection.
+	const sigForOneItem = buildGuestAttemptSignature({
+		...baseGuestFields,
+		items: [{ itemId: "item-1", quantity: 1 }],
+	});
+	const sigForTwoItems = buildGuestAttemptSignature({
+		...baseGuestFields,
+		items: [{ itemId: "item-1", quantity: 1 }, { itemId: "item-2", quantity: 1 }],
+	});
+	assert.notEqual(sigForOneItem, sigForTwoItems, "items must be part of the guest attempt signature");
 });

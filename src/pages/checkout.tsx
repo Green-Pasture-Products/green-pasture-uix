@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { uuidv7 } from "uuidv7";
-import { resolveIdempotencyKey, IdempotencyState } from "@/_utils/idempotencyKey";
+import {
+	resolveIdempotencyKey,
+	buildAuthenticatedAttemptSignature,
+	buildGuestAttemptSignature,
+	IdempotencyState,
+} from "@/_utils/idempotencyKey";
 import { useRouter } from "next/router";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -404,9 +409,14 @@ const CheckoutPage: React.FC = () => {
 	 * single attempt (create order, then start payment), so they share one key —
 	 * the backend scopes the key by endpoint, so reusing the value across the two
 	 * calls isn't a collision. Whether that key is reused or replaced is decided
-	 * by resolveIdempotencyKey — see src/_utils/idempotencyKey.ts. Held in a ref,
-	 * lazily minted (not eagerly via useRef(uuidv7())) so we never generate a
-	 * UUID that's thrown away on render.
+	 * by resolveIdempotencyKey against a per-branch signature built by
+	 * buildAuthenticatedAttemptSignature / buildGuestAttemptSignature — see
+	 * src/_utils/idempotencyKey.ts. The signature is computed where its inputs
+	 * are actually final (after the stale-cart recovery below settles
+	 * activeCartId, or from the current cart items in the guest branch), not
+	 * eagerly at the top of onSubmit — cartId is only known after that recovery
+	 * runs. Held in a ref, lazily minted (not eagerly via useRef(uuidv7())) so
+	 * we never generate a UUID that's thrown away on render.
 	 */
 	const idempotencyStateRef = useRef<IdempotencyState>({ key: undefined, signature: undefined });
 
@@ -415,21 +425,6 @@ const CheckoutPage: React.FC = () => {
 		// Prevent double submission
 		if (submittingRef.current) return;
 		submittingRef.current = true;
-
-		const attemptSignature = JSON.stringify({
-			shippingAddress: data.shippingAddress,
-			shippingMethod: data.shippingMethod,
-			paymentMethod: data.paymentMethod,
-			couponCode: couponApplied ? couponCode : undefined,
-			// Guest identity is part of the order/guest-checkout body too — a typo
-			// fix here must also rotate the key, or the retry hits the same 422.
-			guestFirstName: data.guestFirstName,
-			guestLastName: data.guestLastName,
-			guestEmail: data.guestEmail,
-			guestPhone: data.guestPhone,
-		});
-		idempotencyStateRef.current = resolveIdempotencyKey(idempotencyStateRef.current, attemptSignature, uuidv7);
-		const idempotencyKey = idempotencyStateRef.current.key as string;
 
 		try {
 			if (isAuthenticated) {
@@ -467,6 +462,20 @@ const CheckoutPage: React.FC = () => {
 						return;
 					}
 				}
+
+				// The idempotency key is scoped to this attempt only now that
+				// activeCartId is final — it can silently differ from the stored
+				// cartId (the stale-cart recovery above), and cartId must be part of
+				// the signature or a swap would replay the old cart's response.
+				const authenticatedAttemptSignature = buildAuthenticatedAttemptSignature({
+					cartId: activeCartId,
+					shippingAddress: data.shippingAddress,
+					shippingMethod: data.shippingMethod,
+					paymentMethod: data.paymentMethod,
+					couponCode: couponApplied ? couponCode : undefined,
+				});
+				idempotencyStateRef.current = resolveIdempotencyKey(idempotencyStateRef.current, authenticatedAttemptSignature, uuidv7);
+				const idempotencyKey = idempotencyStateRef.current.key as string;
 
 				// Step 3: Sync local items to backend cart if needed
 				if (needsSync) {
@@ -553,8 +562,26 @@ const CheckoutPage: React.FC = () => {
 					return;
 				}
 
-	
+
 				const axiosInstance = (await import("@/_utils/axiosInstance")).default;
+
+				// Guest checkout has no cartId — the item list is what identifies
+				// which cart is being converted into an order, so it stands in for
+				// cartId's role in the authenticated branch's signature.
+				const guestItems = items.map((item) => ({ itemId: item.id, quantity: item.quantity }));
+				const guestAttemptSignature = buildGuestAttemptSignature({
+					items: guestItems,
+					shippingAddress: data.shippingAddress,
+					shippingMethod: data.shippingMethod,
+					paymentMethod: data.paymentMethod,
+					couponCode: couponApplied ? couponCode : undefined,
+					guestFirstName: data.guestFirstName,
+					guestLastName: data.guestLastName,
+					guestEmail: data.guestEmail,
+					guestPhone: data.guestPhone,
+				});
+				idempotencyStateRef.current = resolveIdempotencyKey(idempotencyStateRef.current, guestAttemptSignature, uuidv7);
+				const idempotencyKey = idempotencyStateRef.current.key as string;
 
 				// Call guest-checkout endpoint
 				const guestRes = await axiosInstance.post(
@@ -564,10 +591,7 @@ const CheckoutPage: React.FC = () => {
 						lastName: data.guestLastName || "",
 						email: data.guestEmail,
 						phoneNumber: data.guestPhone,
-						items: items.map((item) => ({
-							itemId: item.id,
-							quantity: item.quantity,
-						})),
+						items: guestItems,
 						shippingMethod: data.shippingMethod,
 						paymentMethod: data.paymentMethod === "CARD" ? "Paystack" : "Cash On Delivery",
 						couponCode: couponApplied ? couponCode : undefined,
@@ -640,7 +664,21 @@ const CheckoutPage: React.FC = () => {
 		} catch (err: any) {
 			const status = err?.response?.status;
 			const serverMsg = err?.response?.data?.message || "";
-			if (status === 409) {
+			if (status === 409 && serverMsg.includes("already being processed")) {
+				// The idempotency interceptor: this attempt's key is still IN_FLIGHT
+				// from a prior submission — same-tab double-clicks are already
+				// blocked by submittingRef, so this means a network-level retry or a
+				// second tab beat this one to the server. Nothing failed; ask the
+				// customer to wait rather than reporting an error.
+				toast.error("Your order is already being processed. Please wait a moment before trying again.");
+			} else if (status === 422) {
+				// Same idempotency key, reused against a different request body.
+				// Should be rare now that the signature covers cartId/items, but a
+				// stale key must not strand the customer with no way to recover —
+				// force a fresh key so their next submit isn't blocked by this one.
+				idempotencyStateRef.current = { key: undefined, signature: undefined };
+				toast.error("Something about your order changed since your last attempt. Please try again.");
+			} else if (status === 409) {
 				if (serverMsg.toLowerCase().includes("email")) {
 					setEmailExists(true);
 				}
