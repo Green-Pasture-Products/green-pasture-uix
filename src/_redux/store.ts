@@ -20,6 +20,23 @@ const persistConfig = {
 	key: `${appConstants.ROOT_STORAGE}`,
 	storage,
 	whitelist: ["auth", "cart", "wishlist"],
+	version: 1,
+	// The backend migrated every entity id from int to UUIDv7. Any state
+	// persisted before this deploy (version is undefined) may hold stale
+	// integer ids — cart.cartId and auth.user.id are both fed straight back
+	// into API/websocket calls, so a stale value breaks those calls silently.
+	// Drop them and let those slices rehydrate fresh; wishlist has no
+	// backend calls keyed by id, so it's left as-is.
+	migrate: (state: any) => {
+		if (!state || state._persist?.version === 1) {
+			return Promise.resolve(state);
+		}
+		const { cart, ...rest } = state;
+		if (rest.auth) {
+			rest.auth = { ...rest.auth, user: null };
+		}
+		return Promise.resolve(rest);
+	},
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

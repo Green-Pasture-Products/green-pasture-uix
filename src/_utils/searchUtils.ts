@@ -79,10 +79,11 @@ export const filterAndSortProducts = (
 			break;
 		}
 		case "newest":
-			// ids are UUIDv7 (time-ordered), so lexicographic string comparison
-			// sorts newest-first the same way numeric comparison did for the old
-			// auto-increment ids.
-			filtered.sort((a, b) => (String(b.id) > String(a.id) ? 1 : -1));
+			filtered.sort((a, b) => {
+				const ta = new Date((a as any).createdAt || 0).getTime();
+				const tb = new Date((b as any).createdAt || 0).getTime();
+				return tb - ta;
+			});
 			break;
 		case "name":
 		default:
