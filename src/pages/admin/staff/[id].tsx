@@ -15,6 +15,7 @@ import axiosInstance from "@/_utils/axiosInstance";
 import { BackendStaff } from "@/types";
 import { Pencil, X, Power } from "lucide-react";
 import * as changeCase from "change-case";
+import { resolveRoleIdForPatch } from "@/_utils/staffForm";
 
 interface RoleOption {
 	id: string;
@@ -39,6 +40,10 @@ const StaffDetail: React.FC = () => {
 		phoneNumber: "",
 		roleId: "",
 	});
+	// The role loaded from the server, so handleSave can tell "admin picked
+	// the same role again" apart from "admin never touched the field" and
+	// only send roleId when it actually changed (see resolveRoleIdForPatch).
+	const [initialRoleId, setInitialRoleId] = useState("");
 
 	const fetchStaff = () => {
 		if (!id) return;
@@ -49,12 +54,14 @@ const StaffDetail: React.FC = () => {
 				const data = res.data?.data ?? res.data;
 				setStaff(data);
 				if (data?.profile) {
+					const roleId = data.profile.roles?.[0]?.id ? String(data.profile.roles[0].id) : "";
 					setEditForm({
 						firstName: data.profile.firstName || "",
 						lastName: data.profile.lastName || "",
 						phoneNumber: data.profile.phoneNumber || "",
-						roleId: data.profile.roles?.[0]?.id ? String(data.profile.roles[0].id) : "",
+						roleId,
 					});
+					setInitialRoleId(roleId);
 				}
 			})
 			.catch(() => {
@@ -92,7 +99,7 @@ const StaffDetail: React.FC = () => {
 				firstName: editForm.firstName.trim(),
 				lastName: editForm.lastName.trim(),
 				phoneNumber: editForm.phoneNumber.trim(),
-				roleId: editForm.roleId || undefined,
+				roleId: resolveRoleIdForPatch(editForm.roleId, initialRoleId),
 			});
 			toast.success("Staff updated successfully");
 			setEditing(false);
@@ -113,6 +120,8 @@ const StaffDetail: React.FC = () => {
 				phoneNumber: staff.profile.phoneNumber || "",
 				roleId: staff.profile.roles?.[0]?.id ? String(staff.profile.roles[0].id) : "",
 			});
+			// initialRoleId is left as-is here — it already reflects the server's
+			// value from the last fetch, which is exactly what cancel reverts to.
 		}
 	};
 
@@ -245,6 +254,12 @@ const StaffDetail: React.FC = () => {
 									options={roles.map((r) => ({ value: String(r.id), label: r.name }))}
 									placeholder="Select a role"
 								/>
+								{profile?.roles && profile.roles.length > 1 && (
+									<p className="mt-1.5 text-xs" style={{ color: "var(--text-secondary)" }}>
+										Also has: {profile.roles.filter((r) => String(r.id) !== editForm.roleId).map((r) => changeCase.capitalCase(r.name)).join(", ")}.
+										Changing the role above replaces all of this member&apos;s roles with the one selected.
+									</p>
+								)}
 							</div>
 							<div className="sm:col-span-2 flex justify-end">
 								<Button variant="filled" size="md" onClick={handleSave} loading={saving} disabled={saving}>
