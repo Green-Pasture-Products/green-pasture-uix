@@ -35,6 +35,42 @@
 	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
 	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.05);
 	--shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+
+	/* ─── shadcn/ui tokens (radix-nova primitives) ─────────────────────────
+	   Mapped onto the existing green-pasture palette above — no new colours
+	   invented. --background/--foreground are already declared above and
+	   deliberately left untouched; --primary is declared here for
+	   documentation but intentionally NOT re-exposed under --color-primary
+	   in the @theme block below, because --color-primary already has 128
+	   live `var(--color-primary)` call sites across the app (see
+	   tailwind.config.ts's colors.primary, which independently already
+	   generates a correctly-green bg-primary/text-primary utility with the
+	   same #1f6554 value — redeclaring --color-primary here would risk
+	   shadowing those existing usages for no benefit). */
+	--card: var(--surface-paper);
+	--card-foreground: var(--text-primary);
+	--popover: var(--surface-paper);
+	--popover-foreground: var(--text-primary);
+	--primary: #1f6554; /* = --color-primary above */
+	--primary-foreground: #ffffff; /* derived: no "on-primary" token exists; white matches the text-white already used on primary-600 buttons/badges throughout the app */
+	--secondary: var(--surface-medium);
+	--secondary-foreground: var(--text-primary);
+	--muted: var(--surface-low);
+	--muted-foreground: var(--text-secondary);
+	--accent: var(--surface-medium); /* derived: shadcn --accent is a hover/highlight surface (menu items, select options), not the vivid lime brand accent; no dedicated hover-surface token exists so it reuses the same surface-medium slot as --secondary */
+	--accent-foreground: var(--text-primary);
+	--destructive: #dc2626; /* derived: matches tailwind.config.ts's existing error.DEFAULT/600 (no CSS custom property equivalent exists for it) */
+	--border: var(--border-light);
+	--input: var(--border-light); /* derived: no dedicated input-border token exists; reuses the same border-light slot already used for card/section borders */
+	--ring: #1f6554; /* derived: focus ring in the brand primary green, matching the existing .auth-field focus treatment below */
+	--sidebar: #14532d; /* exact value already used by src/_navigations/Sidebar.tsx (bg-[#14532d]) */
+	--sidebar-foreground: #ffffff; /* Sidebar.tsx uses text-white for its labels/logo */
+	--sidebar-primary: #469a85; /* derived: tailwind.config.ts's primary.400 — the exact shade Sidebar.tsx already uses (text-primary-400 / border-primary-400) to highlight the active nav item */
+	--sidebar-primary-foreground: #ffffff;
+	--sidebar-accent: rgba(255, 255, 255, 0.1); /* Sidebar.tsx's active-item background, bg-white/10 */
+	--sidebar-accent-foreground: #ffffff;
+	--sidebar-border: rgba(255, 255, 255, 0.1); /* Sidebar.tsx's divider borders, border-white/10 */
+	--sidebar-ring: #469a85; /* derived: same as --sidebar-primary, no dedicated focus-ring token exists for the dark sidebar */
 }
 
 .dark {
@@ -63,6 +99,71 @@
 	--shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5);
 
 	color-scheme: dark;
+
+	/* ─── shadcn/ui tokens (dark) — see :root for rationale/derivations ─── */
+	--card: var(--surface-paper);
+	--card-foreground: var(--text-primary);
+	--popover: var(--surface-paper);
+	--popover-foreground: var(--text-primary);
+	--primary: #469a85; /* = --color-primary above */
+	--primary-foreground: #ffffff;
+	--secondary: var(--surface-medium);
+	--secondary-foreground: var(--text-primary);
+	--muted: var(--surface-low);
+	--muted-foreground: var(--text-secondary);
+	--accent: var(--surface-medium);
+	--accent-foreground: var(--text-primary);
+	--destructive: #dc2626;
+	--border: var(--border-light);
+	--input: var(--border-light);
+	--ring: #469a85;
+	/* Sidebar.tsx renders the admin sidebar as a permanently-dark surface in
+	   both site themes (bg-[#14532d] dark:bg-[#0e0e1a]), so these match the
+	   dark-mode half of that literal pair rather than re-deriving from the
+	   rest of the dark palette. */
+	--sidebar: #0e0e1a;
+	--sidebar-foreground: #ffffff;
+	--sidebar-primary: #469a85;
+	--sidebar-primary-foreground: #ffffff;
+	--sidebar-accent: rgba(255, 255, 255, 0.1);
+	--sidebar-accent-foreground: #ffffff;
+	--sidebar-border: rgba(255, 255, 255, 0.1);
+	--sidebar-ring: #469a85;
+}
+
+/* ─── shadcn/ui Tailwind v4 token exposure ─────────────────────────────
+   Registers the bare tokens above under Tailwind's --color-* namespace so
+   utilities like bg-card, bg-sidebar, text-accent-foreground exist for the
+   copied src/components/ui primitives. --color-primary is deliberately
+   omitted (see :root comment above) — bg-primary/text-primary already work
+   via tailwind.config.ts's colors.primary, which is not touched here. */
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
 }
 
 /* ─── Base Styles ─────────────────────────────────────────────────────── */
