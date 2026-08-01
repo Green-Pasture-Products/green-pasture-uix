@@ -2,43 +2,17 @@
 
 // LIBRARY COMPONENTS
 import Head from "next/head";
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 
 // CUSTOM COMPONENTS
 import { LayoutProps } from "@/types/client/layout";
-import Sidebar from "../_navigations/Sidebar";
-import Header from "../_navigations/Header";
+import { AppShell } from "./AppShell";
 import { usePathname } from "next/navigation";
 
 const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 	const pathname = usePathname() || "";
 	const lastSegment = pathname.split("/").filter(Boolean).pop() || "";
 	const page_name = pageTitle || (lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1));
-
-	const [isCollapsed, setIsCollapsed] = useState(false);
-	const [isMobile, setIsMobile] = useState(false);
-
-	// Auto-collapse on mobile
-	useEffect(() => {
-		const checkMobile = () => {
-			const mobile = window.innerWidth < 1024;
-			setIsMobile(mobile);
-			if (mobile) {
-				setIsCollapsed(true);
-			}
-		};
-		checkMobile();
-		window.addEventListener("resize", checkMobile);
-		return () => window.removeEventListener("resize", checkMobile);
-	}, []);
-
-	const toggleCollapse = useCallback(() => {
-		setIsCollapsed((prev) => !prev);
-	}, []);
-
-	const collapse = useCallback(() => {
-		setIsCollapsed(true);
-	}, []);
 
 	return (
 		<>
@@ -111,37 +85,7 @@ const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 			</Head>
 
-			<div className="flex h-screen overflow-hidden bg-mint-50 dark:bg-[#0e0e1a] transition-colors duration-300">
-				{/* Mobile backdrop overlay */}
-				{!isCollapsed && isMobile && (
-					<div
-						className="fixed inset-0 bg-black/40 z-40 transition-opacity duration-300"
-						onClick={collapse}
-					/>
-				)}
-
-				{/* Sidebar */}
-				<aside
-					className={`fixed lg:static z-50 h-full transition-all duration-300 ease-in-out ${
-						isCollapsed
-							? "w-0 lg:w-20 overflow-hidden"
-							: "w-64"
-					}`}
-				>
-					<Sidebar
-						isCollapsed={isCollapsed && !isMobile}
-						onToggle={toggleCollapse}
-					/>
-				</aside>
-
-				{/* Main content area */}
-				<div className="flex-1 flex flex-col overflow-hidden transition-all duration-300">
-					<Header onMenuClick={toggleCollapse} />
-					<main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 animate-page-enter">
-						{children}
-					</main>
-				</div>
-			</div>
+			<AppShell>{children}</AppShell>
 		</>
 	);
 };

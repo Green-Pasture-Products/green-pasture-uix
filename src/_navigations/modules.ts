@@ -23,7 +23,12 @@ export const MODULES: ModuleDef[] = [
 	{ path: "/admin/customers", title: "Customers", icon: UserRound, group: "Sales", privilege: "MANAGE_CUSTOMERS", owns: ["/admin/customer"] },
 	{ path: "/admin/staff", title: "Staff", icon: UserCog, group: "People", privilege: "MANAGE_STAFF" },
 	{ path: "/admin/roles", title: "Roles", icon: Shield, group: "People", privilege: "MANAGE_ROLES", owns: ["/admin/role"] },
-	{ path: "/admin/settings", title: "Settings", icon: Settings, group: "System", privilege: "MANAGE_STORES" },
+	// Ungated: settings.tsx has tabs every signed-in staff member needs (My
+	// Profile, Security) alongside store-scoped ones. Gating the nav item would
+	// deny a STAFF user their own profile/password change. The store-scoped
+	// tabs (Store Settings, Order & Shipping) are hidden inside the page
+	// itself via useHasPrivilege('MANAGE_STORES').
+	{ path: "/admin/settings", title: "Settings", icon: Settings, group: "System" },
 ];
 
 /** Look up a module by its absolute path (exact match). */
