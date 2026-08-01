@@ -53,7 +53,7 @@ const StaffDetail: React.FC = () => {
 						firstName: data.profile.firstName || "",
 						lastName: data.profile.lastName || "",
 						phoneNumber: data.profile.phoneNumber || "",
-						roleId: data.profile.role?.id ? String(data.profile.role.id) : "",
+						roleId: data.profile.roles?.[0]?.id ? String(data.profile.roles[0].id) : "",
 					});
 				}
 			})
@@ -111,7 +111,7 @@ const StaffDetail: React.FC = () => {
 				firstName: staff.profile.firstName || "",
 				lastName: staff.profile.lastName || "",
 				phoneNumber: staff.profile.phoneNumber || "",
-				roleId: staff.profile.role?.id ? String(staff.profile.role.id) : "",
+				roleId: staff.profile.roles?.[0]?.id ? String(staff.profile.roles[0].id) : "",
 			});
 		}
 	};
@@ -262,7 +262,9 @@ const StaffDetail: React.FC = () => {
 							label="Role"
 							value={
 								<Badge variant="info">
-									{changeCase.capitalCase(profile?.role?.name ?? profile?.profileType ?? "Staff")}
+									{profile?.roles?.length
+										? profile.roles.map((r) => changeCase.capitalCase(r.name)).join(", ")
+										: changeCase.capitalCase(profile?.profileType ?? "Staff")}
 								</Badge>
 							}
 						/>

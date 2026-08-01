@@ -176,7 +176,9 @@ const Staff: React.FC = () => {
 			header: "Role",
 			render: (_value: any, row: BackendStaff) => (
 				<Badge variant="info">
-					{changeCase.capitalCase(row.profile?.role?.name ?? "Staff")}
+					{row.profile?.roles?.length
+						? row.profile.roles.map((r) => changeCase.capitalCase(r.name)).join(", ")
+						: "Staff"}
 				</Badge>
 			),
 		},

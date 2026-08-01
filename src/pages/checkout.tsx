@@ -469,6 +469,7 @@ const CheckoutPage: React.FC = () => {
 				// the signature or a swap would replay the old cart's response.
 				const authenticatedAttemptSignature = buildAuthenticatedAttemptSignature({
 					cartId: activeCartId,
+					items,
 					shippingAddress: data.shippingAddress,
 					shippingMethod: data.shippingMethod,
 					paymentMethod: data.paymentMethod,
@@ -479,6 +480,7 @@ const CheckoutPage: React.FC = () => {
 
 				// Step 3: Sync local items to backend cart if needed
 				if (needsSync) {
+					const failedItems: typeof items = [];
 					for (const item of items) {
 						try {
 							await axiosInstance.post("cart-item/create", {
@@ -486,9 +488,18 @@ const CheckoutPage: React.FC = () => {
 								itemId: item.id,
 								quantity: item.quantity,
 							});
-						} catch {
-							// Item may already exist — backend handles idempotently
+						} catch (error) {
+							// A 409/already-exists is fine (backend handles that
+							// idempotently), but anything else means this item never
+							// made it into the cart — placing an order now would
+							// silently omit it, so that must not pass unnoticed.
+							console.error("Failed to sync cart item", item.id, error);
+							failedItems.push(item);
 						}
+					}
+					if (failedItems.length > 0) {
+						toast.error("Some items could not be added to your cart. Please try again.");
+						return;
 					}
 				}
 

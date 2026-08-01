@@ -39,6 +39,8 @@ test("a key changed by an edit does not revert on a further retry of the new att
 });
 
 const baseAuthenticatedFields = {
+	cartId: "cart-a",
+	items: [{ itemId: "item-1", quantity: 1 }],
 	shippingAddress: { street: "1 Market St", city: "Lagos", state: "LA", country: "NG", postalCode: "100001" },
 	shippingMethod: "STANDARD",
 	paymentMethod: "CARD",
@@ -55,6 +57,22 @@ test("authenticated attempt signature differs when the target cart differs", () 
 	const sigForCartA = buildAuthenticatedAttemptSignature({ ...baseAuthenticatedFields, cartId: "cart-a" });
 	const sigForCartB = buildAuthenticatedAttemptSignature({ ...baseAuthenticatedFields, cartId: "cart-b" });
 	assert.notEqual(sigForCartA, sigForCartB, "cartId must be part of the authenticated attempt signature");
+});
+
+test("authenticated attempt signature differs when the cart's items differ", () => {
+	// Same swapped-cart scenario as above, but via cart-item sync (Step 3)
+	// rather than cartId itself: same cartId, different items on it. Without
+	// items in the signature, the key would be reused and the interceptor
+	// would replay a stale response against a cart whose contents changed.
+	const sigForOneItem = buildAuthenticatedAttemptSignature({
+		...baseAuthenticatedFields,
+		items: [{ itemId: "item-1", quantity: 1 }],
+	});
+	const sigForTwoItems = buildAuthenticatedAttemptSignature({
+		...baseAuthenticatedFields,
+		items: [{ itemId: "item-1", quantity: 1 }, { itemId: "item-2", quantity: 1 }],
+	});
+	assert.notEqual(sigForOneItem, sigForTwoItems, "items must be part of the authenticated attempt signature");
 });
 
 const baseGuestFields = {

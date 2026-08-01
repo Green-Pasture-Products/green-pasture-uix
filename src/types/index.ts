@@ -321,7 +321,7 @@ export interface ProfileData {
 	status?: string;
 	createdAt?: string;
 	updatedAt?: string;
-	role?: { id: string; name: string; permissions?: BackendPermission[] };
+	roles?: Array<{ id: string; name: string; permissions?: BackendPermission[] }>;
 }
 
 export interface ShippingAddress {

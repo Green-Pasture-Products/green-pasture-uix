@@ -25,13 +25,15 @@ const persistConfig = {
 	// persisted before this deploy (version is undefined) may hold stale
 	// integer ids — cart.cartId and auth.user.id are both fed straight back
 	// into API/websocket calls, so a stale value breaks those calls silently.
-	// Drop them and let those slices rehydrate fresh; wishlist has no
-	// backend calls keyed by id, so it's left as-is.
+	// Drop them and let those slices rehydrate fresh. wishlist is dropped too:
+	// wishlist.tsx's handleAddAllToCart dispatches addToCart(product) with the
+	// persisted (stale-id) Product straight into cart, so it is just as
+	// id-sensitive as cart/auth despite having no direct backend calls of its own.
 	migrate: (state: any) => {
 		if (!state || state._persist?.version === 1) {
 			return Promise.resolve(state);
 		}
-		const { cart, ...rest } = state;
+		const { cart, wishlist, ...rest } = state;
 		if (rest.auth) {
 			rest.auth = { ...rest.auth, user: null };
 		}

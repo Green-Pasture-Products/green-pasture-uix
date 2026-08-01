@@ -45,6 +45,7 @@ export function resolveIdempotencyKey(
 
 export interface AuthenticatedAttemptFields {
 	cartId: string;
+	items: unknown;
 	shippingAddress: unknown;
 	shippingMethod: string;
 	paymentMethod: string;
@@ -52,8 +53,8 @@ export interface AuthenticatedAttemptFields {
 }
 
 export function buildAuthenticatedAttemptSignature(fields: AuthenticatedAttemptFields): string {
-	const { cartId, shippingAddress, shippingMethod, paymentMethod, couponCode } = fields;
-	return JSON.stringify({ cartId, shippingAddress, shippingMethod, paymentMethod, couponCode });
+	const { cartId, items, shippingAddress, shippingMethod, paymentMethod, couponCode } = fields;
+	return JSON.stringify({ cartId, items, shippingAddress, shippingMethod, paymentMethod, couponCode });
 }
 
 export interface GuestAttemptFields {
