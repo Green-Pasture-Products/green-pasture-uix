@@ -97,18 +97,6 @@ export const forgotPasswordAsync = createAsyncThunk<any, { email: string }, { re
 	}
 );
 
-export const resetPasswordAsync = createAsyncThunk<any, { email: string; otp: string; newPassword: string }, { rejectValue: string }>(
-	"auth/resetPassword",
-	async (payload, { rejectWithValue }) => {
-		try {
-			const res = await axios.post(`${appConstants.API_BASE_URL}auth/reset-password`, payload);
-			return res.data;
-		} catch (error: any) {
-			return rejectWithValue(extractErrorMessage(error));
-		}
-	}
-);
-
 export const verifyAccountAsync = createAsyncThunk<any, { email: string; otp: string }, { rejectValue: string }>(
 	"auth/verifyAccount",
 	async (payload, { rejectWithValue }) => {

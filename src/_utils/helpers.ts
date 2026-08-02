@@ -102,8 +102,6 @@ export const useIsAuthRoute = () => {
 		"/login",
 		"/signup",
 		"/forgot-password",
-		"/reset-password",
-		"/setup-password",
 		"/verify-user/[email]",
 	];
 
