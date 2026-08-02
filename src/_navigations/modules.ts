@@ -1,4 +1,4 @@
-import { LayoutDashboard, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, Shield, Settings, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, Shield, Settings, type LucideIcon } from "lucide-react";
 
 /** One admin module: drives the sidebar nav, tab metadata, and privilege gating. */
 export interface ModuleDef {
@@ -17,6 +17,7 @@ export interface ModuleDef {
 /** Source of truth for nav, tabs, and privilege gating. Authored in sidebar order. */
 export const MODULES: ModuleDef[] = [
 	{ path: "/admin/dashboard", title: "Dashboard", icon: LayoutDashboard, group: "Overview", closable: false },
+	{ path: "/admin/analytics", title: "Analytics", icon: BarChart3, group: "Overview", privilege: "VIEW_ANALYTICS" },
 	{ path: "/admin/categories", title: "Category", icon: ShoppingBasket, group: "Catalog", owns: ["/admin/category"] },
 	{ path: "/admin/products", title: "Products", icon: Package, group: "Catalog", privilege: "MANAGE_PRODUCTS", owns: ["/admin/product"] },
 	{ path: "/admin/orders", title: "Orders", icon: ShoppingCart, group: "Sales", privilege: "MANAGE_ORDERS", owns: ["/admin/order"] },
