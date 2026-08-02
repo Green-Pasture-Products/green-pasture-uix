@@ -60,7 +60,13 @@ const profileSchema = z.object({
 const passwordSchema = z
 	.object({
 		currentPassword: z.string().min(1, "Current password is required"),
-		newPassword: z.string().min(8, "Minimum 8 characters"),
+		newPassword: z
+			.string()
+			.min(8, "Minimum 8 characters")
+			.regex(
+				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+				"Must contain an uppercase letter, a lowercase letter, and a number"
+			),
 		confirmPassword: z.string().min(1, "Please confirm"),
 	})
 	.refine((d) => d.newPassword === d.confirmPassword, {
@@ -283,7 +289,10 @@ const AdminSettings: React.FC = () => {
 	const onChangePassword = async (data: PasswordFormData) => {
 		setSavingPassword(true);
 		try {
-			await axiosInstance.patch("profile", { password: data.newPassword });
+			await axiosInstance.post("auth/change-password", {
+				currentPassword: data.currentPassword,
+				newPassword: data.newPassword,
+			});
 			toast.success("Password updated");
 			passwordForm.reset();
 		} catch (err: any) {

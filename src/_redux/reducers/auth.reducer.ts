@@ -5,7 +5,6 @@ import {
 	signupAsync,
 	logoutAsync,
 	forgotPasswordAsync,
-	resetPasswordAsync,
 	verifyAccountAsync,
 	resendOtpAsync,
 	googleOAuthSigninAsync,
@@ -105,19 +104,6 @@ const authSlice = createSlice({
 				state.isLoading = false;
 			})
 			.addCase(forgotPasswordAsync.rejected, (state, action) => {
-				state.isLoading = false;
-				state.error = action.payload as string;
-			});
-
-		builder
-			.addCase(resetPasswordAsync.pending, (state) => {
-				state.isLoading = true;
-				state.error = null;
-			})
-			.addCase(resetPasswordAsync.fulfilled, (state) => {
-				state.isLoading = false;
-			})
-			.addCase(resetPasswordAsync.rejected, (state, action) => {
 				state.isLoading = false;
 				state.error = action.payload as string;
 			});
