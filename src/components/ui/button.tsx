@@ -42,25 +42,38 @@ const buttonVariants = cva(
   }
 )
 
-function Button({
-  className,
-  variant = "default",
-  size = "default",
-  asChild = false,
-  loading,
-  disabled,
-  children,
-  ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-    loading?: boolean
-  }) {
+// forwardRef is required: Radix's `asChild`/Slot pattern (DropdownMenuTrigger,
+// PopoverTrigger, TooltipTrigger, ...) attaches a ref to its child to measure
+// and position portalled content. A plain function component can't receive
+// that ref — React throws "Function components cannot be given refs" and the
+// trigger's positioning breaks. Every `<Foo asChild><Button/></Foo>` usage
+// needs this.
+const Button = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<"button"> &
+    VariantProps<typeof buttonVariants> & {
+      asChild?: boolean
+      loading?: boolean
+    }
+>(function Button(
+  {
+    className,
+    variant = "default",
+    size = "default",
+    asChild = false,
+    loading,
+    disabled,
+    children,
+    ...props
+  },
+  ref
+) {
   const Comp = asChild ? Slot.Root : "button"
 
   if (asChild) {
     return (
       <Comp
+        ref={ref}
         data-slot="button"
         data-variant={variant}
         data-size={size}
@@ -75,6 +88,7 @@ function Button({
 
   return (
     <Comp
+      ref={ref}
       data-slot="button"
       data-variant={variant}
       data-size={size}
@@ -86,6 +100,6 @@ function Button({
       {children}
     </Comp>
   )
-}
+})
 
 export { Button, buttonVariants }

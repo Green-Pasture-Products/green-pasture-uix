@@ -41,7 +41,8 @@ import AdminLayout from "@/_components/AdminLayout";
 import PageLoader from "@/_UI/PageLoader";
 import { useAppDispatch } from "@/_redux/store";
 import { analyticsAction } from "@/_redux/actions/analytics.action";
-import { DataTable, Column } from "@/_UI/DataTable";
+import { DataTable } from "@/_components/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import Badge from "@/_UI/Badge";
 
 // ── Style Constants (EGFM pattern) ──
@@ -138,22 +139,24 @@ const AdminDashboard: React.FC = () => {
 	], [overview]);
 
 	// ── Table Columns ──
-	const orderColumns: Column<any>[] = [
-		{ key: "orderReference", header: "ORDER REF", render: (v) => <span className="font-medium" style={{ color: "var(--text-primary)" }}>#{v}</span> },
-		{ key: "customerName", header: "CUSTOMER" },
-		{ key: "totalAmount", header: "AMOUNT", render: (v) => <span className="font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>₦{Number(v).toLocaleString()}</span> },
-		{ key: "orderStatus", header: "STATUS", render: (v) => <Badge variant={getStatusBadgeVariant(String(v))} dot>{String(v)}</Badge> },
-		{ key: "createdAt", header: "DATE", render: (v) => <span style={{ color: "var(--text-hint)" }}>{new Date(String(v)).toLocaleDateString()}</span> },
+	const orderColumns: ColumnDef<any, any>[] = [
+		{ accessorKey: "orderReference", header: "ORDER REF", cell: ({ getValue }) => <span className="font-medium" style={{ color: "var(--text-primary)" }}>#{String(getValue())}</span> },
+		{ accessorKey: "customerName", header: "CUSTOMER" },
+		{ accessorKey: "totalAmount", header: "AMOUNT", cell: ({ getValue }) => <span className="font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>₦{Number(getValue()).toLocaleString()}</span> },
+		{ accessorKey: "orderStatus", header: "STATUS", cell: ({ getValue }) => <Badge variant={getStatusBadgeVariant(String(getValue()))} dot>{String(getValue())}</Badge> },
+		{ accessorKey: "createdAt", header: "DATE", cell: ({ getValue }) => <span style={{ color: "var(--text-hint)" }}>{new Date(String(getValue())).toLocaleDateString()}</span> },
 	];
 
-	const customerColumns: Column<any>[] = [
-		{ key: "firstName", header: "CUSTOMER", render: (_, row) => (
-			<div>
-				<div className="font-medium" style={{ color: "var(--text-primary)" }}>{row.firstName} {row.lastName}</div>
-				<div className="text-[0.7rem]" style={{ color: "var(--text-hint)" }}>{row.email}</div>
-			</div>
-		)},
-		{ key: "createdAt", header: "JOINED", render: (v) => <span style={{ color: "var(--text-hint)" }}>{new Date(String(v)).toLocaleDateString()}</span> },
+	const customerColumns: ColumnDef<any, any>[] = [
+		{
+			id: "customer", accessorKey: "firstName", header: "CUSTOMER", enableSorting: false, cell: ({ row }) => (
+				<div>
+					<div className="font-medium" style={{ color: "var(--text-primary)" }}>{row.original.firstName} {row.original.lastName}</div>
+					<div className="text-[0.7rem]" style={{ color: "var(--text-hint)" }}>{row.original.email}</div>
+				</div>
+			)
+		},
+		{ accessorKey: "createdAt", header: "JOINED", cell: ({ getValue }) => <span style={{ color: "var(--text-hint)" }}>{new Date(String(getValue())).toLocaleDateString()}</span> },
 	];
 
 	if (loading) {
@@ -296,7 +299,7 @@ const AdminDashboard: React.FC = () => {
 								<h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Recent Orders</h2>
 								<Link href="/admin/orders" className={VIEW_ALL}>View All</Link>
 							</div>
-							<DataTable columns={orderColumns} data={analytics?.recentOrders ?? []} emptyMessage="No orders yet" />
+							<DataTable columns={orderColumns} data={analytics?.recentOrders ?? []} manualPagination={false} emptyMessage="No orders yet" testId="recent-orders-table" />
 						</div>
 					</div>
 
@@ -644,7 +647,7 @@ const AdminDashboard: React.FC = () => {
 						<h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Recent Customers</h2>
 						<Link href="/admin/customers" className={VIEW_ALL}>View All</Link>
 					</div>
-					<DataTable columns={customerColumns} data={analytics?.recentCustomers ?? []} emptyMessage="No customers yet" />
+					<DataTable columns={customerColumns} data={analytics?.recentCustomers ?? []} manualPagination={false} emptyMessage="No customers yet" testId="recent-customers-table" />
 				</div>
 			</div>
 		</AdminLayout>

@@ -7,7 +7,8 @@ import toast from "react-hot-toast";
 import AdminLayout from "@/_components/AdminLayout";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { adminAction } from "@/_redux/actions/admin.action";
-import { DataTable, Column, FilterDef } from "@/_UI/DataTable";
+import { DataTable, FilterDef } from "@/_components/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import Modal from "@/_UI/Modal";
@@ -105,76 +106,80 @@ const AdminOrders: React.FC = () => {
 		}
 	};
 
-	const columns: Column<BackendOrder>[] = [
+	const columns: ColumnDef<BackendOrder, any>[] = [
 		{
-			key: "orderReference",
+			accessorKey: "orderReference",
 			header: "Order Ref",
-			width: "200px",
-			render: (value: any) => (
-				<span className="text-sm font-medium whitespace-nowrap" style={{ color: "var(--text-primary)" }}>#{value}</span>
+			meta: { width: "200px" },
+			cell: ({ getValue }) => (
+				<span className="text-sm font-medium whitespace-nowrap" style={{ color: "var(--text-primary)" }}>#{String(getValue())}</span>
 			),
 		},
 		{
-			key: "customer",
+			id: "customer",
+			accessorKey: "customer",
 			header: "Customer",
-			maxWidth: "220px",
-			truncate: true,
-			render: (_value: any, row: BackendOrder) => (
+			enableSorting: false,
+			meta: { maxWidth: "220px", truncate: true },
+			cell: ({ row }) => (
 				<div>
 					<div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-						{row.customer?.profile?.firstName} {row.customer?.profile?.lastName}
+						{row.original.customer?.profile?.firstName} {row.original.customer?.profile?.lastName}
 					</div>
 					<div className="text-xs truncate" style={{ color: "var(--text-hint)" }}>
-						{row.customer?.profile?.email}
+						{row.original.customer?.profile?.email}
 					</div>
 				</div>
 			),
 		},
 		{
-			key: "items",
+			id: "items",
+			accessorKey: "items",
 			header: "Items",
-			render: (_value: any, row: BackendOrder) => (
+			enableSorting: false,
+			cell: ({ row }) => (
 				<span className="text-sm text-gray-600 dark:text-gray-300">
-					{row.items?.length ?? 0}
+					{row.original.items?.length ?? 0}
 				</span>
 			),
 		},
 		{
-			key: "totalAmount",
+			accessorKey: "totalAmount",
 			header: "Total",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm font-semibold text-on-surface dark:text-gray-200">
-					{formatCurrency(value)}
+					{formatCurrency(getValue() as number)}
 				</span>
 			),
 		},
 		{
-			key: "orderStatus",
+			accessorKey: "orderStatus",
 			header: "Status",
-			render: (value: any) => (
-				<Badge variant={getStatusBadgeVariant(String(value))} dot>
-					{String(value)}
+			cell: ({ getValue }) => (
+				<Badge variant={getStatusBadgeVariant(String(getValue()))} dot>
+					{String(getValue())}
 				</Badge>
 			),
 		},
 		{
-			key: "createdAt",
+			accessorKey: "createdAt",
 			header: "Date",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm text-gray-500 dark:text-gray-400">
-					{new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+					{new Date(getValue() as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
 				</span>
 			),
 		},
 		{
-			key: "id",
+			id: "actions",
 			header: "",
-			width: "50px",
-			align: "center" as const,
-			render: (_: any, row: BackendOrder) => (
+			enableSorting: false,
+			enableHiding: false,
+			meta: { width: "50px", align: "center" },
+			cell: ({ row }) => (
 				<ActionMenu items={[
-					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/order/${row.orderReference}`) },
-					{ label: "Cancel", icon: DELETE_ICON, onClick: () => setCancelTarget(row), variant: "danger" as const, hidden: row.orderStatus === "CANCELLED" },
+					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/order/${row.original.orderReference}`) },
+					{ label: "Cancel", icon: DELETE_ICON, onClick: () => setCancelTarget(row.original), variant: "danger" as const, hidden: row.original.orderStatus === "CANCELLED" },
 				]} />
 			),
 		},
@@ -188,14 +193,18 @@ const AdminOrders: React.FC = () => {
 					columns={columns}
 					data={filteredOrders ?? []}
 					isLoading={ordersLoading}
-					onSearch={setSearch}
-					initialSearch={searchTerm}
+					manualFiltering
+					globalFilter={searchTerm}
+					onGlobalFilterChange={setSearch}
 					searchPlaceholder="Search orders..."
 					filters={ORDER_STATUS_FILTERS}
 					filterValues={filterValues}
 					onFilterChange={handleFilterChange}
-					pagination={ordersPagination ?? undefined}
-					onPageChange={setPage}
+					pageIndex={currentPage - 1}
+					pageSize={pageSize}
+					pageCount={ordersPagination?.totalPages ?? 1}
+					totalItems={ordersPagination?.totalItems}
+					onPageChange={(idx) => setPage(idx + 1)}
 					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/order/${row.orderReference}`)}
 					emptyMessage="No orders found"

@@ -5,7 +5,8 @@ import AdminLayout from "@/_components/AdminLayout";
 import { BackButton, DetailHeader, DetailSection, DetailRow } from "@/_UI/DetailField";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
-import { DataTable, Column } from "@/_UI/DataTable";
+import { DataTable } from "@/_components/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { formatCurrency } from "@/_UI/FormatValue";
 import { FormInput, FormSelect } from "@/_UI/FormField";
 import PageLoader from "@/_UI/PageLoader";
@@ -92,40 +93,43 @@ const OrderDetail: React.FC = () => {
 		}
 	};
 
-	const itemColumns: Column<BackendOrderItem>[] = [
+	const itemColumns: ColumnDef<BackendOrderItem, any>[] = [
 		{
-			key: "item",
+			id: "item",
+			accessorKey: "item",
 			header: "Item Name",
-			render: (_value: any, row: BackendOrderItem) => (
+			enableSorting: false,
+			cell: ({ row }) => (
 				<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-					{row.item?.name ?? "\u2014"}
+					{row.original.item?.name ?? "\u2014"}
 				</span>
 			),
 		},
 		{
-			key: "quantity",
+			accessorKey: "quantity",
 			header: "Quantity",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm" style={{ color: "var(--text-primary)" }}>
-					{value}
+					{getValue() as number}
 				</span>
 			),
 		},
 		{
-			key: "unitPrice",
+			accessorKey: "unitPrice",
 			header: "Unit Price",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm tabular-nums" style={{ color: "var(--text-primary)" }}>
-					{formatCurrency(value)}
+					{formatCurrency(getValue() as number)}
 				</span>
 			),
 		},
 		{
-			key: "subtotal",
+			id: "subtotal",
 			header: "Subtotal",
-			render: (_value: any, row: BackendOrderItem) => (
+			enableSorting: false,
+			cell: ({ row }) => (
 				<span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>
-					{formatCurrency(row.quantity * row.unitPrice)}
+					{formatCurrency(row.original.quantity * row.original.unitPrice)}
 				</span>
 			),
 		},
@@ -251,7 +255,7 @@ const OrderDetail: React.FC = () => {
 				)}
 
 				<DetailSection title="Order Items">
-					<DataTable columns={itemColumns} data={order.items ?? []} emptyMessage="No items in this order" />
+					<DataTable columns={itemColumns} data={order.items ?? []} manualPagination={false} emptyMessage="No items in this order" />
 				</DetailSection>
 			</div>
 		</AdminLayout>
