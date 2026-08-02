@@ -15,8 +15,6 @@ import {
 	Truck,
 	CheckCircle,
 	Loader2,
-	Zap,
-	Clock,
 	DollarSign,
 	Wallet,
 	Lock,
@@ -58,7 +56,9 @@ const checkoutFormSchema = z.object({
 		country: z.string().min(1, "Country is required"),
 		postalCode: z.string().min(1, "Postal code is required"),
 	}),
-	shippingMethod: z.enum(["STANDARD", "EXPRESS"]),
+	// The id of an admin-configured shipping method — not a fixed set, so this
+	// is validated as "picked something" rather than against a closed list.
+	shippingMethod: z.string().min(1, "Please select a shipping method"),
 	paymentMethod: z.enum(["CARD", "CASH_ON_DELIVERY"]),
 });
 
@@ -67,11 +67,6 @@ type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
 /* ------------------------------------------------------------------ */
 /*  Option data                                                       */
 /* ------------------------------------------------------------------ */
-
-const shippingOptions = [
-	{ value: "STANDARD" as const, label: "Standard Shipping", desc: "5-7 business days", Icon: Truck },
-	{ value: "EXPRESS" as const, label: "Express Shipping", desc: "2-3 business days", Icon: Zap },
-];
 
 const paymentOptions = [
 	{ value: "CARD" as const, label: "Pay with Card", desc: "Secure payment via Paystack", Icon: CreditCard },
@@ -276,7 +271,9 @@ const CheckoutPage: React.FC = () => {
 	} = useForm<CheckoutFormData>({
 		resolver: zodResolver(checkoutFormSchema),
 		defaultValues: {
-			shippingMethod: "STANDARD",
+			// Set once the store config loads and the enabled methods are known
+			// (see the effect below) — there is no fixed default id to assume.
+			shippingMethod: "",
 			paymentMethod: "CARD",
 			guestFirstName: "",
 			guestLastName: "",
@@ -323,14 +320,25 @@ const CheckoutPage: React.FC = () => {
 	const taxRate = Number(storeConfig?.orderSettings?.taxRate) || 0;
 	const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold) || 0;
 
-	// Price the method the customer picked. Reading methods[0] unconditionally
-	// meant express shipping was displayed — and charged — at standard cost.
+	// Price the method the customer picked, matched by id — matching by name
+	// meant a renamed method silently fell through to methods[0], so express
+	// was displayed and charged at standard cost. Disabled methods aren't
+	// offered at all, so they can never be the active selection.
 	const shippingMethods = storeConfig?.shippingConfig?.methods ?? [];
-	const activeMethod =
-		shippingMethods.find(
-			(m: any) => String(m?.name ?? m?.code ?? "").toUpperCase() === String(selectedShipping ?? "").toUpperCase(),
-		) ?? shippingMethods[0];
+	const enabledShippingMethods = shippingMethods.filter((m: any) => m?.enabled !== false);
+	const activeMethod = enabledShippingMethods.find((m: any) => m.id === selectedShipping) ?? enabledShippingMethods[0];
 	const shippingFee = Number(activeMethod?.baseCost) || 0;
+
+	// Default (and re-default if the store config changes underneath the form,
+	// e.g. the admin disabled the previously-selected method) to the first
+	// enabled method's id.
+	useEffect(() => {
+		if (enabledShippingMethods.length === 0) return;
+		if (!enabledShippingMethods.some((m: any) => m.id === selectedShipping)) {
+			setValue("shippingMethod", enabledShippingMethods[0].id);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [storeConfig]);
 
 	const subtotal = total;
 	const shipping = freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : shippingFee;
@@ -540,7 +548,7 @@ const CheckoutPage: React.FC = () => {
 				const paymentResult = await dispatch(
 					checkoutAction.placeOrderAsync({
 						orderId,
-						shippingMethod: data.shippingMethod as any,
+						shippingMethod: data.shippingMethod,
 						paymentMethod: backendPaymentMethod as any,
 						shippingAddress: {
 							...data.shippingAddress,
@@ -963,18 +971,29 @@ const CheckoutPage: React.FC = () => {
 							</h2>
 
 							<div className="space-y-3">
-								{shippingOptions.map((opt) => (
-									<OptionCard
-										key={opt.value}
-										selected={selectedShipping === opt.value}
-										Icon={opt.Icon}
-										label={opt.label}
-										desc={opt.desc}
-										value={opt.value}
-										name="shippingMethod"
-										onChange={() => setValue("shippingMethod", opt.value)}
-									/>
-								))}
+								{configLoading ? (
+									<div className="h-16 rounded-xl animate-pulse" style={{ background: "var(--surface-medium)" }} />
+								) : enabledShippingMethods.length === 0 ? (
+									<div
+										className="rounded-lg p-4 text-sm"
+										style={{ background: "var(--surface-medium)", color: "var(--text-secondary)" }}
+									>
+										No shipping methods are currently available. Please check back later or contact support.
+									</div>
+								) : (
+									enabledShippingMethods.map((opt: any) => (
+										<OptionCard
+											key={opt.id}
+											selected={selectedShipping === opt.id}
+											Icon={Truck}
+											label={opt.name}
+											desc={`${opt.estimatedDays ? `${opt.estimatedDays} • ` : ""}₦${Number(opt.baseCost).toLocaleString()}`}
+											value={opt.id}
+											name="shippingMethod"
+											onChange={() => setValue("shippingMethod", opt.id)}
+										/>
+									))
+								)}
 							</div>
 						</motion.section>
 
@@ -1189,7 +1208,7 @@ const CheckoutPage: React.FC = () => {
 								size="lg"
 								fullWidth
 								loading={isProcessing}
-								disabled={isProcessing || configLoading}
+								disabled={isProcessing || configLoading || enabledShippingMethods.length === 0}
 							>
 								{isProcessing ? "Processing..." : "Place Order"}
 							</Button>

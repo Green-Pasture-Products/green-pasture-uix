@@ -340,7 +340,9 @@ export type OrderStatusType =
 	| "DELIVERED"
 	| "CANCELLED";
 
-export type ShippingMethodType = "STANDARD" | "EXPRESS" | "OVERNIGHT";
+// Shipping methods are admin-configurable (store settings), so the backend
+// accepts any configured method id as a plain string — not a fixed set.
+export type ShippingMethodType = string;
 
 export type PaymentMethodType = "CARD" | "CASH_ON_DELIVERY" | "WALLET";
 
