@@ -8,7 +8,8 @@ import { BackendCustomer } from "@/types";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { adminAction } from "@/_redux/actions/admin.action";
 import AdminLayout from "@/_components/AdminLayout";
-import { DataTable, Column, FilterDef } from "@/_UI/DataTable";
+import { DataTable, FilterDef } from "@/_components/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
@@ -98,64 +99,70 @@ const AdminCustomers: React.FC = () => {
 		}
 	};
 
-	const columns: Column<BackendCustomer>[] = [
+	const columns: ColumnDef<BackendCustomer, any>[] = [
 		{
-			key: "profile",
+			id: "name",
+			accessorKey: "profile",
 			header: "Name",
-			render: (_value: any, row: BackendCustomer) => (
+			enableSorting: false,
+			cell: ({ row }) => (
 				<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-					{row.profile?.firstName} {row.profile?.lastName}
+					{row.original.profile?.firstName} {row.original.profile?.lastName}
 				</span>
 			),
 		},
 		{
-			key: "profile",
+			id: "email",
+			accessorKey: "profile.email",
 			header: "Email",
-			maxWidth: "240px",
-			truncate: true,
-			render: (_value: any, row: BackendCustomer) => (
-				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>{row.profile?.email}</span>
+			enableSorting: false,
+			meta: { maxWidth: "240px", truncate: true },
+			cell: ({ row }) => (
+				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>{row.original.profile?.email}</span>
 			),
 		},
 		{
-			key: "profile",
+			id: "phone",
+			accessorKey: "profile.phoneNumber",
 			header: "Phone",
-			render: (_value: any, row: BackendCustomer) => (
-				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>{row.profile?.phoneNumber ?? "N/A"}</span>
+			enableSorting: false,
+			cell: ({ row }) => (
+				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>{row.original.profile?.phoneNumber ?? "N/A"}</span>
 			),
 		},
 		{
-			key: "status",
+			accessorKey: "status",
 			header: "Status",
-			render: (value: any) => (
-				<Badge variant={value === "A" ? "success" : "error"} dot>
-					{value === "A" ? "Active" : "Inactive"}
+			cell: ({ getValue }) => (
+				<Badge variant={getValue() === "A" ? "success" : "error"} dot>
+					{getValue() === "A" ? "Active" : "Inactive"}
 				</Badge>
 			),
 		},
 		{
-			key: "createdAt",
+			accessorKey: "createdAt",
 			header: "Joined",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm text-gray-500 dark:text-gray-400">
-					{new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+					{new Date(getValue() as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
 				</span>
 			),
 		},
 		{
-			key: "id",
+			id: "actions",
 			header: "",
-			width: "50px",
-			align: "center" as const,
-			render: (_: any, row: any) => (
+			enableSorting: false,
+			enableHiding: false,
+			meta: { width: "50px", align: "center" },
+			cell: ({ row }) => (
 				<ActionMenu items={[
-					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/customer/${row.id}`) },
+					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/customer/${row.original.id}`) },
 					{
-						label: row.status === "A" ? "Deactivate" : "Activate",
+						label: row.original.status === "A" ? "Deactivate" : "Activate",
 						icon: STATUS_ICON,
-						onClick: () => setStatusTarget(row),
+						onClick: () => setStatusTarget(row.original),
 					},
-					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: "danger" as const },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
 				]} />
 			),
 		},
@@ -168,14 +175,18 @@ const AdminCustomers: React.FC = () => {
 					columns={columns}
 					data={customers ?? []}
 					isLoading={customersLoading}
-					onSearch={setSearch}
-					initialSearch={searchTerm}
+					manualFiltering
+					globalFilter={searchTerm}
+					onGlobalFilterChange={setSearch}
 					searchPlaceholder="Search customers..."
 					filters={CUSTOMER_STATUS_FILTERS}
 					filterValues={filterValues}
 					onFilterChange={setFilter}
-					pagination={customersPagination ?? undefined}
-					onPageChange={setPage}
+					pageIndex={currentPage - 1}
+					pageSize={pageSize}
+					pageCount={customersPagination?.totalPages ?? 1}
+					totalItems={customersPagination?.totalItems}
+					onPageChange={(idx) => setPage(idx + 1)}
 					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/customer/${row.id}`)}
 					emptyMessage="No customers found"

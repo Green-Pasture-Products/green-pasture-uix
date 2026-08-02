@@ -8,7 +8,8 @@ import { BackendStaff } from "@/types";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { adminAction } from "@/_redux/actions/admin.action";
 import AdminLayout from "@/_components/AdminLayout";
-import { DataTable, Column } from "@/_UI/DataTable";
+import { DataTable } from "@/_components/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
@@ -145,75 +146,83 @@ const Staff: React.FC = () => {
 		}
 	};
 
-	const columns: Column<BackendStaff>[] = [
+	const columns: ColumnDef<BackendStaff, any>[] = [
 		{
-			key: "profile",
+			id: "name",
+			accessorKey: "profile",
 			header: "Name",
-			render: (_value: any, row: BackendStaff) => (
+			enableSorting: false,
+			cell: ({ row }) => (
 				<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-					{row.profile?.firstName} {row.profile?.lastName}
+					{row.original.profile?.firstName} {row.original.profile?.lastName}
 				</span>
 			),
 		},
 		{
-			key: "profile",
+			id: "email",
+			accessorKey: "profile.email",
 			header: "Email",
-			maxWidth: "240px",
-			truncate: true,
-			render: (_value: any, row: BackendStaff) => (
-				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>{row.profile?.email}</span>
+			enableSorting: false,
+			meta: { maxWidth: "240px", truncate: true },
+			cell: ({ row }) => (
+				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>{row.original.profile?.email}</span>
 			),
 		},
 		{
-			key: "profile",
+			id: "phone",
+			accessorKey: "profile.phoneNumber",
 			header: "Phone",
-			render: (_value: any, row: BackendStaff) => (
-				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>{row.profile?.phoneNumber ?? "N/A"}</span>
+			enableSorting: false,
+			cell: ({ row }) => (
+				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>{row.original.profile?.phoneNumber ?? "N/A"}</span>
 			),
 		},
 		{
-			key: "profile",
+			id: "role",
+			accessorKey: "profile.roles",
 			header: "Role",
-			render: (_value: any, row: BackendStaff) => (
+			enableSorting: false,
+			cell: ({ row }) => (
 				<Badge variant="info">
-					{row.profile?.roles?.length
-						? row.profile.roles.map((r) => changeCase.capitalCase(r.name)).join(", ")
+					{row.original.profile?.roles?.length
+						? row.original.profile.roles.map((r) => changeCase.capitalCase(r.name)).join(", ")
 						: "Staff"}
 				</Badge>
 			),
 		},
 		{
-			key: "status",
+			accessorKey: "status",
 			header: "Status",
-			render: (value: any) => (
-				<Badge variant={String(value) === "ACTIVE" ? "success" : "neutral"} dot>
-					{String(value)}
+			cell: ({ getValue }) => (
+				<Badge variant={String(getValue()) === "ACTIVE" ? "success" : "neutral"} dot>
+					{String(getValue())}
 				</Badge>
 			),
 		},
 		{
-			key: "createdAt",
+			accessorKey: "createdAt",
 			header: "Joined",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm text-gray-500 dark:text-gray-400">
-					{new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+					{new Date(getValue() as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
 				</span>
 			),
 		},
 		{
-			key: "id",
+			id: "actions",
 			header: "",
-			width: "50px",
-			align: "center" as const,
-			render: (_: any, row: any) => (
+			enableSorting: false,
+			enableHiding: false,
+			meta: { width: "50px", align: "center" },
+			cell: ({ row }) => (
 				<ActionMenu items={[
-					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/staff/${row.id}`) },
+					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/staff/${row.original.id}`) },
 					{
-						label: row.status === "ACTIVE" ? "Deactivate" : "Activate",
+						label: row.original.status === "ACTIVE" ? "Deactivate" : "Activate",
 						icon: STATUS_ICON,
-						onClick: () => setStatusTarget(row),
+						onClick: () => setStatusTarget(row.original),
 					},
-					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: "danger" as const },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
 				]} />
 			),
 		},
@@ -227,14 +236,18 @@ const Staff: React.FC = () => {
 					columns={columns}
 					data={staffList}
 					isLoading={staffLoading}
-					onSearch={setSearch}
-					initialSearch={searchTerm}
+					manualFiltering
+					globalFilter={searchTerm}
+					onGlobalFilterChange={setSearch}
 					searchPlaceholder="Search staff..."
-					pagination={staffPagination ?? undefined}
-					onPageChange={setPage}
+					pageIndex={currentPage - 1}
+					pageSize={pageSize}
+					pageCount={staffPagination?.totalPages ?? 1}
+					totalItems={staffPagination?.totalItems}
+					onPageChange={(idx) => setPage(idx + 1)}
 					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/staff/${row.id}`)}
-					actions={
+					toolbar={
 						<Button variant="filled" leftIcon={Plus} onClick={() => setShowOnboard(true)}>
 							Add Staff
 						</Button>

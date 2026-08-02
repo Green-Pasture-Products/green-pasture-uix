@@ -7,7 +7,8 @@ import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
 import AddCategory from "@/_components/Modals/AddCategory";
 import { selectCategory } from "@/_redux/reducers/admin.reducer";
-import { DataTable, Column } from "@/_UI/DataTable";
+import { DataTable } from "@/_components/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
@@ -54,38 +55,38 @@ const AdminCategories: React.FC = () => {
 		}
 	};
 
-	const columns: Column<ProductCategory>[] = [
+	const columns: ColumnDef<ProductCategory, any>[] = [
 		{
-			key: "name",
+			accessorKey: "name",
 			header: "Name",
-			width: "200px",
-			render: (_value: any, row: ProductCategory) => (
+			meta: { width: "200px" },
+			cell: ({ row }) => (
 				<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-					{row.name}
+					{row.original.name}
 				</span>
 			),
 		},
 		{
-			key: "description",
+			accessorKey: "description",
 			header: "Description",
-			maxWidth: "400px",
-			truncate: true,
-			render: (_value: any, row: ProductCategory) => (
+			meta: { maxWidth: "400px", truncate: true },
+			cell: ({ row }) => (
 				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-					{row.description}
+					{row.original.description}
 				</span>
 			),
 		},
 		{
-			key: "id",
+			id: "actions",
 			header: "",
-			width: "50px",
-			align: "center" as const,
-			render: (_: any, row: ProductCategory) => (
+			enableSorting: false,
+			enableHiding: false,
+			meta: { width: "50px", align: "center" },
+			cell: ({ row }) => (
 				<ActionMenu items={[
-					{ label: "View", icon: VIEW_ICON, onClick: () => setViewingCategory(row) },
-					{ label: "Edit", icon: EDIT_ICON, onClick: () => setEditingCategory(row) },
-					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: "danger" as const },
+					{ label: "View", icon: VIEW_ICON, onClick: () => setViewingCategory(row.original) },
+					{ label: "Edit", icon: EDIT_ICON, onClick: () => setEditingCategory(row.original) },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
 				]} />
 			),
 		},
@@ -98,13 +99,17 @@ const AdminCategories: React.FC = () => {
 					columns={columns}
 					data={categories ?? []}
 					isLoading={isFetchingCategories}
-					onSearch={setSearch}
-					initialSearch={searchTerm}
+					manualFiltering
+					globalFilter={searchTerm}
+					onGlobalFilterChange={setSearch}
 					searchPlaceholder="Search categories..."
-					pagination={pagination ?? undefined}
-					onPageChange={setPage}
+					pageIndex={currentPage - 1}
+					pageSize={pageSize}
+					pageCount={pagination?.totalPages ?? 1}
+					totalItems={pagination?.totalItems}
+					onPageChange={(idx) => setPage(idx + 1)}
 					onPageSizeChange={setPageSize}
-					actions={
+					toolbar={
 						<AddCategory
 							title="add category"
 							className="inline-flex"

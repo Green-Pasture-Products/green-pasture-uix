@@ -5,7 +5,8 @@ import { Plus } from 'lucide-react';
 
 import { BackendRole } from '@/types';
 import AdminLayout from '@/_components/AdminLayout';
-import { DataTable, Column, FilterDef } from '@/_UI/DataTable';
+import { DataTable, FilterDef } from '@/_components/DataTable';
+import type { ColumnDef } from '@tanstack/react-table';
 import ActionMenu from '@/_UI/ActionMenu';
 import Badge from '@/_UI/Badge';
 import Button from '@/_UI/Button';
@@ -113,64 +114,68 @@ const Roles: React.FC = () => {
 		}
 	};
 
-	const columns: Column<BackendRole>[] = [
+	const columns: ColumnDef<BackendRole, any>[] = [
 		{
-			key: 'name',
+			accessorKey: 'name',
 			header: 'Name',
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-					{String(value).replace(/_/g, ' ')}
+					{String(getValue()).replace(/_/g, ' ')}
 				</span>
 			),
 		},
 		{
-			key: 'description',
+			accessorKey: 'description',
 			header: 'Description',
-			maxWidth: '300px',
-			truncate: true,
-			render: (value: any) => (
+			meta: { maxWidth: '300px', truncate: true },
+			cell: ({ getValue }) => (
 				<span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-					{value || '—'}
+					{(getValue() as string) || '—'}
 				</span>
 			),
 		},
 		{
-			key: 'permissions',
+			accessorKey: 'permissions',
 			header: 'Permissions',
-			render: (value: any) => <Badge variant="info">{Array.isArray(value) ? value.length : 0}</Badge>,
+			enableSorting: false,
+			cell: ({ getValue }) => {
+				const value = getValue();
+				return <Badge variant="info">{Array.isArray(value) ? value.length : 0}</Badge>;
+			},
 		},
 		{
-			key: 'status',
+			accessorKey: 'status',
 			header: 'Status',
-			render: (value: any) => (
-				<Badge variant={value === 'A' ? 'success' : 'error'} dot>
-					{value === 'A' ? 'Active' : 'Inactive'}
+			cell: ({ getValue }) => (
+				<Badge variant={getValue() === 'A' ? 'success' : 'error'} dot>
+					{getValue() === 'A' ? 'Active' : 'Inactive'}
 				</Badge>
 			),
 		},
 		{
-			key: 'createdAt',
+			accessorKey: 'createdAt',
 			header: 'Created',
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm text-gray-500 dark:text-gray-400">
-					{value ? new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+					{getValue() ? new Date(getValue() as string).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
 				</span>
 			),
 		},
 		{
-			key: 'id',
+			id: 'actions',
 			header: '',
-			width: '50px',
-			align: 'center' as const,
-			render: (_: any, row: any) => (
+			enableSorting: false,
+			enableHiding: false,
+			meta: { width: '50px', align: 'center' },
+			cell: ({ row }) => (
 				<ActionMenu items={[
-					{ label: 'View', icon: VIEW_ICON, onClick: () => router.push(`/admin/role/${row.id}`) },
+					{ label: 'View', icon: VIEW_ICON, onClick: () => router.push(`/admin/role/${row.original.id}`) },
 					{
-						label: row.status === 'A' ? 'Deactivate' : 'Activate',
+						label: row.original.status === 'A' ? 'Deactivate' : 'Activate',
 						icon: STATUS_ICON,
-						onClick: () => setStatusTarget(row),
+						onClick: () => setStatusTarget(row.original),
 					},
-					{ label: 'Delete', icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: 'danger' as const },
+					{ label: 'Delete', icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: 'danger' as const },
 				]} />
 			),
 		},
@@ -183,17 +188,21 @@ const Roles: React.FC = () => {
 					columns={columns}
 					data={roles}
 					isLoading={loading}
-					onSearch={setSearch}
-					initialSearch={searchTerm}
+					manualFiltering
+					globalFilter={searchTerm}
+					onGlobalFilterChange={setSearch}
 					searchPlaceholder="Search roles..."
-					pagination={pagination ?? undefined}
-					onPageChange={setPage}
+					pageIndex={currentPage - 1}
+					pageSize={pageSize}
+					pageCount={pagination?.totalPages ?? 1}
+					totalItems={pagination?.totalItems}
+					onPageChange={(idx) => setPage(idx + 1)}
 					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/role/${row.id}`)}
 					filters={ROLE_STATUS_FILTERS}
 					filterValues={filterValues}
 					onFilterChange={setFilter}
-					actions={
+					toolbar={
 						<Button variant="filled" leftIcon={Plus} onClick={() => router.push('/admin/roles/new')}>
 							Create Role
 						</Button>

@@ -6,7 +6,8 @@ import toast from "react-hot-toast";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
-import { DataTable, Column } from "@/_UI/DataTable";
+import { DataTable } from "@/_components/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
@@ -72,58 +73,60 @@ const AdminProducts: React.FC = () => {
 		}
 	};
 
-	const columns: Column<any>[] = [
+	const columns: ColumnDef<any, any>[] = [
 		{
-			key: "name",
+			accessorKey: "name",
 			header: "Product",
-			maxWidth: "280px",
-			truncate: true,
-			render: (_value: any, row: any) => (
+			meta: { maxWidth: "280px", truncate: true },
+			cell: ({ row }) => (
 				<div className="flex items-center gap-3">
-					{row.photos?.[0]?.url ? (
+					{row.original.photos?.[0]?.url ? (
 						<img
 							className="h-10 w-10 rounded-radius-sm object-cover"
 							style={{ border: "1px solid var(--border-light)" }}
-							src={row.photos[0].url}
-							alt={row.name}
+							src={row.original.photos[0].url}
+							alt={row.original.name}
 						/>
 					) : (
 						<div
 							className="h-10 w-10 rounded-radius-sm flex items-center justify-center text-xs font-bold"
 							style={{ background: "var(--surface-medium)", color: "var(--text-hint)" }}
 						>
-							{row.name?.charAt(0)?.toUpperCase() || "?"}
+							{row.original.name?.charAt(0)?.toUpperCase() || "?"}
 						</div>
 					)}
 					<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-						{row.name}
+						{row.original.name}
 					</span>
 				</div>
 			),
 		},
 		{
-			key: "product",
+			id: "category",
+			accessorKey: "product.name",
 			header: "Category",
-			render: (value: any) => (
+			enableSorting: false,
+			cell: ({ getValue }) => (
 				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-					{value?.name || "—"}
+					{(getValue() as string) || "—"}
 				</span>
 			),
 		},
 		{
-			key: "price",
+			accessorKey: "price",
 			header: "Price",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-					{formatCurrency(value)}
+					{formatCurrency(getValue() as number)}
 				</span>
 			),
 		},
 		{
-			key: "availableQuantity",
+			id: "stock",
+			accessorKey: "availableQuantity",
 			header: "Stock",
-			render: (value: any, row: any) => {
-				const qty = Number(value ?? row.unit ?? 0);
+			cell: ({ row }) => {
+				const qty = Number(row.original.availableQuantity ?? row.original.unit ?? 0);
 				return (
 					<Badge variant={qty > 0 ? "success" : "error"} dot>
 						{qty > 0 ? `${qty} units` : "Out of Stock"}
@@ -132,9 +135,12 @@ const AdminProducts: React.FC = () => {
 			},
 		},
 		{
-			key: "ratingStats",
+			id: "rating",
+			accessorKey: "ratingStats",
 			header: "Rating",
-			render: (value: any) => {
+			enableSorting: false,
+			cell: ({ getValue }) => {
+				const value: any = getValue();
 				const avg = value?.average ?? 0;
 				const count = value?.count ?? 0;
 				return (
@@ -149,28 +155,29 @@ const AdminProducts: React.FC = () => {
 			},
 		},
 		{
-			key: "status",
+			accessorKey: "status",
 			header: "Status",
-			render: (value: any) => (
-				<Badge variant={value === "A" ? "success" : "error"} dot>
-					{value === "A" ? "Active" : "Inactive"}
+			cell: ({ getValue }) => (
+				<Badge variant={getValue() === "A" ? "success" : "error"} dot>
+					{getValue() === "A" ? "Active" : "Inactive"}
 				</Badge>
 			),
 		},
 		{
-			key: "id",
+			id: "actions",
 			header: "",
-			width: "50px",
-			align: "center" as const,
-			render: (_: any, row: any) => (
+			enableSorting: false,
+			enableHiding: false,
+			meta: { width: "50px", align: "center" },
+			cell: ({ row }) => (
 				<ActionMenu items={[
-					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/product/${row.id}`) },
+					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/product/${row.original.id}`) },
 					{
-						label: row.status === "A" ? "Deactivate" : "Activate",
+						label: row.original.status === "A" ? "Deactivate" : "Activate",
 						icon: STATUS_ICON,
-						onClick: () => setStatusTarget(row),
+						onClick: () => setStatusTarget(row.original),
 					},
-					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row), variant: "danger" as const },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
 				]} />
 			),
 		},
@@ -183,14 +190,18 @@ const AdminProducts: React.FC = () => {
 					columns={columns}
 					data={adminItems}
 					isLoading={adminItemsLoading}
-					onSearch={setSearch}
-					initialSearch={searchTerm}
+					manualFiltering
+					globalFilter={searchTerm}
+					onGlobalFilterChange={setSearch}
 					searchPlaceholder="Search products..."
-					pagination={adminItemsPagination ?? undefined}
-					onPageChange={setPage}
+					pageIndex={currentPage - 1}
+					pageSize={pageSize}
+					pageCount={adminItemsPagination?.totalPages ?? 1}
+					totalItems={adminItemsPagination?.totalItems}
+					onPageChange={(idx) => setPage(idx + 1)}
 					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/product/${row.id}`)}
-					actions={
+					toolbar={
 						<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/products/new")}>
 							Add Product
 						</Button>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import withAdminAuth from '@/_components/withAdminAuth';
 import AdminLayout from '@/_components/AdminLayout';
@@ -11,6 +11,13 @@ import toast from 'react-hot-toast';
 import axiosInstance from '@/_utils/axiosInstance';
 import { BackendRole, BackendPermission } from '@/types';
 import { Pencil, Shield, Power } from 'lucide-react';
+import { visibleCount, hasMore } from '@/_utils/windowedList';
+
+// Role permissions arrive in full in a single `role/details/:id` response (see the
+// fetch below) — there's no server-side pagination for this list. A Manager role
+// carries 30 rows, ADMIN 56, so we window over the in-memory array instead of
+// rendering it all at once.
+const PRIVILEGE_PAGE_SIZE = 25;
 
 const formatPermissionName = (name: string) => {
 	return name
@@ -27,6 +34,9 @@ const RoleDetail: React.FC = () => {
 	const [activeTab, setActiveTab] = useState<'details' | 'privileges'>('details');
 	const [statusModalOpen, setStatusModalOpen] = useState(false);
 	const [toggling, setToggling] = useState(false);
+	const [privilegePages, setPrivilegePages] = useState(1);
+	const privilegesScrollRef = useRef<HTMLDivElement>(null);
+	const privilegesSentinelRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		if (!router.isReady || !id) return;
@@ -45,6 +55,36 @@ const RoleDetail: React.FC = () => {
 				setLoading(false);
 			});
 	}, [id, router.isReady]);
+
+	// Reset the visible window whenever a (possibly different) role loads.
+	useEffect(() => {
+		setPrivilegePages(1);
+	}, [role?.id]);
+
+	const totalPrivileges = role?.permissions?.length ?? 0;
+	const morePrivilegesAvailable = hasMore(totalPrivileges, PRIVILEGE_PAGE_SIZE, privilegePages);
+
+	// Load the next page of privileges when the sentinel at the bottom of the
+	// scroll container comes into view. Re-runs (and re-attaches) whenever the
+	// tab, role, or loaded-page count changes, so it survives tab switches and
+	// the sentinel unmounting once every row is visible.
+	useEffect(() => {
+		if (activeTab !== 'privileges' || !morePrivilegesAvailable) return;
+		const container = privilegesScrollRef.current;
+		const sentinel = privilegesSentinelRef.current;
+		if (!container || !sentinel) return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0]?.isIntersecting) {
+					setPrivilegePages((prev) => prev + 1);
+				}
+			},
+			{ root: container, rootMargin: '100px' },
+		);
+		observer.observe(sentinel);
+		return () => observer.disconnect();
+	}, [activeTab, morePrivilegesAvailable]);
 
 	const handleToggleStatus = async () => {
 		if (!role) return;
@@ -221,7 +261,7 @@ const RoleDetail: React.FC = () => {
 								</p>
 							</div>
 						) : (
-							<div className="overflow-x-auto">
+							<div ref={privilegesScrollRef} className="overflow-auto" style={{ maxHeight: '24rem' }}>
 								<table className="w-full">
 									<thead>
 										<tr style={{ borderBottom: '1px solid var(--border-light)' }}>
@@ -240,25 +280,28 @@ const RoleDetail: React.FC = () => {
 										</tr>
 									</thead>
 									<tbody>
-										{role.permissions.map((perm: BackendPermission) => (
-											<tr
-												key={perm.id}
-												style={{ borderBottom: '1px solid var(--border-light)' }}
-											>
-												<td className="px-5 py-3">
-													<span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-														{formatPermissionName(perm.name)}
-													</span>
-												</td>
-												<td className="px-5 py-3">
-													<span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-														{perm.description || '\u2014'}
-													</span>
-												</td>
-											</tr>
-										))}
+										{role.permissions
+											.slice(0, visibleCount(totalPrivileges, PRIVILEGE_PAGE_SIZE, privilegePages))
+											.map((perm: BackendPermission) => (
+												<tr
+													key={perm.id}
+													style={{ borderBottom: '1px solid var(--border-light)' }}
+												>
+													<td className="px-5 py-3">
+														<span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+															{formatPermissionName(perm.name)}
+														</span>
+													</td>
+													<td className="px-5 py-3">
+														<span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+															{perm.description || '\u2014'}
+														</span>
+													</td>
+												</tr>
+											))}
 									</tbody>
 								</table>
+								{morePrivilegesAvailable && <div ref={privilegesSentinelRef} className="h-px" aria-hidden="true" />}
 							</div>
 						)}
 					</DetailSection>

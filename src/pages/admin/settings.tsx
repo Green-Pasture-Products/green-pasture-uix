@@ -7,6 +7,7 @@ import withAdminAuth from "@/_components/withAdminAuth";
 import { Store, User, Shield, Truck, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 
 import { useAppSelector } from "@/_redux/store";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
 import AdminLayout from "@/_components/AdminLayout";
 import axiosInstance from "@/_utils/axiosInstance";
 import { FormInput, FormActions } from "@/_UI/FormField";
@@ -76,7 +77,12 @@ const CARD =
 
 const AdminSettings: React.FC = () => {
 	const { user } = useAppSelector((state) => state.auth);
-	const [activeTab, setActiveTab] = useState("store");
+	const hasPrivilege = useHasPrivilege();
+	// Store Settings and Order & Shipping are store-scoped; a STAFF user without
+	// MANAGE_STORES still needs My Profile and Security, so those two tabs hide
+	// instead of the whole nav item (see modules.ts for the ungated nav entry).
+	const canManageStores = hasPrivilege("MANAGE_STORES");
+	const [activeTab, setActiveTab] = useState(() => (canManageStores ? "store" : "profile"));
 	const [loading, setLoading] = useState(true);
 	const [storeId, setStoreId] = useState<string | null>(null);
 	const [storeData, setStoreData] = useState<any>(null);
@@ -97,7 +103,7 @@ const AdminSettings: React.FC = () => {
 		{ id: "order", name: "Order & Shipping", icon: Truck },
 		{ id: "profile", name: "My Profile", icon: User },
 		{ id: "security", name: "Security", icon: Shield },
-	];
+	].filter((tab) => canManageStores || (tab.id !== "store" && tab.id !== "order"));
 
 	const storeForm = useForm<StoreFormData>({ resolver: zodResolver(storeSchema) });
 	const orderShippingForm = useForm<OrderShippingFormData>({ resolver: zodResolver(orderShippingSchema) });

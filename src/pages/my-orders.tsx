@@ -9,7 +9,8 @@ import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { orderAction } from "@/_redux/actions/order.action";
 import { addToCart } from "@/_redux/reducers/cart.reducer";
-import { DataTable, Column } from "@/_UI/DataTable";
+import { DataTable } from "@/_components/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import PageLoader from "@/_UI/PageLoader";
@@ -105,23 +106,23 @@ const MyOrders: React.FC = () => {
 		? orders.filter((o) => o.orderReference?.toLowerCase().includes(search.toLowerCase()))
 		: orders;
 
-	const columns: Column<BackendOrder>[] = [
+	const columns: ColumnDef<BackendOrder, any>[] = [
 		{
-			key: "orderReference",
+			accessorKey: "orderReference",
 			header: "Order Ref",
-			width: "180px",
-			render: (value: any) => (
+			meta: { width: "180px" },
+			cell: ({ getValue }) => (
 				<span className="text-sm font-medium whitespace-nowrap" style={{ color: "var(--text-primary)" }}>
-					#{value}
+					#{String(getValue())}
 				</span>
 			),
 		},
 		{
-			key: "createdAt",
+			accessorKey: "createdAt",
 			header: "Date",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-					{new Date(value).toLocaleDateString("en-US", {
+					{new Date(getValue() as string).toLocaleDateString("en-US", {
 						month: "short",
 						day: "numeric",
 						year: "numeric",
@@ -130,49 +131,53 @@ const MyOrders: React.FC = () => {
 			),
 		},
 		{
-			key: "items",
+			id: "items",
+			accessorKey: "items",
 			header: "Items",
-			align: "center",
-			render: (value: any) => (
+			enableSorting: false,
+			meta: { align: "center" },
+			cell: ({ getValue }) => (
 				<span className="text-sm" style={{ color: "var(--text-primary)" }}>
-					{value?.length ?? 0}
+					{(getValue() as any[])?.length ?? 0}
 				</span>
 			),
 		},
 		{
-			key: "totalAmount",
+			accessorKey: "totalAmount",
 			header: "Total",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm font-semibold tabular-nums" style={{ color: "var(--text-primary)" }}>
-					{formatCurrency(value)}
+					{formatCurrency(getValue() as number)}
 				</span>
 			),
 		},
 		{
-			key: "orderStatus",
+			accessorKey: "orderStatus",
 			header: "Status",
-			render: (value: any) => (
-				<Badge variant={getStatusVariant(value)} dot size="sm">
-					{value}
+			cell: ({ getValue }) => (
+				<Badge variant={getStatusVariant(getValue() as string)} dot size="sm">
+					{getValue() as string}
 				</Badge>
 			),
 		},
 		{
-			key: "actions",
+			id: "actions",
 			header: "",
-			align: "right",
-			render: (_value: any, row: BackendOrder) => (
+			enableSorting: false,
+			enableHiding: false,
+			meta: { align: "right" },
+			cell: ({ row }) => (
 				<ActionMenu
 					items={[
 						{
 							label: "View Details",
-							onClick: () => router.push(`/my-orders/${row.orderReference}`),
+							onClick: () => router.push(`/my-orders/${row.original.orderReference}`),
 						},
 						{
 							label: "Buy Again",
 							onClick: () => {
 								// Add all items from this order back to cart
-								const items = row.items ?? [];
+								const items = row.original.items ?? [];
 								if (items.length > 0) {
 									items.forEach((orderItem: any) => {
 										const item = orderItem.item || orderItem;
@@ -250,20 +255,15 @@ const MyOrders: React.FC = () => {
 						columns={columns}
 						data={filteredOrders}
 						isLoading={loading}
-						onSearch={setSearch}
-						initialSearch={search}
+						manualFiltering
+						globalFilter={search}
+						onGlobalFilterChange={setSearch}
 						searchPlaceholder="Search by order reference..."
-						pagination={
-							meta
-								? {
-										currentPage: meta.currentPage ?? page,
-										totalItems: meta.totalItems ?? 0,
-										itemsPerPage: meta.itemsPerPage ?? 10,
-										totalPages: meta.totalPages ?? 1,
-									}
-								: undefined
-						}
-						onPageChange={(newPage) => setPage(newPage)}
+						pageIndex={(meta?.currentPage ?? page) - 1}
+						pageSize={meta?.itemsPerPage ?? 10}
+						pageCount={meta?.totalPages ?? 1}
+						totalItems={meta?.totalItems}
+						onPageChange={(idx) => setPage(idx + 1)}
 						emptyMessage="No orders found"
 						emptyDescription="Try adjusting your search"
 					/>

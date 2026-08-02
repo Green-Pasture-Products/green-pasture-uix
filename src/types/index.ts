@@ -124,6 +124,7 @@ export interface User {
 	firstName: string;
 	lastName: string;
 	role?: string;
+	roles?: Array<{ id: string; name: string; permissions?: BackendPermission[] }>;
 	isVerified: boolean;
 	createdAt: string;
 

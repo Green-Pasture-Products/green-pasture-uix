@@ -5,7 +5,8 @@ import AdminLayout from "@/_components/AdminLayout";
 import { BackButton, DetailHeader, DetailSection, DetailRow } from "@/_UI/DetailField";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
-import { DataTable, Column } from "@/_UI/DataTable";
+import { DataTable } from "@/_components/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { formatCurrency, formatNumber } from "@/_UI/FormatValue";
 import PageLoader from "@/_UI/PageLoader";
 import toast from "react-hot-toast";
@@ -213,31 +214,31 @@ const ProductDetail: React.FC = () => {
 		setNewImagePreviews([]);
 	};
 
-	const reviewColumns: Column<BackendReview>[] = [
+	const reviewColumns: ColumnDef<BackendReview, any>[] = [
 		{
-			key: "rating",
+			accessorKey: "rating",
 			header: "Rating",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-					{value} / 5
+					{getValue() as number} / 5
 				</span>
 			),
 		},
 		{
-			key: "comment",
+			accessorKey: "comment",
 			header: "Comment",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm" style={{ color: "var(--text-primary)" }}>
-					{value ?? "\u2014"}
+					{(getValue() as string) ?? "\u2014"}
 				</span>
 			),
 		},
 		{
-			key: "createdAt",
+			accessorKey: "createdAt",
 			header: "Date",
-			render: (value: any) => (
+			cell: ({ getValue }) => (
 				<span className="text-sm" style={{ color: "var(--text-hint)" }}>
-					{new Date(value).toLocaleDateString()}
+					{new Date(getValue() as string).toLocaleDateString()}
 				</span>
 			),
 		},
@@ -468,7 +469,7 @@ const ProductDetail: React.FC = () => {
 
 				{item.reviews && item.reviews.length > 0 && (
 					<DetailSection title="Reviews">
-						<DataTable columns={reviewColumns} data={item.reviews} emptyMessage="No reviews yet" />
+						<DataTable columns={reviewColumns} data={item.reviews} manualPagination={false} emptyMessage="No reviews yet" />
 					</DetailSection>
 				)}
 			</div>
