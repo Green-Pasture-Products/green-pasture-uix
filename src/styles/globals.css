@@ -166,6 +166,25 @@
 	--color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ─── Default border colour (Tailwind v4 compat) ──────────────────────
+   Tailwind v4 changed the bare `border` utility's default colour from
+   gray-200 to currentColor, so shadcn primitives (card.tsx etc.) that use
+   an unqualified `border` class now render near-white borders in dark
+   mode. This restores the pre-v4 default via --color-border, per
+   Tailwind's own v4 upgrade-guide shim. Plain CSS (not @apply) so it
+   doesn't depend on utility class availability. Elements with an inline
+   `style={{ border: ... }}` (e.g. /admin/settings) still win, since
+   inline styles outrank this stylesheet rule. */
+@layer base {
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		border-color: var(--color-border, currentColor);
+	}
+}
+
 /* ─── Base Styles ─────────────────────────────────────────────────────── */
 
 html {
