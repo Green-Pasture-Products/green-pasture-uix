@@ -1,4 +1,4 @@
-import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, Shield, Settings, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, Shield, Settings, Globe, type LucideIcon } from "lucide-react";
 
 /** One admin module: drives the sidebar nav, tab metadata, and privilege gating. */
 export interface ModuleDef {
@@ -30,6 +30,10 @@ export const MODULES: ModuleDef[] = [
 	// tabs (Store Settings, Order & Shipping) are hidden inside the page
 	// itself via useHasPrivilege('MANAGE_STORES').
 	{ path: "/admin/settings", title: "Settings", icon: Settings, group: "System" },
+	// No privilege gate: no permission covering country/currency management
+	// exists yet in the backend's permission set (checked live against the
+	// seeded `permissions` table) — omitted per policy rather than inventing one.
+	{ path: "/admin/countries", title: "Countries", icon: Globe, group: "System" },
 ];
 
 /** Look up a module by its absolute path (exact match). */

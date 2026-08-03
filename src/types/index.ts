@@ -389,3 +389,14 @@ export interface BackendPermission {
 	description: string;
 	status: string;
 }
+
+export interface BackendCountry {
+	id: string;
+	name: string;
+	code: string;
+	// TypeORM decimal columns serialize as strings — never assume `number`.
+	priceFactor: string | number;
+	currencyCode: string;
+	shippingEnabled: boolean;
+	status: string;
+}
