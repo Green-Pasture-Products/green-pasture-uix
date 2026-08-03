@@ -7,7 +7,6 @@ import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
 import { FormInput } from "@/_UI/FormField";
-import FormSelectDropdown from "@/_UI/FormSelect";
 import { formatPhoneDisplay } from "@/_UI/FormatValue";
 import PageLoader from "@/_UI/PageLoader";
 import toast from "react-hot-toast";
@@ -15,7 +14,7 @@ import axiosInstance from "@/_utils/axiosInstance";
 import { BackendStaff } from "@/types";
 import { Pencil, X, Power } from "lucide-react";
 import * as changeCase from "change-case";
-import { resolveRoleIdForPatch } from "@/_utils/staffForm";
+import { resolveRoleIdsForPatch } from "@/_utils/staffForm";
 
 interface RoleOption {
 	id: string;
@@ -38,12 +37,12 @@ const StaffDetail: React.FC = () => {
 		firstName: "",
 		lastName: "",
 		phoneNumber: "",
-		roleId: "",
+		roleIds: [] as string[],
 	});
-	// The role loaded from the server, so handleSave can tell "admin picked
-	// the same role again" apart from "admin never touched the field" and
-	// only send roleId when it actually changed (see resolveRoleIdForPatch).
-	const [initialRoleId, setInitialRoleId] = useState("");
+	// The roles loaded from the server, so handleSave can tell "admin left the
+	// same set checked" apart from "admin never touched the field" and only
+	// send roleIds when the set actually changed (see resolveRoleIdsForPatch).
+	const [initialRoleIds, setInitialRoleIds] = useState<string[]>([]);
 
 	const fetchStaff = () => {
 		if (!id) return;
@@ -54,14 +53,14 @@ const StaffDetail: React.FC = () => {
 				const data = res.data?.data ?? res.data;
 				setStaff(data);
 				if (data?.profile) {
-					const roleId = data.profile.roles?.[0]?.id ? String(data.profile.roles[0].id) : "";
+					const roleIds = (data.profile.roles ?? []).map((r: RoleOption) => String(r.id));
 					setEditForm({
 						firstName: data.profile.firstName || "",
 						lastName: data.profile.lastName || "",
 						phoneNumber: data.profile.phoneNumber || "",
-						roleId,
+						roleIds,
 					});
-					setInitialRoleId(roleId);
+					setInitialRoleIds(roleIds);
 				}
 			})
 			.catch(() => {
@@ -93,13 +92,17 @@ const StaffDetail: React.FC = () => {
 
 	const handleSave = async () => {
 		if (!id) return;
+		if (editForm.roleIds.length === 0) {
+			toast.error("Select at least one role");
+			return;
+		}
 		setSaving(true);
 		try {
 			await axiosInstance.patch(`staff/${id}`, {
 				firstName: editForm.firstName.trim(),
 				lastName: editForm.lastName.trim(),
 				phoneNumber: editForm.phoneNumber.trim(),
-				roleId: resolveRoleIdForPatch(editForm.roleId, initialRoleId),
+				roleIds: resolveRoleIdsForPatch(editForm.roleIds, initialRoleIds),
 			});
 			toast.success("Staff updated successfully");
 			setEditing(false);
@@ -118,11 +121,18 @@ const StaffDetail: React.FC = () => {
 				firstName: staff.profile.firstName || "",
 				lastName: staff.profile.lastName || "",
 				phoneNumber: staff.profile.phoneNumber || "",
-				roleId: staff.profile.roles?.[0]?.id ? String(staff.profile.roles[0].id) : "",
+				roleIds: (staff.profile.roles ?? []).map((r) => String(r.id)),
 			});
-			// initialRoleId is left as-is here — it already reflects the server's
+			// initialRoleIds is left as-is here — it already reflects the server's
 			// value from the last fetch, which is exactly what cancel reverts to.
 		}
+	};
+
+	const toggleRole = (roleId: string) => {
+		setEditForm((f) => ({
+			...f,
+			roleIds: f.roleIds.includes(roleId) ? f.roleIds.filter((id) => id !== roleId) : [...f.roleIds, roleId],
+		}));
 	};
 
 	const handleToggleStatus = async () => {
@@ -247,22 +257,44 @@ const StaffDetail: React.FC = () => {
 								onChange={(e) => setEditForm((f) => ({ ...f, phoneNumber: e.target.value }))}
 							/>
 							<div className="sm:col-span-2">
-								<FormSelectDropdown
-									label="Role"
-									value={editForm.roleId}
-									onChange={(val) => setEditForm((f) => ({ ...f, roleId: val }))}
-									options={roles.map((r) => ({ value: String(r.id), label: r.name }))}
-									placeholder="Select a role"
-								/>
-								{profile?.roles && profile.roles.length > 1 && (
-									<p className="mt-1.5 text-xs" style={{ color: "var(--text-secondary)" }}>
-										Also has: {profile.roles.filter((r) => String(r.id) !== editForm.roleId).map((r) => changeCase.capitalCase(r.name)).join(", ")}.
-										Changing the role above replaces all of this member&apos;s roles with the one selected.
-									</p>
+								<label
+									className="block text-xs md:text-sm font-semibold mb-2"
+									style={{ color: "var(--text-secondary)" }}
+								>
+									Roles
+								</label>
+								<div className="flex flex-wrap gap-x-6 gap-y-2">
+									{roles.map((r) => {
+										const roleId = String(r.id);
+										return (
+											<label
+												key={roleId}
+												className="flex items-center gap-2 text-sm cursor-pointer select-none"
+												style={{ color: "var(--text-primary)" }}
+											>
+												<input
+													type="checkbox"
+													checked={editForm.roleIds.includes(roleId)}
+													onChange={() => toggleRole(roleId)}
+													className="w-4 h-4 rounded cursor-pointer"
+												/>
+												{r.name}
+											</label>
+										);
+									})}
+								</div>
+								{editForm.roleIds.length === 0 && (
+									<p className="mt-1.5 text-xs text-red-500">At least one role is required.</p>
 								)}
 							</div>
 							<div className="sm:col-span-2 flex justify-end">
-								<Button variant="filled" size="md" onClick={handleSave} loading={saving} disabled={saving}>
+								<Button
+									variant="filled"
+									size="md"
+									onClick={handleSave}
+									loading={saving}
+									disabled={saving || editForm.roleIds.length === 0}
+								>
 									Save Changes
 								</Button>
 							</div>
