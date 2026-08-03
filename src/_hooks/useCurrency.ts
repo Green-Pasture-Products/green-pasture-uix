@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import React from "react";
 import { appConstants } from "@/_redux/constants";
+import { isPlausiblePriceFactor } from "@/_utils/priceFactor";
 
 interface CurrencyConfig {
 	code: string;       // "NGN" or "USD"
@@ -23,13 +24,6 @@ const DEFAULT_CURRENCY: CurrencyConfig = {
 	country: "NG",
 };
 
-const USD_CURRENCY: CurrencyConfig = {
-	code: "USD",
-	symbol: "$",
-	priceFactor: 0.00062, // ~1 NGN = 0.00062 USD (adjustable, should come from backend)
-	country: "",
-};
-
 const CurrencyContext = createContext<CurrencyContextValue>({
 	currency: DEFAULT_CURRENCY,
 	isNigeria: true,
@@ -44,46 +38,54 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		const detectCurrency = async () => {
 			try {
-				// 1. Check cached country
-				const cached = sessionStorage.getItem("gp-user-country");
-				if (cached) {
-					applyCountry(cached);
-					setLoading(false);
+				// 1. Determine country: cached, else IPInfo
+				let countryCode = sessionStorage.getItem("gp-user-country");
+				if (!countryCode) {
+					const response = await fetch(
+						`https://ipinfo.io/json?token=${appConstants.IPINFO_TOKEN}`
+					);
+					if (!response.ok) throw new Error("IPInfo failed");
+					const data = await response.json();
+					countryCode = (data?.country as string) || "NG";
+					sessionStorage.setItem("gp-user-country", countryCode);
+				}
+
+				if (countryCode === "NG") {
+					setCurrency(DEFAULT_CURRENCY);
 					return;
 				}
 
-				// 2. Fetch from IPInfo
-				const response = await fetch(
-					`https://ipinfo.io/json?token=${appConstants.IPINFO_TOKEN}`
-				);
-				if (!response.ok) throw new Error("IPInfo failed");
-				const data = await response.json();
-				const countryCode = data?.country || "NG";
-
-				sessionStorage.setItem("gp-user-country", countryCode);
-				applyCountry(countryCode);
-
-				// 3. Try to get price factor from backend
+				// 2. Non-NG visitor: the real priceFactor must come from the backend.
+				// No hardcoded guess here — a failure or bad value falls back to NGN,
+				// never a silently wrong conversion.
 				try {
 					const axiosInstance = (await import("@/_utils/axiosInstance")).default;
 					const countryRes = await axiosInstance.get(`country`);
 					const countries = countryRes.data?.data?.items || [];
 					const match = countries.find(
-						(c: any) => c.code?.toUpperCase() === countryCode.toUpperCase()
+						(c: any) => c.code?.toUpperCase() === countryCode!.toUpperCase()
 					);
-					if (match && match.priceFactor && match.currencyCode) {
-						setCurrency((prev) => ({
-							...prev,
-							priceFactor: Number(match.priceFactor),
+					const factor = Number(match?.priceFactor);
+
+					if (match?.currencyCode && isPlausiblePriceFactor(factor)) {
+						setCurrency({
 							code: match.currencyCode,
 							symbol: getCurrencySymbol(match.currencyCode),
-						}));
+							priceFactor: factor,
+							country: countryCode,
+						});
+					} else {
+						console.warn(
+							`[useCurrency] Rejected priceFactor for "${countryCode}" (value: ${match?.priceFactor}) — showing NGN`
+						);
+						setCurrency(DEFAULT_CURRENCY);
 					}
-				} catch {
-					// Backend not available — use defaults
+				} catch (err) {
+					console.warn("[useCurrency] Failed to fetch country pricing — showing NGN", err);
+					setCurrency(DEFAULT_CURRENCY);
 				}
 			} catch {
-				// IPInfo failed — default to Nigeria
+				// IPInfo/location detection failed — default to Nigeria
 				setCurrency(DEFAULT_CURRENCY);
 			} finally {
 				setLoading(false);
@@ -92,17 +94,6 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
 		detectCurrency();
 	}, []);
-
-	const applyCountry = (countryCode: string) => {
-		if (countryCode === "NG") {
-			setCurrency(DEFAULT_CURRENCY);
-		} else {
-			setCurrency({
-				...USD_CURRENCY,
-				country: countryCode,
-			});
-		}
-	};
 
 	const formatPrice = useCallback(
 		(priceInNaira: number) => {
