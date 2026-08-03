@@ -44,12 +44,30 @@ const orderShippingSchema = z.object({
 type OrderShippingFormData = z.infer<typeof orderShippingSchema>;
 
 interface ShippingMethod {
+	// Stable React key / update-remove handle — never changes after creation,
+	// unlike `id` which is re-derived from the name while the method is new.
+	key: string;
 	id: string;
 	name: string;
 	baseCost: string;
 	estimatedDays: string;
 	enabled: boolean;
+	// True only for methods added in this session, so `id` keeps mirroring the
+	// name as the admin types. Methods loaded from the store keep whatever id
+	// they were saved with — renaming an already-saved method must not change
+	// its id out from under checkout.
+	autoId: boolean;
 }
+
+// "Next Day Delivery" -> "next-day-delivery". Falls back to the caller's
+// existing id when the name has no sluggable characters (e.g. empty, or
+// symbols only) so an id is never blanked out.
+const slugify = (value: string): string =>
+	value
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "");
 
 const profileSchema = z.object({
 	firstName: z.string().min(1, "First name is required"),
@@ -101,7 +119,7 @@ const AdminSettings: React.FC = () => {
 	// with no saved flag keeps showing the discounts it already had live.
 	const [showDiscountBadges, setShowDiscountBadges] = useState(true);
 	const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([
-		{ id: "standard", name: "Standard Shipping", baseCost: "0", estimatedDays: "5-7 business days", enabled: true },
+		{ key: "standard", id: "standard", name: "Standard Shipping", baseCost: "0", estimatedDays: "5-7 business days", enabled: true, autoId: true },
 	]);
 
 	const tabs = [
@@ -143,13 +161,21 @@ const AdminSettings: React.FC = () => {
 						setShowDiscountBadges(s.orderSettings?.showDiscountBadges !== false);
 						if (s.shippingConfig?.methods?.length > 0) {
 							setShippingMethods(
-								s.shippingConfig.methods.map((m: any) => ({
-									id: m.id || `method-${Date.now()}`,
-									name: m.name || "",
-									baseCost: String(m.baseCost ?? "0"),
-									estimatedDays: m.estimatedDays || "",
-									enabled: m.enabled !== false,
-								}))
+								s.shippingConfig.methods.map((m: any, index: number) => {
+									// Backfill once for legacy rows saved without an id — not
+									// auto-synced afterward, so editing the name later can't
+									// change the id of a method that's already live.
+									const id = m.id || slugify(m.name || "") || `method-${index}-${Date.now()}`;
+									return {
+										key: id,
+										id,
+										name: m.name || "",
+										baseCost: String(m.baseCost ?? "0"),
+										estimatedDays: m.estimatedDays || "",
+										enabled: m.enabled !== false,
+										autoId: false,
+									};
+								})
 							);
 						}
 					}
@@ -258,19 +284,28 @@ const AdminSettings: React.FC = () => {
 	}, []);
 
 	const addShippingMethod = () => {
+		const key = `method-${Date.now()}`;
 		setShippingMethods((prev) => [
 			...prev,
-			{ id: `method-${Date.now()}`, name: "", baseCost: "0", estimatedDays: "", enabled: true },
+			{ key, id: key, name: "", baseCost: "0", estimatedDays: "", enabled: true, autoId: true },
 		]);
 	};
 
-	const removeShippingMethod = (id: string) => {
-		setShippingMethods((prev) => prev.filter((m) => m.id !== id));
+	const removeShippingMethod = (key: string) => {
+		setShippingMethods((prev) => prev.filter((m) => m.key !== key));
 	};
 
-	const updateShippingMethod = (id: string, field: keyof ShippingMethod, value: any) => {
+	const updateShippingMethod = (key: string, field: keyof ShippingMethod, value: any) => {
 		setShippingMethods((prev) =>
-			prev.map((m) => (m.id === id ? { ...m, [field]: value } : m))
+			prev.map((m) => {
+				if (m.key !== key) return m;
+				const updated = { ...m, [field]: value };
+				// Keep a still-new method's id mirroring its name as the admin types.
+				if (field === "name" && m.autoId) {
+					updated.id = slugify(String(value)) || m.id;
+				}
+				return updated;
+			})
 		);
 	};
 
@@ -469,7 +504,7 @@ const AdminSettings: React.FC = () => {
 										<div className="space-y-3">
 											{shippingMethods.map((method, index) => (
 												<div
-													key={method.id}
+													key={method.key}
 													className="rounded-lg p-4 space-y-3"
 													style={{
 														border: "1px solid var(--border-light)",
@@ -484,7 +519,7 @@ const AdminSettings: React.FC = () => {
 														<div className="flex items-center gap-2">
 															<button
 																type="button"
-																onClick={() => updateShippingMethod(method.id, "enabled", !method.enabled)}
+																onClick={() => updateShippingMethod(method.key, "enabled", !method.enabled)}
 																className="cursor-pointer"
 																title={method.enabled ? "Disable" : "Enable"}
 															>
@@ -497,7 +532,7 @@ const AdminSettings: React.FC = () => {
 															{shippingMethods.length > 1 && (
 																<button
 																	type="button"
-																	onClick={() => removeShippingMethod(method.id)}
+																	onClick={() => removeShippingMethod(method.key)}
 																	className="cursor-pointer p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
 																	title="Remove method"
 																>
@@ -511,19 +546,19 @@ const AdminSettings: React.FC = () => {
 															label="Name"
 															placeholder="Standard Shipping"
 															value={method.name}
-															onChange={(e: any) => updateShippingMethod(method.id, "name", e.target.value)}
+															onChange={(e: any) => updateShippingMethod(method.key, "name", e.target.value)}
 														/>
 														<CurrencyInput
 															label="Cost"
 															placeholder="2,500"
 															value={method.baseCost}
-															onChange={(val) => updateShippingMethod(method.id, "baseCost", val)}
+															onChange={(val) => updateShippingMethod(method.key, "baseCost", val)}
 														/>
 														<FormInput
 															label="Estimated Delivery"
 															placeholder="5-7 business days"
 															value={method.estimatedDays}
-															onChange={(e: any) => updateShippingMethod(method.id, "estimatedDays", e.target.value)}
+															onChange={(e: any) => updateShippingMethod(method.key, "estimatedDays", e.target.value)}
 														/>
 													</div>
 												</div>

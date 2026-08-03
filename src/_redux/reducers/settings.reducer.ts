@@ -51,7 +51,7 @@ const settingsSlice = createSlice({
 
 				state.freeShippingThreshold = Number(order.freeShippingThreshold) || 0;
 				state.taxRate = Number(order.taxRate) || 0;
-				state.shippingFee = Number(shipping.methods?.[0]?.baseCost) || 0;
+				state.shippingFee = Number(shipping.methods?.find((m: any) => m?.enabled !== false)?.baseCost) || 0;
 				state.defaultCurrency = order.defaultCurrency ?? "NGN";
 				state.showDiscountBadges = order.showDiscountBadges !== false;
 				state.loaded = true;

@@ -113,7 +113,7 @@ const CartPage: React.FC = () => {
 	// Server-driven values — no hardcoded fallbacks
 	const taxRate = Number(storeConfig?.orderSettings?.taxRate) || 0;
 	const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold) || 0;
-	const shippingFee = Number(storeConfig?.shippingConfig?.methods?.[0]?.baseCost) || 0;
+	const shippingFee = Number(storeConfig?.shippingConfig?.methods?.find((m: any) => m?.enabled !== false)?.baseCost) || 0;
 	const defaultCurrency = storeConfig?.orderSettings?.defaultCurrency ?? "NGN";
 
 	const calculations = useMemo(() => {
