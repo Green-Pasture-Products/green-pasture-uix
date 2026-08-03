@@ -13,6 +13,7 @@ export interface SettingsState {
 	shippingFee: number;
 	defaultCurrency: string;
 	showDiscountBadges: boolean;
+	multiCurrencyEnabled: boolean;
 	loaded: boolean;
 }
 
@@ -24,6 +25,9 @@ const initialState: SettingsState = {
 	// Default on: an unset flag on an existing store must not silently hide
 	// discounts that were already live before this setting existed.
 	showDiscountBadges: true,
+	// Default OFF: an unset flag on an existing store must keep showing NGN
+	// to everyone, exactly today's behaviour, until an admin opts in.
+	multiCurrencyEnabled: false,
 	loaded: false,
 };
 
@@ -54,6 +58,7 @@ const settingsSlice = createSlice({
 				state.shippingFee = Number(shipping.methods?.find((m: any) => m?.enabled !== false)?.baseCost) || 0;
 				state.defaultCurrency = order.defaultCurrency ?? "NGN";
 				state.showDiscountBadges = order.showDiscountBadges !== false;
+				state.multiCurrencyEnabled = order.multiCurrencyEnabled === true;
 				state.loaded = true;
 			})
 			// A settings outage must not blank the storefront — keep the defaults

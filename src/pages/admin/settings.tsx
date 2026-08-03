@@ -118,6 +118,10 @@ const AdminSettings: React.FC = () => {
 	// Storefront sale-treatment kill-switch. Defaults on so an existing store
 	// with no saved flag keeps showing the discounts it already had live.
 	const [showDiscountBadges, setShowDiscountBadges] = useState(true);
+	// Multi-currency kill-switch. Defaults OFF so an existing store with no
+	// saved flag keeps showing everyone NGN — exactly today's behaviour —
+	// until an admin deliberately opts in.
+	const [multiCurrencyEnabled, setMultiCurrencyEnabled] = useState(false);
 	const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([
 		{ key: "standard", id: "standard", name: "Standard Shipping", baseCost: "0", estimatedDays: "5-7 business days", enabled: true, autoId: true },
 	]);
@@ -159,6 +163,7 @@ const AdminSettings: React.FC = () => {
 							freeShippingThreshold: String(s.orderSettings?.freeShippingThreshold ?? "0"),
 						});
 						setShowDiscountBadges(s.orderSettings?.showDiscountBadges !== false);
+						setMultiCurrencyEnabled(s.orderSettings?.multiCurrencyEnabled === true);
 						if (s.shippingConfig?.methods?.length > 0) {
 							setShippingMethods(
 								s.shippingConfig.methods.map((m: any, index: number) => {
@@ -259,6 +264,7 @@ const AdminSettings: React.FC = () => {
 					taxRate: percentToRate(Number(data.taxRate)),
 					freeShippingThreshold: Number(data.freeShippingThreshold),
 					showDiscountBadges,
+					multiCurrencyEnabled,
 				},
 				shippingConfig: {
 					...storeData?.shippingConfig,
@@ -281,6 +287,10 @@ const AdminSettings: React.FC = () => {
 
 	const toggleDiscountBadges = useCallback(() => {
 		setShowDiscountBadges((prev) => !prev);
+	}, []);
+
+	const toggleMultiCurrency = useCallback(() => {
+		setMultiCurrencyEnabled((prev) => !prev);
 	}, []);
 
 	const addShippingMethod = () => {
@@ -481,6 +491,48 @@ const AdminSettings: React.FC = () => {
 													<ToggleLeft className="h-5 w-5" aria-hidden="true" />
 												)}
 												{showDiscountBadges ? "On" : "Off"}
+											</button>
+										</div>
+									</div>
+
+									<div className="h-px w-full" style={{ background: "var(--border-light)" }} />
+
+									{/* Multi-currency — server-resolved-country display kill-switch */}
+									<div>
+										<h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-hint)" }}>Currency</h4>
+										<div
+											className="flex flex-col gap-3 rounded-lg p-4 sm:flex-row sm:items-center sm:justify-between"
+											style={{ border: "1px solid var(--border-light)", background: "var(--surface-low)" }}
+										>
+											<div className="min-w-0">
+												<label htmlFor="multiCurrencyEnabled" className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+													Show foreign visitors prices in their own currency
+												</label>
+												<p className="text-xs mt-1" style={{ color: "var(--text-hint)" }}>
+													When on, visitors outside Nigeria see prices converted to their local currency
+													based on their detected country. Payment still happens in Naira — this only
+													changes what price is displayed. Leave off to show everyone NGN regardless of country.
+												</p>
+											</div>
+											<button
+												id="multiCurrencyEnabled"
+												type="button"
+												role="switch"
+												aria-checked={multiCurrencyEnabled}
+												onClick={toggleMultiCurrency}
+												data-testid="toggle-multi-currency"
+												className="flex shrink-0 cursor-pointer items-center gap-2 self-start rounded-full px-3 py-2 text-xs font-semibold transition-colors sm:self-auto"
+												style={{
+													background: multiCurrencyEnabled ? "rgba(154,202,60,0.14)" : "var(--surface-medium)",
+													color: multiCurrencyEnabled ? "var(--color-primary)" : "var(--text-hint)",
+												}}
+											>
+												{multiCurrencyEnabled ? (
+													<ToggleRight className="h-5 w-5" aria-hidden="true" />
+												) : (
+													<ToggleLeft className="h-5 w-5" aria-hidden="true" />
+												)}
+												{multiCurrencyEnabled ? "On" : "Off"}
 											</button>
 										</div>
 									</div>

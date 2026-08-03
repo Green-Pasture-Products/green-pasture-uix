@@ -14,6 +14,11 @@ export function useShowDiscountBadges(): boolean {
 	return useAppSelector((state) => state.settings.showDiscountBadges);
 }
 
+/** Admin kill-switch for showing foreign visitors converted prices. */
+export function useMultiCurrencyEnabled(): boolean {
+	return useAppSelector((state) => state.settings.multiCurrencyEnabled);
+}
+
 export interface FreeShippingProgress {
 	threshold: number;
 	shippingFee: number;
