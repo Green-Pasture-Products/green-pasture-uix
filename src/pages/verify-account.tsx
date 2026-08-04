@@ -16,6 +16,7 @@ import {
 } from "@/_redux/actions/auth.action";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import Image from "next/image";
+import { formatCountdown } from "@/_utils/format";
 import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
 import Button from "@/_UI/Button";
@@ -26,6 +27,10 @@ const VerifyAccountPage: React.FC = () => {
 	const { isLoading, error } = useAppSelector((state) => state.auth);
 	const [verified, setVerified] = useState(false);
 	const [resendCountdown, setResendCountdown] = useState(0);
+	// Seconds the emailed code is still good for. null = unknown (page opened
+	// directly rather than arriving from signup), in which case we show nothing
+	// rather than guess a window the backend may not honour.
+	const [otpExpiresIn, setOtpExpiresIn] = useState<number | null>(null);
 
 	const email = (router.query.email as string) || "";
 
@@ -59,6 +64,21 @@ const VerifyAccountPage: React.FC = () => {
 		return () => clearTimeout(timer);
 	}, [resendCountdown]);
 
+	// Seed the expiry countdown from the signup response, handed over in the URL.
+	useEffect(() => {
+		if (!router.isReady) return;
+		const seconds = Number(router.query.expiresIn);
+		if (Number.isFinite(seconds) && seconds > 0) setOtpExpiresIn(seconds);
+	}, [router.isReady, router.query.expiresIn]);
+
+	useEffect(() => {
+		if (otpExpiresIn === null || otpExpiresIn <= 0) return;
+		const timer = setTimeout(() => {
+			setOtpExpiresIn((prev) => (prev === null ? null : prev - 1));
+		}, 1000);
+		return () => clearTimeout(timer);
+	}, [otpExpiresIn]);
+
 	useEffect(() => {
 		if (verified) {
 			const timer = setTimeout(() => {
@@ -85,8 +105,11 @@ const VerifyAccountPage: React.FC = () => {
 		if (!email || resendCountdown > 0) return;
 
 		try {
-			await dispatch(resendOtpAsync({ email })).unwrap();
+			const res = await dispatch(resendOtpAsync({ email })).unwrap();
 			setResendCountdown(60);
+			// A fresh code replaces the old one, so restart the expiry clock too.
+			const expiresIn = Number(res?.data?.expiresIn);
+			setOtpExpiresIn(Number.isFinite(expiresIn) && expiresIn > 0 ? expiresIn : null);
 		} catch (err: any) {
 			console.error(err);
 		}
@@ -174,6 +197,23 @@ const VerifyAccountPage: React.FC = () => {
 						leftIcon={KeyRound}
 						error={errors.otp?.message}
 					/>
+
+					{otpExpiresIn !== null && (
+						<p className="-mt-2 text-center text-sm">
+							{otpExpiresIn > 0 ? (
+								<span className="text-on-surface-variant dark:text-gray-400">
+									This code expires in{" "}
+									<strong className="text-on-surface dark:text-white tabular-nums">
+										{formatCountdown(otpExpiresIn)}
+									</strong>
+								</span>
+							) : (
+								<span className="text-red-600 dark:text-red-400">
+									This code has expired. Request a new one below.
+								</span>
+							)}
+						</p>
+					)}
 
 					<Button
 						type="submit"

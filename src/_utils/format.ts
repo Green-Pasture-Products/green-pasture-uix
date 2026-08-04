@@ -29,3 +29,12 @@ export function toDayBucket(iso: string): string {
 	const d = new Date(iso);
 	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+/**
+ * Seconds as m:ss for OTP/session countdowns. Clamped at zero so a timer that
+ * overshoots shows "0:00" rather than a negative time.
+ */
+export function formatCountdown(seconds: number): string {
+	const total = Math.max(0, Math.floor(seconds));
+	return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
