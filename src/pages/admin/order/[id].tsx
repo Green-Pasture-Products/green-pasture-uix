@@ -45,13 +45,16 @@ const OrderDetail: React.FC = () => {
 	const { id } = router.query;
 	const [order, setOrder] = useState<BackendOrder | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [refreshing, setRefreshing] = useState(false);
 	const [selectedStatus, setSelectedStatus] = useState("");
 	const [statusNote, setStatusNote] = useState("");
 	const [updatingStatus, setUpdatingStatus] = useState(false);
 
-	const fetchOrder = () => {
+	// `silent` refreshes in place: the toolbar icon spins but the page keeps its
+	// content, instead of collapsing back into the full-page loader.
+	const fetchOrder = (silent = false) => {
 		if (!id) return;
-		setLoading(true);
+		silent ? setRefreshing(true) : setLoading(true);
 		axiosInstance
 			.get(`order/admin/ref/${id}`)
 			.then((res) => {
@@ -61,7 +64,10 @@ const OrderDetail: React.FC = () => {
 				setOrder(null);
 				toast.error("Failed to load order");
 			})
-			.finally(() => setLoading(false));
+			.finally(() => {
+				setLoading(false);
+				setRefreshing(false);
+			});
 	};
 
 	useEffect(() => {
@@ -255,7 +261,14 @@ const OrderDetail: React.FC = () => {
 				)}
 
 				<DetailSection title="Order Items">
-					<DataTable columns={itemColumns} data={order.items ?? []} manualPagination={false} emptyMessage="No items in this order" />
+					<DataTable
+						columns={itemColumns}
+						data={order.items ?? []}
+						manualPagination={false}
+						onRefresh={() => fetchOrder(true)}
+						refreshing={refreshing}
+						emptyMessage="No items in this order"
+					/>
 				</DetailSection>
 			</div>
 		</AdminLayout>

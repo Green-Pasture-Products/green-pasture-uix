@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
 import Layout from "@/_components/Layout";
@@ -42,6 +42,7 @@ const MyOrderDetail: React.FC = () => {
 
 	const [order, setOrder] = useState<BackendOrder | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [refreshing, setRefreshing] = useState(false);
 	const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
 	useEffect(() => {
@@ -55,25 +56,35 @@ const MyOrderDetail: React.FC = () => {
 		}
 	}, [isAuthenticated, isAdmin, router]);
 
+	// `silent` refreshes in place: the toolbar icon spins but the page keeps its
+	// content, instead of collapsing back into the full-page loader.
+	const loadOrder = useCallback(
+		(silent = false) => {
+			if (!router.isReady || !router.query.id) return;
+			if (!isAuthenticated || isAdmin) return;
+
+			const orderReference = router.query.id as string;
+
+			silent ? setRefreshing(true) : setLoading(true);
+			dispatch(orderAction.fetchMyOrderDetailAsync(orderReference))
+				.unwrap()
+				.then((res: any) => {
+					setOrder(res?.data ?? res);
+				})
+				.catch(() => {
+					setOrder(null);
+				})
+				.finally(() => {
+					setLoading(false);
+					setRefreshing(false);
+				});
+		},
+		[router.isReady, router.query.id, isAuthenticated, isAdmin, dispatch],
+	);
+
 	useEffect(() => {
-		if (!router.isReady || !router.query.id) return;
-		if (!isAuthenticated || isAdmin) return;
-
-		const orderReference = router.query.id as string;
-
-		setLoading(true);
-		dispatch(orderAction.fetchMyOrderDetailAsync(orderReference))
-			.unwrap()
-			.then((res: any) => {
-				setOrder(res?.data ?? res);
-			})
-			.catch(() => {
-				setOrder(null);
-			})
-			.finally(() => {
-				setLoading(false);
-			});
-	}, [router.isReady, router.query.id, isAuthenticated, isAdmin, dispatch]);
+		loadOrder();
+	}, [loadOrder]);
 
 	const itemColumns: ColumnDef<BackendOrderItem, any>[] = [
 		{
@@ -200,6 +211,8 @@ const MyOrderDetail: React.FC = () => {
 						columns={itemColumns}
 						data={order.items ?? []}
 						manualPagination={false}
+						onRefresh={() => loadOrder(true)}
+						refreshing={refreshing}
 						emptyMessage="No items in this order"
 					/>
 				</DetailSection>

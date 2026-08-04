@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
@@ -39,9 +39,14 @@ const AdminCategories: React.FC = () => {
 	const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
 	const [viewingCategory, setViewingCategory] = useState<ProductCategory | null>(null);
 
-	useEffect(() => {
+	// Extracted so the toolbar's refresh icon re-runs exactly the fetch the page loads with.
+	const refresh = useCallback(() => {
 		dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm, pageSize]);
+
+	useEffect(() => {
+		refresh();
+	}, [refresh]);
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
@@ -78,7 +83,7 @@ const AdminCategories: React.FC = () => {
 		},
 		{
 			id: "actions",
-			header: "",
+			header: "Action",
 			enableSorting: false,
 			enableHiding: false,
 			meta: { width: "50px", align: "center" },
@@ -99,6 +104,8 @@ const AdminCategories: React.FC = () => {
 					columns={columns}
 					data={categories ?? []}
 					isLoading={isFetchingCategories}
+					onRefresh={refresh}
+					refreshing={isFetchingCategories}
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}

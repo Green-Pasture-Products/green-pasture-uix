@@ -163,7 +163,7 @@ const Roles: React.FC = () => {
 		},
 		{
 			id: 'actions',
-			header: '',
+			header: 'Action',
 			enableSorting: false,
 			enableHiding: false,
 			meta: { width: '50px', align: 'center' },
@@ -188,6 +188,8 @@ const Roles: React.FC = () => {
 					columns={columns}
 					data={roles}
 					isLoading={loading}
+					onRefresh={fetchRoles}
+					refreshing={loading}
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}

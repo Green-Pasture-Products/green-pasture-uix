@@ -162,7 +162,7 @@ const Countries: React.FC = () => {
 		},
 		{
 			id: "actions",
-			header: "",
+			header: "Action",
 			enableSorting: false,
 			enableHiding: false,
 			meta: { width: "50px", align: "center" },
@@ -181,6 +181,8 @@ const Countries: React.FC = () => {
 					columns={columns}
 					data={countries}
 					isLoading={loading}
+					onRefresh={fetchCountries}
+					refreshing={loading}
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}

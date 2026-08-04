@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { parseAsString } from "nuqs";
@@ -78,9 +78,14 @@ const AdminOrders: React.FC = () => {
 	const [cancelTarget, setCancelTarget] = useState<BackendOrder | null>(null);
 	const [isCancelling, setIsCancelling] = useState(false);
 
-	useEffect(() => {
+	// Extracted so the toolbar's refresh icon re-runs exactly the fetch the page loads with.
+	const refresh = useCallback(() => {
 		dispatch(adminAction.fetchOrdersAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm, pageSize]);
+
+	useEffect(() => {
+		refresh();
+	}, [refresh]);
 
 	const filteredOrders = orders?.filter((order: any) => {
 		const statusFilter = filterValues.status;
@@ -172,7 +177,7 @@ const AdminOrders: React.FC = () => {
 		},
 		{
 			id: "actions",
-			header: "",
+			header: "Action",
 			enableSorting: false,
 			enableHiding: false,
 			meta: { width: "50px", align: "center" },
@@ -193,6 +198,8 @@ const AdminOrders: React.FC = () => {
 					columns={columns}
 					data={filteredOrders ?? []}
 					isLoading={ordersLoading}
+					onRefresh={refresh}
+					refreshing={ordersLoading}
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
