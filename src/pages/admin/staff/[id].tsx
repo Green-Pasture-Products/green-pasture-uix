@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
@@ -8,6 +8,7 @@ import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
 import { FormInput } from "@/_UI/FormField";
 import { formatPhoneDisplay } from "@/_UI/FormatValue";
+import PhoneInput, { splitDialCode } from "@/_UI/PhoneInput";
 import PageLoader from "@/_UI/PageLoader";
 import toast from "react-hot-toast";
 import axiosInstance from "@/_utils/axiosInstance";
@@ -32,13 +33,16 @@ const StaffDetail: React.FC = () => {
 	const [statusModalOpen, setStatusModalOpen] = useState(false);
 	const [roles, setRoles] = useState<RoleOption[]>([]);
 
-	// Edit form state
+	// Edit form state. phoneNumber holds LOCAL digits only — PhoneInput owns the
+	// dial code, and the two are rejoined into E.164 on save.
 	const [editForm, setEditForm] = useState({
 		firstName: "",
 		lastName: "",
 		phoneNumber: "",
 		roleIds: [] as string[],
 	});
+	const [phoneCountry, setPhoneCountry] = useState("NG");
+	const phoneDialRef = useRef("+234");
 	// The roles loaded from the server, so handleSave can tell "admin left the
 	// same set checked" apart from "admin never touched the field" and only
 	// send roleIds when the set actually changed (see resolveRoleIdsForPatch).
@@ -54,10 +58,13 @@ const StaffDetail: React.FC = () => {
 				setStaff(data);
 				if (data?.profile) {
 					const roleIds = (data.profile.roles ?? []).map((r: RoleOption) => String(r.id));
+					// PhoneInput works in local digits + a dial code, so split the stored E.164 value.
+					const phone = splitDialCode(data.profile.phoneNumber);
+					setPhoneCountry(phone.countryCode);
 					setEditForm({
 						firstName: data.profile.firstName || "",
 						lastName: data.profile.lastName || "",
-						phoneNumber: data.profile.phoneNumber || "",
+						phoneNumber: phone.local,
 						roleIds,
 					});
 					setInitialRoleIds(roleIds);
@@ -101,7 +108,7 @@ const StaffDetail: React.FC = () => {
 			await axiosInstance.patch(`staff/${id}`, {
 				firstName: editForm.firstName.trim(),
 				lastName: editForm.lastName.trim(),
-				phoneNumber: editForm.phoneNumber.trim(),
+				phoneNumber: `${phoneDialRef.current}${editForm.phoneNumber}`,
 				roleIds: resolveRoleIdsForPatch(editForm.roleIds, initialRoleIds),
 			});
 			toast.success("Staff updated successfully");
@@ -117,10 +124,12 @@ const StaffDetail: React.FC = () => {
 	const handleCancelEdit = () => {
 		setEditing(false);
 		if (staff?.profile) {
+			const phone = splitDialCode(staff.profile.phoneNumber);
+			setPhoneCountry(phone.countryCode);
 			setEditForm({
 				firstName: staff.profile.firstName || "",
 				lastName: staff.profile.lastName || "",
-				phoneNumber: staff.profile.phoneNumber || "",
+				phoneNumber: phone.local,
 				roleIds: (staff.profile.roles ?? []).map((r) => String(r.id)),
 			});
 			// initialRoleIds is left as-is here — it already reflects the server's
@@ -251,10 +260,12 @@ const StaffDetail: React.FC = () => {
 								value={profile?.email ?? ""}
 								disabled
 							/>
-							<FormInput
+							<PhoneInput
 								label="Phone Number"
+								defaultCountry={phoneCountry}
 								value={editForm.phoneNumber}
-								onChange={(e) => setEditForm((f) => ({ ...f, phoneNumber: e.target.value }))}
+								onChange={(local) => setEditForm((f) => ({ ...f, phoneNumber: local }))}
+								onCountryChange={(dial) => (phoneDialRef.current = dial)}
 							/>
 							<div className="sm:col-span-2">
 								<label
