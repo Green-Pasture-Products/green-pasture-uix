@@ -3,6 +3,7 @@ import { persistor, store, useAppDispatch, useAppSelector } from "@/_redux/store
 import { ThemeProvider } from "@/_hooks/useTheme";
 import { CurrencyProvider } from "@/_hooks/useCurrency";
 import PageTransition from "@/_UI/PageTransition";
+import { AppShell } from "@/_components/AppShell";
 import { OutcomeProvider } from "@/_UI/Outcome";
 import { initAuth } from "@/_utils/authInit";
 import { hydrateAuth } from "@/_redux/reducers/auth.reducer";
@@ -90,6 +91,8 @@ export default function App({ Component, pageProps }: AppProps) {
 		process.env.NODE_ENV === "development"
 			? String(router.isReady)
 			: undefined;
+	// AdminLayout is admin-only, so the shell can be selected by route here.
+	const isAdminRoute = router.pathname.startsWith("/admin");
 	return (
 		<ErrorBoundary>
 			<Provider store={store}>
@@ -99,9 +102,25 @@ export default function App({ Component, pageProps }: AppProps) {
 							<CurrencyProvider>
 								<OutcomeProvider>
 										<NuqsAdapter>
-											<PageTransition>
-												<Component key={nuqsDevKey} {...pageProps} />
-											</PageTransition>
+											{/*
+											 * The admin shell (sidebar, top bar, tab strip) is mounted HERE,
+											 * outside PageTransition, not inside AdminLayout. PageTransition
+											 * keys its motion.div on router.pathname, so anything below it is
+											 * unmounted and rebuilt on every navigation — which tore down the
+											 * whole shell each time a tab was opened, switched, or closed.
+											 * Only the page content should animate.
+											 */}
+											{isAdminRoute ? (
+												<AppShell>
+													<PageTransition>
+														<Component key={nuqsDevKey} {...pageProps} />
+													</PageTransition>
+												</AppShell>
+											) : (
+												<PageTransition>
+													<Component key={nuqsDevKey} {...pageProps} />
+												</PageTransition>
+											)}
 										</NuqsAdapter>
 									</OutcomeProvider>
 							</CurrencyProvider>

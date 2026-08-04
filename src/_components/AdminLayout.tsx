@@ -6,9 +6,10 @@ import React from "react";
 
 // CUSTOM COMPONENTS
 import { LayoutProps } from "@/types/client/layout";
-import { AppShell } from "./AppShell";
 import { usePathname } from "next/navigation";
 
+// Page-level <Head> only. The shell (sidebar/top bar/tabs) is mounted once in
+// _app.tsx so it survives navigation — see the comment there.
 const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 	const pathname = usePathname() || "";
 	const lastSegment = pathname.split("/").filter(Boolean).pop() || "";
@@ -85,7 +86,7 @@ const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 			</Head>
 
-			<AppShell>{children}</AppShell>
+			{children}
 		</>
 	);
 };
