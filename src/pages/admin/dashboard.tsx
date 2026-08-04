@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
 	DollarSign,
@@ -128,16 +128,31 @@ const AdminDashboard: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const [analytics, setAnalytics] = useState<any>(null);
 	const [loading, setLoading] = useState(true);
+	const [refreshing, setRefreshing] = useState(false);
+
+	// `silent` keeps the page-level PageLoader out of the way: a toolbar refresh
+	// should spin the icon and leave the current numbers on screen, not blank the
+	// whole dashboard back to a loading state.
+	const load = useCallback(
+		(silent = false) => {
+			if (silent) setRefreshing(true);
+			dispatch(analyticsAction.fetchDashboardAnalytics())
+				.unwrap()
+				.then((res: any) => setAnalytics(res?.data))
+				.catch(() => {})
+				.finally(() => {
+					setLoading(false);
+					setRefreshing(false);
+				});
+		},
+		[dispatch],
+	);
 
 	useEffect(() => {
-		dispatch(analyticsAction.fetchDashboardAnalytics())
-			.unwrap()
-			.then((res: any) => {
-				setAnalytics(res?.data);
-				setLoading(false);
-			})
-			.catch(() => setLoading(false));
-	}, [dispatch]);
+		load();
+	}, [load]);
+
+	const refresh = useCallback(() => load(true), [load]);
 
 	const overview = analytics?.overview;
 
@@ -216,6 +231,8 @@ const AdminDashboard: React.FC = () => {
 							columns={orderColumns}
 							data={analytics?.recentOrders ?? []}
 							manualPagination={false}
+							onRefresh={refresh}
+							refreshing={refreshing}
 							showSN={false}
 							emptyMessage="No orders yet"
 							testId="recent-orders-table"
@@ -235,6 +252,8 @@ const AdminDashboard: React.FC = () => {
 							columns={customerColumns}
 							data={analytics?.recentCustomers ?? []}
 							manualPagination={false}
+							onRefresh={refresh}
+							refreshing={refreshing}
 							showSN={false}
 							emptyMessage="No customers yet"
 							testId="recent-customers-table"

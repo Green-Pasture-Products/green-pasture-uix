@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 
@@ -35,9 +35,14 @@ const Users: React.FC = () => {
 	const { customers, customersLoading, customersPagination } = useAppSelector((state) => state.admin);
 	const { page: currentPage, search: searchTerm, setPage, setSearch } = useListParams();
 
-	useEffect(() => {
+	// Extracted so the toolbar's refresh icon re-runs exactly the fetch the page loads with.
+	const refresh = useCallback(() => {
 		dispatch(adminAction.fetchCustomersAsync({ page: currentPage, limit: 50, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm]);
+
+	useEffect(() => {
+		refresh();
+	}, [refresh]);
 
 	const columns: ColumnDef<UserRecord, any>[] = [
 		{
@@ -101,7 +106,7 @@ const Users: React.FC = () => {
 		},
 		{
 			id: "actions",
-			header: "",
+			header: "Action",
 			enableSorting: false,
 			enableHiding: false,
 			meta: { width: "50px", align: "center" },
@@ -129,6 +134,8 @@ const Users: React.FC = () => {
 					columns={columns}
 					data={customers as unknown as UserRecord[]}
 					isLoading={customersLoading}
+					onRefresh={refresh}
+					refreshing={customersLoading}
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}

@@ -14,9 +14,6 @@ import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
-import { FormInput } from "@/_UI/FormField";
-import FormSelectDropdown from "@/_UI/FormSelect";
-import axiosInstance from "@/_utils/axiosInstance";
 import * as changeCase from "change-case";
 import { useListParams } from "@/_hooks/useListParams";
 
@@ -32,11 +29,6 @@ const DELETE_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
 );
 
-interface RoleOption {
-	id: string;
-	name: string;
-}
-
 const Staff: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
@@ -49,70 +41,15 @@ const Staff: React.FC = () => {
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
 
-	// Onboard modal state
-	const [showOnboard, setShowOnboard] = useState(false);
-	const [onboarding, setOnboarding] = useState(false);
-	const [roles, setRoles] = useState<RoleOption[]>([]);
-	const [onboardForm, setOnboardForm] = useState({
-		firstName: "",
-		lastName: "",
-		email: "",
-		phoneNumber: "",
-		roleId: "",
-	});
-	const [onboardErrors, setOnboardErrors] = useState<Record<string, string>>({});
 
-	useEffect(() => {
+	// Extracted so the toolbar's refresh icon re-runs exactly the fetch the page loads with.
+	const refresh = useCallback(() => {
 		dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm, pageSize]);
 
-	// Fetch roles on mount
 	useEffect(() => {
-		axiosInstance
-			.get("role/all")
-			.then((res) => {
-				const data = res.data?.data;
-				if (Array.isArray(data)) {
-					setRoles(data.map((r: any) => ({ id: r.id, name: changeCase.capitalCase(r.name) })));
-				}
-			})
-			.catch(() => {});
-	}, []);
-
-	const validateOnboardForm = () => {
-		const errors: Record<string, string> = {};
-		if (!onboardForm.firstName.trim()) errors.firstName = "First name is required";
-		if (!onboardForm.lastName.trim()) errors.lastName = "Last name is required";
-		if (!onboardForm.email.trim()) errors.email = "Email is required";
-		else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(onboardForm.email)) errors.email = "Invalid email address";
-		if (!onboardForm.phoneNumber.trim()) errors.phoneNumber = "Phone number is required";
-		if (!onboardForm.roleId) errors.roleId = "Role is required";
-		setOnboardErrors(errors);
-		return Object.keys(errors).length === 0;
-	};
-
-	const handleOnboard = async () => {
-		if (!validateOnboardForm()) return;
-		setOnboarding(true);
-		try {
-			await axiosInstance.post("staff/onboard", {
-				firstName: onboardForm.firstName.trim(),
-				lastName: onboardForm.lastName.trim(),
-				email: onboardForm.email.trim(),
-				phoneNumber: onboardForm.phoneNumber.trim(),
-				roleId: onboardForm.roleId,
-			});
-			toast.success("Staff onboarded successfully");
-			setShowOnboard(false);
-			setOnboardForm({ firstName: "", lastName: "", email: "", phoneNumber: "", roleId: "" });
-			setOnboardErrors({});
-			dispatch(adminAction.fetchStaffAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
-		} catch (err: any) {
-			toast.error(err?.response?.data?.message || "Failed to onboard staff");
-		} finally {
-			setOnboarding(false);
-		}
-	};
+		refresh();
+	}, [refresh]);
 
 	const handleStatusUpdate = async () => {
 		if (!statusTarget) return;
@@ -210,7 +147,7 @@ const Staff: React.FC = () => {
 		},
 		{
 			id: "actions",
-			header: "",
+			header: "Action",
 			enableSorting: false,
 			enableHiding: false,
 			meta: { width: "50px", align: "center" },
@@ -236,6 +173,8 @@ const Staff: React.FC = () => {
 					columns={columns}
 					data={staffList}
 					isLoading={staffLoading}
+					onRefresh={refresh}
+					refreshing={staffLoading}
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
@@ -247,88 +186,14 @@ const Staff: React.FC = () => {
 					onPageChange={(idx) => setPage(idx + 1)}
 					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/staff/${row.id}`)}
+					// Staff accounts only come into existence by accepting an invite, so adding one starts there.
 					toolbar={
-						<Button variant="filled" leftIcon={Plus} onClick={() => setShowOnboard(true)}>
-							Add Staff
+						<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/invitations")}>
+							Invite Staff
 						</Button>
 					}
 					emptyMessage="No staff members found"
 				/>
-
-				{/* Onboard Staff Modal */}
-				<Modal
-					isOpen={showOnboard}
-					onClose={() => { setShowOnboard(false); setOnboardErrors({}); }}
-					title="Onboard New Staff"
-					subtitle="Add a new staff member to the team"
-					size="md"
-				>
-					<div className="space-y-4 pb-56">
-						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<FormInput
-								label="First Name"
-								placeholder="Enter first name"
-								required
-								value={onboardForm.firstName}
-								onChange={(e: any) => setOnboardForm((f) => ({ ...f, firstName: e.target.value }))}
-								error={onboardErrors.firstName}
-							/>
-							<FormInput
-								label="Last Name"
-								placeholder="Enter last name"
-								required
-								value={onboardForm.lastName}
-								onChange={(e: any) => setOnboardForm((f) => ({ ...f, lastName: e.target.value }))}
-								error={onboardErrors.lastName}
-							/>
-						</div>
-						<FormInput
-							label="Email"
-							type="email"
-							placeholder="staff@example.com"
-							required
-							value={onboardForm.email}
-							onChange={(e: any) => setOnboardForm((f) => ({ ...f, email: e.target.value }))}
-							error={onboardErrors.email}
-						/>
-						<FormInput
-							label="Phone Number"
-							placeholder="Enter phone number"
-							required
-							value={onboardForm.phoneNumber}
-							onChange={(e: any) => setOnboardForm((f) => ({ ...f, phoneNumber: e.target.value }))}
-							error={onboardErrors.phoneNumber}
-						/>
-						<FormSelectDropdown
-							label="Role"
-							required
-							placeholder="Select a role"
-							value={onboardForm.roleId}
-							onChange={(val) => setOnboardForm((f) => ({ ...f, roleId: val }))}
-							options={roles.map((r) => ({ value: String(r.id), label: r.name }))}
-							error={onboardErrors.roleId}
-						/>
-						<div className="flex justify-end gap-3 pt-4" style={{ borderTop: "1px solid var(--border-light)" }}>
-							<Button
-								variant="outlined"
-								color="secondary"
-								size="sm"
-								onClick={() => { setShowOnboard(false); setOnboardErrors({}); }}
-							>
-								Cancel
-							</Button>
-							<Button
-								variant="filled"
-								size="sm"
-								loading={onboarding}
-								disabled={onboarding}
-								onClick={handleOnboard}
-							>
-								Onboard Staff
-							</Button>
-						</div>
-					</div>
-				</Modal>
 
 				{/* Status Confirmation Modal */}
 				<Modal

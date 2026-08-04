@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { Plus, Star } from "lucide-react";
@@ -39,9 +39,14 @@ const AdminProducts: React.FC = () => {
 	const [statusTarget, setStatusTarget] = useState<any | null>(null);
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-	useEffect(() => {
+	// Extracted so the toolbar's refresh icon re-runs exactly the fetch the page loads with.
+	const refresh = useCallback(() => {
 		dispatch(adminAction.fetchAdminItemsAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 	}, [currentPage, searchTerm, pageSize]);
+
+	useEffect(() => {
+		refresh();
+	}, [refresh]);
 
 	const handleStatusUpdate = async () => {
 		if (!statusTarget) return;
@@ -165,7 +170,7 @@ const AdminProducts: React.FC = () => {
 		},
 		{
 			id: "actions",
-			header: "",
+			header: "Action",
 			enableSorting: false,
 			enableHiding: false,
 			meta: { width: "50px", align: "center" },
@@ -190,6 +195,8 @@ const AdminProducts: React.FC = () => {
 					columns={columns}
 					data={adminItems}
 					isLoading={adminItemsLoading}
+					onRefresh={refresh}
+					refreshing={adminItemsLoading}
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}

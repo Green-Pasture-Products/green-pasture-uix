@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -154,16 +154,31 @@ const AdminAnalytics: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const [analytics, setAnalytics] = useState<any>(null);
 	const [loading, setLoading] = useState(true);
+	const [refreshing, setRefreshing] = useState(false);
+
+	// `silent` keeps the page-level PageLoader out of the way: a toolbar refresh
+	// should spin the icon and leave the current numbers on screen, not blank the
+	// whole dashboard back to a loading state.
+	const load = useCallback(
+		(silent = false) => {
+			if (silent) setRefreshing(true);
+			dispatch(analyticsAction.fetchDashboardAnalytics())
+				.unwrap()
+				.then((res: any) => setAnalytics(res?.data))
+				.catch(() => {})
+				.finally(() => {
+					setLoading(false);
+					setRefreshing(false);
+				});
+		},
+		[dispatch],
+	);
 
 	useEffect(() => {
-		dispatch(analyticsAction.fetchDashboardAnalytics())
-			.unwrap()
-			.then((res: any) => {
-				setAnalytics(res?.data);
-				setLoading(false);
-			})
-			.catch(() => setLoading(false));
-	}, [dispatch]);
+		load();
+	}, [load]);
+
+	const refresh = useCallback(() => load(true), [load]);
 
 	const orderVolumeData = useMemo(
 		() => (analytics?.orderVolumeTrend ?? []).map((r: any) => ({ bucket: toDayBucket(r.date), value: r.count })),
@@ -313,6 +328,8 @@ const AdminAnalytics: React.FC = () => {
 							columns={topSellingColumns}
 							data={analytics?.topSellingItems ?? []}
 							manualPagination={false}
+							onRefresh={refresh}
+							refreshing={refreshing}
 							showSN
 							emptyMessage="No sales yet"
 							testId="top-selling-table"
@@ -329,6 +346,8 @@ const AdminAnalytics: React.FC = () => {
 							columns={lowStockColumns}
 							data={analytics?.lowStockItems ?? []}
 							manualPagination={false}
+							onRefresh={refresh}
+							refreshing={refreshing}
 							showSN
 							emptyMessage="All stocked up"
 							testId="low-stock-table"

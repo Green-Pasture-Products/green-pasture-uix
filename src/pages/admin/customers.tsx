@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { parseAsString } from "nuqs";
@@ -58,7 +58,8 @@ const AdminCustomers: React.FC = () => {
 	const [statusTarget, setStatusTarget] = useState<BackendCustomer | null>(null);
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-	useEffect(() => {
+	// Extracted so the toolbar's refresh icon re-runs exactly the fetch the page loads with.
+	const refresh = useCallback(() => {
 		dispatch(adminAction.fetchCustomersAsync({
 			page: currentPage,
 			limit: pageSize,
@@ -66,6 +67,10 @@ const AdminCustomers: React.FC = () => {
 			filter: filterValues.filter || undefined,
 		}));
 	}, [currentPage, searchTerm, filterValues.filter, pageSize]);
+
+	useEffect(() => {
+		refresh();
+	}, [refresh]);
 
 	const handleDelete = async () => {
 		if (!deleteTarget) return;
@@ -150,7 +155,7 @@ const AdminCustomers: React.FC = () => {
 		},
 		{
 			id: "actions",
-			header: "",
+			header: "Action",
 			enableSorting: false,
 			enableHiding: false,
 			meta: { width: "50px", align: "center" },
@@ -175,6 +180,8 @@ const AdminCustomers: React.FC = () => {
 					columns={columns}
 					data={customers ?? []}
 					isLoading={customersLoading}
+					onRefresh={refresh}
+					refreshing={customersLoading}
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}

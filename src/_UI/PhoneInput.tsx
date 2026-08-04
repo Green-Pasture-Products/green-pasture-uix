@@ -43,6 +43,25 @@ function stripFormat(val: string): string {
 	return val.replace(/\D/g, "");
 }
 
+/**
+ * Split a stored E.164 number back into the pieces this component works in:
+ * a country code for `defaultCountry` and the local digits for `value`.
+ * Longest dial prefix wins, so +1 never shadows a longer code that starts
+ * with it. Unrecognised numbers fall back to NG with the digits untouched,
+ * which is what an edit form should show rather than an empty field.
+ */
+export function splitDialCode(phone?: string | null): { countryCode: string; local: string } {
+	const digits = stripFormat(String(phone ?? ""));
+	if (!digits) return { countryCode: "NG", local: "" };
+
+	const match = [...COUNTRIES]
+		.sort((a, b) => b.dial.length - a.dial.length)
+		.find((c) => digits.startsWith(stripFormat(c.dial)));
+
+	if (!match) return { countryCode: "NG", local: digits };
+	return { countryCode: match.code, local: digits.slice(stripFormat(match.dial).length) };
+}
+
 interface PhoneInputProps {
 	label?: string;
 	required?: boolean;

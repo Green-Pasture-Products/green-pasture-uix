@@ -1,4 +1,4 @@
-import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, Shield, Settings, Globe, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, MailPlus, Shield, Settings, Globe, type LucideIcon } from "lucide-react";
 
 /** One admin module: drives the sidebar nav, tab metadata, and privilege gating. */
 export interface ModuleDef {
@@ -23,6 +23,7 @@ export const MODULES: ModuleDef[] = [
 	{ path: "/admin/orders", title: "Orders", icon: ShoppingCart, group: "Sales", privilege: "MANAGE_ORDERS", owns: ["/admin/order"] },
 	{ path: "/admin/customers", title: "Customers", icon: UserRound, group: "Sales", privilege: "MANAGE_CUSTOMERS", owns: ["/admin/customer"] },
 	{ path: "/admin/staff", title: "Staff", icon: UserCog, group: "People", privilege: "MANAGE_STAFF" },
+	{ path: "/admin/invitations", title: "Invitations", icon: MailPlus, group: "People", privilege: "MANAGE_STAFF" },
 	{ path: "/admin/roles", title: "Roles", icon: Shield, group: "People", privilege: "MANAGE_ROLES", owns: ["/admin/role"] },
 	// Ungated: settings.tsx has tabs every signed-in staff member needs (My
 	// Profile, Security) alongside store-scoped ones. Gating the nav item would

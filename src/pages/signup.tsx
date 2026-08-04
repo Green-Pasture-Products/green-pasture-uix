@@ -62,7 +62,7 @@ const SignupPage: React.FC = () => {
 
 	const onSubmit = async (data: SignupFormData) => {
 		try {
-			await dispatch(
+			const res = await dispatch(
 				signupAsync({
 					firstName: data.firstName,
 					lastName: data.lastName,
@@ -73,7 +73,12 @@ const SignupPage: React.FC = () => {
 					profileType: "CLIENT",
 				} as any)
 			).unwrap();
-			router.push(`/verify-account?email=${encodeURIComponent(data.email)}`);
+			// Carry the OTP's lifetime across so the verify page can start its countdown
+			// at the moment the code was actually issued, not when that page mounts.
+			const expiresIn = res?.data?.expiresIn;
+			router.push(
+				`/verify-account?email=${encodeURIComponent(data.email)}${expiresIn ? `&expiresIn=${expiresIn}` : ""}`
+			);
 		} catch {}
 	};
 

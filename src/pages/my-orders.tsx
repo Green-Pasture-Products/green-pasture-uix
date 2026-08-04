@@ -255,6 +255,8 @@ const MyOrders: React.FC = () => {
 						columns={columns}
 						data={filteredOrders}
 						isLoading={loading}
+						onRefresh={() => fetchOrders(page)}
+						refreshing={loading}
 						manualFiltering
 						globalFilter={search}
 						onGlobalFilterChange={setSearch}

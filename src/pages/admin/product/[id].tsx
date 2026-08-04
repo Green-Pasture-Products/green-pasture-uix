@@ -26,6 +26,7 @@ const ProductDetail: React.FC = () => {
 	const { id } = router.query;
 	const [item, setItem] = useState<BackendItem | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [refreshing, setRefreshing] = useState(false);
 	const [editing, setEditing] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [toggling, setToggling] = useState(false);
@@ -53,9 +54,11 @@ const ProductDetail: React.FC = () => {
 		status: "A",
 	});
 
-	const fetchItem = () => {
+	// `silent` refreshes in place: the toolbar icon spins but the page keeps its
+	// content, instead of collapsing back into the full-page loader.
+	const fetchItem = (silent = false) => {
 		if (!id) return Promise.resolve();
-		setLoading(true);
+		silent ? setRefreshing(true) : setLoading(true);
 		return axiosInstance
 			.get(`items/${id}`)
 			.then((res) => {
@@ -77,7 +80,10 @@ const ProductDetail: React.FC = () => {
 				setItem(null);
 				toast.error("Failed to load product");
 			})
-			.finally(() => setLoading(false));
+			.finally(() => {
+				setLoading(false);
+				setRefreshing(false);
+			});
 	};
 
 	useEffect(() => {
@@ -469,7 +475,14 @@ const ProductDetail: React.FC = () => {
 
 				{item.reviews && item.reviews.length > 0 && (
 					<DetailSection title="Reviews">
-						<DataTable columns={reviewColumns} data={item.reviews} manualPagination={false} emptyMessage="No reviews yet" />
+						<DataTable
+							columns={reviewColumns}
+							data={item.reviews}
+							manualPagination={false}
+							onRefresh={() => fetchItem(true)}
+							refreshing={refreshing}
+							emptyMessage="No reviews yet"
+						/>
 					</DetailSection>
 				)}
 			</div>
