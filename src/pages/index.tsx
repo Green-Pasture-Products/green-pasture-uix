@@ -6,8 +6,9 @@ import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AnimatedSection from "@/_UI/AnimatedSection";
 import { productsAction } from "@/_redux/actions";
-import Products from "@/_components/Products";
+import ProductStack from "@/_components/ProductStack";
 import Layout from "@/_components/Layout";
+import { CircularTestimonials } from "@/components/ui/circular-testimonials";
 import Button from "@/_UI/Button";
 import EmptyState from "@/_UI/EmptyState";
 import EmptyShelfIllustration from "@/_UI/illustrations/EmptyShelfIllustration";
@@ -63,10 +64,35 @@ const journey: TimelineItem[] = [
 	},
 ];
 
+/** ponytail: hard-coded until a reviews endpoint exists. Photos are Unsplash stock. */
+const testimonials = [
+	{
+		quote:
+			"I started the immunity blend after a rough harmattan season and I have not had a single cold since. It tastes like something that actually came out of the ground.",
+		name: "Amina Bello",
+		designation: "Customer since 2023 · Abuja",
+		src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=800&auto=format&fit=crop",
+	},
+	{
+		quote:
+			"What sold me was the batch certificate on the label. I could look up the farm and the harvest week. Nobody else in this market shows you that.",
+		name: "Chidi Okafor",
+		designation: "Nutritionist · Lagos",
+		src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop",
+	},
+	{
+		quote:
+			"My whole family is on the green smoothie now, children included. It arrives quickly and it tastes fresh, which says a lot about how fast they move it.",
+		name: "Ngozi Adeyemi",
+		designation: "Repeat customer · Port Harcourt",
+		src: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=800&auto=format&fit=crop",
+	},
+];
+
 const HomePage: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const { products } = useAppSelector((state) => state.product);
-	const featuredProducts = products?.slice(0, 4);
+	const featuredProducts = products?.slice(0, 6);
 	const [email, setEmail] = useState("");
 
 	useEffect(() => {
@@ -76,6 +102,49 @@ const HomePage: React.FC = () => {
 	return (
 		<Layout pageTitle={"Home"}>
 			<BotanicalHero />
+
+			{/* ── Featured products ────────────────────────────────── */}
+			<section className="py-20 md:py-28" style={{ background: "var(--surface-low)" }}>
+				<div className="page-wrapper">
+					<AnimatedSection>
+						<div className="mb-12 flex flex-wrap items-end justify-between gap-6">
+							<SectionHeading eyebrow="The range" title="Small catalogue," accent="deliberately." />
+							<Link
+								href="/products"
+								className="group inline-flex items-center gap-2 text-sm font-medium"
+								style={{ color: "var(--color-primary)" }}
+							>
+								Browse everything
+								<ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+							</Link>
+						</div>
+					</AnimatedSection>
+
+					<AnimatedSection delay={0.15}>
+						{featuredProducts?.length > 0 ? (
+							<ProductStack products={featuredProducts} />
+						) : (
+							<EmptyState
+								illustration={<EmptyShelfIllustration className="w-40 h-40" />}
+								title="No products yet"
+								description="We're stocking up on fresh organic goodness. Check back soon!"
+							/>
+						)}
+					</AnimatedSection>
+
+					{products?.length > 6 && (
+						<AnimatedSection delay={0.25}>
+							<div className="mt-10 text-center">
+								<Link href="/products">
+									<Button variant="filled" size="lg" rightIcon={ArrowRight}>
+										View All Products
+									</Button>
+								</Link>
+							</div>
+						</AnimatedSection>
+					)}
+				</div>
+			</section>
 
 			{/* ── Why it's different ───────────────────────────────── */}
 			<section className="py-20 md:py-28" style={{ background: "var(--background)" }}>
@@ -144,46 +213,29 @@ const HomePage: React.FC = () => {
 				</div>
 			</section>
 
-			{/* ── Featured products ────────────────────────────────── */}
-			<section className="py-20 md:py-28" style={{ background: "var(--background)" }}>
+			{/* ── Testimonials ─────────────────────────────────────── */}
+			<section className="py-20 md:py-28" style={{ background: "var(--surface-low)" }}>
 				<div className="page-wrapper">
 					<AnimatedSection>
-						<div className="mb-12 flex flex-wrap items-end justify-between gap-6">
-							<SectionHeading eyebrow="The range" title="Small catalogue," accent="deliberately." />
-							<Link
-								href="/products"
-								className="group inline-flex items-center gap-2 text-sm font-medium"
-								style={{ color: "var(--color-primary)" }}
-							>
-								Browse everything
-								<ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-							</Link>
+						<SectionHeading eyebrow="In their words" title="People who" accent="kept reordering." centered />
+					</AnimatedSection>
+					<AnimatedSection delay={0.15}>
+						<div className="mt-12 flex justify-center">
+							<CircularTestimonials
+								testimonials={testimonials}
+								autoplay
+								colors={{
+									name: "var(--text-primary)",
+									designation: "var(--text-hint)",
+									testimony: "var(--text-secondary)",
+									arrowBackground: "var(--color-primary)",
+									arrowForeground: "#f4f8e8",
+									arrowHoverBackground: "#9aca3c",
+								}}
+								fontSizes={{ name: "26px", designation: "15px", quote: "18px" }}
+							/>
 						</div>
 					</AnimatedSection>
-
-					<AnimatedSection delay={0.15}>
-						{featuredProducts?.length > 0 ? (
-							<Products products={featuredProducts} />
-						) : (
-							<EmptyState
-								illustration={<EmptyShelfIllustration className="w-40 h-40" />}
-								title="No products yet"
-								description="We're stocking up on fresh organic goodness. Check back soon!"
-							/>
-						)}
-					</AnimatedSection>
-
-					{products?.length > 4 && (
-						<AnimatedSection delay={0.25}>
-							<div className="mt-10 text-center">
-								<Link href="/products">
-									<Button variant="filled" size="lg" rightIcon={ArrowRight}>
-										View All Products
-									</Button>
-								</Link>
-							</div>
-						</AnimatedSection>
-					)}
 				</div>
 			</section>
 
