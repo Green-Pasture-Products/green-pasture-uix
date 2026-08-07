@@ -26,6 +26,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAppDispatch } from "@/_redux/store";
 import { analyticsAction } from "@/_redux/actions/analytics.action";
 import { formatCurrency, formatCurrencyFull, toDayBucket } from "@/_utils/format";
+import { comparePeriods, lastDays, type Point } from "@/_utils/periodCompare";
+import { RangeToggle } from "@/_UI/RangeToggle";
 
 // Re-skin of the previous 657-line dashboard.tsx onto the ogaryde-ported chart
 // system (ChartCard/TrendAreaChart/BreakdownDonut/MetricCard/DataTable). Every
@@ -36,7 +38,26 @@ import { formatCurrency, formatCurrencyFull, toDayBucket } from "@/_utils/format
 // orderVolumeTrend, orderHourlyDistribution, stockLevels, itemsPerOrderDistribution,
 // stockMovementTrend) moved to the new /admin/analytics page.
 
-const TRENDING_DAYS = 30;
+/** Window used for every "vs prior" delta on this page. */
+const COMPARE_DAYS = 7;
+
+const RANGES = [
+	{ value: "7", label: "7D" },
+	{ value: "30", label: "30D" },
+] as const;
+type RangeValue = (typeof RANGES)[number]["value"];
+
+/** Turns a comparison into MetricCard's subtitle + trend props, or nothing when there's no baseline. */
+function deltaProps(cmp: { deltaPercent: number | null; prior: number }, format: (n: number) => string) {
+	if (cmp.deltaPercent === null) return {};
+	return {
+		subtitle: `vs prior ${COMPARE_DAYS}d: ${format(cmp.prior)}`,
+		trend: {
+			direction: (cmp.deltaPercent >= 0 ? "up" : "down") as "up" | "down",
+			text: `${Math.abs(cmp.deltaPercent).toFixed(1)}%`,
+		},
+	};
+}
 
 function statusBadgeVariant(status: string): "success" | "warning" | "error" | "info" | "neutral" {
 	switch (status?.toUpperCase()) {
@@ -129,6 +150,7 @@ const AdminDashboard: React.FC = () => {
 	const [analytics, setAnalytics] = useState<any>(null);
 	const [loading, setLoading] = useState(true);
 	const [refreshing, setRefreshing] = useState(false);
+	const [range, setRange] = useState<RangeValue>("30");
 
 	// `silent` keeps the page-level PageLoader out of the way: a toolbar refresh
 	// should spin the icon and leave the current numbers on screen, not blank the
@@ -156,26 +178,88 @@ const AdminDashboard: React.FC = () => {
 
 	const overview = analytics?.overview;
 
-	// Every field the old dashboard's primary + secondary stat rows displayed,
-	// carried over 1:1 (see the module comment above for what moved to analytics.tsx).
-	const metrics = useMemo(
+	/* Deltas are derived here, not served: the analytics endpoint has no
+	   previous-period concept, so we split its daily series into the last 7 days
+	   and the 7 before. Metrics with no time series (products, rating, reviews)
+	   get no delta rather than an invented one. */
+	const revenuePoints: Point[] = useMemo(
+		() => (analytics?.revenueTrend ?? []).map((r: any) => ({ date: toDayBucket(r.date), value: Number(r.revenue) || 0 })),
+		[analytics],
+	);
+	const orderPoints: Point[] = useMemo(
+		() => (analytics?.revenueTrend ?? []).map((r: any) => ({ date: toDayBucket(r.date), value: Number(r.orders) || 0 })),
+		[analytics],
+	);
+
+	const revenueCmp = useMemo(() => comparePeriods(revenuePoints, COMPARE_DAYS), [revenuePoints]);
+	const orderCmp = useMemo(() => comparePeriods(orderPoints, COMPARE_DAYS), [orderPoints]);
+
+	const headline: Array<{
+		id: string;
+		label: string;
+		icon: typeof DollarSign;
+		color: MetricColor;
+		value: number | string | undefined;
+		to?: string;
+		subtitle?: string;
+		trend?: { direction: "up" | "down"; text: string };
+	}> = useMemo(
 		() => [
-			{ id: "revenue", label: "Total Revenue", icon: DollarSign, color: "brand" as MetricColor, value: overview ? formatCurrency(overview.totalRevenue) : undefined },
-			{ id: "orders", label: "Total Orders", icon: ShoppingCart, color: "info" as MetricColor, value: overview?.totalOrders },
-			{ id: "customers", label: "Total Customers", icon: Users, color: "success" as MetricColor, value: overview?.totalCustomers },
-			{ id: "aov", label: "Avg Order Value", icon: TrendingUp, color: "brand" as MetricColor, value: overview ? formatCurrency(overview.averageOrderValue) : undefined },
-			{ id: "products", label: "Total Products", icon: Package, color: "info" as MetricColor, value: overview?.totalItems },
+			{
+				id: "revenue",
+				label: "Total Revenue",
+				icon: DollarSign,
+				color: "brand" as MetricColor,
+				value: overview ? formatCurrency(overview.totalRevenue) : undefined,
+				to: "/admin/orders",
+				...deltaProps(revenueCmp, formatCurrency),
+			},
+			{
+				id: "orders",
+				label: "Total Orders",
+				icon: ShoppingCart,
+				color: "info" as MetricColor,
+				value: overview?.totalOrders,
+				to: "/admin/orders",
+				...deltaProps(orderCmp, (n) => String(Math.round(n))),
+			},
+			{
+				id: "customers",
+				label: "Total Customers",
+				icon: Users,
+				color: "success" as MetricColor,
+				value: overview?.totalCustomers,
+				to: "/admin/customers",
+			},
+			{
+				id: "aov",
+				label: "Avg Order Value",
+				icon: TrendingUp,
+				color: "brand" as MetricColor,
+				value: overview ? formatCurrency(overview.averageOrderValue) : undefined,
+			},
+		],
+		[overview, revenueCmp, orderCmp],
+	);
+
+	// No time series behind these, so no delta — a number without a baseline.
+	const secondary = useMemo(
+		() => [
+			{ id: "products", label: "Products", icon: Package, color: "info" as MetricColor, value: overview?.totalItems, to: "/admin/products" },
 			{ id: "orders-today", label: "Orders Today", icon: Clock, color: "warning" as MetricColor, value: overview?.ordersToday },
-			{ id: "rating", label: "Avg Rating", icon: Star, color: "warning" as MetricColor, value: overview ? `${Number(overview.averageRating).toFixed(1)}/5` : undefined },
-			{ id: "reviews", label: "Total Reviews", icon: MessageCircle, color: "info" as MetricColor, value: overview?.totalReviews },
+			{ id: "rating", label: "Avg Rating", icon: Star, color: "warning" as MetricColor, value: overview ? `${Number(overview.averageRating).toFixed(1)}/5` : undefined, to: "/admin/reviews" },
+			{ id: "reviews", label: "Reviews", icon: MessageCircle, color: "info" as MetricColor, value: overview?.totalReviews, to: "/admin/reviews" },
 		],
 		[overview],
 	);
 
+	const rangeDays = Number(range);
 	const revenueTrendData = useMemo(
-		() => (analytics?.revenueTrend ?? []).map((r: any) => ({ bucket: toDayBucket(r.date), value: r.revenue })),
-		[analytics],
+		() => lastDays(revenuePoints, rangeDays).map((p) => ({ bucket: p.date, value: p.value })),
+		[revenuePoints, rangeDays],
 	);
+
+	const topProducts = useMemo(() => (analytics?.topSellingItems ?? []).slice(0, 4), [analytics]);
 
 	const orderStatusData = useMemo(
 		() => (analytics?.orderStatusDistribution ?? []).map((s: any) => ({ label: s.status, count: s.count })),
@@ -193,26 +277,47 @@ const AdminDashboard: React.FC = () => {
 	return (
 		<AdminLayout>
 			<div className="space-y-6">
-				<div>
-					<h2 className="text-xl font-semibold tracking-tight">Dashboard</h2>
-					<p className="text-muted-foreground mt-1 text-sm">Store performance at a glance.</p>
+				<div className="flex flex-wrap items-end justify-between gap-3">
+					<div>
+						<h2 className="text-xl font-semibold tracking-tight">Dashboard</h2>
+						<p className="text-muted-foreground mt-1 text-sm">
+							Store performance at a glance. Changes compare the last {COMPARE_DAYS} days with the {COMPARE_DAYS} before.
+						</p>
+					</div>
+				</div>
+
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+					{headline.map((m) => (
+						<MetricCard
+							key={m.id}
+							label={m.label}
+							icon={m.icon}
+							color={m.color}
+							value={m.value}
+							to={m.to}
+							subtitle={m.subtitle}
+							trend={m.trend}
+							testId={`kpi-${m.id}`}
+						/>
+					))}
 				</div>
 
 				<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-					{metrics.map((m) => (
-						<MetricCard key={m.id} label={m.label} icon={m.icon} color={m.color} value={m.value} testId={`kpi-${m.id}`} />
+					{secondary.map((m) => (
+						<MetricCard key={m.id} label={m.label} icon={m.icon} color={m.color} value={m.value} to={m.to} testId={`kpi-${m.id}`} />
 					))}
 				</div>
 
 				<div className="grid gap-4 lg:grid-cols-3">
 					<ChartCard
 						title="Revenue Trend"
-						subtitle="Daily revenue, last 30 days"
+						subtitle={`Daily revenue, last ${rangeDays} days`}
 						className="lg:col-span-2"
+						action={<RangeToggle options={RANGES as any} value={range} onChange={setRange} aria-label="Revenue range" />}
 						isEmpty={(analytics?.revenueTrend?.length ?? 0) === 0}
 						emptyMessage="No revenue in the last 30 days."
 					>
-						<TrendAreaChart data={revenueTrendData} color={TREND.revenue} name="Revenue" days={TRENDING_DAYS} formatValue={formatCurrency} />
+						<TrendAreaChart data={revenueTrendData} color={TREND.revenue} name="Revenue" days={rangeDays} formatValue={formatCurrency} />
 					</ChartCard>
 					<ChartCard title="Order Status" subtitle="Distribution breakdown" isEmpty={orderStatusData.length === 0} emptyMessage="No orders yet.">
 						<BreakdownDonut data={orderStatusData} colorFor={statusColor} />
@@ -239,6 +344,44 @@ const AdminDashboard: React.FC = () => {
 						/>
 					</CardContent>
 				</Card>
+
+				{topProducts.length > 0 && (
+					<Card>
+						<CardHeader className="flex-row items-center justify-between space-y-0">
+							<CardTitle>Top Products</CardTitle>
+							<Link href="/admin/products" className="text-muted-foreground hover:text-foreground text-xs font-medium">
+								View All
+							</Link>
+						</CardHeader>
+						<CardContent>
+							<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+								{topProducts.map((item: any) => (
+									<Link
+										key={item.id}
+										href={`/admin/product/${item.id}`}
+										className="border-border hover:border-primary/40 group rounded-xl border p-3 transition-colors"
+									>
+										{/* contain, not cover — these are packaging shots */}
+										<div className="bg-muted flex h-28 items-center justify-center overflow-hidden rounded-lg">
+											{item.photo ? (
+												// eslint-disable-next-line @next/next/no-img-element
+												<img src={item.photo} alt={item.name} className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" />
+											) : (
+												<span className="text-muted-foreground text-2xl font-semibold">{String(item.name ?? "?").charAt(0)}</span>
+											)}
+										</div>
+										<p className="mt-3 truncate text-sm font-medium">{item.name}</p>
+										<p className="text-muted-foreground truncate text-xs">{item.product ?? "Uncategorised"}</p>
+										<div className="mt-2 flex items-center justify-between text-xs">
+											<span className="font-semibold">{formatCurrencyFull(Number(item.price) || 0)}</span>
+											<span className="text-muted-foreground tabular-nums">{Number(item.soldQuantity) || 0} sold</span>
+										</div>
+									</Link>
+								))}
+							</div>
+						</CardContent>
+					</Card>
+				)}
 
 				<Card>
 					<CardHeader className="flex-row items-center justify-between space-y-0">
