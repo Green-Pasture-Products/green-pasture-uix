@@ -19,7 +19,9 @@ import { categoryAction } from "@/_redux/actions/category.action";
 
 const schema = z
 	.object({
-		productId: z.coerce.number().positive("Category is required"),
+		// Category ids are uuidv7 strings, not numbers — coercing to a number
+		// yields NaN and the field can never validate.
+		productId: z.string().min(1, "Category is required"),
 		name: z.string().min(1, "Name is required"),
 		description: z.string().optional(),
 		price: z.coerce.number().positive("Selling price must be greater than 0"),
@@ -166,7 +168,7 @@ const AddProductPage: React.FC = () => {
 										label: c.name,
 									}))}
 									value={field.value}
-									onChange={(val) => field.onChange(Number(val))}
+									onChange={field.onChange}
 									error={errors.productId?.message}
 								/>
 							)}
