@@ -8,7 +8,7 @@ import AnimatedSection from "@/_UI/AnimatedSection";
 import { productsAction } from "@/_redux/actions";
 import ProductStack from "@/_components/ProductStack";
 import Layout from "@/_components/Layout";
-import { CircularTestimonials } from "@/components/ui/circular-testimonials";
+import Testimonials from "@/_components/Testimonials";
 import Button from "@/_UI/Button";
 import EmptyState from "@/_UI/EmptyState";
 import EmptyShelfIllustration from "@/_UI/illustrations/EmptyShelfIllustration";
@@ -61,31 +61,6 @@ const journey: TimelineItem[] = [
 		description:
 			"Delivered nationwide with the batch record attached — you can trace the jar in your hand back to the row it grew in.",
 		icon: Home,
-	},
-];
-
-/** ponytail: hard-coded until a reviews endpoint exists. Photos are Unsplash stock. */
-const testimonials = [
-	{
-		quote:
-			"I started the immunity blend after a rough harmattan season and I have not had a single cold since. It tastes like something that actually came out of the ground.",
-		name: "Amina Bello",
-		designation: "Customer since 2023 · Abuja",
-		src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=800&auto=format&fit=crop",
-	},
-	{
-		quote:
-			"What sold me was the batch certificate on the label. I could look up the farm and the harvest week. Nobody else in this market shows you that.",
-		name: "Chidi Okafor",
-		designation: "Nutritionist · Lagos",
-		src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop",
-	},
-	{
-		quote:
-			"My whole family is on the green smoothie now, children included. It arrives quickly and it tastes fresh, which says a lot about how fast they move it.",
-		name: "Ngozi Adeyemi",
-		designation: "Repeat customer · Port Harcourt",
-		src: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=800&auto=format&fit=crop",
 	},
 ];
 
@@ -213,31 +188,8 @@ const HomePage: React.FC = () => {
 				</div>
 			</section>
 
-			{/* ── Testimonials ─────────────────────────────────────── */}
-			<section className="py-20 md:py-28" style={{ background: "var(--surface-low)" }}>
-				<div className="page-wrapper">
-					<AnimatedSection>
-						<SectionHeading eyebrow="In their words" title="People who" accent="kept reordering." centered />
-					</AnimatedSection>
-					<AnimatedSection delay={0.15}>
-						<div className="mt-12 flex justify-center">
-							<CircularTestimonials
-								testimonials={testimonials}
-								autoplay
-								colors={{
-									name: "var(--text-primary)",
-									designation: "var(--text-hint)",
-									testimony: "var(--text-secondary)",
-									arrowBackground: "var(--color-primary)",
-									arrowForeground: "#f4f8e8",
-									arrowHoverBackground: "#9aca3c",
-								}}
-								fontSizes={{ name: "26px", designation: "15px", quote: "18px" }}
-							/>
-						</div>
-					</AnimatedSection>
-				</div>
-			</section>
+			{/* ── Testimonials (real reviews, paged in) ────────────── */}
+			<Testimonials featured />
 
 			{/* ── Newsletter ───────────────────────────────────────── */}
 			<section className="py-20 md:py-28" style={{ background: "var(--background)" }}>

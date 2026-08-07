@@ -28,6 +28,7 @@ import {
 import Layout from "@/_components/Layout";
 import { appConstants } from "@/_redux/constants";
 import { useFreeShipping } from "@/_hooks/useStoreSettings";
+import Testimonials from "@/_components/Testimonials";
 import ReviewList from "@/_components/ReviewList";
 import ReviewForm from "@/_components/ReviewForm";
 import Breadcrumb from "@/_UI/Breadcrumb";
@@ -433,6 +434,16 @@ const ProductDetailsPage: React.FC = () => {
 						)}
 					</div>
 				</div>
+
+				{/* Quotes for this product specifically — outside the tabs, so they're
+				    seen without a click. Renders nothing when this item has none. */}
+				<Testimonials
+					itemId={String(id)}
+					inline
+					eyebrow="Verified buyers"
+					title="What people say"
+					accent="about this one."
+				/>
 
 				{/* Related Products */}
 				{relatedProducts?.length > 0 && (

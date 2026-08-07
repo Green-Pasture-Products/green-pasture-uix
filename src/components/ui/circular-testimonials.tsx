@@ -29,6 +29,8 @@ interface CircularTestimonialsProps {
 	autoplay?: boolean;
 	colors?: Colors;
 	fontSizes?: FontSizes;
+	/** Fires whenever the visible testimonial changes — used to page more in. */
+	onIndexChange?: (index: number) => void;
 }
 
 function calculateGap(width: number) {
@@ -41,7 +43,13 @@ function calculateGap(width: number) {
 	return minGap + (maxGap - minGap) * ((width - minWidth) / (maxWidth - minWidth));
 }
 
-export const CircularTestimonials = ({ testimonials, autoplay = true, colors = {}, fontSizes = {} }: CircularTestimonialsProps) => {
+export const CircularTestimonials = ({
+	testimonials,
+	autoplay = true,
+	colors = {},
+	fontSizes = {},
+	onIndexChange,
+}: CircularTestimonialsProps) => {
 	// Color & font config
 	const colorName = colors.name ?? "#000";
 	const colorDesignation = colors.designation ?? "#6b7280";
@@ -74,6 +82,11 @@ export const CircularTestimonials = ({ testimonials, autoplay = true, colors = {
 		setActiveIndex((prev) => (prev - 1 + testimonialsLength) % testimonialsLength);
 		if (autoplayIntervalRef.current) clearInterval(autoplayIntervalRef.current);
 	}, [testimonialsLength]);
+
+	useEffect(() => {
+		onIndexChange?.(activeIndex);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [activeIndex]);
 
 	// Responsive gap calculation
 	useEffect(() => {
@@ -167,7 +180,7 @@ export const CircularTestimonials = ({ testimonials, autoplay = true, colors = {
 					{testimonials.map((testimonial, index) => (
 						// eslint-disable-next-line @next/next/no-img-element
 						<img
-							key={testimonial.src}
+							key={`${testimonial.name}-${index}`}
 							src={testimonial.src}
 							alt={testimonial.name}
 							className="testimonial-image"
