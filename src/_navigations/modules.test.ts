@@ -32,3 +32,21 @@ test("NAV_GROUPS preserves first-seen group order", () => {
 		expectedOrder,
 	);
 });
+
+test("every admin detail route resolves to the module its breadcrumb links back to", () => {
+	// AdminLayout shows a breadcrumb only when findOwningModule resolves, so an
+	// unowned detail route would silently render no trail.
+	const detailRoutes: Array<[string, string]> = [
+		["/admin/product/019f-abc", "Products"],
+		["/admin/products/new", "Products"],
+		["/admin/order/019f-abc", "Orders"],
+		["/admin/customer/019f-abc", "Customers"],
+		["/admin/staff/019f-abc", "Staff"],
+		["/admin/role/019f-abc", "Roles"],
+		["/admin/roles/new", "Roles"],
+	];
+	for (const [route, expected] of detailRoutes) {
+		assert.equal(findOwningModule(route)?.title, expected, route);
+		assert.equal(findModule(route), undefined, `${route} must not be a module itself`);
+	}
+});
