@@ -1,10 +1,14 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { ReviewState } from "@/types";
 import { reviewAction } from "../actions/review.action";
+import { mergePages } from "@/_utils/mergePages";
 
 const initialState: ReviewState = {
 	reviews: [],
 	pagination: null,
+	testimonials: [],
+	testimonialsPagination: null,
+	isLoadingTestimonials: false,
 	isLoading: false,
 	isSubmitting: false,
 	error: null,
@@ -33,6 +37,18 @@ const reviewSlice = createSlice({
 			.addCase(reviewAction.fetchItemReviewsAsync.rejected, (state, action) => {
 				state.isLoading = false;
 				state.error = action.payload as string;
+			})
+			.addCase(reviewAction.fetchTestimonialsAsync.pending, (state) => {
+				state.isLoadingTestimonials = true;
+			})
+			.addCase(reviewAction.fetchTestimonialsAsync.fulfilled, (state, action) => {
+				state.isLoadingTestimonials = false;
+				const meta = action.payload?.data?.meta ?? null;
+				state.testimonials = mergePages(state.testimonials, action.payload?.data?.items ?? [], meta?.currentPage ?? 1);
+				state.testimonialsPagination = meta;
+			})
+			.addCase(reviewAction.fetchTestimonialsAsync.rejected, (state) => {
+				state.isLoadingTestimonials = false;
 			})
 			.addCase(reviewAction.submitReviewAsync.pending, (state) => {
 				state.isSubmitting = true;

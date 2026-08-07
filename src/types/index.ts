@@ -266,6 +266,10 @@ export interface BackendReview {
 	rating: number;
 	comment?: string;
 	customer: string;
+	customerImage?: string;
+	/** Curated by a moderator to lead the marketing pages. */
+	featured?: boolean;
+	itemImage?: string;
 	item?: BackendItem;
 	status: string;
 	createdAt: string;
@@ -362,6 +366,10 @@ export interface CheckoutState {
 export interface ReviewState {
 	reviews: BackendReview[];
 	pagination: PaginationMeta | null;
+	/** Public highlight reel for the home page — paged in and appended, not replaced. */
+	testimonials: BackendReview[];
+	testimonialsPagination: PaginationMeta | null;
+	isLoadingTestimonials: boolean;
 	isLoading: boolean;
 	isSubmitting: boolean;
 	error: string | null;

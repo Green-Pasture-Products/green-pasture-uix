@@ -71,85 +71,96 @@ const About = () => {
 	return (
 		<Layout pageTitle="About">
 			{/* ── Editorial hero ───────────────────────────────────── */}
-			<section className="relative overflow-hidden" style={{ background: "var(--background)" }}>
+			{/* Full-bleed field at sunset. Copy sits in the open sky on the left,
+			    where the photograph is quietest — the basket keeps the right. */}
+			<section className="relative isolate flex min-h-[32rem] items-center overflow-hidden lg:min-h-[38rem]">
+				<Image
+					src="/images/about_banner.png"
+					alt="Green Pasture products in a basket at the edge of a field at sunset"
+					fill
+					priority
+					quality={95}
+					sizes="100vw"
+					className="-z-10 object-cover object-[70%_center] lg:object-center"
+				/>
 				<div
 					aria-hidden
-					className="pointer-events-none absolute -right-40 -top-40 h-[36rem] w-[36rem] rounded-full opacity-70"
-					style={{ background: "radial-gradient(circle,rgba(154,202,60,0.16),transparent 66%)" }}
+					className="absolute inset-0 -z-10"
+					style={{
+						background:
+							"linear-gradient(100deg,rgba(10,26,18,0.90) 0%,rgba(10,26,18,0.72) 38%,rgba(10,26,18,0.28) 62%,transparent 82%)",
+					}}
 				/>
-				<div className="page-wrapper relative py-20 md:py-28">
-					<div className="grid items-center gap-14 lg:grid-cols-[1.1fr_0.9fr]">
-						<div>
-							<motion.p
-								initial={{ opacity: 0, y: 16 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ duration: 0.6 }}
-								className="mb-5 text-[0.68rem] font-semibold uppercase tracking-[0.22em]"
-								style={{ color: "#7fac2d" }}
-							>
-								About us
-							</motion.p>
-							<motion.h1
-								initial={{ opacity: 0, y: 24 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ duration: 0.75, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-								className="font-display text-4xl leading-[1.03] tracking-[-0.02em] sm:text-5xl lg:text-[3.6rem]"
-								style={{ color: "var(--text-primary)", fontWeight: 300 }}
-							>
-								We did not invent
-								<br />
-								these remedies.
-								<br />
-								<span className="italic" style={{ color: "var(--color-primary)", fontWeight: 500 }}>
-									We made them traceable.
-								</span>
-							</motion.h1>
-							<motion.p
-								initial={{ opacity: 0, y: 20 }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ duration: 0.7, delay: 0.22 }}
-								className="mt-8 max-w-lg text-base leading-relaxed sm:text-lg"
-								style={{ color: "var(--text-secondary)" }}
-							>
-								Green Pasture Organics bridges generations of Nigerian agricultural knowledge
-								and the evidence modern buyers deserve — potent botanicals, grown well, tested
-								honestly, and documented from the row to the jar.
-							</motion.p>
-						</div>
 
-						<motion.div
-							initial={{ opacity: 0, scale: 0.94 }}
-							animate={{ opacity: 1, scale: 1 }}
-							transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-							className="relative"
+				<div className="page-wrapper relative w-full py-20 md:py-28">
+					<div className="max-w-xl">
+						<motion.p
+							initial={{ opacity: 0, y: 16 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.6 }}
+							className="mb-5 text-[0.68rem] font-semibold uppercase tracking-[0.22em]"
+							style={{ color: "#b9dd72" }}
 						>
-							<div
-								className="overflow-hidden rounded-[28px]"
-								style={{ border: "1px solid var(--border-light)", boxShadow: "var(--shadow-xl)" }}
-							>
-								<Image
-									src="/images/Green_vegggies_1.jpeg"
-									alt="Organically farmed produce"
-									width={640}
-									height={720}
-									quality={95}
-									className="h-full w-full object-cover"
-								/>
-							</div>
-							<div
-								className="absolute -bottom-6 -left-6 hidden rounded-2xl px-6 py-5 backdrop-blur-sm sm:block"
-								style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)", boxShadow: "var(--shadow-lg)" }}
-							>
-								<p className="font-display text-3xl tabular-nums" style={{ color: "var(--color-primary)", fontWeight: 500 }}>
-									12
-								</p>
-								<p className="mt-0.5 text-[0.68rem] uppercase tracking-[0.14em]" style={{ color: "var(--text-hint)" }}>
-									Partner farms
-								</p>
-							</div>
-						</motion.div>
+							About us
+						</motion.p>
+						<motion.h1
+							initial={{ opacity: 0, y: 24 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.75, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+							className="font-display text-4xl leading-[1.03] tracking-[-0.02em] sm:text-5xl lg:text-[3.6rem]"
+							style={{ color: "#f4f8e8", fontWeight: 300 }}
+						>
+							We did not invent
+							<br />
+							these remedies.
+							<br />
+							<span className="italic" style={{ color: "#b9dd72", fontWeight: 500 }}>
+								We made them traceable.
+							</span>
+						</motion.h1>
+						<motion.p
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.7, delay: 0.22 }}
+							className="mt-8 max-w-lg text-base leading-relaxed sm:text-lg"
+							style={{ color: "rgba(226,238,206,0.78)" }}
+						>
+							Green Pasture Organics bridges generations of Nigerian agricultural knowledge
+							and the evidence modern buyers deserve — potent botanicals, grown well, tested
+							honestly, and documented from the row to the jar.
+						</motion.p>
+
+						<motion.dl
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.7, delay: 0.34 }}
+							className="mt-10 grid max-w-md grid-cols-3 gap-6 border-t pt-7"
+							style={{ borderColor: "rgba(226,238,206,0.22)" }}
+						>
+							{[
+								{ n: "12", l: "Partner farms" },
+								{ n: "2", l: "States sourced" },
+								{ n: "2019", l: "Growing since" },
+							].map((s) => (
+								<div key={s.l}>
+									<dt className="font-display text-2xl tabular-nums sm:text-3xl" style={{ color: "#b9dd72", fontWeight: 500 }}>
+										{s.n}
+									</dt>
+									<dd className="mt-1 text-[0.68rem] uppercase tracking-[0.12em]" style={{ color: "rgba(226,238,206,0.6)" }}>
+										{s.l}
+									</dd>
+								</div>
+							))}
+						</motion.dl>
 					</div>
 				</div>
+
+				{/* Hand-off into the values section below */}
+				<div
+					aria-hidden
+					className="pointer-events-none absolute inset-x-0 bottom-0 h-24"
+					style={{ background: "linear-gradient(to bottom,transparent,var(--surface-low))" }}
+				/>
 			</section>
 
 			{/* ── Values ───────────────────────────────────────────── */}
