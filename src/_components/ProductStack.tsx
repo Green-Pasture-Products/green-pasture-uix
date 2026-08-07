@@ -102,7 +102,7 @@ const ProductFanCard: React.FC<{ item: ProductStackItem; active: boolean }> = ({
 						fill
 						sizes="240px"
 						draggable={false}
-						className="object-cover"
+						className="object-contain p-3"
 					/>
 				) : (
 					<div className="flex h-full w-full items-center justify-center font-display text-4xl" style={{ color: "var(--text-disabled)" }}>

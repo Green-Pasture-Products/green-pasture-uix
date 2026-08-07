@@ -7,13 +7,24 @@ import React from "react";
 // CUSTOM COMPONENTS
 import { LayoutProps } from "@/types/client/layout";
 import { usePathname } from "next/navigation";
+import Breadcrumb from "@/_UI/Breadcrumb";
+import { findModule, findOwningModule } from "@/_navigations/modules";
 
 // Page-level <Head> only. The shell (sidebar/top bar/tabs) is mounted once in
 // _app.tsx so it survives navigation — see the comment there.
-const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
+const AdminLayout = ({ children, pageTitle, breadcrumbLabel }: LayoutProps) => {
 	const pathname = usePathname() || "";
 	const lastSegment = pathname.split("/").filter(Boolean).pop() || "";
 	const page_name = pageTitle || (lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1));
+
+	/* Detail screens are the routes that aren't a module of their own —
+	   /admin/product/[id], /admin/products/new and friends. They get a trail
+	   back to the list they came from, derived from MODULES so a new detail
+	   route is covered the moment its parent module exists. */
+	const owner = findOwningModule(pathname);
+	const isDetail = !findModule(pathname) && !!owner;
+	// Ids make terrible crumbs; fall back to the page title the page already sets.
+	const leaf = breadcrumbLabel || pageTitle || (lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1));
 
 	return (
 		<>
@@ -85,6 +96,18 @@ const AdminLayout = ({ children, pageTitle }: LayoutProps) => {
 					sizes="512x512"
 				/>
 			</Head>
+
+			{isDetail && (
+				<div className="mb-5">
+					<Breadcrumb
+						items={[
+							{ label: "Dashboard", href: "/admin/dashboard" },
+							{ label: owner.title, href: owner.path },
+							{ label: leaf },
+						]}
+					/>
+				</div>
+			)}
 
 			{children}
 		</>

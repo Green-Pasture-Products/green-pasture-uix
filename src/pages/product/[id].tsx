@@ -27,7 +27,7 @@ import {
 } from "@/_redux/reducers/wishlist.reducer";
 import Layout from "@/_components/Layout";
 import { appConstants } from "@/_redux/constants";
-import { useFreeShipping } from "@/_hooks/useStoreSettings";
+import { useFreeShipping, useShowDiscountBadges } from "@/_hooks/useStoreSettings";
 import Testimonials from "@/_components/Testimonials";
 import ReviewList from "@/_components/ReviewList";
 import ReviewForm from "@/_components/ReviewForm";
@@ -47,6 +47,7 @@ const ProductDetailsPage: React.FC = () => {
 	const wishlistItems = useAppSelector((state) => state.wishlist.items);
 	const cartTotal = useAppSelector((state) => state.cart.total);
 	const freeShipping = useFreeShipping(cartTotal || 0);
+	const showDiscountBadges = useShowDiscountBadges();
 	const product = products?.find((p: Product) => String(p.id) === String(id));
 
 	const [quantity, setQuantity] = useState(1);
@@ -130,7 +131,9 @@ const ProductDetailsPage: React.FC = () => {
 	const itemRating = itemData.ratingStats?.average ?? itemData.rating ?? 0;
 	const itemReviewCount = itemData.ratingStats?.count ?? itemData.reviews ?? 0;
 	const itemInStock = itemData.unit > 0 || itemData.inStock;
-	const itemOriginalPrice = itemData.originalPrice ? Number(itemData.originalPrice) : null;
+	// Same admin kill-switch the cards honour — the detail page was reading
+	// originalPrice raw, so it ignored the toggle entirely.
+	const itemOriginalPrice = showDiscountBadges && itemData.originalPrice ? Number(itemData.originalPrice) : null;
 	const itemPrice = Number(itemData.price || 0);
 	const itemMaxQuantity = Number(itemData.availableQuantity) || Number(itemData.unit) || 10;
 
@@ -166,11 +169,13 @@ const ProductDetailsPage: React.FC = () => {
 					{/* Image Column */}
 					<div className="space-y-4">
 						<Card elevation={1} padding="none" className="overflow-hidden">
-							<div className="aspect-square bg-mint-100 dark:bg-white/[0.04]">
+							{/* contain, not cover: these are packaging shots — cropping a
+							    pouch to a square hides the label people came to read. */}
+							<div className="aspect-square bg-mint-100 p-6 dark:bg-white/[0.04]">
 								<img
 									src={productImages[selectedImage]}
 									alt={product?.name}
-									className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+									className="h-full w-full object-contain transition-transform duration-500 hover:scale-105"
 								/>
 							</div>
 						</Card>
@@ -189,7 +194,7 @@ const ProductDetailsPage: React.FC = () => {
 									<img
 										src={image}
 										alt={`${product?.name} view ${index + 1}`}
-										className="w-full h-full object-cover"
+										className="h-full w-full bg-mint-100 object-contain p-1 dark:bg-white/[0.04]"
 									/>
 								</button>
 							))}
