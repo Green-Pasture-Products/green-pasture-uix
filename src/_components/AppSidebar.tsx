@@ -28,10 +28,12 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarRail,
+	useSidebar,
 } from "@/components/ui/sidebar";
 
 function NavMenuButton({ item }: { item: ModuleDef }) {
 	const router = useRouter();
+	const { setOpenMobile } = useSidebar();
 	const pathname = router.asPath.split("?")[0];
 	// findOwningModule (not a plain prefix match) so a detail route like
 	// /admin/product/<uuid> highlights the Products entry, matching TabBar.
@@ -40,7 +42,10 @@ function NavMenuButton({ item }: { item: ModuleDef }) {
 
 	return (
 		<SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-			<Link href={item.path} data-testid={testid}>
+			{/* On mobile the sidebar is an overlay sheet, so picking a tab has to
+			    dismiss it — otherwise it sits on top of the page it just opened.
+			    setOpenMobile is inert on desktop, where the rail is persistent. */}
+			<Link href={item.path} data-testid={testid} onClick={() => setOpenMobile(false)}>
 				<item.icon className="size-4" />
 				<span>{item.title}</span>
 			</Link>
@@ -59,6 +64,7 @@ export function AppSidebar() {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const hasPrivilege = useHasPrivilege();
+	const { setOpenMobile } = useSidebar();
 	const { user } = useAppSelector((state) => state.auth);
 
 	const displayName =
@@ -79,7 +85,12 @@ export function AppSidebar() {
 	return (
 		<Sidebar collapsible="icon" data-testid="app-sidebar">
 			<SidebarHeader>
-				<Link href="/admin/dashboard" className="flex h-12 items-center gap-2.5 px-2">
+				{/* Navigates too, so it dismisses the mobile sheet like any tab does. */}
+				<Link
+					href="/admin/dashboard"
+					onClick={() => setOpenMobile(false)}
+					className="flex h-12 items-center gap-2.5 px-2"
+				>
 					<div className="relative size-8 shrink-0">
 						<Image
 							src="/images/GP Organic Logo (Primary).png"
