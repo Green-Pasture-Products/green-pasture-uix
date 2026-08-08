@@ -101,7 +101,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 							src={imageUrl}
 							alt={product.name}
 							fill
-							sizes="(max-width: 768px) 50vw, 33vw"
+							sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 20vw"
 							className="object-contain p-4 transition-transform duration-700 ease-out group-hover:scale-105"
 						/>
 					) : (
@@ -171,7 +171,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 			</Link>
 
 			{/* Details */}
-			<div className="p-5">
+			<div className="p-3 sm:p-5">
 				<Link href={`/product/${product.id}`}>
 					<h3
 						className="font-display text-base leading-snug mb-1 line-clamp-1 transition-colors"

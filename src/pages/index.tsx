@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AnimatedSection from "@/_UI/AnimatedSection";
 import { productsAction } from "@/_redux/actions";
-import ProductStack from "@/_components/ProductStack";
+import ProductCard from "@/_components/ProductCard";
 import Layout from "@/_components/Layout";
 import Testimonials from "@/_components/Testimonials";
 import Button from "@/_UI/Button";
@@ -15,6 +15,7 @@ import EmptyShelfIllustration from "@/_UI/illustrations/EmptyShelfIllustration";
 import BotanicalHero from "@/_components/BotanicalHero";
 import Timeline, { TimelineItem } from "@/_UI/Timeline";
 import SectionHeading from "@/_UI/SectionHeading";
+import { groupByCategory } from "@/_utils/groupByCategory";
 
 const features = [
 	{ icon: Leaf, title: "Certified organic", desc: "No synthetic pesticides, no growth agents, no fillers — verified at the farm gate." },
@@ -64,10 +65,13 @@ const journey: TimelineItem[] = [
 	},
 ];
 
+/** Max cards per category row before "See all items" takes over. */
+const PER_SHELF = 10;
+
 const HomePage: React.FC = () => {
 	const dispatch = useAppDispatch();
-	const { products } = useAppSelector((state) => state.product);
-	const featuredProducts = products?.slice(0, 6);
+	const { products, isFetchingAllProducts } = useAppSelector((state) => state.product);
+	const shelves = groupByCategory(products);
 	const [email, setEmail] = useState("");
 
 	useEffect(() => {
@@ -78,12 +82,12 @@ const HomePage: React.FC = () => {
 		<Layout pageTitle={"Home"}>
 			<BotanicalHero />
 
-			{/* ── Featured products ────────────────────────────────── */}
-			<section className="py-20 md:py-28" style={{ background: "var(--surface-low)" }}>
+			{/* ── Catalogue, one shelf per category ────────────────── */}
+			<section className="py-14 md:py-24" style={{ background: "var(--surface-low)" }}>
 				<div className="page-wrapper">
 					<AnimatedSection>
-						<div className="mb-12 flex flex-wrap items-end justify-between gap-6">
-							<SectionHeading eyebrow="The range" title="Small catalogue," accent="deliberately." />
+						<div className="mb-8 flex flex-wrap items-end justify-between gap-6 md:mb-12">
+							<SectionHeading eyebrow="The range" title="Shop the shelf," accent="by category." />
 							<Link
 								href="/products"
 								className="group inline-flex items-center gap-2 text-sm font-medium"
@@ -95,19 +99,52 @@ const HomePage: React.FC = () => {
 						</div>
 					</AnimatedSection>
 
-					<AnimatedSection delay={0.15}>
-						{featuredProducts?.length > 0 ? (
-							<ProductStack products={featuredProducts} />
-						) : (
-							<EmptyState
-								illustration={<EmptyShelfIllustration className="w-40 h-40" />}
-								title="No products yet"
-								description="We're stocking up on fresh organic goodness. Check back soon!"
-							/>
-						)}
-					</AnimatedSection>
+					{isFetchingAllProducts && !products?.length ? (
+						<ShelfSkeleton />
+					) : shelves.length > 0 ? (
+						<div className="space-y-8 md:space-y-10">
+							{shelves.map(([category, items], i) => (
+								<AnimatedSection key={category} delay={Math.min(i, 3) * 0.08}>
+									<div
+										className="overflow-hidden rounded-2xl"
+										style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}
+									>
+										<div
+											className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6"
+											style={{ background: "var(--color-primary)" }}
+										>
+											<h3 className="truncate font-display text-base text-white sm:text-lg" style={{ fontWeight: 600 }}>
+												{category}
+											</h3>
+											<Link
+												href={`/products?category=${encodeURIComponent(category)}`}
+												className="group inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-white/90 hover:text-white sm:text-sm"
+											>
+												See all items
+												<ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
+											</Link>
+										</div>
 
-					{products?.length > 6 && (
+										{/* 6 cards on mobile, the rest of the shelf from sm up — CSS only,
+										    so there is no breakpoint state to hydrate wrong. */}
+										<div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 lg:grid-cols-4 xl:grid-cols-5 [&>*:nth-child(n+7)]:hidden sm:[&>*:nth-child(n+7)]:block">
+											{items.slice(0, PER_SHELF).map((product) => (
+												<ProductCard key={product.id} product={product} />
+											))}
+										</div>
+									</div>
+								</AnimatedSection>
+							))}
+						</div>
+					) : (
+						<EmptyState
+							illustration={<EmptyShelfIllustration className="w-40 h-40" />}
+							title="No products yet"
+							description="We're stocking up on fresh organic goodness. Check back soon!"
+						/>
+					)}
+
+					{products?.length > 0 && (
 						<AnimatedSection delay={0.25}>
 							<div className="mt-10 text-center">
 								<Link href="/products">
@@ -246,5 +283,24 @@ const HomePage: React.FC = () => {
 		</Layout>
 	);
 };
+
+/** Placeholder shelf so the first paint isn't the "No products yet" empty state. */
+const ShelfSkeleton: React.FC = () => (
+	<div className="overflow-hidden rounded-2xl" style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}>
+		<div className="h-12" style={{ background: "var(--color-primary)", opacity: 0.55 }} />
+		<div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 lg:grid-cols-4 xl:grid-cols-5">
+			{[...Array(5)].map((_, i) => (
+				<div key={i} className="animate-pulse rounded-2xl" style={{ border: "1px solid var(--border-light)" }}>
+					<div className="aspect-[4/5] rounded-t-2xl" style={{ background: "var(--surface-medium)" }} />
+					<div className="space-y-2.5 p-4">
+						<div className="h-4 w-3/4 rounded-full" style={{ background: "var(--surface-medium)" }} />
+						<div className="h-3 w-1/2 rounded-full" style={{ background: "var(--surface-medium)" }} />
+						<div className="h-8 rounded-full" style={{ background: "var(--surface-medium)" }} />
+					</div>
+				</div>
+			))}
+		</div>
+	</div>
+);
 
 export default HomePage;
