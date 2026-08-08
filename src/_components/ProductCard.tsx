@@ -92,8 +92,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		>
 			{/* Image */}
 			<Link href={`/product/${product?.id}`}>
+				{/* Square, not 4:5. Shots are contained rather than cropped, so a
+				    portrait box letterboxed every landscape photo with dead space
+				    above and below it. Square splits the difference for both. */}
 				<div
-					className="relative aspect-[4/5] overflow-hidden"
+					className="relative aspect-square overflow-hidden"
 					style={{ background: "var(--surface-medium)" }}
 				>
 					{imageUrl ? (
@@ -102,7 +105,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 							alt={product.name}
 							fill
 							sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 20vw"
-							className="object-contain p-4 transition-transform duration-700 ease-out group-hover:scale-105"
+							className="object-contain p-2.5 transition-transform duration-700 ease-out group-hover:scale-105 sm:p-3"
 						/>
 					) : (
 						<div
