@@ -62,6 +62,22 @@ test.describe("admin shell", () => {
 		expect(box!.x).toBeLessThanOrEqual(1);
 		expect(box!.width).toBeLessThanOrEqual(PHONE.width + 1);
 	});
+
+	test("picking a tab dismisses the sidebar instead of covering the page", async ({ page }) => {
+		await page.setViewportSize(PHONE);
+		await page.goto("/admin/dashboard");
+
+		// Category, not a privileged entry: the seeded session carries no roles,
+		// so anything with a `privilege` is filtered out of the nav.
+		await page.getByTestId("sidebar-trigger").click();
+		const nav = page.getByTestId("nav-category");
+		await expect(nav).toBeVisible();
+
+		await nav.click();
+
+		await expect(page).toHaveURL(/\/admin\/categories/);
+		await expect(nav).toBeHidden();
+	});
 });
 
 for (const route of ADMIN_ROUTES) {

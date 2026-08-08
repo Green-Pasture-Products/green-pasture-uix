@@ -291,7 +291,7 @@ const ShelfSkeleton: React.FC = () => (
 		<div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 lg:grid-cols-4 xl:grid-cols-5">
 			{[...Array(5)].map((_, i) => (
 				<div key={i} className="animate-pulse rounded-2xl" style={{ border: "1px solid var(--border-light)" }}>
-					<div className="aspect-[4/5] rounded-t-2xl" style={{ background: "var(--surface-medium)" }} />
+					<div className="aspect-square rounded-t-2xl" style={{ background: "var(--surface-medium)" }} />
 					<div className="space-y-2.5 p-4">
 						<div className="h-4 w-3/4 rounded-full" style={{ background: "var(--surface-medium)" }} />
 						<div className="h-3 w-1/2 rounded-full" style={{ background: "var(--surface-medium)" }} />
