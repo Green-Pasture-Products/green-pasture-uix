@@ -61,23 +61,25 @@ const quickLinks = [
 	{ href: "/contact", label: "Contact" },
 ];
 
+// Terms and Privacy live in the bottom bar — repeating them here only made the
+// mobile footer taller.
 const customerServiceLinks = [
 	{ href: "/cart", label: "Cart" },
 	{ href: "/wishlist", label: "Wishlist" },
 	{ href: "/profile", label: "Profile" },
 	{ href: "/search", label: "Track Order" },
-	{ href: "/terms", label: "Terms of Service" },
-	{ href: "/privacy", label: "Privacy Policy" },
 	{ href: "/refund-policy", label: "Return Policy" },
 ];
 
 const Footer = () => {
 	return (
 		<footer className="bg-primary-900 dark:bg-black text-gray-300">
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-16 pb-6 md:pb-8">
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 md:pt-16 pb-6 md:pb-8">
+				{/* Two columns from the narrowest width up — stacking all four made
+				    the mobile footer taller than the viewport. */}
+				<div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 lg:gap-12">
 					{/* Column 1: Brand */}
-					<div className="sm:col-span-2 lg:col-span-1">
+					<div className="col-span-2 lg:col-span-1">
 						<Link
 							href="/"
 							className="inline-flex items-center gap-2 mb-4"
@@ -86,7 +88,7 @@ const Footer = () => {
 								Green Pastures
 							</span>
 						</Link>
-						<p className="text-gray-400 text-sm leading-relaxed mb-6">
+						<p className="text-gray-400 text-sm leading-relaxed mb-5 max-w-md">
 							Your trusted source for premium organic products.
 							Fresh, healthy, and sustainably grown for a better
 							life.
@@ -148,8 +150,8 @@ const Footer = () => {
 						</ul>
 					</div>
 
-					{/* Column 4: Contact Info */}
-					<div>
+					{/* Column 4: Contact Info — address needs the width on mobile */}
+					<div className="col-span-2 lg:col-span-1">
 						<h3 className="text-sm font-semibold uppercase tracking-wider text-white mb-4">
 							Contact Info
 						</h3>
