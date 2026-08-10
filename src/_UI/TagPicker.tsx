@@ -5,6 +5,7 @@ import { Check, Tag as TagIcon } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { tagAction } from "@/_redux/actions/tag.action";
+import { htmlToText } from "@/_utils/htmlToText";
 
 interface TagPickerProps {
 	/** Selected tag ids. */
@@ -68,7 +69,7 @@ const TagPicker: React.FC<TagPickerProps> = ({
 								type="button"
 								onClick={() => toggle(tag.id)}
 								aria-pressed={selected}
-								title={tag.description}
+								title={htmlToText(tag.description)}
 								data-testid={`tag-${tag.slug}`}
 								className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all"
 								style={{

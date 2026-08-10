@@ -39,6 +39,7 @@ import EmptyState from "@/_UI/EmptyState";
 import PageLoader from "@/_UI/PageLoader";
 import SanitizedHtml from "@/_UI/SanitizedHtml";
 import { formatWeight } from "@/_utils/formatWeight";
+import { htmlToText } from "@/_utils/htmlToText";
 
 const ProductDetailsPage: React.FC = () => {
 	const router = useRouter();
@@ -226,7 +227,7 @@ const ProductDetailsPage: React.FC = () => {
 										<Link
 											key={tag.id}
 											href={`/products?tag=${encodeURIComponent(tag.slug)}`}
-											title={tag.description}
+											title={htmlToText(tag.description)}
 											className="rounded-full px-2.5 py-1 text-[0.7rem] font-medium transition-colors"
 											style={{ background: "rgba(154,202,60,0.16)", color: "var(--color-primary)" }}
 										>
