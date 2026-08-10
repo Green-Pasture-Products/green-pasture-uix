@@ -1,15 +1,16 @@
 import { Leaf, Truck, Shield, Award, Mail, ArrowRight, Sprout, FlaskConical, PackageCheck, Home } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AnimatedSection from "@/_UI/AnimatedSection";
 import { productsAction } from "@/_redux/actions";
+import { tagAction } from "@/_redux/actions/tag.action";
 import ProductCard from "@/_components/ProductCard";
+import CardRail from "@/_UI/CardRail";
 import Layout from "@/_components/Layout";
 import Testimonials from "@/_components/Testimonials";
-import Button from "@/_UI/Button";
 import EmptyState from "@/_UI/EmptyState";
 import EmptyShelfIllustration from "@/_UI/illustrations/EmptyShelfIllustration";
 import BotanicalHero from "@/_components/BotanicalHero";
@@ -65,84 +66,136 @@ const journey: TimelineItem[] = [
 	},
 ];
 
-/** Max cards per category row before "See all items" takes over. */
-const PER_SHELF = 10;
+/** Cards in the rail before "See all" takes over. */
+const RAIL_LIMIT = 12;
+
+const ALL = "All";
 
 const HomePage: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const { products, isFetchingAllProducts } = useAppSelector((state) => state.product);
-	const shelves = groupByCategory(products);
+	const tags = useAppSelector((state) => state.tag.tags);
 	const [email, setEmail] = useState("");
+
+	// Two independent filters that combine: category is the shelf a product
+	// lives on, a tag is who it suits. Local state, not the URL — this is a
+	// browsing aid on the landing page, not a shareable filtered view. That is
+	// what /products is for, and where "See all" hands off to.
+	const [category, setCategory] = useState<string>(ALL);
+	const [tag, setTag] = useState<string>(ALL);
 
 	useEffect(() => {
 		dispatch(productsAction.fetchAllProducts({ activeOnly: true }));
+		// The tag chips read state.tag.tags; without this the row silently never
+		// rendered, because nothing else on the landing page populates it.
+		dispatch(tagAction.fetchTags());
 	}, []);
+
+	// Category order follows the API's, so the chips do not reshuffle between loads.
+	const categories = useMemo(() => groupByCategory(products).map(([name]) => name), [products]);
+
+	// Only offer tags something is actually tagged with — a chip that always
+	// yields an empty row is worse than no chip.
+	const usedTagSlugs = useMemo(() => {
+		const slugs = new Set<string>();
+		for (const p of products ?? []) {
+			for (const t of (p as any).tags ?? []) if (t?.slug) slugs.add(t.slug);
+		}
+		return slugs;
+	}, [products]);
+	const availableTags = useMemo(() => tags.filter((t) => usedTagSlugs.has(t.slug)), [tags, usedTagSlugs]);
+
+	const visible = useMemo(() => {
+		return (products ?? []).filter((p: any) => {
+			const inCategory = category === ALL || (p.product?.name || p.category || "") === category;
+			const hasTag = tag === ALL || ((p.tags ?? []) as any[]).some((t) => t?.slug === tag);
+			return inCategory && hasTag;
+		});
+	}, [products, category, tag]);
+
+	// Hand the active filters to /products, which reads the same keys.
+	const seeAllHref = useMemo(() => {
+		const params = new URLSearchParams();
+		if (category !== ALL) params.set("category", category);
+		if (tag !== ALL) params.set("tag", tag);
+		const qs = params.toString();
+		return qs ? `/products?${qs}` : "/products";
+	}, [category, tag]);
 
 	return (
 		<Layout pageTitle={"Home"}>
 			<BotanicalHero />
 
-			{/* ── Catalogue, one shelf per category ────────────────── */}
+			{/* ── The catalogue: one rail, filtered by chips ───────── */}
 			<section className="py-14 md:py-24" style={{ background: "var(--surface-low)" }}>
 				<div className="page-wrapper">
 					<AnimatedSection>
-						<div className="mb-8 flex flex-wrap items-end justify-between gap-6 md:mb-12">
+						<div className="mb-7 flex flex-wrap items-end justify-between gap-6">
 							<SectionHeading eyebrow="The range" title="Shop the shelf." />
 							<Link
-								href="/products"
+								href={seeAllHref}
 								className="group inline-flex items-center gap-2 text-sm font-medium"
 								style={{ color: "var(--color-primary)" }}
 							>
-								Browse everything
+								See all
 								<ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
 							</Link>
 						</div>
 					</AnimatedSection>
 
-					{isFetchingAllProducts && !products?.length ? (
-						<ShelfSkeleton />
-					) : shelves.length > 0 ? (
-						<div className="space-y-14 md:space-y-20">
-							{shelves.map(([category, items], i) => (
-								<AnimatedSection key={category} delay={Math.min(i, 3) * 0.08}>
-									{/* No panel and no filled bar. A shelf is a rule and a name —
-									    the same editorial register as the rest of the page. It also
-									    stops a short shelf reading as a void: leftover space on the
-									    row is page, not a gap inside a box. */}
-									<div
-										className="mb-5 flex items-baseline justify-between gap-4 pb-3 md:mb-7"
-										style={{ borderBottom: "1px solid var(--border-light)" }}
-									>
-										<div className="flex items-baseline gap-3">
-											<h3
-												className="font-display text-xl leading-none tracking-[-0.01em] sm:text-2xl"
-												style={{ color: "var(--text-primary)", fontWeight: 400 }}
-											>
-												{category}
-											</h3>
-											<span className="text-xs tabular-nums" style={{ color: "var(--text-hint)" }}>
-												{items.length}
-											</span>
-										</div>
-										<Link
-											href={`/products?category=${encodeURIComponent(category)}`}
-											className="group inline-flex shrink-0 items-center gap-1.5 text-xs font-medium sm:text-sm"
-											style={{ color: "var(--color-primary)" }}
-										>
-											See all
-											<ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-										</Link>
-									</div>
+					{categories.length > 0 && (
+						<AnimatedSection delay={0.08}>
+							<div className="hide-scrollbar -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+								{[ALL, ...categories].map((name) => (
+									<FilterChip key={name} active={category === name} onClick={() => setCategory(name)}>
+										{name}
+									</FilterChip>
+								))}
+							</div>
+						</AnimatedSection>
+					)}
 
-									{/* 6 cards on mobile, the rest of the shelf from sm up — CSS only,
-									    so there is no breakpoint state to hydrate wrong. */}
-									<div className="grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 [&>*:nth-child(n+7)]:hidden sm:[&>*:nth-child(n+7)]:block">
-										{items.slice(0, PER_SHELF).map((product) => (
-											<ProductCard key={product.id} product={product} />
-										))}
+					{availableTags.length > 0 && (
+						<AnimatedSection delay={0.12}>
+							<div className="hide-scrollbar -mx-4 mb-8 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+								<span className="shrink-0 pr-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--text-hint)" }}>
+									For
+								</span>
+								{[{ id: ALL, name: "Everyone", slug: ALL }, ...availableTags].map((t) => (
+									<FilterChip key={t.id} active={tag === t.slug} onClick={() => setTag(t.slug)} subtle>
+										{t.name}
+									</FilterChip>
+								))}
+							</div>
+						</AnimatedSection>
+					)}
+
+					{isFetchingAllProducts && !products?.length ? (
+						<RailSkeleton />
+					) : visible.length > 0 ? (
+						<AnimatedSection delay={0.16}>
+							<CardRail label="Products">
+								{visible.slice(0, RAIL_LIMIT).map((product) => (
+									<div key={product.id} className="w-[45%] shrink-0 snap-start sm:w-[236px]">
+										<ProductCard product={product} />
 									</div>
-								</AnimatedSection>
-							))}
+								))}
+							</CardRail>
+						</AnimatedSection>
+					) : products?.length ? (
+						<div className="py-10 text-center text-sm" style={{ color: "var(--text-hint)" }}>
+							Nothing in this combination yet.{" "}
+							<button
+								type="button"
+								onClick={() => {
+									setCategory(ALL);
+									setTag(ALL);
+								}}
+								className="font-medium underline underline-offset-2"
+								style={{ color: "var(--color-primary)" }}
+							>
+								Clear filters
+							</button>
 						</div>
 					) : (
 						<EmptyState
@@ -150,18 +203,6 @@ const HomePage: React.FC = () => {
 							title="No products yet"
 							description="We're stocking up on fresh organic goodness. Check back soon!"
 						/>
-					)}
-
-					{products?.length > 0 && (
-						<AnimatedSection delay={0.25}>
-							<div className="mt-10 text-center">
-								<Link href="/products">
-									<Button variant="filled" size="lg" rightIcon={ArrowRight}>
-										View All Products
-									</Button>
-								</Link>
-							</div>
-						</AnimatedSection>
 					)}
 				</div>
 			</section>
@@ -292,25 +333,43 @@ const HomePage: React.FC = () => {
 	);
 };
 
-/** Placeholder shelf so the first paint isn't the "No products yet" empty state. */
-const ShelfSkeleton: React.FC = () => (
-	<div>
-		<div className="mb-5 flex items-baseline justify-between gap-4 pb-3 md:mb-7" style={{ borderBottom: "1px solid var(--border-light)" }}>
-			<div className="h-6 w-32 animate-pulse rounded" style={{ background: "var(--surface-medium)" }} />
-			<div className="h-4 w-16 animate-pulse rounded" style={{ background: "var(--surface-medium)" }} />
-		</div>
-		<div className="grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-			{[...Array(5)].map((_, i) => (
-				<div key={i} className="animate-pulse">
-					<div className="aspect-square rounded-xl" style={{ background: "var(--surface-tile)" }} />
-					<div className="space-y-2.5 pt-3.5">
-						<div className="h-4 w-3/4 rounded-full" style={{ background: "var(--surface-medium)" }} />
-						<div className="h-3 w-1/2 rounded-full" style={{ background: "var(--surface-medium)" }} />
-						<div className="h-8 rounded-full" style={{ background: "var(--surface-medium)" }} />
-					</div>
+/** Section filter chip. Shared by the category row and the tag row. */
+const FilterChip: React.FC<{
+	active: boolean;
+	onClick: () => void;
+	subtle?: boolean;
+	children: React.ReactNode;
+}> = ({ active, onClick, subtle, children }) => (
+	<button
+		type="button"
+		onClick={onClick}
+		aria-pressed={active}
+		className={`shrink-0 whitespace-nowrap rounded-full transition-all duration-200 ${
+			subtle ? "px-3 py-1.5 text-[0.7rem]" : "px-4 py-2 text-xs"
+		} font-medium`}
+		style={{
+			background: active ? "var(--color-primary)" : "var(--surface-paper)",
+			color: active ? "#fff" : "var(--text-secondary)",
+			border: `1px solid ${active ? "var(--color-primary)" : "var(--border-light)"}`,
+		}}
+	>
+		{children}
+	</button>
+);
+
+/** Placeholder rail so the first paint isn't the "No products yet" empty state. */
+const RailSkeleton: React.FC = () => (
+	<div className="flex gap-5 overflow-hidden">
+		{[...Array(5)].map((_, i) => (
+			<div key={i} className="w-[45%] shrink-0 animate-pulse sm:w-[236px]">
+				<div className="aspect-square rounded-xl" style={{ background: "var(--surface-tile)" }} />
+				<div className="space-y-2.5 pt-3.5">
+					<div className="h-4 w-3/4 rounded-full" style={{ background: "var(--surface-medium)" }} />
+					<div className="h-3 w-1/2 rounded-full" style={{ background: "var(--surface-medium)" }} />
+					<div className="h-8 rounded-full" style={{ background: "var(--surface-medium)" }} />
 				</div>
-			))}
-		</div>
+			</div>
+		))}
 	</div>
 );
 

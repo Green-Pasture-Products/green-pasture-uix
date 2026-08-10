@@ -82,7 +82,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	return (
 		<motion.div
 			layout
-			className="group relative"
+			className="group relative flex h-full flex-col"
 			whileHover={{ y: -4, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } }}
 		>
 			{/* Image */}
@@ -169,7 +169,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 			</Link>
 
 			{/* Details */}
-			<div className="pt-3.5">
+			<div className="flex flex-1 flex-col pt-3.5">
 				<Link href={`/product/${product.id}`}>
 					<h3
 						className="font-display text-[0.95rem] leading-snug mb-1 line-clamp-2 transition-colors"
@@ -226,7 +226,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 				</div>
 
 				{/* Actions */}
-				<div className="flex gap-2">
+				<div className="mt-auto flex gap-2">
 					{isAdmin ? (
 						<Link
 							href={`/product/${product.id}`}
