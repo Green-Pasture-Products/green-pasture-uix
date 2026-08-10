@@ -598,3 +598,16 @@ input[type="password"]::-ms-clear {
 
 /* The editor surface scrolls rather than growing without bound. */
 .rte-content:focus { outline: none; }
+
+/* ─── Horizontal rails ───────────────────────────────────────────────── */
+/* The row scrolls; the scrollbar is noise under a set of product cards.
+   Keyboard and touch scrolling are unaffected — only the chrome is hidden. */
+
+.hide-scrollbar {
+	scrollbar-width: none;          /* Firefox */
+	-ms-overflow-style: none;       /* legacy Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+	display: none;
+}
