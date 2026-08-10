@@ -1,4 +1,5 @@
 import { Product } from "../types";
+import { htmlToText } from "./htmlToText";
 
 export interface SearchFilters {
 	category: string;
@@ -7,6 +8,8 @@ export interface SearchFilters {
 	organicOnly: boolean;
 	rating: number;
 	sortBy: "name" | "price-low" | "price-high" | "rating" | "newest";
+	/** Tag slug, or "All". Independent of category — a product can carry several. */
+	tag?: string;
 }
 
 export const filterAndSortProducts = (
@@ -26,13 +29,15 @@ export const filterAndSortProducts = (
 		const price = Number(p.price || 0);
 		const inStock = p.unit !== undefined ? p.unit > 0 : p.inStock;
 		const rating = p.ratingStats?.average ?? p.rating ?? 0;
+		const tagSlugs: string[] = (p.tags ?? []).map((t: any) => t?.slug).filter(Boolean);
 
-		// Text search
+		// Text search. Description is HTML now, so a query would otherwise match
+		// tag names and style attributes — search the flattened text instead.
 		const matchesQuery =
 			!query ||
 			query.trim() === "" ||
 			name.toLowerCase().includes(query.toLowerCase()) ||
-			description.toLowerCase().includes(query.toLowerCase()) ||
+			htmlToText(description).toLowerCase().includes(query.toLowerCase()) ||
 			category.toLowerCase().includes(query.toLowerCase());
 
 		// Category filter
@@ -40,6 +45,10 @@ export const filterAndSortProducts = (
 			!filters?.category ||
 			filters.category === "All" ||
 			category === filters.category;
+
+		// Tag filter — matched on slug, which is what the URL carries
+		const matchesTag =
+			!filters?.tag || filters.tag === "All" || tagSlugs.includes(filters.tag);
 
 		// Price range filter
 		const matchesPrice =
@@ -56,6 +65,7 @@ export const filterAndSortProducts = (
 		return (
 			matchesQuery &&
 			matchesCategory &&
+			matchesTag &&
 			matchesPrice &&
 			matchesStock &&
 			matchesRating

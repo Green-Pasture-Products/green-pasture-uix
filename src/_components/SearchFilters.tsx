@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { SearchFilters } from "@/_utils/searchUtils";
 import { useProductFilters } from "@/_hooks/useProductFilters";
 import { categoryAction } from "@/_redux/actions/category.action";
+import { tagAction } from "@/_redux/actions/tag.action";
 
 // ── Formatted Number Input ──
 const NumberInput: React.FC<{
@@ -60,12 +61,17 @@ const SearchFiltersComponent: React.FC = () => {
 	// Only skeleton the very first load — during background refreshes the
 	// previously fetched options stay visible and usable.
 	const showCategorySkeleton = isFetchingCategories && categories.length <= 1;
+	const tags = useAppSelector((state) => state.tag.tags);
 
 	useEffect(() => {
 		if (categories.length <= 1) {
 			dispatch(categoryAction.fetchAllCategories());
 		}
 	}, [categories.length, dispatch]);
+
+	useEffect(() => {
+		if (!tags.length) dispatch(tagAction.fetchTags());
+	}, [tags.length, dispatch]);
 
 	const handleFilterChange = (newFilters: Partial<SearchFilters>) =>
 		setFilters(newFilters);
@@ -183,6 +189,40 @@ const SearchFiltersComponent: React.FC = () => {
 					</div>
 					)}
 				</div>
+
+				{/* Tags — who the product suits. Independent of category, so a
+				    product can carry several and still live on one shelf. */}
+				{tags.length > 0 && (
+					<div>
+						<h4
+							className="text-xs font-semibold uppercase tracking-wider mb-3"
+							style={{ color: "var(--text-hint)" }}
+						>
+							Suitable for
+						</h4>
+						<div className="flex flex-wrap gap-2">
+							{[{ id: "all", name: "All", slug: "All" }, ...tags].map((tag) => {
+								const active = (filters?.tag ?? "All") === tag.slug;
+								return (
+									<button
+										key={tag.id}
+										type="button"
+										onClick={() => handleFilterChange({ tag: tag.slug })}
+										aria-pressed={active}
+										className="rounded-full px-3 py-1.5 text-xs font-medium transition-all cursor-pointer"
+										style={{
+											background: active ? "rgba(154,202,60,0.16)" : "var(--surface-medium)",
+											color: active ? "var(--color-primary)" : "var(--text-secondary)",
+											border: `1px solid ${active ? "var(--color-primary)" : "transparent"}`,
+										}}
+									>
+										{tag.name}
+									</button>
+								);
+							})}
+						</div>
+					</div>
+				)}
 
 				{/* Price Range */}
 				<div>

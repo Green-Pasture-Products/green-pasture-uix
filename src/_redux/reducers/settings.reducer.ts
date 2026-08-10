@@ -13,6 +13,8 @@ export interface SettingsState {
 	shippingFee: number;
 	defaultCurrency: string;
 	showDiscountBadges: boolean;
+	/** Regions where the free-shipping threshold actually applies. Empty = everywhere. */
+	freeShippingRegions: string[];
 	multiCurrencyEnabled: boolean;
 	loaded: boolean;
 }
@@ -25,6 +27,7 @@ const initialState: SettingsState = {
 	// Default on: an unset flag on an existing store must not silently hide
 	// discounts that were already live before this setting existed.
 	showDiscountBadges: true,
+	freeShippingRegions: [],
 	// Default OFF: an unset flag on an existing store must keep showing NGN
 	// to everyone, exactly today's behaviour, until an admin opts in.
 	multiCurrencyEnabled: false,
@@ -58,6 +61,7 @@ const settingsSlice = createSlice({
 				state.shippingFee = Number(shipping.methods?.find((m: any) => m?.enabled !== false)?.baseCost) || 0;
 				state.defaultCurrency = order.defaultCurrency ?? "NGN";
 				state.showDiscountBadges = order.showDiscountBadges !== false;
+				state.freeShippingRegions = Array.isArray(order.freeShippingRegions) ? order.freeShippingRegions : [];
 				state.multiCurrencyEnabled = order.multiCurrencyEnabled === true;
 				state.loaded = true;
 			})

@@ -128,6 +128,23 @@ const updateItemStatusAsync = createAsyncThunk<any, { id: string; activate: bool
 	}
 );
 
+/**
+ * Storefront visibility. Distinct from updateItemStatusAsync, which is the
+ * record's lifecycle — a product can be an active record that is not published.
+ */
+const updateItemPublishedAsync = createAsyncThunk<any, { id: string; publish: boolean }, { rejectValue: string }>(
+	"admin/updateItemPublished",
+	async ({ id, publish }, { rejectWithValue }) => {
+		try {
+			const endpoint = publish ? "items/publish" : "items/unpublish";
+			const response = await axiosInstance.patch(endpoint, { ids: [id] });
+			return { ...response.data, itemId: id, publish };
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
 const fetchAdminItemsAsync = createAsyncThunk<any, { page?: number; limit?: number; search?: string; filter?: string }, { rejectValue: string }>(
 	"admin/fetchAdminItems",
 	async ({ page = 1, limit = 50, search, filter } = {}, { rejectWithValue }) => {
@@ -141,4 +158,4 @@ const fetchAdminItemsAsync = createAsyncThunk<any, { page?: number; limit?: numb
 	}
 );
 
-export const adminAction = { fetchOrdersAsync, cancelOrderAsync, fetchCustomersAsync, deleteCustomerAsync, updateCustomerStatusAsync, fetchStaffAsync, updateStaffAsync, updateStaffStatusAsync, deleteStaffAsync, fetchAdminItemsAsync, updateItemStatusAsync };
+export const adminAction = { fetchOrdersAsync, cancelOrderAsync, fetchCustomersAsync, deleteCustomerAsync, updateCustomerStatusAsync, fetchStaffAsync, updateStaffAsync, updateStaffStatusAsync, deleteStaffAsync, fetchAdminItemsAsync, updateItemStatusAsync, updateItemPublishedAsync };

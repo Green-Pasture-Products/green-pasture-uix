@@ -87,7 +87,7 @@ const HomePage: React.FC = () => {
 				<div className="page-wrapper">
 					<AnimatedSection>
 						<div className="mb-8 flex flex-wrap items-end justify-between gap-6 md:mb-12">
-							<SectionHeading eyebrow="The range" title="Shop the shelf," accent="by category." />
+							<SectionHeading eyebrow="The range" title="Shop the shelf." />
 							<Link
 								href="/products"
 								className="group inline-flex items-center gap-2 text-sm font-medium"

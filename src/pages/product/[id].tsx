@@ -37,6 +37,8 @@ import Button from "@/_UI/Button";
 import Badge from "@/_UI/Badge";
 import EmptyState from "@/_UI/EmptyState";
 import PageLoader from "@/_UI/PageLoader";
+import SanitizedHtml from "@/_UI/SanitizedHtml";
+import { formatWeight } from "@/_utils/formatWeight";
 
 const ProductDetailsPage: React.FC = () => {
 	const router = useRouter();
@@ -134,6 +136,8 @@ const ProductDetailsPage: React.FC = () => {
 	// Same admin kill-switch the cards honour — the detail page was reading
 	// originalPrice raw, so it ignored the toggle entirely.
 	const itemOriginalPrice = showDiscountBadges && itemData.originalPrice ? Number(itemData.originalPrice) : null;
+	const packSize = formatWeight((itemData as any).weightValue, (itemData as any).weightUnit);
+	const productTags: any[] = (itemData as any).tags ?? [];
 	const itemPrice = Number(itemData.price || 0);
 	const itemMaxQuantity = Number(itemData.availableQuantity) || Number(itemData.unit) || 10;
 
@@ -208,6 +212,29 @@ const ProductDetailsPage: React.FC = () => {
 								{product?.name}
 							</h1>
 							<p className="text-on-surface-variant dark:text-gray-400">{productCategory}</p>
+
+							{packSize && (
+								<p className="mt-1 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+									Pack size: {packSize}
+								</p>
+							)}
+
+							{/* Who it suits. Each chip links into the filtered listing. */}
+							{productTags.length > 0 && (
+								<div className="mt-3 flex flex-wrap gap-1.5">
+									{productTags.map((tag: any) => (
+										<Link
+											key={tag.id}
+											href={`/products?tag=${encodeURIComponent(tag.slug)}`}
+											title={tag.description}
+											className="rounded-full px-2.5 py-1 text-[0.7rem] font-medium transition-colors"
+											style={{ background: "rgba(154,202,60,0.16)", color: "var(--color-primary)" }}
+										>
+											{tag.name}
+										</Link>
+									))}
+								</div>
+							)}
 						</div>
 
 						{/* Rating */}
@@ -417,9 +444,16 @@ const ProductDetailsPage: React.FC = () => {
 									<h3 className="text-xl font-semibold text-on-surface dark:text-white mb-4">
 										About this product
 									</h3>
-									<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-										{product?.description || "No description available."}
-									</p>
+									{/* Stored as HTML by the admin editor, so it renders as
+									    markup — sanitised, never raw. */}
+									<SanitizedHtml
+										html={product?.description}
+										fallback={
+											<p className="text-on-surface/80 dark:text-gray-300 leading-relaxed">
+												No description available.
+											</p>
+										}
+									/>
 								</div>
 							</Card>
 						)}

@@ -37,6 +37,7 @@ const AdminProducts: React.FC = () => {
 	const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [statusTarget, setStatusTarget] = useState<any | null>(null);
+	const [publishTarget, setPublishTarget] = useState<any | null>(null);
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
 	// Extracted so the toolbar's refresh icon re-runs exactly the fetch the page loads with.
@@ -58,6 +59,22 @@ const AdminProducts: React.FC = () => {
 			setStatusTarget(null);
 		} catch (error: any) {
 			toast.error(error || "Failed to update product status");
+		} finally {
+			setIsUpdatingStatus(false);
+		}
+	};
+
+	const handlePublishUpdate = async () => {
+		if (!publishTarget) return;
+		const isPublished = !!publishTarget.published;
+		setIsUpdatingStatus(true);
+		try {
+			await dispatch(adminAction.updateItemPublishedAsync({ id: publishTarget.id, publish: !isPublished })).unwrap();
+			toast.success(`Product ${isPublished ? "unpublished" : "published"} successfully`);
+			setPublishTarget(null);
+			refresh();
+		} catch (error: any) {
+			toast.error(error || "Failed to update visibility");
 		} finally {
 			setIsUpdatingStatus(false);
 		}
@@ -160,8 +177,18 @@ const AdminProducts: React.FC = () => {
 			},
 		},
 		{
+			// Storefront visibility — the column an admin actually acts on.
+			accessorKey: "published",
+			header: "Visibility",
+			cell: ({ getValue }) => (
+				<Badge variant={getValue() ? "success" : "warning"} dot>
+					{getValue() ? "Published" : "Draft"}
+				</Badge>
+			),
+		},
+		{
 			accessorKey: "status",
-			header: "Status",
+			header: "Record",
 			cell: ({ getValue }) => (
 				<Badge variant={getValue() === "A" ? "success" : "error"} dot>
 					{getValue() === "A" ? "Active" : "Inactive"}
@@ -177,6 +204,11 @@ const AdminProducts: React.FC = () => {
 			cell: ({ row }) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/product/${row.original.id}`) },
+					{
+						label: row.original.published ? "Unpublish" : "Publish",
+						icon: STATUS_ICON,
+						onClick: () => setPublishTarget(row.original),
+					},
 					{
 						label: row.original.status === "A" ? "Deactivate" : "Activate",
 						icon: STATUS_ICON,
@@ -273,6 +305,46 @@ const AdminProducts: React.FC = () => {
 								onClick={handleStatusUpdate}
 							>
 								{statusTarget?.status === "A" ? "Deactivate" : "Activate"}
+							</Button>
+						</div>
+					</div>
+				</Modal>
+
+				<Modal
+					isOpen={!!publishTarget}
+					onClose={() => setPublishTarget(null)}
+					title={`${publishTarget?.published ? "Unpublish" : "Publish"} Product`}
+					size="sm"
+				>
+					<div className="space-y-4">
+						<p className="text-sm text-gray-600 dark:text-gray-300">
+							{publishTarget?.published ? (
+								<>
+									Hide{" "}
+									<span className="font-semibold text-on-surface dark:text-white">{publishTarget?.name}</span>{" "}
+									from the storefront? The record stays active — only its visibility to
+									shoppers changes.
+								</>
+							) : (
+								<>
+									Make{" "}
+									<span className="font-semibold text-on-surface dark:text-white">{publishTarget?.name}</span>{" "}
+									visible to shoppers on the storefront?
+								</>
+							)}
+						</p>
+						<div className="flex justify-end gap-3">
+							<Button variant="outlined" color="secondary" size="sm" onClick={() => setPublishTarget(null)}>
+								Cancel
+							</Button>
+							<Button
+								variant="filled"
+								color={publishTarget?.published ? "error" : "primary"}
+								size="sm"
+								loading={isUpdatingStatus}
+								onClick={handlePublishUpdate}
+							>
+								{publishTarget?.published ? "Unpublish" : "Publish"}
 							</Button>
 						</div>
 					</div>

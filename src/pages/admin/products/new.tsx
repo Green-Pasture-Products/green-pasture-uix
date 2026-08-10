@@ -9,7 +9,10 @@ import { Package } from "lucide-react";
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
 import { BackButton } from "@/_UI/DetailField";
-import { FormInput, FormTextarea, FormFileUpload, FormActions } from "@/_UI/FormField";
+import { FormInput, FormFileUpload, FormActions } from "@/_UI/FormField";
+import RichTextEditor from "@/_UI/RichTextEditor";
+import TagPicker from "@/_UI/TagPicker";
+import { WEIGHT_UNITS } from "@/_utils/formatWeight";
 import FormSelectDropdown from "@/_UI/FormSelect";
 import CurrencyInput from "@/_UI/CurrencyInput";
 import NumberInput from "@/_UI/NumberInput";
@@ -30,10 +33,21 @@ const schema = z
 			z.number().positive("Original price must be greater than 0").optional(),
 		),
 		unit: z.coerce.number().int().min(0, "Units must be 0 or more"),
+		weightValue: z.preprocess(
+			(val) => (val === "" || val === null || val === undefined ? undefined : Number(val)),
+			z.number().positive("Pack size must be greater than 0").optional(),
+		),
+		weightUnit: z.string().optional(),
 	})
 	.refine((data) => !data.originalPrice || data.originalPrice > data.price, {
 		message: "Original price must be greater than selling price",
 		path: ["originalPrice"],
+	})
+	// A bare number is meaningless on a shelf — "250" of what? Only enforced in
+	// that direction: a unit with no amount is just an unfinished field.
+	.refine((data) => !data.weightValue || !!data.weightUnit?.trim(), {
+		message: "Pick a unit for the pack size",
+		path: ["weightUnit"],
 	});
 
 type FormData = z.infer<typeof schema>;
@@ -46,6 +60,7 @@ const AddProductPage: React.FC = () => {
 	const [images, setImages] = useState<File[]>([]);
 	const [previews, setPreviews] = useState<string[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
 	const {
 		register,
@@ -93,6 +108,11 @@ const AddProductPage: React.FC = () => {
 			if (data.originalPrice) formData.append("originalPrice", String(data.originalPrice));
 			formData.append("unit", String(data.unit));
 			if (data.description) formData.append("description", data.description);
+			if (data.weightValue) formData.append("weightValue", String(data.weightValue));
+			if (data.weightUnit?.trim()) formData.append("weightUnit", data.weightUnit.trim());
+			// Repeated field, which is how the DTO's transform expects it — a
+			// single selection arrives as a bare string and is normalised there.
+			selectedTagIds.forEach((id) => formData.append("tagIds", id));
 			if (images.length > 0) {
 				images.forEach((file) => formData.append("images", file));
 			}
@@ -223,12 +243,53 @@ const AddProductPage: React.FC = () => {
 							/>
 						</div>
 
-						<FormTextarea
-							label="Description"
-							rows={3}
-							placeholder="Describe the product benefits, ingredients, etc."
-							{...register("description")}
-						/>
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+							<FormInput
+								label="Pack Size"
+								type="number"
+								step="0.01"
+								placeholder="e.g. 250"
+								{...register("weightValue")}
+								error={(errors as any).weightValue?.message}
+							/>
+							<Controller
+								name="weightUnit"
+								control={control}
+								render={({ field }) => (
+									<FormSelectDropdown
+										label="Unit"
+										value={field.value ?? ""}
+										onChange={field.onChange}
+										options={WEIGHT_UNITS.map((u) => ({ value: u, label: u }))}
+										placeholder="Select a unit"
+										error={(errors as any).weightUnit?.message}
+										searchable={false}
+									/>
+								)}
+							/>
+						</div>
+
+						<TagPicker value={selectedTagIds} onChange={setSelectedTagIds} />
+
+						<div>
+							<label className="mb-1.5 block text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+								Description
+							</label>
+							{/* Stored as HTML so pasted formatting survives; the storefront
+							    renders it through SanitizedHtml. */}
+							<Controller
+								name="description"
+								control={control}
+								render={({ field }) => (
+									<RichTextEditor
+										value={field.value ?? ""}
+										onChange={field.onChange}
+										placeholder="Describe the product benefits, ingredients, etc."
+										error={errors.description?.message}
+									/>
+								)}
+							/>
+						</div>
 
 						<FormFileUpload
 							label="Product Images"

@@ -19,6 +19,7 @@ import ProductCard from "@/_components/ProductCard";
 import SearchBar from "@/_components/SearchBar";
 import { usePathname } from "next/navigation";
 import { productsAction } from "@/_redux/actions";
+import { htmlToText } from "@/_utils/htmlToText";
 
 const gridContainerVariants = {
 	hidden: {},
@@ -361,7 +362,7 @@ const FilteredProducts: React.FC = () => {
 													color: "var(--text-hint)",
 												}}
 											>
-												{product.description}
+												{htmlToText(product.description)}
 											</p>
 											<div className="flex items-center gap-3 mt-2">
 												<span
