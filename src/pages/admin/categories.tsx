@@ -15,6 +15,8 @@ import Modal from "@/_UI/Modal";
 import { ProductCategory } from "@/types";
 import { categoryAction } from "@/_redux/actions/category.action";
 import { useListParams } from "@/_hooks/useListParams";
+import SanitizedHtml from "@/_UI/SanitizedHtml";
+import { htmlToText } from "@/_utils/htmlToText";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -77,7 +79,7 @@ const AdminCategories: React.FC = () => {
 			meta: { maxWidth: "400px", truncate: true },
 			cell: ({ row }) => (
 				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-					{row.original.description}
+					{htmlToText(row.original.description)}
 				</span>
 			),
 		},
@@ -143,7 +145,11 @@ const AdminCategories: React.FC = () => {
 							</div>
 							<div>
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description:</label>
-								<p className="mt-1 text-sm text-gray-900 dark:text-white">{viewingCategory.description || "No description"}</p>
+								<SanitizedHtml
+									html={viewingCategory.description}
+									className="mt-1 text-sm"
+									fallback={<p className="mt-1 text-sm text-gray-900 dark:text-white">No description</p>}
+								/>
 							</div>
 							<div className="flex justify-end">
 								<Button

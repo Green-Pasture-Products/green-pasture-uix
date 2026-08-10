@@ -504,3 +504,91 @@ input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
 	display: none;
 }
+
+/* ─── Rich-text descriptions ─────────────────────────────────────────── */
+/* Shared by the admin editor surface and the storefront renderer, so what an
+   admin composes is what a shopper sees. Tailwind's preflight strips heading
+   and list styling globally, which is why each element is restated here. */
+
+.rte-content {
+	color: var(--text-secondary);
+	font-size: 0.95rem;
+	line-height: 1.75;
+}
+
+.rte-content > :first-child { margin-top: 0; }
+.rte-content > :last-child { margin-bottom: 0; }
+
+.rte-content h1,
+.rte-content h2,
+.rte-content h3 {
+	color: var(--text-primary);
+	font-family: var(--font-display, inherit);
+	font-weight: 500;
+	line-height: 1.25;
+	margin: 1.4em 0 0.5em;
+}
+
+.rte-content h1 { font-size: 1.6rem; }
+.rte-content h2 { font-size: 1.35rem; }
+.rte-content h3 { font-size: 1.15rem; }
+
+.rte-content p { margin: 0 0 0.9em; }
+
+.rte-content strong { color: var(--text-primary); font-weight: 600; }
+.rte-content em { font-style: italic; }
+.rte-content u { text-decoration: underline; }
+.rte-content s { text-decoration: line-through; }
+
+.rte-content ul,
+.rte-content ol {
+	margin: 0 0 0.9em;
+	padding-left: 1.4em;
+}
+
+.rte-content ul { list-style: disc; }
+.rte-content ol { list-style: decimal; }
+.rte-content li { margin: 0.25em 0; }
+.rte-content li > p { margin: 0; }
+
+.rte-content blockquote {
+	border-left: 3px solid var(--color-primary);
+	margin: 1em 0;
+	padding: 0.15em 0 0.15em 1em;
+	color: var(--text-hint);
+	font-style: italic;
+}
+
+.rte-content a {
+	color: var(--color-primary);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.rte-content code {
+	background: var(--surface-medium);
+	border-radius: 4px;
+	font-size: 0.875em;
+	padding: 0.15em 0.4em;
+}
+
+.rte-content pre {
+	background: var(--surface-medium);
+	border-radius: 8px;
+	margin: 1em 0;
+	overflow-x: auto;
+	padding: 0.9em 1em;
+}
+
+.rte-content pre code { background: none; padding: 0; }
+
+.rte-content hr {
+	border: 0;
+	border-top: 1px solid var(--border-light);
+	margin: 1.5em 0;
+}
+
+.rte-content img { max-width: 100%; height: auto; }
+
+/* The editor surface scrolls rather than growing without bound. */
+.rte-content:focus { outline: none; }

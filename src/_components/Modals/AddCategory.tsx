@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
@@ -8,7 +8,8 @@ import { useAppDispatch } from "@/_redux/store";
 import { ProductCategory } from "@/types";
 import { categoryAction } from "@/_redux/actions/category.action";
 import Modal from "@/_UI/Modal";
-import { FormInput, FormTextarea, FormActions } from "@/_UI/FormField";
+import { FormInput, FormActions } from "@/_UI/FormField";
+import RichTextEditor from "@/_UI/RichTextEditor";
 
 const schema = z.object({
 	name: z.string().min(1, "Name is required"),
@@ -46,6 +47,7 @@ const AddCategory: React.FC<{
 		register,
 		handleSubmit,
 		reset,
+		control,
 		formState: { errors },
 	} = useForm<FormData>({
 		resolver: zodResolver(schema),
@@ -127,13 +129,24 @@ const AddCategory: React.FC<{
 						error={errors.name?.message}
 					/>
 
-					<FormTextarea
-						label="Description"
-						rows={3}
-						placeholder="Brief description of this category"
-						{...register("description")}
-						error={errors.description?.message}
-					/>
+					<div>
+						<label className="mb-1.5 block text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+							Description
+						</label>
+						<Controller
+							name="description"
+							control={control}
+							render={({ field }) => (
+								<RichTextEditor
+									value={field.value ?? ""}
+									onChange={field.onChange}
+									placeholder="Brief description of this category"
+									error={errors.description?.message}
+									minHeight={160}
+								/>
+							)}
+						/>
+					</div>
 
 					<FormActions
 						onCancel={handleClose}
