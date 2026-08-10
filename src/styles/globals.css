@@ -21,6 +21,11 @@
 	--surface-paper: #ffffff;
 	--surface-low: #f6f8eb;
 	--surface-medium: #eef2da;
+	/* Backdrop behind a contained product shot. White in light mode: packshots
+	   read as photography on white, and the section sits on the warm
+	   surface-low, so the tile needs to separate from it rather than blend.
+	   Dark mode recesses instead — surface-medium there was a bright grey slab. */
+	--surface-tile: #ffffff;
 	--surface-high: #e0e8c9;
 
 	--text-primary: #10231f;
@@ -83,6 +88,7 @@
 	--surface-paper: #111827;
 	--surface-low: #1e293b;
 	--surface-medium: #334155;
+	--surface-tile: #1a2233;
 	--surface-high: #475569;
 
 	--text-primary: #f1f5f9;

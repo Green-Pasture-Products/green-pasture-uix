@@ -102,36 +102,44 @@ const HomePage: React.FC = () => {
 					{isFetchingAllProducts && !products?.length ? (
 						<ShelfSkeleton />
 					) : shelves.length > 0 ? (
-						<div className="space-y-8 md:space-y-10">
+						<div className="space-y-14 md:space-y-20">
 							{shelves.map(([category, items], i) => (
 								<AnimatedSection key={category} delay={Math.min(i, 3) * 0.08}>
+									{/* No panel and no filled bar. A shelf is a rule and a name —
+									    the same editorial register as the rest of the page. It also
+									    stops a short shelf reading as a void: leftover space on the
+									    row is page, not a gap inside a box. */}
 									<div
-										className="overflow-hidden rounded-2xl"
-										style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}
+										className="mb-5 flex items-baseline justify-between gap-4 pb-3 md:mb-7"
+										style={{ borderBottom: "1px solid var(--border-light)" }}
 									>
-										<div
-											className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6"
-											style={{ background: "var(--color-primary)" }}
-										>
-											<h3 className="truncate font-display text-base text-white sm:text-lg" style={{ fontWeight: 600 }}>
+										<div className="flex items-baseline gap-3">
+											<h3
+												className="font-display text-xl leading-none tracking-[-0.01em] sm:text-2xl"
+												style={{ color: "var(--text-primary)", fontWeight: 400 }}
+											>
 												{category}
 											</h3>
-											<Link
-												href={`/products?category=${encodeURIComponent(category)}`}
-												className="group inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-white/90 hover:text-white sm:text-sm"
-											>
-												See all items
-												<ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-											</Link>
+											<span className="text-xs tabular-nums" style={{ color: "var(--text-hint)" }}>
+												{items.length}
+											</span>
 										</div>
+										<Link
+											href={`/products?category=${encodeURIComponent(category)}`}
+											className="group inline-flex shrink-0 items-center gap-1.5 text-xs font-medium sm:text-sm"
+											style={{ color: "var(--color-primary)" }}
+										>
+											See all
+											<ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
+										</Link>
+									</div>
 
-										{/* 6 cards on mobile, the rest of the shelf from sm up — CSS only,
-										    so there is no breakpoint state to hydrate wrong. */}
-										<div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 lg:grid-cols-4 xl:grid-cols-5 [&>*:nth-child(n+7)]:hidden sm:[&>*:nth-child(n+7)]:block">
-											{items.slice(0, PER_SHELF).map((product) => (
-												<ProductCard key={product.id} product={product} />
-											))}
-										</div>
+									{/* 6 cards on mobile, the rest of the shelf from sm up — CSS only,
+									    so there is no breakpoint state to hydrate wrong. */}
+									<div className="grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 [&>*:nth-child(n+7)]:hidden sm:[&>*:nth-child(n+7)]:block">
+										{items.slice(0, PER_SHELF).map((product) => (
+											<ProductCard key={product.id} product={product} />
+										))}
 									</div>
 								</AnimatedSection>
 							))}
@@ -286,13 +294,16 @@ const HomePage: React.FC = () => {
 
 /** Placeholder shelf so the first paint isn't the "No products yet" empty state. */
 const ShelfSkeleton: React.FC = () => (
-	<div className="overflow-hidden rounded-2xl" style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}>
-		<div className="h-12" style={{ background: "var(--color-primary)", opacity: 0.55 }} />
-		<div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 sm:gap-4 sm:p-4 lg:grid-cols-4 xl:grid-cols-5">
+	<div>
+		<div className="mb-5 flex items-baseline justify-between gap-4 pb-3 md:mb-7" style={{ borderBottom: "1px solid var(--border-light)" }}>
+			<div className="h-6 w-32 animate-pulse rounded" style={{ background: "var(--surface-medium)" }} />
+			<div className="h-4 w-16 animate-pulse rounded" style={{ background: "var(--surface-medium)" }} />
+		</div>
+		<div className="grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
 			{[...Array(5)].map((_, i) => (
-				<div key={i} className="animate-pulse rounded-2xl" style={{ border: "1px solid var(--border-light)" }}>
-					<div className="aspect-square rounded-t-2xl" style={{ background: "var(--surface-medium)" }} />
-					<div className="space-y-2.5 p-4">
+				<div key={i} className="animate-pulse">
+					<div className="aspect-square rounded-xl" style={{ background: "var(--surface-tile)" }} />
+					<div className="space-y-2.5 pt-3.5">
 						<div className="h-4 w-3/4 rounded-full" style={{ background: "var(--surface-medium)" }} />
 						<div className="h-3 w-1/2 rounded-full" style={{ background: "var(--surface-medium)" }} />
 						<div className="h-8 rounded-full" style={{ background: "var(--surface-medium)" }} />
