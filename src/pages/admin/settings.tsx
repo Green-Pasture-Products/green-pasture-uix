@@ -15,6 +15,8 @@ import PageLoader from "@/_UI/PageLoader";
 import CurrencyInput from "@/_UI/CurrencyInput";
 import { rateToPercent, percentToRate } from "@/_utils/rate";
 import NumberInput from "@/_UI/NumberInput";
+import ChipAutocomplete from "@/_UI/ChipAutocomplete";
+import { NIGERIAN_STATES } from "@/_utils/nigerianStates";
 import PhoneInput from "@/_UI/PhoneInput";
 
 // ── Schemas ──
@@ -118,7 +120,7 @@ const AdminSettings: React.FC = () => {
 	// Storefront sale-treatment kill-switch. Defaults on so an existing store
 	// with no saved flag keeps showing the discounts it already had live.
 	const [showDiscountBadges, setShowDiscountBadges] = useState(true);
-	const [freeShippingRegions, setFreeShippingRegions] = useState("");
+	const [freeShippingRegions, setFreeShippingRegions] = useState<string[]>([]);
 	// Multi-currency kill-switch. Defaults OFF so an existing store with no
 	// saved flag keeps showing everyone NGN — exactly today's behaviour —
 	// until an admin deliberately opts in.
@@ -164,7 +166,7 @@ const AdminSettings: React.FC = () => {
 							freeShippingThreshold: String(s.orderSettings?.freeShippingThreshold ?? "0"),
 						});
 						setShowDiscountBadges(s.orderSettings?.showDiscountBadges !== false);
-						setFreeShippingRegions((s.orderSettings?.freeShippingRegions ?? []).join(", "));
+						setFreeShippingRegions(s.orderSettings?.freeShippingRegions ?? []);
 						setMultiCurrencyEnabled(s.orderSettings?.multiCurrencyEnabled === true);
 						if (s.shippingConfig?.methods?.length > 0) {
 							setShippingMethods(
@@ -265,10 +267,7 @@ const AdminSettings: React.FC = () => {
 					...storeData?.orderSettings,
 					taxRate: percentToRate(Number(data.taxRate)),
 					freeShippingThreshold: Number(data.freeShippingThreshold),
-					freeShippingRegions: freeShippingRegions
-						.split(",")
-						.map((r) => r.trim())
-						.filter(Boolean),
+					freeShippingRegions,
 					showDiscountBadges,
 					multiCurrencyEnabled,
 				},
@@ -457,17 +456,15 @@ const AdminSettings: React.FC = () => {
 												Orders at or above this amount qualify for free shipping. Set to 0 to always charge shipping.
 											</p>
 
-											<FormInput
+											<ChipAutocomplete
 												label="Free Shipping Regions"
-												placeholder="Lagos"
+												placeholder="Search states…"
+												options={NIGERIAN_STATES}
 												value={freeShippingRegions}
-												onChange={(e) => setFreeShippingRegions(e.target.value)}
+												onChange={setFreeShippingRegions}
+												hint="States where the threshold actually earns free delivery, matched against the delivery address. Leave empty to apply it everywhere."
+												emptyMessage="No matching state"
 											/>
-											<p className="text-xs -mt-2" style={{ color: "var(--text-hint)" }}>
-												Comma-separated states or regions where the threshold actually earns free
-												delivery, matched against the delivery address. Leave empty to apply it
-												everywhere.
-											</p>
 										</div>
 									</div>
 
