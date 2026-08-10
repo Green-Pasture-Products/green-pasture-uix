@@ -34,6 +34,19 @@ export interface Product {
 	inStock: boolean;
 	rating: number;
 	reviews: number;
+	/** Pack size as printed on the label — 250 + "g", 50 + "tabs". */
+	weightValue?: number | null;
+	weightUnit?: string | null;
+	tags?: Tag[];
+}
+
+/** Who a product suits. Assigned by admins, browsable at /products?tag=slug. */
+export interface Tag {
+	id: string;
+	name: string;
+	slug: string;
+	description?: string;
+	status?: string;
 }
 
 export interface CategoriesState {
@@ -253,7 +266,7 @@ export interface BackendItem {
 	discountPercent?: number | null;
 	unit: number;
 	product?: { id: string; name: string };
-	photos?: { id: string; url: string; publicId: string }[];
+	photos?: { id: string; url: string; publicId: string; isThumbnail?: boolean }[];
 	ratingStats?: { average: number; count: number };
 	reviews?: BackendReview[];
 	status: string;

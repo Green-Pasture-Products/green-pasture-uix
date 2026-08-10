@@ -12,7 +12,7 @@ import PageLoader from "@/_UI/PageLoader";
 import toast from "react-hot-toast";
 import axiosInstance from "@/_utils/axiosInstance";
 import { BackendItem, BackendReview } from "@/types";
-import { Pencil, X, Trash2, Upload, Power } from "lucide-react";
+import { Pencil, X, Trash2, Upload, Power, Star } from "lucide-react";
 import { FormInput, FormTextarea, FormFileUpload } from "@/_UI/FormField";
 import Modal from "@/_UI/Modal";
 import FormSelectDropdown from "@/_UI/FormSelect";
@@ -20,6 +20,10 @@ import CurrencyInput from "@/_UI/CurrencyInput";
 import NumberInput from "@/_UI/NumberInput";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { categoryAction } from "@/_redux/actions/category.action";
+import RichTextEditor from "@/_UI/RichTextEditor";
+import TagPicker from "@/_UI/TagPicker";
+import { WEIGHT_UNITS, formatWeight } from "@/_utils/formatWeight";
+import SanitizedHtml from "@/_UI/SanitizedHtml";
 
 const ProductDetail: React.FC = () => {
 	const router = useRouter();
@@ -32,6 +36,7 @@ const ProductDetail: React.FC = () => {
 	const [toggling, setToggling] = useState(false);
 	const [statusModalOpen, setStatusModalOpen] = useState(false);
 	const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
+	const [settingThumbnailId, setSettingThumbnailId] = useState<string | null>(null);
 	const [newImages, setNewImages] = useState<File[]>([]);
 	const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 	const [uploadingImages, setUploadingImages] = useState(false);
@@ -52,7 +57,10 @@ const ProductDetail: React.FC = () => {
 		unit: "",
 		category: "",
 		status: "A",
+		weightValue: "",
+		weightUnit: "",
 	});
+	const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
 	// `silent` refreshes in place: the toolbar icon spins but the page keeps its
 	// content, instead of collapsing back into the full-page loader.
@@ -73,7 +81,10 @@ const ProductDetail: React.FC = () => {
 						unit: String(data.unit ?? data.availableQuantity ?? ""),
 						category: String(data.product?.id ?? data.category ?? ""),
 						status: data.status ?? "A",
+						weightValue: data.weightValue ? String(data.weightValue) : "",
+						weightUnit: data.weightUnit ?? "",
 					});
+					setSelectedTagIds((data.tags ?? []).map((t: any) => t.id));
 				}
 			})
 			.catch(() => {
@@ -117,6 +128,11 @@ const ProductDetail: React.FC = () => {
 				price: Number(editForm.price),
 				originalPrice: editForm.originalPrice !== "" ? Number(editForm.originalPrice) : null,
 				unit: Number(editForm.unit),
+				weightValue: editForm.weightValue !== "" ? Number(editForm.weightValue) : null,
+				weightUnit: editForm.weightUnit.trim() || null,
+				// Always sent, so clearing every tag actually clears them. The
+				// API treats an absent tagIds as "leave alone" and [] as "clear".
+				tagIds: selectedTagIds,
 			};
 
 			if (editForm.category) {
@@ -159,6 +175,22 @@ const ProductDetail: React.FC = () => {
 			toast.error(err?.response?.data?.message || "Failed to delete image");
 		} finally {
 			setDeletingImageId(null);
+		}
+	};
+
+	// Promotes one of the already-uploaded images. Not an upload of its own —
+	// the thumbnail is always one of the product's existing shots.
+	const handleSetThumbnail = async (imageId: string) => {
+		if (!id) return;
+		setSettingThumbnailId(imageId);
+		try {
+			await axiosInstance.patch(`items/${id}/images/${imageId}/thumbnail`);
+			toast.success("Thumbnail updated");
+			await fetchItem(true);
+		} catch (err: any) {
+			toast.error(err?.response?.data?.message || "Failed to set thumbnail");
+		} finally {
+			setSettingThumbnailId(null);
 		}
 	};
 
@@ -214,7 +246,10 @@ const ProductDetail: React.FC = () => {
 				unit: String(item.unit ?? (item as any).availableQuantity ?? ""),
 				category: String(item.product?.id ?? item.category ?? ""),
 				status: item.status ?? "A",
+				weightValue: (item as any).weightValue ? String((item as any).weightValue) : "",
+				weightUnit: (item as any).weightUnit ?? "",
 			});
+			setSelectedTagIds(((item as any).tags ?? []).map((t: any) => t.id));
 		}
 		setNewImages([]);
 		setNewImagePreviews([]);
@@ -377,13 +412,34 @@ const ProductDetail: React.FC = () => {
 								]}
 								searchable={false}
 							/>
-							
+							<NumberInput
+								label="Pack Size"
+								value={editForm.weightValue}
+								onChange={(val) => setEditForm((f) => ({ ...f, weightValue: val }))}
+								prefix="Size"
+								min={0}
+							/>
+							<FormSelectDropdown
+								label="Unit"
+								value={editForm.weightUnit}
+								onChange={(val) => setEditForm((f) => ({ ...f, weightUnit: val }))}
+								options={WEIGHT_UNITS.map((u) => ({ value: u, label: u }))}
+								placeholder="Select a unit"
+								searchable={false}
+							/>
+
 							<div className="sm:col-span-2">
-								<FormTextarea
-									label="Description"
+								<TagPicker value={selectedTagIds} onChange={setSelectedTagIds} />
+							</div>
+
+							<div className="sm:col-span-2">
+								<label className="mb-1.5 block text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+									Description
+								</label>
+								<RichTextEditor
 									value={editForm.description}
-									onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
-									rows={3}
+									onChange={(html) => setEditForm((f) => ({ ...f, description: html }))}
+									placeholder="Describe the product benefits, ingredients, etc."
 								/>
 							</div>
 
@@ -411,11 +467,44 @@ const ProductDetail: React.FC = () => {
 				) : (
 					<DetailSection title="Product Information">
 						<DetailRow label="Name" value={item.name} />
-						<DetailRow label="Description" value={item.description ?? "\u2014"} />
+						<DetailRow
+							label="Description"
+							value={
+								item.description ? (
+									<SanitizedHtml html={item.description} />
+								) : (
+									"\u2014"
+								)
+							}
+						/>
 						<DetailRow label="Category" value={item.product?.name ?? item.category ?? "\u2014"} />
 						<DetailRow label="Selling Price" value={formatCurrency(item.price)} />
 						<DetailRow label="Original Price" value={item.originalPrice ? formatCurrency(item.originalPrice) : "—"} />
 						<DetailRow label="Available" value={formatNumber(available)} />
+						<DetailRow
+							label="Pack Size"
+							value={formatWeight((item as any).weightValue, (item as any).weightUnit) || "\u2014"}
+						/>
+						<DetailRow
+							label="Tags"
+							value={
+								(item as any).tags?.length ? (
+									<div className="flex flex-wrap gap-1.5">
+										{(item as any).tags.map((tag: any) => (
+											<span
+												key={tag.id}
+												className="rounded-full px-2 py-0.5 text-[0.65rem] font-medium"
+												style={{ background: "rgba(154,202,60,0.16)", color: "var(--color-primary)" }}
+											>
+												{tag.name}
+											</span>
+										))}
+									</div>
+								) : (
+									"\u2014"
+								)
+							}
+						/>
 						<DetailRow
 							label="Status"
 							value={
@@ -429,15 +518,44 @@ const ProductDetail: React.FC = () => {
 
 				{item.photos && item.photos.length > 0 && (
 					<DetailSection title="Images">
+						<p className="px-5 pt-4 text-xs" style={{ color: "var(--text-hint)" }}>
+							The thumbnail is the single image used wherever the product appears in a
+							smaller format — cards, listings, search results, cart lines.
+						</p>
 						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-5">
 							{/* Existing images */}
 							{item.photos.map((photo) => (
 								<div
 									key={photo.id}
 									className="relative group aspect-square rounded-lg overflow-hidden"
-									style={{ border: "1px solid var(--border-light)" }}
+									style={{
+										border: photo.isThumbnail
+											? "2px solid var(--color-primary)"
+											: "1px solid var(--border-light)",
+									}}
 								>
 									<img src={photo.url} alt={item.name} className="w-full h-full object-cover" />
+
+									{photo.isThumbnail ? (
+										<span
+											className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.6rem] font-semibold"
+											style={{ background: "var(--color-primary)", color: "#fff" }}
+										>
+											<Star className="w-3 h-3 fill-current" />
+											Thumbnail
+										</span>
+									) : (
+										<button
+											onClick={() => handleSetThumbnail(photo.id)}
+											disabled={settingThumbnailId === photo.id}
+											className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.6rem] font-semibold opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+											style={{ background: "rgba(255,255,255,0.92)", color: "var(--color-primary)" }}
+										>
+											<Star className="w-3 h-3" />
+											{settingThumbnailId === photo.id ? "Setting…" : "Make thumbnail"}
+										</button>
+									)}
+
 									{editing && (
 										<button
 											onClick={() => handleDeleteImage(photo.id)}

@@ -16,6 +16,8 @@ import {
 } from "@/_redux/reducers/wishlist.reducer";
 import { usePathname } from "next/navigation";
 import { appConstants } from "@/_redux/constants";
+import { htmlToText } from "@/_utils/htmlToText";
+import { formatWeight } from "@/_utils/formatWeight";
 
 interface ProductCardProps {
 	product: Product;
@@ -43,6 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const reviewCount = p.ratingStats?.count ?? p.reviews ?? 0;
 	const inStock = p.unit > 0 || p.inStock;
 	const price = Number(p.price || 0);
+	const packSize = formatWeight(p.weightValue, p.weightUnit);
 	// Admin kill-switch: hide the sale treatment site-wide without touching the
 	// stored originalPrice, so it can be switched back on unchanged.
 	const showDiscount = useAppSelector((state) => state.settings.showDiscountBadges);
@@ -184,11 +187,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 					</h3>
 				</Link>
 
+				{/* Pack size sits with the name: it is what separates the 100g
+				    listing from the 200g one. */}
+				{packSize && (
+					<p className="mb-1.5 text-[0.7rem] font-medium" style={{ color: "var(--text-secondary)" }}>
+						{packSize}
+					</p>
+				)}
+
 				<p
 					className="text-[0.7rem] line-clamp-2 leading-relaxed mb-2.5"
 					style={{ color: "var(--text-hint)" }}
 				>
-					{product.description}
+					{htmlToText(product.description)}
 				</p>
 
 				{/* Rating */}

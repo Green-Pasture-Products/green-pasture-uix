@@ -30,6 +30,7 @@ export function useProductFilters() {
 		{
 			q: parseAsString.withDefault(""),
 			category: parseAsString.withDefault("All"),
+			tag: parseAsString.withDefault("All"),
 			sort: parseAsStringLiteral(SORT_OPTIONS).withDefault("name"),
 			minPrice: parseAsInteger.withDefault(0),
 			maxPrice: parseAsInteger.withDefault(PRICE_MAX_DEFAULT),
@@ -41,6 +42,7 @@ export function useProductFilters() {
 
 	const filters: SearchFilters = {
 		category: params.category,
+		tag: params.tag,
 		priceRange: [params.minPrice, params.maxPrice],
 		inStockOnly: params.inStock,
 		organicOnly: false,
@@ -51,6 +53,7 @@ export function useProductFilters() {
 	const setFilters = (partial: Partial<SearchFilters>) => {
 		setParams({
 			...(partial.category !== undefined && { category: partial.category }),
+			...(partial.tag !== undefined && { tag: partial.tag }),
 			...(partial.sortBy !== undefined && { sort: partial.sortBy }),
 			...(partial.priceRange !== undefined && {
 				minPrice: partial.priceRange[0],
@@ -64,6 +67,7 @@ export function useProductFilters() {
 	const resetFilters = () =>
 		setParams({
 			category: null,
+			tag: null,
 			sort: null,
 			minPrice: null,
 			maxPrice: null,
@@ -73,6 +77,7 @@ export function useProductFilters() {
 
 	const hasActiveFilters =
 		params.category !== "All" ||
+		params.tag !== "All" ||
 		params.inStock ||
 		params.rating > 0 ||
 		params.minPrice > 0 ||
