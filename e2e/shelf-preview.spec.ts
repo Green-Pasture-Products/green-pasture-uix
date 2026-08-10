@@ -100,6 +100,9 @@ test.describe("landing catalogue rail", () => {
 
 		const rail = page.getByRole("region", { name: "Products" });
 		await expect(rail).toBeVisible();
+		// Wait for the fetched set to land before filtering it — clicking a chip
+		// mid-hydration filters an empty list and the assertion races.
+		await expect(rail.locator("> div")).toHaveCount(items.length);
 
 		await page.getByRole("button", { name: "Beverages", exact: true }).click();
 		await page.getByRole("button", { name: "Adults", exact: true }).click();
