@@ -7,8 +7,10 @@ const fetchAllProducts = createAsyncThunk<Product[], { activeOnly?: boolean } | 
 	"product/fetchAll",
 	async (args, { rejectWithValue }) => {
 		try {
+			// `published`, not `filter=A`: status is the record's lifecycle,
+			// publishing is the editorial decision about storefront visibility.
 			const url = args?.activeOnly
-				? "/items?page=1&limit=100&filter=A"
+				? "/items?page=1&limit=100&published=true"
 				: "/items?page=1&limit=100";
 			const response = await axiosInstance.get(url);
 			return response.data?.data?.items ?? [];

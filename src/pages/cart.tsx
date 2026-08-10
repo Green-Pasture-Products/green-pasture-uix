@@ -115,6 +115,10 @@ const CartPage: React.FC = () => {
 	const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold) || 0;
 	const shippingFee = Number(storeConfig?.shippingConfig?.methods?.find((m: any) => m?.enabled !== false)?.baseCost) || 0;
 	const defaultCurrency = storeConfig?.orderSettings?.defaultCurrency ?? "NGN";
+	// Free shipping is threshold AND region. The cart has no delivery address
+	// yet, so this is a preview: name the regions rather than promise the
+	// waiver. The backend is the authority and re-decides at checkout.
+	const freeShippingRegions: string[] = storeConfig?.orderSettings?.freeShippingRegions ?? [];
 
 	const calculations = useMemo(() => {
 		const subtotal = total || 0;
@@ -578,6 +582,11 @@ const CartPage: React.FC = () => {
 									{"\u20A6"}{calculations?.remainingForFreeShipping.toLocaleString()} away
 								</span>
 							</div>
+							{freeShippingRegions.length > 0 && (
+								<p className="mb-2.5" style={{ fontSize: "0.72rem", color: "var(--text-hint)" }}>
+									Applies to deliveries within {freeShippingRegions.join(", ")}.
+								</p>
+							)}
 							<div
 								style={{
 									width: "100%",
