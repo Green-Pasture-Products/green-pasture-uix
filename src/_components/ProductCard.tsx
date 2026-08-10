@@ -213,15 +213,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 					</div>
 				)}
 
-				{/* Price */}
-				<div className="flex items-baseline gap-2 mb-3">
-					<span className="font-display text-lg tabular-nums" style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+				{/* Price. Stacked, not inline: side by side the two numbers compete,
+				    and the struck one has to shrink so far to stay out of the way
+				    that it stops reading as a price at all. */}
+				<div className="mb-3">
+					<div className="font-display text-lg leading-tight tabular-nums" style={{ color: "var(--text-primary)", fontWeight: 500 }}>
 						{formatPrice(price)}
-					</span>
+					</div>
 					{originalPrice && originalPrice > price && (
-						<span className="text-xs line-through tabular-nums" style={{ color: "var(--text-disabled)" }}>
+						<div className="mt-0.5 text-sm line-through tabular-nums" style={{ color: "var(--text-disabled)" }}>
 							{formatPrice(originalPrice)}
-						</span>
+						</div>
 					)}
 				</div>
 
