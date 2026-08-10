@@ -244,13 +244,21 @@ const AddProductPage: React.FC = () => {
 						</div>
 
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<FormInput
-								label="Pack Size"
-								type="number"
-								step="0.01"
-								placeholder="e.g. 250"
-								{...register("weightValue")}
-								error={(errors as any).weightValue?.message}
+							<Controller
+								name="weightValue"
+								control={control}
+								render={({ field }) => (
+									<NumberInput
+										label="Pack Size"
+										placeholder="e.g. 250"
+										prefix="Size"
+										step="0.01"
+										min={0}
+										value={(field.value as number | undefined) ?? ""}
+										onChange={field.onChange}
+										error={(errors as any).weightValue?.message}
+									/>
+								)}
 							/>
 							<Controller
 								name="weightUnit"
