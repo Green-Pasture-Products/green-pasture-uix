@@ -58,7 +58,11 @@ const schema = z
 	// collide on the unique name constraint — catch it here, not in a 500.
 	.refine(
 		(data) => {
-			const sizes = data.variants.map((v) => `${v.weightValue ?? ""}${(v.weightUnit ?? "").toLowerCase()}`);
+			const sizes = data.variants.map((v) =>
+				// Mirrors the server's variantName: either half missing means the
+				// item is named with the bare base name, so two such rows collide.
+				!v.weightValue || !v.weightUnit?.trim() ? "" : `${v.weightValue}${v.weightUnit.trim().toLowerCase()}`,
+			);
 			return new Set(sizes).size === sizes.length;
 		},
 		{ message: "Each pack size must be different", path: ["variants"] },
@@ -250,7 +254,13 @@ const AddProductPage: React.FC = () => {
 										{/* The first row is the product itself — removing it would
 										    leave nothing to create. */}
 										{index > 0 && (
-											<button type="button" onClick={() => remove(index)} className="text-xs font-medium" style={{ color: "#ef4444" }}>
+											<button
+												type="button"
+												onClick={() => remove(index)}
+												className="text-xs font-medium"
+												style={{ color: "#ef4444" }}
+												aria-label={`Remove size ${index + 1}`}
+											>
 												Remove
 											</button>
 										)}
@@ -341,9 +351,15 @@ const AddProductPage: React.FC = () => {
 								</div>
 							))}
 
-							{(errors as any).variants?.message && (
+							{/* `.root`, not `.message`. Once the rows are mounted,
+							    zodResolver sees `variants.0.price` in the field
+							    registry and routes an array-level issue to
+							    errors.variants.root — reading .message directly
+							    renders nothing, so a duplicate-size submit would
+							    just silently do nothing. */}
+							{(errors as any).variants?.root?.message && (
 								<p className="text-xs font-medium" style={{ color: "#ef4444" }}>
-									{(errors as any).variants.message}
+									{(errors as any).variants.root.message}
 								</p>
 							)}
 						</div>
