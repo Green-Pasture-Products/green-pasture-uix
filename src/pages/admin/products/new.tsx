@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
@@ -20,13 +20,8 @@ import axiosInstance from "@/_utils/axiosInstance";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { categoryAction } from "@/_redux/actions/category.action";
 
-const schema = z
+const variantSchema = z
 	.object({
-		// Category ids are uuidv7 strings, not numbers — coercing to a number
-		// yields NaN and the field can never validate.
-		productId: z.string().min(1, "Category is required"),
-		name: z.string().min(1, "Name is required"),
-		description: z.string().optional(),
 		price: z.coerce.number().positive("Selling price must be greater than 0"),
 		originalPrice: z.preprocess(
 			(val) => (val === "" || val === null || val === undefined ? undefined : Number(val)),
@@ -50,6 +45,29 @@ const schema = z
 		path: ["weightUnit"],
 	});
 
+const schema = z
+	.object({
+		// Category ids are uuidv7 strings, not numbers — coercing to a number
+		// yields NaN and the field can never validate.
+		productId: z.string().min(1, "Category is required"),
+		name: z.string().min(1, "Name is required"),
+		description: z.string().optional(),
+		variants: z.array(variantSchema).min(1, "Add at least one pack size"),
+	})
+	// Two rows with the same size would create two identically named items and
+	// collide on the unique name constraint — catch it here, not in a 500.
+	.refine(
+		(data) => {
+			const sizes = data.variants.map((v) =>
+				// Mirrors the server's variantName: either half missing means the
+				// item is named with the bare base name, so two such rows collide.
+				!v.weightValue || !v.weightUnit?.trim() ? "" : `${v.weightValue}${v.weightUnit.trim().toLowerCase()}`,
+			);
+			return new Set(sizes).size === sizes.length;
+		},
+		{ message: "Each pack size must be different", path: ["variants"] },
+	);
+
 type FormData = z.infer<typeof schema>;
 
 const AddProductPage: React.FC = () => {
@@ -69,8 +87,10 @@ const AddProductPage: React.FC = () => {
 		formState: { errors },
 	} = useForm<FormData>({
 		resolver: zodResolver(schema) as any,
-		defaultValues: { unit: 0, price: 0 },
+		defaultValues: { variants: [{ price: 0, unit: 0 }] },
 	});
+
+	const { fields, append, remove } = useFieldArray({ control, name: "variants" });
 
 	useEffect(() => {
 		if (productCategories.length === 0) {
@@ -104,22 +124,31 @@ const AddProductPage: React.FC = () => {
 			const formData = new FormData();
 			formData.append("productId", String(data.productId));
 			formData.append("name", data.name);
-			formData.append("price", String(data.price));
-			if (data.originalPrice) formData.append("originalPrice", String(data.originalPrice));
-			formData.append("unit", String(data.unit));
 			if (data.description) formData.append("description", data.description);
-			if (data.weightValue) formData.append("weightValue", String(data.weightValue));
-			if (data.weightUnit?.trim()) formData.append("weightUnit", data.weightUnit.trim());
+			// One JSON field rather than variants[0][price]-style keys: the DTO
+			// parses it in a single Transform, and multipart has no native
+			// representation for an array of objects.
+			formData.append(
+				"variants",
+				JSON.stringify(
+					data.variants.map((v) => ({
+						price: v.price,
+						originalPrice: v.originalPrice ?? null,
+						unit: v.unit,
+						weightValue: v.weightValue ?? null,
+						weightUnit: v.weightUnit?.trim() || null,
+					})),
+				),
+			);
 			// Repeated field, which is how the DTO's transform expects it — a
 			// single selection arrives as a bare string and is normalised there.
 			selectedTagIds.forEach((id) => formData.append("tagIds", id));
-			if (images.length > 0) {
-				images.forEach((file) => formData.append("images", file));
-			}
-			await axiosInstance.post("items", formData, {
+			images.forEach((file) => formData.append("images", file));
+
+			await axiosInstance.post("items/bulk", formData, {
 				headers: { "Content-Type": "multipart/form-data" },
 			});
-			toast.success("Product created successfully");
+			toast.success(data.variants.length > 1 ? `${data.variants.length} pack sizes created` : "Product created successfully");
 			router.push("/admin/products");
 		} catch (err: any) {
 			const message = err?.response?.data?.message ?? err?.message ?? "Failed to create product";
@@ -194,87 +223,145 @@ const AddProductPage: React.FC = () => {
 							)}
 						/>
 
-						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<Controller
-								name="price"
-								control={control}
-								render={({ field }) => (
-									<CurrencyInput
-										label="Selling Price"
-										required
-										placeholder="0.00"
-										value={field.value || ""}
-										onChange={(val) => field.onChange(parseFloat(val) || 0)}
-										error={errors.price?.message}
-										showWords
-									/>
-								)}
-							/>
-							<Controller
-								name="originalPrice"
-								control={control}
-								render={({ field }) => (
-									<CurrencyInput
-										label="Original Price"
-										placeholder="0.00 (leave empty if not on sale)"
-										value={field.value ?? ""}
-										onChange={(val) => field.onChange(val === "" ? undefined : parseFloat(val))}
-										error={(errors as any).originalPrice?.message}
-									/>
-								)}
-							/>
-						</div>
+						<div className="space-y-3">
+							<div className="flex items-center justify-between">
+								<label className="block text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+									Pack sizes <span style={{ color: "#ef4444" }}>*</span>
+								</label>
+								<button
+									type="button"
+									onClick={() => append({ price: 0, unit: 0 } as any)}
+									className="text-xs font-semibold"
+									style={{ color: "var(--color-primary)" }}
+								>
+									+ Add size
+								</button>
+							</div>
+							<p className="text-xs" style={{ color: "var(--text-hint)" }}>
+								One row per size. Each row becomes its own listing with its own price and stock, grouped as one product in the shop.
+							</p>
 
-						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<Controller
-								name="unit"
-								control={control}
-								render={({ field }) => (
-									<NumberInput
-										label="Available Units"
-										placeholder="0"
-										required
-										prefix="Qty"
-										value={field.value ?? ""}
-										onChange={(val) => field.onChange(parseInt(val) || 0)}
-										error={errors.unit?.message}
-									/>
-								)}
-							/>
-						</div>
+							{fields.map((field, index) => (
+								<div
+									key={field.id}
+									className="rounded-lg p-4 space-y-4"
+									style={{ background: "var(--surface-low)", border: "1px solid var(--border-light)" }}
+								>
+									<div className="flex items-center justify-between">
+										<span className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--text-hint)" }}>
+											Size {index + 1}
+										</span>
+										{/* The first row is the product itself — removing it would
+										    leave nothing to create. */}
+										{index > 0 && (
+											<button
+												type="button"
+												onClick={() => remove(index)}
+												className="text-xs font-medium"
+												style={{ color: "#ef4444" }}
+												aria-label={`Remove size ${index + 1}`}
+											>
+												Remove
+											</button>
+										)}
+									</div>
 
-						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<Controller
-								name="weightValue"
-								control={control}
-								render={({ field }) => (
-									<NumberInput
-										label="Pack Size"
-										placeholder="e.g. 250"
-										prefix="Size"
-										step="0.01"
-										min={0}
-										value={(field.value as number | undefined) ?? ""}
-										onChange={field.onChange}
-										error={(errors as any).weightValue?.message}
-									/>
-								)}
-							/>
-							<Controller
-								name="weightUnit"
-								control={control}
-								render={({ field }) => (
-									<FormSelectDropdown
-										label="Unit"
-										value={field.value ?? ""}
-										onChange={field.onChange}
-										options={WEIGHT_UNITS.map((u) => ({ value: u, label: u }))}
-										placeholder="Select a unit"
-										error={(errors as any).weightUnit?.message}
-										searchable={false}
-									/>
-								)}
-							/>
+									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+										<Controller
+											name={`variants.${index}.weightValue` as const}
+											control={control}
+											render={({ field: f }) => (
+												<NumberInput
+													label="Pack Size"
+													placeholder="e.g. 250"
+													prefix="Size"
+													step="0.01"
+													min={0}
+													value={(f.value as number | undefined) ?? ""}
+													onChange={f.onChange}
+													error={(errors as any).variants?.[index]?.weightValue?.message}
+												/>
+											)}
+										/>
+										<Controller
+											name={`variants.${index}.weightUnit` as const}
+											control={control}
+											render={({ field: f }) => (
+												<FormSelectDropdown
+													label="Unit"
+													value={f.value ?? ""}
+													onChange={f.onChange}
+													options={WEIGHT_UNITS.map((u) => ({ value: u, label: u }))}
+													placeholder="Select a unit"
+													error={(errors as any).variants?.[index]?.weightUnit?.message}
+													searchable={false}
+												/>
+											)}
+										/>
+									</div>
+
+									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+										<Controller
+											name={`variants.${index}.price` as const}
+											control={control}
+											render={({ field: f }) => (
+												<CurrencyInput
+													label="Selling Price"
+													required
+													placeholder="0.00"
+													value={f.value || ""}
+													onChange={(val) => f.onChange(parseFloat(val) || 0)}
+													error={(errors as any).variants?.[index]?.price?.message}
+													showWords
+												/>
+											)}
+										/>
+										<Controller
+											name={`variants.${index}.originalPrice` as const}
+											control={control}
+											render={({ field: f }) => (
+												<CurrencyInput
+													label="Original Price"
+													placeholder="0.00 (leave empty if not on sale)"
+													value={f.value ?? ""}
+													onChange={(val) => f.onChange(val === "" ? undefined : parseFloat(val))}
+													error={(errors as any).variants?.[index]?.originalPrice?.message}
+												/>
+											)}
+										/>
+									</div>
+
+									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+										<Controller
+											name={`variants.${index}.unit` as const}
+											control={control}
+											render={({ field: f }) => (
+												<NumberInput
+													label="Available Units"
+													placeholder="0"
+													required
+													prefix="Qty"
+													value={f.value ?? ""}
+													onChange={(val) => f.onChange(parseInt(val) || 0)}
+													error={(errors as any).variants?.[index]?.unit?.message}
+												/>
+											)}
+										/>
+									</div>
+								</div>
+							))}
+
+							{/* `.root`, not `.message`. Once the rows are mounted,
+							    zodResolver sees `variants.0.price` in the field
+							    registry and routes an array-level issue to
+							    errors.variants.root — reading .message directly
+							    renders nothing, so a duplicate-size submit would
+							    just silently do nothing. */}
+							{(errors as any).variants?.root?.message && (
+								<p className="text-xs font-medium" style={{ color: "#ef4444" }}>
+									{(errors as any).variants.root.message}
+								</p>
+							)}
 						</div>
 
 						<TagPicker value={selectedTagIds} onChange={setSelectedTagIds} />
@@ -301,7 +388,7 @@ const AddProductPage: React.FC = () => {
 
 						<FormFileUpload
 							label="Product Images"
-							hint="max 5"
+							hint="max 5 — shared by every pack size"
 							previews={previews}
 							onSelect={handleImageSelect}
 							onRemove={removeImage}

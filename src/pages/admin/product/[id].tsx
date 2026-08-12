@@ -24,6 +24,7 @@ import RichTextEditor from "@/_UI/RichTextEditor";
 import TagPicker from "@/_UI/TagPicker";
 import { WEIGHT_UNITS, formatWeight } from "@/_utils/formatWeight";
 import SanitizedHtml from "@/_UI/SanitizedHtml";
+import { siblingAnchorId } from "@/_utils/siblingAnchorId";
 
 const ProductDetail: React.FC = () => {
 	const router = useRouter();
@@ -59,8 +60,49 @@ const ProductDetail: React.FC = () => {
 		status: "A",
 		weightValue: "",
 		weightUnit: "",
+		variantOfItemId: "",
 	});
 	const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+
+	// Deliberately not the shared state.product.products slice: the storefront
+	// grids read that and expect published items only, while this picker needs
+	// unpublished siblings too. Local state keeps the two from colliding.
+	const [anchorCandidates, setAnchorCandidates] = useState<any[]>([]);
+
+	useEffect(() => {
+		let cancelled = false;
+		axiosInstance
+			.get("items?page=1&limit=100")
+			.then((res) => {
+				if (!cancelled) setAnchorCandidates(res.data?.data?.items ?? []);
+			})
+			.catch(() => {
+				// A failed load leaves the picker empty rather than blocking the
+				// rest of the edit form — grouping is not the main job here.
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, []);
+
+	// Any other item can be the anchor, except this one — an item cannot be a
+	// size variant of itself, and the API rejects it anyway.
+	//
+	// The leading empty option is what makes detaching possible at all.
+	// FormSelectDropdown renders only the options it is handed and has no
+	// clear control of its own — `placeholder` is just the text shown while
+	// the value is already empty. Without a selectable "" entry, an item could
+	// be grouped through this picker but never ungrouped.
+	//
+	// ponytail: first 100 items only. The catalogue is far short of that,
+	// and the real fix when it isn't is a server-side search on this
+	// endpoint, not a bigger number here.
+	const anchorOptions = [
+		{ value: "", label: "Not a size variant" },
+		...anchorCandidates
+			.filter((candidate: any) => String(candidate.id) !== String(id))
+			.map((candidate: any) => ({ value: candidate.id, label: candidate.name })),
+	];
 
 	// `silent` refreshes in place: the toolbar icon spins but the page keeps its
 	// content, instead of collapsing back into the full-page loader.
@@ -83,6 +125,7 @@ const ProductDetail: React.FC = () => {
 						status: data.status ?? "A",
 						weightValue: data.weightValue ? String(data.weightValue) : "",
 						weightUnit: data.weightUnit ?? "",
+						variantOfItemId: siblingAnchorId(data, anchorCandidates),
 					});
 					setSelectedTagIds((data.tags ?? []).map((t: any) => t.id));
 				}
@@ -101,6 +144,14 @@ const ProductDetail: React.FC = () => {
 		if (!router.isReady || !id) return;
 		fetchItem();
 	}, [id, router.isReady]);
+
+	// The candidate list is fetched in parallel with the item, so the hydration
+	// above often runs before it lands and the picker shows nothing for a
+	// grouped item. Fill it in when the list arrives, without a second fetch.
+	useEffect(() => {
+		if (!(item as any)?.variantGroupId) return;
+		setEditForm((f) => (f.variantOfItemId ? f : { ...f, variantOfItemId: siblingAnchorId(item, anchorCandidates) }));
+	}, [anchorCandidates, item]);
 
 	const handleToggleStatus = async () => {
 		if (!item) return;
@@ -134,6 +185,16 @@ const ProductDetail: React.FC = () => {
 				// API treats an absent tagIds as "leave alone" and [] as "clear".
 				tagIds: selectedTagIds,
 			};
+
+			// Only the picker can detach. If we could not resolve this item's
+			// current grouping — the candidates fetch failed, or the sibling sits
+			// past the limit — leave the grouping alone rather than asking the API
+			// to dissolve it. Absent means "don't touch"; null means detach, and
+			// for a group owner that now clears every sibling.
+			const groupingResolved = !(item as any)?.variantGroupId || !!siblingAnchorId(item, anchorCandidates);
+			if (editForm.variantOfItemId || groupingResolved) {
+				payload.variantOfItemId = editForm.variantOfItemId || null;
+			}
 
 			if (editForm.category) {
 				payload.productId = editForm.category;
@@ -248,6 +309,7 @@ const ProductDetail: React.FC = () => {
 				status: item.status ?? "A",
 				weightValue: (item as any).weightValue ? String((item as any).weightValue) : "",
 				weightUnit: (item as any).weightUnit ?? "",
+				variantOfItemId: siblingAnchorId(item, anchorCandidates),
 			});
 			setSelectedTagIds(((item as any).tags ?? []).map((t: any) => t.id));
 		}
@@ -427,6 +489,20 @@ const ProductDetail: React.FC = () => {
 								placeholder="Select a unit"
 								searchable={false}
 							/>
+
+							<div className="sm:col-span-2">
+								<FormSelectDropdown
+									label="Same product as"
+									placeholder="Not a size variant"
+									searchable
+									value={editForm.variantOfItemId}
+									onChange={(val) => setEditForm((f) => ({ ...f, variantOfItemId: val }))}
+									options={anchorOptions}
+								/>
+								<p className="mt-1.5 text-xs" style={{ color: "var(--text-hint)" }}>
+									Pick another listing to group this one with it as a pack size of the same product. They will share one card in the shop.
+								</p>
+							</div>
 
 							<div className="sm:col-span-2">
 								<TagPicker value={selectedTagIds} onChange={setSelectedTagIds} />
