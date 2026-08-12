@@ -45,7 +45,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const reviewCount = p.ratingStats?.count ?? p.reviews ?? 0;
 	const inStock = p.unit > 0 || p.inStock;
 	const price = Number(p.price || 0);
-	const packSize = formatWeight(p.weightValue, p.weightUnit);
+	// `variants` is present only when the card came through groupVariants. A
+	// card rendered from a raw item (wishlist, cart) keeps its single size.
+	const variants: any[] = p.variants?.length > 1 ? p.variants : [];
+	const packSize = variants.length
+		? variants
+				.slice(0, 3)
+				.map((v) => formatWeight(v.weightValue, v.weightUnit))
+				.filter(Boolean)
+				.join(" · ") + (variants.length > 3 ? ` +${variants.length - 3}` : "")
+		: formatWeight(p.weightValue, p.weightUnit);
+	// "from" only earns its place when the sizes actually differ in price.
+	const priceVaries = variants.length > 0 && new Set(variants.map((v) => Number(v.price))).size > 1;
+	const lowestPrice = variants.length ? Math.min(...variants.map((v) => Number(v.price || 0))) : 0;
 	// Admin kill-switch: hide the sale treatment site-wide without touching the
 	// stored originalPrice, so it can be switched back on unchanged.
 	const showDiscount = useAppSelector((state) => state.settings.showDiscountBadges);
@@ -218,9 +230,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 				    that it stops reading as a price at all. */}
 				<div className="mb-3">
 					<div className="font-display text-lg leading-tight tabular-nums" style={{ color: "var(--text-primary)", fontWeight: 500 }}>
-						{formatPrice(price)}
+						{priceVaries && (
+							<span className="mr-1 text-[0.7rem] font-normal align-middle" style={{ color: "var(--text-hint)" }}>
+								from
+							</span>
+						)}
+						{formatPrice(priceVaries ? lowestPrice : price)}
 					</div>
-					{originalPrice && originalPrice > price && (
+					{!priceVaries && originalPrice && originalPrice > price && (
 						<div className="mt-0.5 text-sm line-through tabular-nums" style={{ color: "var(--text-disabled)" }}>
 							{formatPrice(originalPrice)}
 						</div>
@@ -229,12 +246,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 				{/* Actions */}
 				<div className="mt-auto flex gap-2">
-					{isAdmin ? (
+					{isAdmin || variants.length > 0 ? (
 						<Link
 							href={`/product/${product.id}`}
 							className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold border border-outline dark:border-white/15 text-primary-700 dark:text-primary-400 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] dark:hover:bg-white/5 dark:hover:shadow-[0_0_10px_rgba(154,202,60,0.25)] transition-all"
 						>
-							View Details
+							{/* The card cannot know which SKU was meant, so the choice
+							    moves to the detail page rather than being guessed. */}
+							{isAdmin ? "View Details" : "Choose size"}
 						</Link>
 					) : (
 					<AnimatePresence mode="wait">
