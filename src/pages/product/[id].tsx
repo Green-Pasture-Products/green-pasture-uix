@@ -1,4 +1,4 @@
-import React, { MouseEvent, useState } from "react";
+import React, { MouseEvent, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -68,6 +68,17 @@ const ProductDetailsPage: React.FC = () => {
 			return cat === productCategory && variantGroupKey(pr) !== variantGroupKey(p);
 		}),
 	).slice(0, 4);
+
+	// Every pack size of this product, smallest first — the chip order.
+	const sizeVariants = products
+		.filter((pr: any) => variantGroupKey(pr) === variantGroupKey(p))
+		.sort((a: any, b: any) => Number(a.weightValue ?? 0) - Number(b.weightValue ?? 0));
+
+	// Sizes share one image set today, but a per-size photo added later would
+	// otherwise leave this index pointing past the end of the new array.
+	useEffect(() => {
+		setSelectedImage(0);
+	}, [id]);
 
 	const cartItem = cartItems.find((item) => String(item.id) === String(id));
 	const isInCart = !!cartItem;
@@ -217,10 +228,45 @@ const ProductDetailsPage: React.FC = () => {
 							</h1>
 							<p className="text-on-surface-variant dark:text-gray-400">{productCategory}</p>
 
-							{packSize && (
-								<p className="mt-1 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-									Pack size: {packSize}
-								</p>
+							{sizeVariants.length > 1 ? (
+								<div className="mt-3">
+									<p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--text-hint)" }}>
+										Pack size
+									</p>
+									<div className="flex flex-wrap gap-2">
+										{sizeVariants.map((variant: any) => {
+											const isSelected = String(variant.id) === String(id);
+											const soldOut = !(Number(variant.unit) > 0);
+											return (
+												<button
+													key={variant.id}
+													type="button"
+													disabled={soldOut}
+													onClick={() =>
+														// Shallow, so the whole page re-derives from the new
+														// id without a refetch — and the chosen size stays
+														// in the URL, shareable and back-button-correct.
+														router.replace(`/product/${variant.id}`, undefined, { shallow: true })
+													}
+													className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${soldOut ? "cursor-not-allowed line-through opacity-45" : "cursor-pointer"}`}
+													style={{
+														border: `1px solid ${isSelected ? "var(--color-primary)" : "var(--border-light)"}`,
+														background: isSelected ? "rgba(154,202,60,0.16)" : "transparent",
+														color: isSelected ? "var(--color-primary)" : "var(--text-primary)",
+													}}
+												>
+													{formatWeight(variant.weightValue, variant.weightUnit) || "One size"}
+												</button>
+											);
+										})}
+									</div>
+								</div>
+							) : (
+								packSize && (
+									<p className="mt-1 text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+										Pack size: {packSize}
+									</p>
+								)
 							)}
 
 							{/* Who it suits. Each chip links into the filtered listing. */}
