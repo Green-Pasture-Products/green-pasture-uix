@@ -74,10 +74,17 @@ const ProductDetailsPage: React.FC = () => {
 		.filter((pr: any) => variantGroupKey(pr) === variantGroupKey(p))
 		.sort((a: any, b: any) => Number(a.weightValue ?? 0) - Number(b.weightValue ?? 0));
 
-	// Sizes share one image set today, but a per-size photo added later would
-	// otherwise leave this index pointing past the end of the new array.
+	// A shallow route change never unmounts this component, so every piece of
+	// local state survives a size switch. Both of these have to be told.
+	//
+	// selectedImage: sizes share one image set today, but a per-size photo
+	// added later would leave this index pointing past the new array's end.
+	// quantity: carrying 4 over to a size that only stocks 2 lets the add-to-
+	// cart loop exceed that size's cap — handleQuantityChange only blocks
+	// further increments, it never clamps a value already set.
 	useEffect(() => {
 		setSelectedImage(0);
+		setQuantity(1);
 	}, [id]);
 
 	const cartItem = cartItems.find((item) => String(item.id) === String(id));
@@ -244,8 +251,13 @@ const ProductDetailsPage: React.FC = () => {
 													disabled={soldOut}
 													onClick={() =>
 														// Shallow, so the whole page re-derives from the new
-														// id without a refetch — and the chosen size stays
-														// in the URL, shareable and back-button-correct.
+														// id without a refetch, and the chosen size stays in
+														// the URL — shareable and reload-safe.
+														//
+														// replace, not push: a size chip is a selector, not
+														// navigation. push would stack a history entry per
+														// click, so trying three sizes would take three Back
+														// presses to leave the product.
 														router.replace(`/product/${variant.id}`, undefined, { shallow: true })
 													}
 													className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${soldOut ? "cursor-not-allowed line-through opacity-45" : "cursor-pointer"}`}
