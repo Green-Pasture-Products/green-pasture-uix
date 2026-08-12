@@ -25,6 +25,7 @@ import TagPicker from "@/_UI/TagPicker";
 import { WEIGHT_UNITS, formatWeight } from "@/_utils/formatWeight";
 import SanitizedHtml from "@/_UI/SanitizedHtml";
 import { siblingAnchorId } from "@/_utils/siblingAnchorId";
+import { variantGroupKey } from "@/_utils/groupVariants";
 
 const ProductDetail: React.FC = () => {
 	const router = useRouter();
@@ -103,6 +104,15 @@ const ProductDetail: React.FC = () => {
 			.filter((candidate: any) => String(candidate.id) !== String(id))
 			.map((candidate: any) => ({ value: candidate.id, label: candidate.name })),
 	];
+
+	// Every pack size of this product, smallest first — the same order the
+	// storefront chips use. Reuses anchorCandidates rather than fetching again:
+	// the picker already loaded the list this filters over.
+	const siblingSizes = item
+		? anchorCandidates
+				.filter((candidate: any) => variantGroupKey(candidate) === variantGroupKey(item))
+				.sort((a: any, b: any) => Number(a.weightValue ?? 0) - Number(b.weightValue ?? 0))
+		: [];
 
 	// `silent` refreshes in place: the toolbar icon spins but the page keeps its
 	// content, instead of collapsing back into the full-page loader.
@@ -589,6 +599,60 @@ const ProductDetail: React.FC = () => {
 								</Badge>
 							}
 						/>
+					</DetailSection>
+				)}
+
+				{/* Only worth a panel once there is more than one size — for a lone
+				    product the Pack Size row above already says everything. */}
+				{siblingSizes.length > 1 && (
+					<DetailSection title="Pack sizes">
+						<p className="px-5 pt-4 text-xs" style={{ color: "var(--text-hint)" }}>
+							These sell as one product on the storefront — one card, with the size chosen on the
+							product page. Each size keeps its own price and stock, and is edited on its own page.
+						</p>
+						<div className="space-y-2 p-5">
+							{siblingSizes.map((size: any) => {
+								const isCurrent = String(size.id) === String(id);
+								return (
+									<button
+										key={size.id}
+										type="button"
+										disabled={isCurrent}
+										onClick={() => router.push(`/admin/product/${size.id}`)}
+										className={`flex w-full flex-wrap items-center gap-x-4 gap-y-1 rounded-lg px-3.5 py-2.5 text-left transition-opacity ${
+											isCurrent ? "cursor-default" : "cursor-pointer hover:opacity-80"
+										}`}
+										style={{
+											background: isCurrent ? "rgba(154,202,60,0.12)" : "var(--surface-low)",
+											border: `1px solid ${isCurrent ? "var(--color-primary)" : "var(--border-light)"}`,
+										}}
+									>
+										<span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+											{formatWeight(size.weightValue, size.weightUnit) || "No size set"}
+										</span>
+										<span className="text-sm tabular-nums" style={{ color: "var(--text-secondary)" }}>
+											{formatCurrency(size.price)}
+										</span>
+										<span className="text-xs tabular-nums" style={{ color: "var(--text-hint)" }}>
+											{formatNumber(Number(size.availableQuantity ?? size.unit ?? 0))} in stock
+										</span>
+										<span className="ml-auto flex items-center gap-2">
+											<Badge variant={size.published ? "success" : "warning"} dot>
+												{size.published ? "Published" : "Draft"}
+											</Badge>
+											{isCurrent && (
+												<span
+													className="text-[0.65rem] font-semibold uppercase tracking-[0.12em]"
+													style={{ color: "var(--color-primary)" }}
+												>
+													Editing
+												</span>
+											)}
+										</span>
+									</button>
+								);
+							})}
+						</div>
 					</DetailSection>
 				)}
 
