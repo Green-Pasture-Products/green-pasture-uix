@@ -24,20 +24,7 @@ import RichTextEditor from "@/_UI/RichTextEditor";
 import TagPicker from "@/_UI/TagPicker";
 import { WEIGHT_UNITS, formatWeight } from "@/_utils/formatWeight";
 import SanitizedHtml from "@/_UI/SanitizedHtml";
-
-// `variantGroupId` is a GROUP id; the API's `variantOfItemId` is another ITEM's
-// id, which it resolves to that item's group. The two are only ever the same
-// uuid for the anchor of a picker-created group — a bulk-created group's id
-// belongs to no item at all, so sending it back 404s and the save fails after
-// the name/price write has already committed. Resolve it to a real sibling
-// instead, out of the list the picker already fetched.
-const siblingAnchorId = (item: any, candidates: any[]): string => {
-	if (!item?.variantGroupId) return "";
-	const sibling = candidates.find(
-		(candidate: any) => candidate?.variantGroupId === item.variantGroupId && String(candidate.id) !== String(item.id),
-	);
-	return sibling?.id ?? "";
-};
+import { siblingAnchorId } from "@/_utils/siblingAnchorId";
 
 const ProductDetail: React.FC = () => {
 	const router = useRouter();
@@ -194,13 +181,20 @@ const ProductDetail: React.FC = () => {
 				unit: Number(editForm.unit),
 				weightValue: editForm.weightValue !== "" ? Number(editForm.weightValue) : null,
 				weightUnit: editForm.weightUnit.trim() || null,
-				// Explicit null detaches; the API treats an absent field as
-				// "leave the grouping alone", which is not what an empty select means.
-				variantOfItemId: editForm.variantOfItemId || null,
 				// Always sent, so clearing every tag actually clears them. The
 				// API treats an absent tagIds as "leave alone" and [] as "clear".
 				tagIds: selectedTagIds,
 			};
+
+			// Only the picker can detach. If we could not resolve this item's
+			// current grouping — the candidates fetch failed, or the sibling sits
+			// past the limit — leave the grouping alone rather than asking the API
+			// to dissolve it. Absent means "don't touch"; null means detach, and
+			// for a group owner that now clears every sibling.
+			const groupingResolved = !(item as any)?.variantGroupId || !!siblingAnchorId(item, anchorCandidates);
+			if (editForm.variantOfItemId || groupingResolved) {
+				payload.variantOfItemId = editForm.variantOfItemId || null;
+			}
 
 			if (editForm.category) {
 				payload.productId = editForm.category;
