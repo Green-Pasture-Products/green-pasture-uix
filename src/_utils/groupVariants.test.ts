@@ -48,6 +48,17 @@ test("a sold-out smallest size does not represent the group", () => {
 	assert.equal(groups[0].id, "a");
 });
 
+test("an unpublished smallest size does not represent the group", () => {
+	const groups = groupVariants([
+		item({ id: "a", variantGroupId: "g", weightValue: 250 }),
+		item({ id: "b", variantGroupId: "g", weightValue: 100, published: false }),
+	]);
+
+	assert.equal(groups[0].id, "a");
+	// It is still a member — the chip list shows every size the group has.
+	assert.equal(groups[0].variants.length, 2);
+});
+
 test("an all-sold-out group still renders, using its first member", () => {
 	const groups = groupVariants([
 		item({ id: "a", variantGroupId: "g", weightValue: 250, unit: 0 }),

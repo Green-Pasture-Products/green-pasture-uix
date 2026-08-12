@@ -25,6 +25,20 @@ import TagPicker from "@/_UI/TagPicker";
 import { WEIGHT_UNITS, formatWeight } from "@/_utils/formatWeight";
 import SanitizedHtml from "@/_UI/SanitizedHtml";
 
+// `variantGroupId` is a GROUP id; the API's `variantOfItemId` is another ITEM's
+// id, which it resolves to that item's group. The two are only ever the same
+// uuid for the anchor of a picker-created group — a bulk-created group's id
+// belongs to no item at all, so sending it back 404s and the save fails after
+// the name/price write has already committed. Resolve it to a real sibling
+// instead, out of the list the picker already fetched.
+const siblingAnchorId = (item: any, candidates: any[]): string => {
+	if (!item?.variantGroupId) return "";
+	const sibling = candidates.find(
+		(candidate: any) => candidate?.variantGroupId === item.variantGroupId && String(candidate.id) !== String(item.id),
+	);
+	return sibling?.id ?? "";
+};
+
 const ProductDetail: React.FC = () => {
 	const router = useRouter();
 	const { id } = router.query;
@@ -124,9 +138,7 @@ const ProductDetail: React.FC = () => {
 						status: data.status ?? "A",
 						weightValue: data.weightValue ? String(data.weightValue) : "",
 						weightUnit: data.weightUnit ?? "",
-						// The anchor is whichever sibling owns the group id. Showing the
-						// group id itself would be meaningless in a product dropdown.
-						variantOfItemId: data.variantGroupId ?? "",
+						variantOfItemId: siblingAnchorId(data, anchorCandidates),
 					});
 					setSelectedTagIds((data.tags ?? []).map((t: any) => t.id));
 				}
@@ -145,6 +157,14 @@ const ProductDetail: React.FC = () => {
 		if (!router.isReady || !id) return;
 		fetchItem();
 	}, [id, router.isReady]);
+
+	// The candidate list is fetched in parallel with the item, so the hydration
+	// above often runs before it lands and the picker shows nothing for a
+	// grouped item. Fill it in when the list arrives, without a second fetch.
+	useEffect(() => {
+		if (!(item as any)?.variantGroupId) return;
+		setEditForm((f) => (f.variantOfItemId ? f : { ...f, variantOfItemId: siblingAnchorId(item, anchorCandidates) }));
+	}, [anchorCandidates, item]);
 
 	const handleToggleStatus = async () => {
 		if (!item) return;
@@ -295,9 +315,7 @@ const ProductDetail: React.FC = () => {
 				status: item.status ?? "A",
 				weightValue: (item as any).weightValue ? String((item as any).weightValue) : "",
 				weightUnit: (item as any).weightUnit ?? "",
-				// The anchor is whichever sibling owns the group id. Showing the
-				// group id itself would be meaningless in a product dropdown.
-				variantOfItemId: (item as any).variantGroupId ?? "",
+				variantOfItemId: siblingAnchorId(item, anchorCandidates),
 			});
 			setSelectedTagIds(((item as any).tags ?? []).map((t: any) => t.id));
 		}

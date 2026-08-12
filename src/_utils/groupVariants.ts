@@ -20,7 +20,11 @@ export function variantGroupKey(item: any): string {
 	return item?.variantGroupId ?? item?.id;
 }
 
-const inStock = (item: any): boolean => Number(item?.unit) > 0;
+// Published AND in stock, per the spec's representative rule. Both current
+// feeders fetch `?published=true`, so the published half never fires today —
+// it is here so handing this an unfiltered list can never elect a draft
+// sibling as the public face of the card.
+const canRepresent = (item: any): boolean => item?.published !== false && Number(item?.unit) > 0;
 
 const bySizeAscending = (a: any, b: any): number => Number(a?.weightValue ?? 0) - Number(b?.weightValue ?? 0);
 
@@ -36,9 +40,9 @@ export function groupVariants<T extends Record<string, any>>(items: T[] | undefi
 	return [...groups.values()].map((members) => {
 		const variants = [...members].sort(bySizeAscending);
 		// Smallest size that can actually be bought — the cheapest way in. When
-		// the whole group is sold out we still show it, using the first member,
+		// no member is eligible we still show the group, using the first member,
 		// so the product does not silently vanish from the shelf.
-		const representative = variants.find(inStock) ?? members[0];
+		const representative = variants.find(canRepresent) ?? members[0];
 		return { ...representative, variants };
 	});
 }
