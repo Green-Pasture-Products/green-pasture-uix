@@ -14,6 +14,7 @@ import EmptySearchIllustration from "@/_UI/illustrations/EmptySearchIllustration
 import SearchFiltersComponent from "@/_components/SearchFilters";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { filterAndSortProducts } from "@/_utils";
+import { groupVariants } from "@/_utils/groupVariants";
 import { useProductFilters } from "@/_hooks/useProductFilters";
 import ProductCard from "@/_components/ProductCard";
 import SearchBar from "@/_components/SearchBar";
@@ -57,7 +58,10 @@ const FilteredProducts: React.FC = () => {
 		dispatch(productsAction.fetchAllProducts({ activeOnly: true }));
 	}, [dispatch]);
 
-	const filteredProducts = filterAndSortProducts(products, query, filters);
+	// Same order as the home rail: filter, then collapse pack sizes into one
+	// card each. The result count on line 98 then counts products, not SKUs,
+	// which is what "12 products found" is meant to mean.
+	const filteredProducts = groupVariants(filterAndSortProducts(products, query, filters));
 
 	const handleSearch = (searchQuery: string) => {
 		router.push(

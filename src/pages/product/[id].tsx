@@ -40,6 +40,7 @@ import PageLoader from "@/_UI/PageLoader";
 import SanitizedHtml from "@/_UI/SanitizedHtml";
 import { formatWeight } from "@/_utils/formatWeight";
 import { htmlToText } from "@/_utils/htmlToText";
+import { groupVariants, variantGroupKey } from "@/_utils/groupVariants";
 
 const ProductDetailsPage: React.FC = () => {
 	const router = useRouter();
@@ -59,12 +60,14 @@ const ProductDetailsPage: React.FC = () => {
 
 	const p = product as any;
 	const productCategory = p?.product?.name || p?.category || "";
-	const relatedProducts = products
-		.filter((pr: any) => {
+	const relatedProducts = groupVariants(
+		products.filter((pr: any) => {
 			const cat = pr.product?.name || pr.category || "";
-			return cat === productCategory && String(pr.id) !== String(id);
-		})
-		.slice(0, 4);
+			// Exclude the whole group, not just this one size — otherwise the
+			// product being viewed reappears in its own "related" strip.
+			return cat === productCategory && variantGroupKey(pr) !== variantGroupKey(p);
+		}),
+	).slice(0, 4);
 
 	const cartItem = cartItems.find((item) => String(item.id) === String(id));
 	const isInCart = !!cartItem;

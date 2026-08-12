@@ -17,6 +17,7 @@ import BotanicalHero from "@/_components/BotanicalHero";
 import Timeline, { TimelineItem } from "@/_UI/Timeline";
 import SectionHeading from "@/_UI/SectionHeading";
 import { groupByCategory } from "@/_utils/groupByCategory";
+import { groupVariants } from "@/_utils/groupVariants";
 
 const features = [
 	{ icon: Leaf, title: "Certified organic", desc: "No synthetic pesticides, no growth agents, no fillers — verified at the farm gate." },
@@ -106,11 +107,14 @@ const HomePage: React.FC = () => {
 	const availableTags = useMemo(() => tags.filter((t) => usedTagSlugs.has(t.slug)), [tags, usedTagSlugs]);
 
 	const visible = useMemo(() => {
-		return (products ?? []).filter((p: any) => {
+		const matching = (products ?? []).filter((p: any) => {
 			const inCategory = category === ALL || (p.product?.name || p.category || "") === category;
 			const hasTag = tag === ALL || ((p.tags ?? []) as any[]).some((t) => t?.slug === tag);
 			return inCategory && hasTag;
 		});
+		// Grouped after filtering: grouping first would let a size the filter
+		// excluded pull its siblings back onto the shelf.
+		return groupVariants(matching);
 	}, [products, category, tag]);
 
 	// Hand the active filters to /products, which reads the same keys.
