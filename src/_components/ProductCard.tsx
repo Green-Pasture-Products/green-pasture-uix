@@ -17,7 +17,7 @@ import {
 import { usePathname } from "next/navigation";
 import { appConstants } from "@/_redux/constants";
 import { htmlToText } from "@/_utils/htmlToText";
-import { formatWeight } from "@/_utils/formatWeight";
+import { variantSummary } from "@/_utils/variantSummary";
 
 interface ProductCardProps {
 	product: Product;
@@ -47,18 +47,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const price = Number(p.price || 0);
 	// `variants` is present only when the card came through groupVariants. A
 	// card rendered from a raw item (wishlist, cart) keeps its single size.
-	const variants: any[] = p.variants?.length > 1 ? p.variants : [];
-	// Label first, then slice. formatWeight returns "" for a size with no
-	// weightValue, and groupVariants sorts those to the front — counting the
-	// overflow off the raw list would hide two sizes while claiming one, or
-	// render a bare " +1" with nothing before it.
-	const sizeLabels = variants.map((v) => formatWeight(v.weightValue, v.weightUnit)).filter(Boolean);
-	const packSize = variants.length
-		? sizeLabels.slice(0, 3).join(" · ") + (sizeLabels.length > 3 ? ` +${sizeLabels.length - 3}` : "")
-		: formatWeight(p.weightValue, p.weightUnit);
-	// "from" only earns its place when the sizes actually differ in price.
-	const priceVaries = variants.length > 0 && new Set(variants.map((v) => Number(v.price))).size > 1;
-	const lowestPrice = variants.length ? Math.min(...variants.map((v) => Number(v.price || 0))) : 0;
+	const { variants, packSize, priceVaries, lowestPrice } = variantSummary(p);
 	// Admin kill-switch: hide the sale treatment site-wide without touching the
 	// stored originalPrice, so it can be switched back on unchanged.
 	const showDiscount = useAppSelector((state) => state.settings.showDiscountBadges);

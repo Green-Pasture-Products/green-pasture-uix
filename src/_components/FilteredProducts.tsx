@@ -15,6 +15,7 @@ import SearchFiltersComponent from "@/_components/SearchFilters";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { filterAndSortProducts } from "@/_utils";
 import { groupVariants } from "@/_utils/groupVariants";
+import { variantSummary } from "@/_utils/variantSummary";
 import { useProductFilters } from "@/_hooks/useProductFilters";
 import ProductCard from "@/_components/ProductCard";
 import SearchBar from "@/_components/SearchBar";
@@ -277,6 +278,7 @@ const FilteredProducts: React.FC = () => {
 						>
 							{filteredProducts?.map((product, i) => {
 								const p = product as any;
+								const { packSize, priceVaries, lowestPrice } = variantSummary(p);
 								const imageUrl =
 									p.photos?.[0]?.url || p.image || "";
 								const price = Number(p.price || 0);
@@ -345,7 +347,7 @@ const FilteredProducts: React.FC = () => {
 														?.toUpperCase()}
 												</div>
 											)}
-											{discount && discount > 0 && (
+											{!priceVaries && discount && discount > 0 && (
 												<span className="absolute top-1.5 left-1.5 text-[0.6rem] font-bold px-1 py-0.5 rounded text-white leading-none" style={{ background: '#ef4444' }}>
 													-{discount}%
 												</span>
@@ -360,6 +362,16 @@ const FilteredProducts: React.FC = () => {
 											>
 												{product.name}
 											</h3>
+											{packSize && (
+												<p
+													className="text-xs mt-0.5"
+													style={{
+														color: "var(--text-hint)",
+													}}
+												>
+													{packSize}
+												</p>
+											)}
 											<p
 												className="text-xs mt-0.5 line-clamp-1"
 												style={{
@@ -375,9 +387,14 @@ const FilteredProducts: React.FC = () => {
 														color: "var(--color-primary)",
 													}}
 												>
-													₦{price.toLocaleString()}
+													{priceVaries && (
+														<span className="mr-0.5 text-[0.65rem] font-normal" style={{ color: "var(--text-hint)" }}>
+															from
+														</span>
+													)}
+													₦{(priceVaries ? lowestPrice : price).toLocaleString()}
 												</span>
-												{originalPrice && discount && discount > 0 && (
+												{!priceVaries && originalPrice && discount && discount > 0 && (
 													<span className="text-xs line-through" style={{ color: 'var(--text-hint)' }}>
 														₦{originalPrice.toLocaleString()}
 													</span>
