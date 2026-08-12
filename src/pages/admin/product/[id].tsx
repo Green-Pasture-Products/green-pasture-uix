@@ -59,8 +59,36 @@ const ProductDetail: React.FC = () => {
 		status: "A",
 		weightValue: "",
 		weightUnit: "",
+		variantOfItemId: "",
 	});
 	const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+
+	// Deliberately not the shared state.product.products slice: the storefront
+	// grids read that and expect published items only, while this picker needs
+	// unpublished siblings too. Local state keeps the two from colliding.
+	const [anchorCandidates, setAnchorCandidates] = useState<any[]>([]);
+
+	useEffect(() => {
+		let cancelled = false;
+		axiosInstance
+			.get("items?page=1&limit=100")
+			.then((res) => {
+				if (!cancelled) setAnchorCandidates(res.data?.data?.items ?? []);
+			})
+			.catch(() => {
+				// A failed load leaves the picker empty rather than blocking the
+				// rest of the edit form — grouping is not the main job here.
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, []);
+
+	// Any other item can be the anchor, except this one — an item cannot be a
+	// size variant of itself, and the API rejects it anyway.
+	const anchorOptions = anchorCandidates
+		.filter((candidate: any) => String(candidate.id) !== String(id))
+		.map((candidate: any) => ({ value: candidate.id, label: candidate.name }));
 
 	// `silent` refreshes in place: the toolbar icon spins but the page keeps its
 	// content, instead of collapsing back into the full-page loader.
@@ -83,6 +111,9 @@ const ProductDetail: React.FC = () => {
 						status: data.status ?? "A",
 						weightValue: data.weightValue ? String(data.weightValue) : "",
 						weightUnit: data.weightUnit ?? "",
+						// The anchor is whichever sibling owns the group id. Showing the
+						// group id itself would be meaningless in a product dropdown.
+						variantOfItemId: data.variantGroupId ?? "",
 					});
 					setSelectedTagIds((data.tags ?? []).map((t: any) => t.id));
 				}
@@ -130,6 +161,9 @@ const ProductDetail: React.FC = () => {
 				unit: Number(editForm.unit),
 				weightValue: editForm.weightValue !== "" ? Number(editForm.weightValue) : null,
 				weightUnit: editForm.weightUnit.trim() || null,
+				// Explicit null detaches; the API treats an absent field as
+				// "leave the grouping alone", which is not what an empty select means.
+				variantOfItemId: editForm.variantOfItemId || null,
 				// Always sent, so clearing every tag actually clears them. The
 				// API treats an absent tagIds as "leave alone" and [] as "clear".
 				tagIds: selectedTagIds,
@@ -248,6 +282,9 @@ const ProductDetail: React.FC = () => {
 				status: item.status ?? "A",
 				weightValue: (item as any).weightValue ? String((item as any).weightValue) : "",
 				weightUnit: (item as any).weightUnit ?? "",
+				// The anchor is whichever sibling owns the group id. Showing the
+				// group id itself would be meaningless in a product dropdown.
+				variantOfItemId: (item as any).variantGroupId ?? "",
 			});
 			setSelectedTagIds(((item as any).tags ?? []).map((t: any) => t.id));
 		}
@@ -427,6 +464,20 @@ const ProductDetail: React.FC = () => {
 								placeholder="Select a unit"
 								searchable={false}
 							/>
+
+							<div className="sm:col-span-2">
+								<FormSelectDropdown
+									label="Same product as"
+									placeholder="Not a size variant"
+									searchable
+									value={editForm.variantOfItemId}
+									onChange={(val) => setEditForm((f) => ({ ...f, variantOfItemId: val }))}
+									options={anchorOptions}
+								/>
+								<p className="mt-1.5 text-xs" style={{ color: "var(--text-hint)" }}>
+									Pick another listing to group this one with it as a pack size of the same product. They will share one card in the shop.
+								</p>
+							</div>
 
 							<div className="sm:col-span-2">
 								<TagPicker value={selectedTagIds} onChange={setSelectedTagIds} />
