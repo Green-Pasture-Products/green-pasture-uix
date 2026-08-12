@@ -86,9 +86,22 @@ const ProductDetail: React.FC = () => {
 
 	// Any other item can be the anchor, except this one — an item cannot be a
 	// size variant of itself, and the API rejects it anyway.
-	const anchorOptions = anchorCandidates
-		.filter((candidate: any) => String(candidate.id) !== String(id))
-		.map((candidate: any) => ({ value: candidate.id, label: candidate.name }));
+	//
+	// The leading empty option is what makes detaching possible at all.
+	// FormSelectDropdown renders only the options it is handed and has no
+	// clear control of its own — `placeholder` is just the text shown while
+	// the value is already empty. Without a selectable "" entry, an item could
+	// be grouped through this picker but never ungrouped.
+	//
+	// ponytail: first 100 items only. The catalogue is far short of that,
+	// and the real fix when it isn't is a server-side search on this
+	// endpoint, not a bigger number here.
+	const anchorOptions = [
+		{ value: "", label: "Not a size variant" },
+		...anchorCandidates
+			.filter((candidate: any) => String(candidate.id) !== String(id))
+			.map((candidate: any) => ({ value: candidate.id, label: candidate.name })),
+	];
 
 	// `silent` refreshes in place: the toolbar icon spins but the page keeps its
 	// content, instead of collapsing back into the full-page loader.
