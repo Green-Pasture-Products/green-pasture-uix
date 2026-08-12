@@ -48,12 +48,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	// `variants` is present only when the card came through groupVariants. A
 	// card rendered from a raw item (wishlist, cart) keeps its single size.
 	const variants: any[] = p.variants?.length > 1 ? p.variants : [];
+	// Label first, then slice. formatWeight returns "" for a size with no
+	// weightValue, and groupVariants sorts those to the front — counting the
+	// overflow off the raw list would hide two sizes while claiming one, or
+	// render a bare " +1" with nothing before it.
+	const sizeLabels = variants.map((v) => formatWeight(v.weightValue, v.weightUnit)).filter(Boolean);
 	const packSize = variants.length
-		? variants
-				.slice(0, 3)
-				.map((v) => formatWeight(v.weightValue, v.weightUnit))
-				.filter(Boolean)
-				.join(" · ") + (variants.length > 3 ? ` +${variants.length - 3}` : "")
+		? sizeLabels.slice(0, 3).join(" · ") + (sizeLabels.length > 3 ? ` +${sizeLabels.length - 3}` : "")
 		: formatWeight(p.weightValue, p.weightUnit);
 	// "from" only earns its place when the sizes actually differ in price.
 	const priceVaries = variants.length > 0 && new Set(variants.map((v) => Number(v.price))).size > 1;
