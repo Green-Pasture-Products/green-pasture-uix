@@ -27,6 +27,7 @@ import {
 import { clearCartAsync } from "@/_redux/actions/cart.action";
 import { appConstants } from "@/_redux/constants";
 import { formatRateAsPercent } from "@/_utils/rate";
+import { formatWeight } from "@/_utils/formatWeight";
 import Image from "next/image";
 import Layout from "@/_components/Layout";
 import PageLoader from "@/_UI/PageLoader";
@@ -739,6 +740,17 @@ const CartPage: React.FC = () => {
 														>
 															{(item as any)?.product?.name || item?.category || ""}
 														</p>
+														{formatWeight(item?.weightValue, item?.weightUnit) && (
+															<p
+																style={{
+																	fontSize: "0.8rem",
+																	color: "var(--text-hint)",
+																	margin: "0.15rem 0 0 0",
+																}}
+															>
+																{formatWeight(item?.weightValue, item?.weightUnit)}
+															</p>
+														)}
 														{(() => {
 															const availableStock = (item as any).unit ?? (item as any).availableQuantity;
 															return availableStock !== undefined && availableStock > 0 && availableStock <= 5 ? (

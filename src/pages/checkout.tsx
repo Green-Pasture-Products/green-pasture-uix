@@ -32,6 +32,7 @@ import Layout from "@/_components/Layout";
 import toast from "react-hot-toast";
 import { useOutcome } from "@/_UI/Outcome";
 import { formatRateAsPercent } from "@/_utils/rate";
+import { formatWeight } from "@/_utils/formatWeight";
 import { FormInput } from "@/_UI/FormField";
 import Button from "@/_UI/Button";
 import PageLoader from "@/_UI/PageLoader";
@@ -1096,7 +1097,7 @@ const CheckoutPage: React.FC = () => {
 													{item.name}
 												</h4>
 												<p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-													Qty: {item.quantity}
+													{[formatWeight(item.weightValue, item.weightUnit), `Qty: ${item.quantity}`].filter(Boolean).join(" · ")}
 												</p>
 											</div>
 											<span className="text-sm font-semibold shrink-0" style={{ color: "var(--text-primary)" }}>

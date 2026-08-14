@@ -265,6 +265,8 @@ export interface BackendItem {
 	onSale?: boolean;
 	discountPercent?: number | null;
 	unit: number;
+	weightValue?: number | null;
+	weightUnit?: string | null;
 	product?: { id: string; name: string };
 	photos?: { id: string; url: string; publicId: string; isThumbnail?: boolean }[];
 	ratingStats?: { average: number; count: number };
