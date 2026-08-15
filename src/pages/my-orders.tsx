@@ -193,6 +193,8 @@ const MyOrders: React.FC = () => {
 												inStock: true,
 												rating: 0,
 												reviews: 0,
+												weightValue: item.weightValue ?? null,
+												weightUnit: item.weightUnit ?? null,
 											} as any));
 										}
 									});

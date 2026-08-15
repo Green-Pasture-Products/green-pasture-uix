@@ -8,6 +8,7 @@ import Button from "@/_UI/Button";
 import { DataTable } from "@/_components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatCurrency } from "@/_UI/FormatValue";
+import { formatWeight } from "@/_utils/formatWeight";
 import { FormInput, FormSelect } from "@/_UI/FormField";
 import PageLoader from "@/_UI/PageLoader";
 import toast from "react-hot-toast";
@@ -105,11 +106,22 @@ const OrderDetail: React.FC = () => {
 			accessorKey: "item",
 			header: "Item Name",
 			enableSorting: false,
-			cell: ({ row }) => (
-				<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-					{row.original.item?.name ?? "\u2014"}
-				</span>
-			),
+			cell: ({ row }) => {
+				const name = row.original.itemName ?? row.original.item?.name ?? "\u2014";
+				const size = formatWeight(row.original.weightValue ?? row.original.item?.weightValue, row.original.weightUnit ?? row.original.item?.weightUnit);
+				return (
+					<div>
+						<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+							{name}
+						</span>
+						{size && (
+							<div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+								{size}
+							</div>
+						)}
+					</div>
+				);
+			},
 		},
 		{
 			accessorKey: "quantity",

@@ -39,10 +39,15 @@ export function groupVariants<T extends Record<string, any>>(items: T[] | undefi
 
 	return [...groups.values()].map((members) => {
 		const variants = [...members].sort(bySizeAscending);
-		// Smallest size that can actually be bought — the cheapest way in. When
-		// no member is eligible we still show the group, using the first member,
-		// so the product does not silently vanish from the shelf.
-		const representative = variants.find(canRepresent) ?? members[0];
+		// Merchant-set default wins first, but only if it is actually
+		// purchasable — an out-of-stock or unpublished default must not hide a
+		// buyable size behind it. Falls back to the existing cheapest-in-stock
+		// rule when no member is marked default, or the default itself cannot
+		// represent the group.
+		const representative =
+			variants.find((v) => v.isDefault && canRepresent(v)) ??
+			variants.find(canRepresent) ??
+			members[0];
 		return { ...representative, variants };
 	});
 }

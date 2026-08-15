@@ -13,6 +13,7 @@ import Button from "@/_UI/Button";
 import PageLoader from "@/_UI/PageLoader";
 import Card from "@/_UI/Card";
 import { formatCurrency } from "@/_UI/FormatValue";
+import { formatWeight } from "@/_utils/formatWeight";
 import { BackendOrder, BackendOrderItem } from "@/types";
 
 const getStatusVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
@@ -229,10 +230,15 @@ const OrderConfirmationPage: React.FC = () => {
 											className="text-sm font-medium truncate"
 											style={{ color: "var(--text-primary)" }}
 										>
-											{orderItem.item?.name ?? "Unknown Item"}
+											{orderItem.itemName ?? orderItem.item?.name ?? "Unknown Item"}
 										</h4>
 										<p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>
-											Qty: {orderItem.quantity} x {formatCurrency(orderItem.unitPrice)}
+											{[
+												formatWeight(orderItem.weightValue ?? orderItem.item?.weightValue, orderItem.weightUnit ?? orderItem.item?.weightUnit),
+												`Qty: ${orderItem.quantity} x ${formatCurrency(orderItem.unitPrice)}`,
+											]
+												.filter(Boolean)
+												.join(" · ")}
 										</p>
 									</div>
 									<span

@@ -39,6 +39,7 @@ const ProductDetail: React.FC = () => {
 	const [statusModalOpen, setStatusModalOpen] = useState(false);
 	const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
 	const [settingThumbnailId, setSettingThumbnailId] = useState<string | null>(null);
+	const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
 	const [newImages, setNewImages] = useState<File[]>([]);
 	const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 	const [uploadingImages, setUploadingImages] = useState(false);
@@ -262,6 +263,21 @@ const ProductDetail: React.FC = () => {
 			toast.error(err?.response?.data?.message || "Failed to set thumbnail");
 		} finally {
 			setSettingThumbnailId(null);
+		}
+	};
+
+	const handleSetDefault = async (itemId: string) => {
+		setSettingDefaultId(itemId);
+		try {
+			await axiosInstance.patch(`items/${itemId}`, { isDefault: true });
+			toast.success("Default size updated");
+			const res = await axiosInstance.get("items?page=1&limit=100");
+			setAnchorCandidates(res.data?.data?.items ?? []);
+			if (String(itemId) === String(id)) await fetchItem(true);
+		} catch (err: any) {
+			toast.error(err?.response?.data?.message || "Failed to set default size");
+		} finally {
+			setSettingDefaultId(null);
 		}
 	};
 
@@ -614,11 +630,16 @@ const ProductDetail: React.FC = () => {
 							{siblingSizes.map((size: any) => {
 								const isCurrent = String(size.id) === String(id);
 								return (
-									<button
+									<div
 										key={size.id}
-										type="button"
-										disabled={isCurrent}
-										onClick={() => router.push(`/admin/product/${size.id}`)}
+										role="button"
+										tabIndex={isCurrent ? -1 : 0}
+										onClick={() => !isCurrent && router.push(`/admin/product/${size.id}`)}
+										onKeyDown={(e) => {
+											if (e.target !== e.currentTarget) return;
+											if (e.key === " ") e.preventDefault();
+											if (!isCurrent && (e.key === "Enter" || e.key === " ")) router.push(`/admin/product/${size.id}`);
+										}}
 										className={`flex w-full flex-wrap items-center gap-x-4 gap-y-1 rounded-lg px-3.5 py-2.5 text-left transition-opacity ${
 											isCurrent ? "cursor-default" : "cursor-pointer hover:opacity-80"
 										}`}
@@ -640,6 +661,29 @@ const ProductDetail: React.FC = () => {
 											<Badge variant={size.published ? "success" : "warning"} dot>
 												{size.published ? "Published" : "Draft"}
 											</Badge>
+											{size.isDefault ? (
+												<span
+													className="inline-flex items-center gap-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em]"
+													style={{ color: "var(--color-primary)" }}
+												>
+													<Star className="w-3 h-3 fill-current" />
+													Default
+												</span>
+											) : (
+												<button
+													type="button"
+													onClick={(e) => {
+														e.stopPropagation();
+														handleSetDefault(size.id);
+													}}
+													disabled={settingDefaultId === size.id}
+													className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.65rem] font-semibold disabled:opacity-50"
+													style={{ background: "var(--surface-base)", color: "var(--text-secondary)", border: "1px solid var(--border-light)" }}
+												>
+													<Star className="w-3 h-3" />
+													{settingDefaultId === size.id ? "Setting…" : "Set default"}
+												</button>
+											)}
 											{isCurrent && (
 												<span
 													className="text-[0.65rem] font-semibold uppercase tracking-[0.12em]"
@@ -649,7 +693,7 @@ const ProductDetail: React.FC = () => {
 												</span>
 											)}
 										</span>
-									</button>
+									</div>
 								);
 							})}
 						</div>
