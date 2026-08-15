@@ -131,6 +131,15 @@ export interface DataTableProps<T> {
   testId?: string;
   /** Serial-number column, prepended to `columns`. Defaults to true. */
   showSN?: boolean;
+  /** Created/Modified By & At columns, inserted before a trailing "actions" column (or appended if there is none). Defaults to true — every admin table gets audit columns for free. */
+  showAuditColumns?: boolean;
+}
+
+function formatAuditDate(value: unknown): string {
+  if (!value) return "—";
+  const date = new Date(value as string);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 const DEFAULT_PAGE_SIZES = [10, 15, 20, 50];
@@ -182,6 +191,7 @@ export function DataTable<T>({
   onRowClick,
   testId = "data-table",
   showSN = true,
+  showAuditColumns = true,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = React.useState<SortingState>(sortingProp ?? []);
   const [globalFilter, setGlobalFilter] = React.useState(globalFilterProp ?? "");
@@ -234,7 +244,49 @@ export function DataTable<T>({
   const snStart = firstSerialNumber(snPageIndex, snPageSize);
 
   const tableColumns = React.useMemo<ColumnDef<T, any>[]>(() => {
-    if (!showSN) return columns;
+    let cols = columns;
+
+    if (showAuditColumns) {
+      const auditColumns: ColumnDef<T, any>[] = [
+        {
+          id: "__createdBy",
+          header: "Created By",
+          enableSorting: false,
+          meta: { width: "140px" },
+          cell: ({ row }) => (row.original as any)?.createdBy || "—",
+        },
+        {
+          id: "__createdAt",
+          header: "Created At",
+          enableSorting: false,
+          meta: { width: "120px" },
+          cell: ({ row }) => formatAuditDate((row.original as any)?.createdAt),
+        },
+        {
+          id: "__updatedBy",
+          header: "Modified By",
+          enableSorting: false,
+          meta: { width: "140px" },
+          cell: ({ row }) => (row.original as any)?.updatedBy || "—",
+        },
+        {
+          id: "__updatedAt",
+          header: "Modified At",
+          enableSorting: false,
+          meta: { width: "120px" },
+          cell: ({ row }) => formatAuditDate((row.original as any)?.updatedAt),
+        },
+      ];
+      // Audit columns read as history, so they belong just before the row's
+      // actions, not after — appending unconditionally would push every
+      // page's action menu off to the right of columns nobody clicks.
+      const actionsIndex = cols.findIndex((c) => c.id === "actions");
+      cols = actionsIndex === -1
+        ? [...cols, ...auditColumns]
+        : [...cols.slice(0, actionsIndex), ...auditColumns, ...cols.slice(actionsIndex)];
+    }
+
+    if (!showSN) return cols;
     const snColumn: ColumnDef<T, any> = {
       id: "__sn",
       header: "S/N",
@@ -246,9 +298,9 @@ export function DataTable<T>({
       // in the full pre-pagination dataset, i.e. already absolute — don't add snStart.
       cell: ({ row }) => (manualPagination ? snStart + row.index : row.index + 1),
     };
-    return [snColumn, ...columns];
+    return [snColumn, ...cols];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columns, showSN, snStart, manualPagination]);
+  }, [columns, showSN, showAuditColumns, snStart, manualPagination]);
 
   const table = useReactTable({
     data,

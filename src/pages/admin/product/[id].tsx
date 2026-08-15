@@ -732,7 +732,7 @@ const ProductDetail: React.FC = () => {
 										<button
 											onClick={() => handleSetThumbnail(photo.id)}
 											disabled={settingThumbnailId === photo.id}
-											className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.6rem] font-semibold opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+											className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.6rem] font-semibold disabled:opacity-50"
 											style={{ background: "rgba(255,255,255,0.92)", color: "var(--color-primary)" }}
 										>
 											<Star className="w-3 h-3" />
@@ -744,7 +744,7 @@ const ProductDetail: React.FC = () => {
 										<button
 											onClick={() => handleDeleteImage(photo.id)}
 											disabled={deletingImageId === photo.id}
-											className="absolute top-2 right-2 p-1.5 rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 disabled:opacity-50"
+											className="absolute top-2 right-2 p-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
 										>
 											<Trash2 className="w-3.5 h-3.5" />
 										</button>
@@ -765,7 +765,7 @@ const ProductDetail: React.FC = () => {
 									</div>
 									<button
 										onClick={() => removeNewImage(index)}
-										className="absolute top-2 left-2 p-1.5 rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+										className="absolute top-2 left-2 p-1.5 rounded-full bg-red-600 text-white hover:bg-red-700"
 									>
 										<Trash2 className="w-3.5 h-3.5" />
 									</button>

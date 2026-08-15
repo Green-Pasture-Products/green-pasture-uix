@@ -1,4 +1,4 @@
-import { Leaf, Truck, Shield, Award, Mail, ArrowRight, Sprout, FlaskConical, PackageCheck, Home } from "lucide-react";
+import { Leaf, Truck, Shield, Award, Mail, ArrowRight, Sprout, FlaskConical, PackageCheck, Home, AlertTriangle } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -74,7 +74,7 @@ const ALL = "All";
 
 const HomePage: React.FC = () => {
 	const dispatch = useAppDispatch();
-	const { products, isFetchingAllProducts } = useAppSelector((state) => state.product);
+	const { products, isFetchingAllProducts, fetchAllProductsError } = useAppSelector((state) => state.product);
 	const tags = useAppSelector((state) => state.tag.tags);
 	const [email, setEmail] = useState("");
 
@@ -176,6 +176,14 @@ const HomePage: React.FC = () => {
 
 					{isFetchingAllProducts && !products?.length ? (
 						<RailSkeleton />
+					) : fetchAllProductsError && !products?.length ? (
+						<EmptyState
+							icon={AlertTriangle}
+							title="Couldn't load products"
+							description={fetchAllProductsError}
+							actionLabel="Try again"
+							onAction={() => dispatch(productsAction.fetchAllProducts({ activeOnly: true }))}
+						/>
 					) : visible.length > 0 ? (
 						<AnimatedSection delay={0.16}>
 							<CardRail label="Products">

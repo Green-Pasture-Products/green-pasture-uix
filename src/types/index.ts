@@ -49,6 +49,10 @@ export interface Tag {
 	slug: string;
 	description?: string;
 	status?: string;
+	createdAt?: string;
+	updatedAt?: string;
+	createdBy?: string;
+	updatedBy?: string;
 }
 
 export interface CategoriesState {
@@ -68,6 +72,8 @@ export interface CategoriesState {
 export interface ProductsState {
 	isFetchingAllProducts: boolean;
 	isFetchingProduct: boolean;
+	/** Set when fetchAllProducts rejects; cleared on the next attempt. Distinguishes "fetch failed" from "genuinely no products" so a transient failure never renders as a permanent empty shelf. */
+	fetchAllProductsError: string | null;
 	products: Product[];
 	product: Product | null;
 	categories: string[];
@@ -410,6 +416,9 @@ export interface BackendRole {
 	permissions: BackendPermission[];
 	status: string;
 	createdAt: string;
+	updatedAt?: string;
+	createdBy?: string;
+	updatedBy?: string;
 }
 
 export interface BackendPermission {
