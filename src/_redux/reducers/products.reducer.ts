@@ -23,6 +23,7 @@ const transformApiProduct = (item: any): Product => {
 const initialState: ProductsState = {
 	isFetchingAllProducts: false,
 	isFetchingProduct: false,
+	fetchAllProductsError: null,
 	products: [],
 	product: null,
 	categories: ["All"],
@@ -45,19 +46,22 @@ const productsSlice = createSlice({
 		builder
 			.addCase(productsAction.fetchAllProducts.pending, (state) => {
 				state.isFetchingAllProducts = true;
+				state.fetchAllProductsError = null;
 			})
 			.addCase(
 				productsAction.fetchAllProducts.fulfilled,
 				(state, action: PayloadAction<Product[]>) => {
 					// Transform API response items to Product type
-					state.products = action.payload.map(item => 
+					state.products = action.payload.map(item =>
 						typeof item.name === 'undefined' ? transformApiProduct(item as any) : item
 					);
 					state.isFetchingAllProducts = false;
+					state.fetchAllProductsError = null;
 				}
 			)
-			.addCase(productsAction.fetchAllProducts.rejected, (state) => {
+			.addCase(productsAction.fetchAllProducts.rejected, (state, action) => {
 				state.isFetchingAllProducts = false;
+				state.fetchAllProductsError = (action.payload as string) || "Failed to load products";
 			})
 			// Fetch Item By Id
 			.addCase(

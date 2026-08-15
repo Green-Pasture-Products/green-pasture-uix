@@ -125,16 +125,6 @@ const Roles: React.FC = () => {
 			),
 		},
 		{
-			accessorKey: 'description',
-			header: 'Description',
-			meta: { maxWidth: '300px', truncate: true },
-			cell: ({ getValue }) => (
-				<span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-					{(getValue() as string) || '—'}
-				</span>
-			),
-		},
-		{
 			accessorKey: 'permissions',
 			header: 'Permissions',
 			enableSorting: false,

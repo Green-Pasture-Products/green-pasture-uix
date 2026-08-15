@@ -14,7 +14,6 @@ import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { tagAction } from "@/_redux/actions/tag.action";
 import { useListParams } from "@/_hooks/useListParams";
 import type { Tag } from "@/types";
-import { htmlToText } from "@/_utils/htmlToText";
 
 const EDIT_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -99,16 +98,6 @@ const AdminTags: React.FC = () => {
 				<code className="text-xs" style={{ color: "var(--text-hint)" }}>
 					{row.original.slug}
 				</code>
-			),
-		},
-		{
-			accessorKey: "description",
-			header: "Description",
-			meta: { maxWidth: "360px", truncate: true },
-			cell: ({ row }) => (
-				<span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-					{htmlToText(row.original.description) || "—"}
-				</span>
 			),
 		},
 		{
