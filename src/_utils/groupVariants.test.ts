@@ -69,6 +69,33 @@ test("an all-sold-out group still renders, using its first member", () => {
 	assert.equal(groups[0].id, "a");
 });
 
+test("the merchant-set default represents the group even when it is not the cheapest", () => {
+	const groups = groupVariants([
+		item({ id: "a", variantGroupId: "g", weightValue: 100 }),
+		item({ id: "b", variantGroupId: "g", weightValue: 250, isDefault: true }),
+	]);
+
+	assert.equal(groups[0].id, "b");
+});
+
+test("a default that is sold out still falls back to the automatic pick", () => {
+	const groups = groupVariants([
+		item({ id: "a", variantGroupId: "g", weightValue: 100 }),
+		item({ id: "b", variantGroupId: "g", weightValue: 250, isDefault: true, unit: 0 }),
+	]);
+
+	assert.equal(groups[0].id, "a");
+});
+
+test("with no default set, the automatic cheapest-in-stock pick is unchanged", () => {
+	const groups = groupVariants([
+		item({ id: "a", variantGroupId: "g", weightValue: 250 }),
+		item({ id: "b", variantGroupId: "g", weightValue: 100 }),
+	]);
+
+	assert.equal(groups[0].id, "b");
+});
+
 test("group order follows first appearance, so the grid does not reshuffle between loads", () => {
 	const groups = groupVariants([
 		item({ id: "a", variantGroupId: "g1" }),

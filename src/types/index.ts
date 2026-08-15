@@ -37,6 +37,8 @@ export interface Product {
 	/** Pack size as printed on the label — 250 + "g", 50 + "tabs". */
 	weightValue?: number | null;
 	weightUnit?: string | null;
+	/** True on at most one size within a pack-size group — the merchant's chosen representative. */
+	isDefault?: boolean;
 	tags?: Tag[];
 }
 
@@ -267,6 +269,7 @@ export interface BackendItem {
 	unit: number;
 	weightValue?: number | null;
 	weightUnit?: string | null;
+	isDefault?: boolean;
 	product?: { id: string; name: string };
 	photos?: { id: string; url: string; publicId: string; isThumbnail?: boolean }[];
 	ratingStats?: { average: number; count: number };
