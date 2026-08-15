@@ -273,7 +273,7 @@ const ProductDetail: React.FC = () => {
 			toast.success("Default size updated");
 			const res = await axiosInstance.get("items?page=1&limit=100");
 			setAnchorCandidates(res.data?.data?.items ?? []);
-			if (itemId === id) await fetchItem(true);
+			if (String(itemId) === String(id)) await fetchItem(true);
 		} catch (err: any) {
 			toast.error(err?.response?.data?.message || "Failed to set default size");
 		} finally {
