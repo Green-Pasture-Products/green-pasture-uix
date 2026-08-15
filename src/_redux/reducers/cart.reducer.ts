@@ -206,6 +206,8 @@ const cartSlice = createSlice({
 									inStock: (itemData.unit || 0) > 0,
 									rating: itemData.ratingStats?.average || 0,
 									reviews: itemData.ratingStats?.count || 0,
+									weightValue: itemData.weightValue ?? null,
+									weightUnit: itemData.weightUnit ?? null,
 									createdAt: Date.now(),
 								} as any;
 							})
