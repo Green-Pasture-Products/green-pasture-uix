@@ -311,6 +311,9 @@ export interface BackendOrderItem {
 	item: BackendItem;
 	quantity: number;
 	unitPrice: number;
+	itemName?: string | null;
+	weightValue?: number | null;
+	weightUnit?: string | null;
 }
 
 export interface BackendCustomer {

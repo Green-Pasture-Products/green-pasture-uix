@@ -107,11 +107,12 @@ const OrderDetail: React.FC = () => {
 			header: "Item Name",
 			enableSorting: false,
 			cell: ({ row }) => {
-				const size = formatWeight(row.original.item?.weightValue, row.original.item?.weightUnit);
+				const name = row.original.itemName ?? row.original.item?.name ?? "\u2014";
+				const size = formatWeight(row.original.weightValue ?? row.original.item?.weightValue, row.original.weightUnit ?? row.original.item?.weightUnit);
 				return (
 					<div>
 						<span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-							{row.original.item?.name ?? "\u2014"}
+							{name}
 						</span>
 						{size && (
 							<div className="text-xs" style={{ color: "var(--text-secondary)" }}>
