@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
 import { Package } from "lucide-react";
+import { uuidv7 } from "uuidv7";
 
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
@@ -17,6 +18,7 @@ import FormSelectDropdown from "@/_UI/FormSelect";
 import CurrencyInput from "@/_UI/CurrencyInput";
 import NumberInput from "@/_UI/NumberInput";
 import axiosInstance from "@/_utils/axiosInstance";
+import { resolveIdempotencyKey, IdempotencyState } from "@/_utils/idempotencyKey";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { categoryAction } from "@/_redux/actions/category.action";
 
@@ -92,6 +94,13 @@ const AddProductPage: React.FC = () => {
 
 	const { fields, append, remove } = useFieldArray({ control, name: "variants" });
 
+	// Same key on a retry of the same attempt (the create timed out client-side
+	// while the server kept going, or an admin double-clicks) — the backend's
+	// IdempotencyInterceptor then replays the stored response instead of
+	// creating a second product. A fresh key the moment anything in the form
+	// actually changes, or the retry would hit "same key, different body".
+	const idempotencyStateRef = useRef<IdempotencyState>({ key: undefined, signature: undefined });
+
 	useEffect(() => {
 		if (productCategories.length === 0) {
 			dispatch(categoryAction.fetchAllCategories());
@@ -145,9 +154,21 @@ const AddProductPage: React.FC = () => {
 			selectedTagIds.forEach((id) => formData.append("tagIds", id));
 			images.forEach((file) => formData.append("images", file));
 
-			await axiosInstance.post("items/bulk", formData, {
-				headers: { "Content-Type": "multipart/form-data" },
+			const signature = JSON.stringify({
+				productId: data.productId,
+				name: data.name,
+				description: data.description,
+				variants: data.variants,
+				tagIds: selectedTagIds,
+				images: images.map((f) => `${f.name}:${f.size}:${f.lastModified}`),
 			});
+			idempotencyStateRef.current = resolveIdempotencyKey(idempotencyStateRef.current, signature, uuidv7);
+
+			await axiosInstance.post("items/bulk", formData, {
+				headers: { "Content-Type": "multipart/form-data", "Idempotency-Key": idempotencyStateRef.current.key },
+			});
+			// This attempt succeeded — a future submit is a new one, not a retry.
+			idempotencyStateRef.current = { key: undefined, signature: undefined };
 			toast.success(data.variants.length > 1 ? `${data.variants.length} pack sizes created` : "Product created successfully");
 			router.push("/admin/products");
 		} catch (err: any) {
