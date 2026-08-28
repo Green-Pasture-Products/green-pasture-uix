@@ -21,7 +21,7 @@ import { useRouter } from "next/router";
 import { logout } from "@/_redux/reducers/auth.reducer";
 import { clearCart } from "@/_redux/reducers/cart.reducer";
 import { logoutAsync } from "@/_redux/actions/auth.action";
-import { getBio } from "@/_redux/actions/user.action";
+import { profileAction } from "@/_redux/actions/profile.action";
 import { useTheme } from "@/_hooks/useTheme";
 import { appConstants } from "@/_redux/constants";
 
@@ -57,15 +57,21 @@ const Navbar: React.FC = () => {
 
 	const itemCount = useAppSelector((state) => state.cart.itemCount);
 	const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+	const { profile } = useAppSelector((state) => state.profile);
 	const bio = user;
 	const isAdmin = appConstants.ADMIN_ROLES.includes(user?.profileType?.toUpperCase() as any || "");
 	const wishlistCount = useAppSelector(
 		(state) => state.wishlist.wishlistItemCount
 	);
+	const avatarUrl = profile?.profileImage?.url;
 
 	useEffect(() => {
-		// bio now comes from auth.user, no need to fetch from storage
-	}, []);
+		// The auth slice doesn't carry the profile picture — only the profile
+		// slice does, and nothing else guarantees it's loaded on every page.
+		if (isAuthenticated && !profile) {
+			dispatch(profileAction.fetchProfileAsync());
+		}
+	}, [isAuthenticated, profile, dispatch]);
 
 	// Close user menu on outside click
 	useEffect(() => {
@@ -197,10 +203,20 @@ const Navbar: React.FC = () => {
 								}
 								className="flex items-center gap-2 p-1.5 rounded-radius-md text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-200 press-effect cursor-pointer"
 							>
-								<div className="w-8 h-8 rounded-full bg-primary-600 dark:bg-primary-500 text-white text-sm font-semibold flex items-center justify-center">
-									{bio.firstName?.charAt(0)?.toUpperCase() ||
-										"U"}
-								</div>
+								{avatarUrl ? (
+									<Image
+										src={avatarUrl}
+										alt=""
+										width={32}
+										height={32}
+										className="w-8 h-8 rounded-full object-cover"
+									/>
+								) : (
+									<div className="w-8 h-8 rounded-full bg-primary-600 dark:bg-primary-500 text-white text-sm font-semibold flex items-center justify-center">
+										{bio.firstName?.charAt(0)?.toUpperCase() ||
+											"U"}
+									</div>
+								)}
 								<span className="hidden sm:block text-sm font-medium text-on-surface dark:text-white/90">
 									{bio.firstName}
 								</span>

@@ -290,6 +290,7 @@ const HomePage: React.FC = () => {
 			<Testimonials featured />
 
 			{/* ── Newsletter ───────────────────────────────────────── */}
+				{/*
 			<section className="py-20 md:py-28" style={{ background: "var(--background)" }}>
 				<div className="page-wrapper">
 					<AnimatedSection>
@@ -341,6 +342,7 @@ const HomePage: React.FC = () => {
 					</AnimatedSection>
 				</div>
 			</section>
+				*/}
 		</Layout>
 	);
 };

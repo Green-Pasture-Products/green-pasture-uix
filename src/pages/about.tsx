@@ -73,26 +73,36 @@ const About = () => {
 			{/* ── Editorial hero ───────────────────────────────────── */}
 			{/* Full-bleed field at sunset. Copy sits in the open sky on the left,
 			    where the photograph is quietest — the basket keeps the right. */}
-			<section className="relative isolate flex min-h-[32rem] items-center overflow-hidden lg:min-h-[38rem]">
-				<Image
-					src="/images/about_banner.png"
-					alt="Green Pasture products in a basket at the edge of a field at sunset"
-					fill
-					priority
-					quality={95}
-					sizes="100vw"
-					className="-z-10 object-cover object-[70%_center] lg:object-center"
-				/>
-				<div
-					aria-hidden
-					className="absolute inset-0 -z-10"
-					style={{
-						background:
-							"linear-gradient(100deg,rgba(10,26,18,0.90) 0%,rgba(10,26,18,0.72) 38%,rgba(10,26,18,0.28) 62%,transparent 82%)",
-					}}
-				/>
+			<section className="relative isolate overflow-hidden lg:flex lg:min-h-[38rem] lg:items-center" style={{ background: "#0a1a12" }}>
+				{/* Photograph: in-flow block above the copy on mobile; full-bleed backdrop from lg up */}
+				<div className="relative h-[300px] w-full sm:h-[380px] lg:absolute lg:inset-0 lg:h-full lg:w-full">
+					<Image
+						src="/images/about_banner.png"
+						alt="Green Pasture products in a basket at the edge of a field at sunset"
+						fill
+						priority
+						quality={95}
+						sizes="100vw"
+						className="object-cover object-[70%_center] lg:object-center"
+					/>
+					{/* Blends the photo into the backdrop that carries the copy below, on mobile */}
+					<div
+						aria-hidden
+						className="absolute inset-0 lg:hidden"
+						style={{ background: "linear-gradient(to bottom, transparent 60%, #0a1a12 100%)" }}
+					/>
+					{/* Darkens the left edge so the overlaid copy stays legible, from lg up */}
+					<div
+						aria-hidden
+						className="absolute inset-0 hidden lg:block"
+						style={{
+							background:
+								"linear-gradient(100deg,rgba(10,26,18,0.90) 0%,rgba(10,26,18,0.72) 38%,rgba(10,26,18,0.28) 62%,transparent 82%)",
+						}}
+					/>
+				</div>
 
-				<div className="page-wrapper relative w-full py-20 md:py-28">
+				<div className="page-wrapper relative z-10 w-full py-10 sm:py-12 md:py-16 lg:py-28">
 					<div className="max-w-xl">
 						<motion.p
 							initial={{ opacity: 0, y: 16 }}
