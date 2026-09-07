@@ -14,6 +14,10 @@ import {
 	addToWishlist,
 	removeFromWishlist,
 } from "@/_redux/reducers/wishlist.reducer";
+import {
+	addToWishlistAsync,
+	removeFromWishlistAsync,
+} from "@/_redux/actions/wishlist.action";
 import { usePathname } from "next/navigation";
 import { appConstants } from "@/_redux/constants";
 import { htmlToText } from "@/_utils/htmlToText";
@@ -72,11 +76,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const handleWishlistToggle = (e: MouseEvent<HTMLButtonElement>) => {
 		e.stopPropagation();
 		e.preventDefault();
+		// Local update first — always succeeds, so the toast (and the heart icon,
+		// driven by the same state) reflect what actually happened. The *Async
+		// thunk below is a fire-and-forget background sync to the backend; same
+		// "optimistic local, silent background sync" split useCartOperations
+		// uses for cart, so a network failure (e.g. a 429) can't make the toast
+		// claim success while the heart never fills in.
 		if (isInWishlist) {
 			dispatch(removeFromWishlist(product.id));
+			dispatch(removeFromWishlistAsync(product.id));
 			toast.error(`${product.name} removed from wishlist`);
 		} else {
 			dispatch(addToWishlist(product));
+			dispatch(addToWishlistAsync(product));
 			toast.success(`${product.name} added to wishlist`);
 		}
 	};
@@ -137,29 +149,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 						</motion.div>
 					)}
 
-					{/* Wishlist button */}
-					<motion.button
-						aria-label="Wishlist"
-						onClick={
-							isWishlistPage
-								? () => dispatch(removeFromWishlist(product.id))
-								: (e) => handleWishlistToggle(e)
-						}
-						className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md transition-all cursor-pointer"
-						style={{
-							background: isInWishlist
-								? "rgba(239,68,68,0.9)"
-								: "rgba(255,255,255,0.8)",
-							color: isInWishlist ? "#fff" : "var(--text-secondary)",
-							opacity: isInWishlist ? 1 : undefined,
-						}}
-						initial={{ opacity: 0, scale: 0.5 }}
-						animate={{ opacity: isInWishlist ? 1 : 0, scale: isInWishlist ? 1 : 0.5 }}
-						whileHover={{ opacity: 1, scale: 1 }}
-						whileTap={{ scale: 0.85 }}
-					>
-						<Heart className={`h-4 w-4 ${isInWishlist ? "fill-current" : ""}`} />
-					</motion.button>
+					{/* Wishlist button — hidden on the wishlist page itself, which already
+					    has a dedicated trash button for removal below. */}
+					{!isWishlistPage && (
+						<motion.button
+							aria-label="Wishlist"
+							onClick={(e) => handleWishlistToggle(e)}
+							className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md transition-all cursor-pointer"
+							style={{
+								background: isInWishlist
+									? "rgba(239,68,68,0.9)"
+									: "rgba(255,255,255,0.8)",
+								color: isInWishlist ? "#fff" : "var(--text-secondary)",
+								opacity: isInWishlist ? 1 : undefined,
+							}}
+							initial={{ opacity: 0, scale: 0.5 }}
+							animate={{ opacity: isInWishlist ? 1 : 0, scale: isInWishlist ? 1 : 0.5 }}
+							whileHover={{ opacity: 1, scale: 1 }}
+							whileTap={{ scale: 0.85 }}
+						>
+							<Heart className={`h-4 w-4 ${isInWishlist ? "fill-current" : ""}`} />
+						</motion.button>
+					)}
 
 					{/* Quick view on hover — bottom of image */}
 					<div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
@@ -294,7 +305,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 					{isWishlistPage && !isAdmin && (
 						<motion.button
-							onClick={() => dispatch(removeFromWishlist(product.id))}
+							onClick={() => {
+								dispatch(removeFromWishlist(product.id));
+								dispatch(removeFromWishlistAsync(product.id));
+							}}
 							className="p-2 rounded-lg cursor-pointer"
 							style={{ border: "1px solid #ef4444", color: "#ef4444" }}
 							whileTap={{ scale: 0.9 }}

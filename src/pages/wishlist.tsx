@@ -1,14 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { Heart, ShoppingCart } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import toast from "react-hot-toast";
 import { Product } from "@/types";
 
+import { clearWishlist, removeFromWishlist } from "@/_redux/reducers/wishlist.reducer";
 import {
-	clearWishlist,
-	removeFromWishlist,
-} from "@/_redux/reducers/wishlist.reducer";
+	removeFromWishlistAsync,
+	clearWishlistAsync,
+	syncWishlistOnLoginAsync,
+} from "@/_redux/actions/wishlist.action";
 import { addToCart } from "@/_redux/reducers/cart.reducer";
 import Products from "@/_components/Products";
 import Layout from "@/_components/Layout";
@@ -22,9 +24,24 @@ const WishlistPage: React.FC = () => {
 	const { items, wishlistItemCount } = useAppSelector(
 		(state) => state.wishlist
 	);
+	const { isAuthenticated } = useAppSelector((state) => state.auth);
+
+	// Backend is the source of truth once logged in — mirrors cart.tsx's
+	// sync-on-mount pattern, since a customer's wishlist can now diverge from
+	// whatever this browser's localStorage happens to hold.
+	useEffect(() => {
+		if (isAuthenticated) {
+			dispatch(syncWishlistOnLoginAsync() as any);
+		}
+	}, [isAuthenticated, dispatch]);
 
 	const handleClearWishlist = () => {
+		// Local clear is instant; clearWishlistAsync is one DELETE /wishlist/clear
+		// call in the background, rather than one DELETE per item (which used to
+		// cost N write-rate-limit requests and could leave a stray item behind
+		// on a failed individual delete).
 		dispatch(clearWishlist());
+		dispatch(clearWishlistAsync());
 	};
 
 	const handleAddAllToCart = () => {
@@ -40,7 +57,11 @@ const WishlistPage: React.FC = () => {
 			const isInCart = cartItems.some((item) => item.id === product.id);
 			if (isInStock(product) && !isInCart) {
 				dispatch(addToCart(product));
+				// Local removal first — the toast/count below is computed
+				// synchronously, so the visible list must update in step with it
+				// rather than waiting on the background sync thunk to resolve.
 				dispatch(removeFromWishlist(product.id));
+				dispatch(removeFromWishlistAsync(product.id));
 				addedCount += 1;
 			}
 		});

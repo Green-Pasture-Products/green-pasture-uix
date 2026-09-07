@@ -25,6 +25,10 @@ import {
 	addToWishlist,
 	removeFromWishlist,
 } from "@/_redux/reducers/wishlist.reducer";
+import {
+	addToWishlistAsync,
+	removeFromWishlistAsync,
+} from "@/_redux/actions/wishlist.action";
 import Layout from "@/_components/Layout";
 import { appConstants } from "@/_redux/constants";
 import { useFreeShipping, useShowDiscountBadges } from "@/_hooks/useStoreSettings";
@@ -138,11 +142,16 @@ const ProductDetailsPage: React.FC = () => {
 
 	const handleWishlistToggle = (e: MouseEvent<HTMLButtonElement>) => {
 		e.stopPropagation();
+		// Local update first — always succeeds, so the toast reflects what
+		// actually happened; the *Async thunk is a fire-and-forget background
+		// sync, same split useCartOperations uses for cart.
 		if (isInWishlist) {
 			dispatch(removeFromWishlist(product.id));
+			dispatch(removeFromWishlistAsync(product.id));
 			toast.error(`${product.name} removed from wishlist`);
 		} else {
 			dispatch(addToWishlist(product));
+			dispatch(addToWishlistAsync(product));
 			toast.success(`${product.name} added to wishlist`);
 		}
 	};
@@ -176,7 +185,14 @@ const ProductDetailsPage: React.FC = () => {
 						items={[
 							{ label: "Home", href: "/" },
 							{ label: "Products", href: "/products" },
-							{ label: productCategory || "Products", href: `/products?category=${(productCategory || "").toLowerCase()}` },
+							{
+								label: productCategory || "Products",
+								// Must match the category exactly as stored — filterAndSortProducts
+								// compares with `===`, not case-insensitively — and be encoded, since
+								// category names routinely contain "&" (e.g. "Herbal Teas & Infusions"),
+								// which would otherwise split the query string.
+								href: productCategory ? `/products?category=${encodeURIComponent(productCategory)}` : "/products",
+							},
 							{ label: product?.name },
 						]}
 					/>
@@ -413,7 +429,7 @@ const ProductDetailsPage: React.FC = () => {
 								<button
 									aria-label="Add to Wishlist"
 									onClick={(e) => handleWishlistToggle(e)}
-									className={`p-3 border rounded-radius-md transition-all ${
+									className={`p-3 border rounded-radius-md transition-all cursor-pointer ${
 										isInWishlist
 											? "bg-red-500 border-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
 											: ""
