@@ -67,7 +67,7 @@ const customerServiceLinks = [
 	{ href: "/cart", label: "Cart" },
 	{ href: "/wishlist", label: "Wishlist" },
 	{ href: "/profile", label: "Profile" },
-	{ href: "/search", label: "Track Order" },
+	{ href: "/my-orders", label: "Track Order" },
 	{ href: "/refund-policy", label: "Return Policy" },
 ];
 

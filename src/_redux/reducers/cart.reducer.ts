@@ -111,63 +111,58 @@ const cartSlice = createSlice({
 		},
 	},
 	extraReducers: (builder) => {
+		// `loading` is a cart-level flag: it belongs to fetching/syncing the whole
+		// cart, not to item mutations. Item mutations are applied optimistically
+		// and already show a per-item spinner (useCartOperations' isUpdating), so
+		// flipping the global flag here made the cart page swap itself for a
+		// full-page loader on every quantity change — a full "refresh" that only
+		// logged-in users saw, since guests never dispatch these thunks.
+
 		// Add to cart async
 		builder
 			.addCase(addToCartAsync.pending, (state) => {
-				state.loading = true;
 				state.error = null;
 			})
 			.addCase(addToCartAsync.fulfilled, (state, action) => {
-				state.loading = false;
 				cartSlice.caseReducers.addToCart(state, action);
 			})
 			.addCase(addToCartAsync.rejected, (state, action) => {
-				state.loading = false;
 				state.error = action.payload as string;
 			});
 
 		// Remove from cart async
 		builder
 			.addCase(removeFromCartAsync.pending, (state) => {
-				state.loading = true;
 				state.error = null;
 			})
 			.addCase(removeFromCartAsync.fulfilled, (state, action) => {
-				state.loading = false;
 				cartSlice.caseReducers.removeFromCart(state, action);
 			})
 			.addCase(removeFromCartAsync.rejected, (state, action) => {
-				state.loading = false;
 				state.error = action.payload as string;
 			});
 
 		// Update quantity async
 		builder
 			.addCase(updateQuantityAsync.pending, (state) => {
-				state.loading = true;
 				state.error = null;
 			})
 			.addCase(updateQuantityAsync.fulfilled, (state, action) => {
-				state.loading = false;
 				cartSlice.caseReducers.updateQuantity(state, action);
 			})
 			.addCase(updateQuantityAsync.rejected, (state, action) => {
-				state.loading = false;
 				state.error = action.payload as string;
 			});
 
 		// Clear cart async
 		builder
 			.addCase(clearCartAsync.pending, (state) => {
-				state.loading = true;
 				state.error = null;
 			})
 			.addCase(clearCartAsync.fulfilled, (state) => {
-				state.loading = false;
 				cartSlice.caseReducers.clearCart(state);
 			})
 			.addCase(clearCartAsync.rejected, (state, action) => {
-				state.loading = false;
 				state.error = action.payload as string;
 			});
 
