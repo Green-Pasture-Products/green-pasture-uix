@@ -184,7 +184,9 @@ const CartPage: React.FC = () => {
 	}, [calculations]);
 
 	// --- Loading State ---
-	if (loading) {
+	// Only when there is nothing to show yet. Once the cart has items, a sync
+	// refreshes them in place rather than collapsing the page into a loader.
+	if (loading && items.length === 0) {
 		return (
 			<Layout>
 				<PageLoader fullScreen={false} message="Loading your cart..." />

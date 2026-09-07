@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Heart, ShoppingCart } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import toast from "react-hot-toast";
+import { Product } from "@/types";
 
 import {
 	clearWishlist,
@@ -27,14 +28,30 @@ const WishlistPage: React.FC = () => {
 	};
 
 	const handleAddAllToCart = () => {
+		// Wishlist entries are raw backend items, which carry `unit` and not the
+		// normalised `inStock` flag — checking `inStock` alone skipped every item
+		// and the button did nothing. Same both-shapes check the cards use.
+		const isInStock = (product: Product & { unit?: number }) =>
+			(product.unit ?? 0) > 0 || product.inStock;
+
+		let addedCount = 0;
+
 		items.forEach((product) => {
 			const isInCart = cartItems.some((item) => item.id === product.id);
-			if (product.inStock && !isInCart) {
+			if (isInStock(product) && !isInCart) {
 				dispatch(addToCart(product));
-				toast.success(`${product.name} added to cart`);
 				dispatch(removeFromWishlist(product.id));
+				addedCount += 1;
 			}
 		});
+
+		if (addedCount > 0) {
+			toast.success(
+				`${addedCount} ${addedCount === 1 ? "item" : "items"} added to cart`
+			);
+		} else {
+			toast.error("Nothing to add — items are out of stock or already in your cart");
+		}
 	};
 
 	if (items.length === 0) {
