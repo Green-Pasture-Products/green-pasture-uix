@@ -611,3 +611,144 @@ input[type="password"]::-ms-clear {
 .hide-scrollbar::-webkit-scrollbar {
 	display: none;
 }
+
+/* ==========================================================================
+   Delete Button Microinteraction ("Bin eats the label")
+   ========================================================================== */
+@keyframes letterFall {
+	0% {
+		transform: translateY(0) rotate(0deg) scale(1);
+		opacity: 1;
+	}
+	35% {
+		transform: translateY(-5px) rotate(-12deg) scale(1.05);
+		opacity: 1;
+	}
+	70% {
+		transform: translateY(18px) rotate(45deg) scale(0.65);
+		opacity: 0.85;
+	}
+	100% {
+		transform: translateY(34px) rotate(90deg) scale(0);
+		opacity: 0;
+	}
+}
+
+@keyframes binShake {
+	0%, 100% { transform: rotate(0deg) scale(1.1); }
+	20% { transform: rotate(-10deg) scale(1.18); }
+	40% { transform: rotate(10deg) scale(1.18); }
+	60% { transform: rotate(-6deg) scale(1.12); }
+	80% { transform: rotate(6deg) scale(1.12); }
+}
+
+@keyframes ringSeal {
+	0% {
+		transform: scale(0.96);
+		opacity: 0;
+		box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+	}
+	40% {
+		opacity: 1;
+	}
+	100% {
+		transform: scale(1.06);
+		opacity: 0;
+		box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+	}
+}
+
+@keyframes lidOpenClose {
+	0% {
+		transform: rotate(0deg);
+	}
+	20%, 80% {
+		transform: rotate(-32deg) translateY(-2px);
+	}
+	100% {
+		transform: rotate(0deg) translateY(0);
+	}
+}
+
+.animate-letter-fall {
+	animation: letterFall 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.animate-bin-shake {
+	animation: binShake 0.6s ease-in-out;
+}
+
+.animate-ring-seal {
+	animation: ringSeal 0.7s ease-out forwards;
+}
+
+.animate-lid-cycle {
+	animation: lidOpenClose 0.85s ease-in-out forwards;
+}
+
+/* ==========================================================================
+   Advance Receipt Print Animations (Slot Feed, Stamp Impact, Paper Tear)
+   ========================================================================== */
+@keyframes receiptFeed {
+	0% {
+		transform: translateY(-90%) scaleY(0.85);
+		opacity: 0.15;
+	}
+	30% {
+		transform: translateY(-45%) scaleY(0.96);
+		opacity: 0.7;
+	}
+	75% {
+		transform: translateY(3%) scaleY(1.02);
+		opacity: 1;
+	}
+	100% {
+		transform: translateY(0%) scaleY(1);
+		opacity: 1;
+	}
+}
+
+@keyframes stampImpact {
+	0% {
+		opacity: 0;
+		transform: scale(2.8) rotate(-30deg);
+	}
+	50% {
+		opacity: 1;
+		transform: scale(0.92) rotate(-14deg);
+	}
+	75% {
+		transform: scale(1.06) rotate(-13deg);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1) rotate(-14deg);
+	}
+}
+
+@keyframes receiptTear {
+	0% {
+		transform: translateY(0) rotate(0deg);
+		opacity: 1;
+	}
+	40% {
+		transform: translateY(18px) rotate(-4deg);
+		opacity: 0.85;
+	}
+	100% {
+		transform: translateY(50px) rotate(-10deg);
+		opacity: 0;
+	}
+}
+
+.animate-receipt-feed {
+	animation: receiptFeed 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-stamp-impact {
+	animation: stampImpact 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-receipt-tear {
+	animation: receiptTear 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
