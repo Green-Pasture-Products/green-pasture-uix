@@ -9,6 +9,8 @@ import {
 	syncCartOnLoginAsync,
 	fetchCartAsync,
 } from "../actions/cart.action";
+import { logoutAsync } from "../actions/auth.action";
+import { logout } from "./auth.reducer";
 
 const initialState: CartState & { cartId: string | null } = {
 	items: [],
@@ -225,6 +227,19 @@ const cartSlice = createSlice({
 			})
 			.addCase(syncCartOnLoginAsync.rejected, (state) => {
 				state.loading = false;
+			});
+
+		// The cart is persisted to localStorage, so signing out used to leave
+		// the previous session's items sitting there for whoever signed in
+		// next -- on the same browser, or on this device while the real cart
+		// moved on elsewhere. Dropping it here is what makes "sign out and
+		// back in" a predictable reset.
+		builder
+			.addCase(logout, (state) => {
+				cartSlice.caseReducers.clearCart(state);
+			})
+			.addCase(logoutAsync.fulfilled, (state) => {
+				cartSlice.caseReducers.clearCart(state);
 			});
 	},
 });

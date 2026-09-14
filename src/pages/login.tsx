@@ -67,7 +67,7 @@ const LoginPage: React.FC = () => {
 			const syncCart = async () => {
 				try {
 					const { syncCartOnLoginAsync } = await import("@/_redux/actions/cart.action");
-					await dispatch(syncCartOnLoginAsync()).unwrap();
+					await dispatch(syncCartOnLoginAsync(true)).unwrap();
 				} catch {}
 			};
 			syncCart();
@@ -77,7 +77,7 @@ const LoginPage: React.FC = () => {
 			const syncWishlist = async () => {
 				try {
 					const { syncWishlistOnLoginAsync } = await import("@/_redux/actions/wishlist.action");
-					await dispatch(syncWishlistOnLoginAsync()).unwrap();
+					await dispatch(syncWishlistOnLoginAsync(true)).unwrap();
 				} catch {}
 			};
 			syncWishlist();

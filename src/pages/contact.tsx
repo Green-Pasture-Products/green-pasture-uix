@@ -8,6 +8,9 @@ import SectionHeading from "@/_UI/SectionHeading";
 import Input from "@/_UI/Input";
 import Button from "@/_UI/Button";
 import { appConstants } from "@/_redux/constants";
+import toast from "react-hot-toast";
+import axiosInstance from "@/_utils/axiosInstance";
+import { extractErrorMessage } from "@/_utils/apiHelpers";
 
 const contactInfo = [
 	{ icon: Phone, title: "Phone", detail: appConstants.CONTACT.PHONE, subtitle: "Mon–Fri, 9am–5pm WAT" },
@@ -35,15 +38,38 @@ const quickAnswers = [
 ];
 
 const Contact = () => {
-	const [formData, setFormData] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
+	const EMPTY_FORM = { name: "", email: "", phone: "", subject: "", message: "" };
+	const [formData, setFormData] = useState(EMPTY_FORM);
+	const [sending, setSending] = useState(false);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		// Handle form submission
+		if (sending) return;
+
+		setSending(true);
+		try {
+			// The backend caps this at 10 characters too -- checking here as well
+			// turns a 400 into a straight answer next to the field.
+			if (formData.message.trim().length < 10) {
+				toast.error("Please tell us a little more — at least 10 characters.");
+				return;
+			}
+
+			const res = await axiosInstance.post("store/contact", {
+				...formData,
+				phone: formData.phone.trim() || undefined,
+			});
+			toast.success(res.data?.message ?? "Message sent — we'll get back to you shortly.");
+			setFormData(EMPTY_FORM);
+		} catch (error: any) {
+			toast.error(extractErrorMessage(error));
+		} finally {
+			setSending(false);
+		}
 	};
 
 	return (
@@ -169,8 +195,8 @@ const Contact = () => {
 											}}
 										/>
 									</div>
-									<Button type="submit" variant="filled" size="lg" rightIcon={Send} fullWidth>
-										Send Message
+									<Button type="submit" variant="filled" size="lg" rightIcon={Send} fullWidth loading={sending}>
+										{sending ? "Sending…" : "Send Message"}
 									</Button>
 								</form>
 							</div>

@@ -60,16 +60,22 @@ export const clearWishlistAsync = createAsyncThunk(
 	}
 );
 
+/**
+ * `mergeLocal` is the login transition ONLY -- same rule as the cart: local
+ * items are only "new" when they were collected while signed out. Pushing them
+ * up on an already-authenticated visit resurrects items the customer removed
+ * on another device.
+ */
 export const syncWishlistOnLoginAsync = createAsyncThunk<
 	Product[],
-	void,
+	boolean | void,
 	{ rejectValue: string }
 >(
 	"wishlist/syncOnLogin",
-	async (_, { rejectWithValue, getState }) => {
+	async (mergeLocal, { rejectWithValue, getState }) => {
 		try {
 			const state = getState() as RootState;
-			const localItems = state.wishlist.items;
+			const localItems = mergeLocal ? state.wishlist.items : [];
 
 			// Fetch what's already on the backend FIRST — this call runs on every
 			// login and every /wishlist page visit, so re-POSTing items already
