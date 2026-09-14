@@ -8,7 +8,8 @@ import { Product } from "../types";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useCurrency } from "@/_hooks/useCurrency";
-import { addToCart, removeFromCart } from "@/_redux/reducers/cart.reducer";
+import { removeFromCart } from "@/_redux/reducers/cart.reducer";
+import { addToCartAsync, removeFromCartAsync } from "@/_redux/actions/cart.action";
 import Link from "next/link";
 import {
 	addToWishlist,
@@ -22,6 +23,7 @@ import { usePathname } from "next/navigation";
 import { appConstants } from "@/_redux/constants";
 import { htmlToText } from "@/_utils/htmlToText";
 import { variantSummary } from "@/_utils/variantSummary";
+import { formatWeight } from "@/_utils/formatWeight";
 
 interface ProductCardProps {
 	product: Product;
@@ -41,6 +43,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const wishlistItems = useAppSelector((state) => state.wishlist.items);
 	const isInWishlist = wishlistItems?.some((item) => item.id === product.id);
 	const [justAdded, setJustAdded] = useState(false);
+	// A multi-size card leads with "Add to Cart" and only asks which size once
+	// the customer has said they want it -- "Choose size" as the resting label
+	// read as a detour rather than a purchase.
+	const [choosingSize, setChoosingSize] = useState(false);
 
 	// Backend item shape adaptation
 	const p = product as any;
@@ -61,16 +67,31 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		? Math.round(((originalPrice - price) / originalPrice) * 100)
 		: null;
 
+	const flashAdded = (name: string) => {
+		setJustAdded(true);
+		toast.success(`${name} added to cart`);
+		setTimeout(() => setJustAdded(false), 1500);
+	};
+
 	const handleAddToCart = () => {
 		if (isInCart) {
 			dispatch(removeFromCart(product.id));
+			dispatch(removeFromCartAsync(product.id));
 			toast.error(`${product.name} removed from cart`);
 		} else {
-			dispatch(addToCart(product));
-			setJustAdded(true);
-			toast.success(`${product.name} added to cart`);
-			setTimeout(() => setJustAdded(false), 1500);
+			// addToCartAsync, not the bare reducer: it applies the same local add
+			// and, for a signed-in customer, writes the line to the server cart.
+			// Adding locally only meant the next cart sync replaced the item with
+			// the (empty) server cart and it vanished.
+			dispatch(addToCartAsync(product));
+			flashAdded(product.name);
 		}
+	};
+
+	const handleAddVariant = (variant: any) => {
+		dispatch(addToCartAsync(variant));
+		setChoosingSize(false);
+		flashAdded(`${variant.name}${formatWeight(variant.weightValue, variant.weightUnit) ? ` (${formatWeight(variant.weightValue, variant.weightUnit)})` : ""}`);
 	};
 
 	const handleWishlistToggle = (e: MouseEvent<HTMLButtonElement>) => {
@@ -155,17 +176,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 						<motion.button
 							aria-label="Wishlist"
 							onClick={(e) => handleWishlistToggle(e)}
-							className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md transition-all cursor-pointer"
+							// Always visible, and readable on any product shot. It used to
+							// animate to opacity 0 unless the item was already wishlisted,
+							// revealing itself on hover -- which meant it did not exist at
+							// all on touch, where there is no hover. Even once shown, a
+							// translucent white circle disappeared into the plain white
+							// backgrounds most of the catalogue now uses, so the fill is
+							// opaque and carries a border and shadow of its own.
+							className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
 							style={{
-								background: isInWishlist
-									? "rgba(239,68,68,0.9)"
-									: "rgba(255,255,255,0.8)",
+								background: isInWishlist ? "rgba(239,68,68,0.95)" : "var(--surface-high, #fff)",
 								color: isInWishlist ? "#fff" : "var(--text-secondary)",
-								opacity: isInWishlist ? 1 : undefined,
+								border: `1px solid ${isInWishlist ? "rgba(239,68,68,0.95)" : "var(--border-light)"}`,
+								boxShadow: "0 2px 8px rgba(12,43,37,0.18)",
 							}}
-							initial={{ opacity: 0, scale: 0.5 }}
-							animate={{ opacity: isInWishlist ? 1 : 0, scale: isInWishlist ? 1 : 0.5 }}
-							whileHover={{ opacity: 1, scale: 1 }}
+							initial={false}
+							animate={{ opacity: 1, scale: 1 }}
+							whileHover={{ scale: 1.1 }}
 							whileTap={{ scale: 0.85 }}
 						>
 							<Heart className={`h-4 w-4 ${isInWishlist ? "fill-current" : ""}`} />
@@ -247,15 +274,59 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 				{/* Actions */}
 				<div className="mt-auto flex gap-2">
-					{isAdmin || variants.length > 0 ? (
+					{isAdmin ? (
 						<Link
 							href={`/product/${product.id}`}
 							className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold border border-outline dark:border-white/15 text-primary-700 dark:text-primary-400 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] dark:hover:bg-white/5 dark:hover:shadow-[0_0_10px_rgba(154,202,60,0.25)] transition-all"
 						>
-							{/* The card cannot know which SKU was meant, so the choice
-							    moves to the detail page rather than being guessed. */}
-							{isAdmin ? "View Details" : "Choose size"}
+							View Details
 						</Link>
+					) : variants.length > 0 && choosingSize && !justAdded ? (
+						/* The size step, in place on the card. The card still cannot
+						   guess which SKU was meant -- but asking here keeps the
+						   customer in the listing instead of sending them to the
+						   detail page to answer one question. */
+						<motion.div
+							key="sizes"
+							initial={{ opacity: 0, y: 4 }}
+							animate={{ opacity: 1, y: 0 }}
+							className="flex-1"
+						>
+							<div className="mb-1.5 flex items-center justify-between">
+								<span className="text-[0.6rem] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--text-hint)" }}>
+									Choose size
+								</span>
+								<button
+									type="button"
+									onClick={() => setChoosingSize(false)}
+									aria-label="Cancel size selection"
+									className="text-[0.6rem] font-medium cursor-pointer"
+									style={{ color: "var(--text-hint)" }}
+								>
+									Cancel
+								</button>
+							</div>
+							<div className="flex flex-wrap gap-1.5">
+								{variants.map((variant: any) => {
+									const soldOut = !(Number(variant.unit) > 0);
+									return (
+										<button
+											key={variant.id}
+											type="button"
+											disabled={soldOut}
+											onClick={() => handleAddVariant(variant)}
+											className={`rounded-full px-2.5 py-1.5 text-[0.65rem] font-semibold transition-all ${soldOut ? "cursor-not-allowed line-through opacity-45" : "cursor-pointer hover:bg-primary-50 dark:hover:bg-white/5"}`}
+											style={{
+												border: "1px solid var(--border-light)",
+												color: "var(--text-primary)",
+											}}
+										>
+											{formatWeight(variant.weightValue, variant.weightUnit) || "One size"}
+										</button>
+									);
+								})}
+							</div>
+						</motion.div>
 					) : (
 					<AnimatePresence mode="wait">
 						{justAdded ? (
@@ -270,7 +341,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 								<Check className="h-3.5 w-3.5" />
 								Added!
 							</motion.div>
-						) : isInCart ? (
+						) : isInCart && variants.length === 0 ? (
 							<motion.button
 								key="remove"
 								initial={{ opacity: 0 }}
@@ -290,7 +361,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
 								exit={{ opacity: 0 }}
-								onClick={handleAddToCart}
+								onClick={variants.length > 0 ? () => setChoosingSize(true) : handleAddToCart}
 								disabled={!inStock}
 								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
 								whileHover={{ scale: 1.02 }}
