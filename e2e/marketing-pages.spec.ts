@@ -13,7 +13,7 @@ test.describe("home", () => {
 
 	test("leads with the botanical hero and its headline", async ({ page }) => {
 		await expect(page.getByRole("heading", { level: 1 })).toContainText("Wellness that");
-		await expect(page.getByRole("img", { name: /growing sprig/i })).toBeVisible();
+		await expect(page.getByRole("img", { name: /family sharing an Exotic Green Smoothie/i })).toBeVisible();
 	});
 
 	test("shows the provenance figures", async ({ page }) => {
@@ -51,7 +51,7 @@ test.describe("about", () => {
 	});
 
 	test("walks the story timeline to the present", async ({ page }) => {
-		await expect(page.getByText("2019", { exact: true })).toBeVisible();
+		await expect(page.locator("ol").getByText("2019")).toBeVisible();
 
 		const today = page.getByText("Thousands of health journeys");
 		await today.scrollIntoViewIfNeeded();
