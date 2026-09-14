@@ -8,7 +8,7 @@ import Layout from "@/_components/Layout";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { orderAction } from "@/_redux/actions/order.action";
-import { addToCart } from "@/_redux/reducers/cart.reducer";
+import { addToCartAsync } from "@/_redux/actions/cart.action";
 import { DataTable } from "@/_components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
@@ -182,7 +182,7 @@ const MyOrders: React.FC = () => {
 									items.forEach((orderItem: any) => {
 										const item = orderItem.item || orderItem;
 										if (item) {
-											dispatch(addToCart({
+											dispatch(addToCartAsync({
 												id: String(item.id),
 												name: item.name || "",
 												price: Number(orderItem.unitPrice || item.price || 0),

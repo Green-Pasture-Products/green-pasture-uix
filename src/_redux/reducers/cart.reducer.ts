@@ -8,6 +8,7 @@ import {
 	updateQuantityAsync,
 	syncCartOnLoginAsync,
 	fetchCartAsync,
+	createCartAsync,
 } from "../actions/cart.action";
 import { logoutAsync } from "../actions/auth.action";
 import { logout } from "./auth.reducer";
@@ -171,6 +172,16 @@ const cartSlice = createSlice({
 		// Fetch cart
 		builder
 			.addCase(fetchCartAsync.fulfilled, (state, action) => {
+				const cart = action.payload?.data;
+				if (cart?.id) {
+					state.cartId = cart.id;
+				}
+			});
+
+		// Create (get-or-create) cart -- the id has to land in state, or the very
+		// next add resolves the cart all over again.
+		builder
+			.addCase(createCartAsync.fulfilled, (state, action) => {
 				const cart = action.payload?.data;
 				if (cart?.id) {
 					state.cartId = cart.id;

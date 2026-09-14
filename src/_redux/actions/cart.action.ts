@@ -49,7 +49,7 @@ export const createCartAsync = createAsyncThunk<
 
 export const addToCartAsync = createAsyncThunk(
 	"cart/addToCartAsync",
-	async (product: Product, { rejectWithValue, getState }) => {
+	async (product: Product, { rejectWithValue, getState, dispatch }) => {
 		try {
 			if (!product.id || !product.name || !product.price) {
 				throw new Error("Invalid product data");
@@ -57,12 +57,26 @@ export const addToCartAsync = createAsyncThunk(
 
 			const state = getState() as RootState;
 
-			if (state.auth.isAuthenticated && state.cart.cartId) {
-				await axiosInstance.post("cart-item/create", {
-					cartId: state.cart.cartId,
-					itemId: product.id,
-					quantity: 1,
-				});
+			if (state.auth.isAuthenticated) {
+				// Resolve the cart rather than giving up when we have no id yet.
+				// Skipping the write on a null cartId meant a signed-in customer
+				// who added from a product card before ever opening /cart wrote
+				// nothing to the server -- the item lived in localStorage only,
+				// and the next cart sync replaced it with the empty server cart.
+				// POST /cart/create returns the existing cart when there is one,
+				// so it is get-or-create, not a duplicate.
+				let cartId = state.cart.cartId;
+				if (!cartId) {
+					const created = await dispatch(createCartAsync()).unwrap();
+					cartId = created?.data?.id ?? null;
+				}
+				if (cartId) {
+					await axiosInstance.post("cart-item/create", {
+						cartId,
+						itemId: product.id,
+						quantity: 1,
+					});
+				}
 			}
 
 			return product;

@@ -18,7 +18,8 @@ import {
 } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { addToCart, removeFromCart } from "@/_redux/reducers/cart.reducer";
+import { removeFromCart } from "@/_redux/reducers/cart.reducer";
+import { addToCartAsync, removeFromCartAsync, updateQuantityAsync } from "@/_redux/actions/cart.action";
 import { Product } from "@/types";
 import Products from "@/_components/Products";
 import {
@@ -119,15 +120,20 @@ const ProductDetailsPage: React.FC = () => {
 		);
 	}
 
-	const handleCartToggle = () => {
+	const handleCartToggle = async () => {
 		if (isInCart) {
-			for (let i = 0; i < quantity; i++) {
-				dispatch(removeFromCart(product.id));
-			}
+			dispatch(removeFromCart(product.id));
+			dispatch(removeFromCartAsync(product.id));
 			toast.error(`${product.name} removed from cart`);
 		} else {
-			for (let i = 0; i < quantity; i++) {
-				dispatch(addToCart(product));
+			// Add once, then set the quantity. The old loop dispatched the local
+			// add N times, which was fine locally but would have written quantity
+			// 1 to the server N times -- cart-item/create SETS the quantity, it
+			// does not increment. Awaiting the add matters too: cart-item/update
+			// 404s on a line the server does not have yet.
+			await dispatch(addToCartAsync(product)).unwrap();
+			if (quantity > 1) {
+				dispatch(updateQuantityAsync({ id: product.id, quantity }));
 			}
 			toast.success(`${product.name} added to cart`);
 		}
