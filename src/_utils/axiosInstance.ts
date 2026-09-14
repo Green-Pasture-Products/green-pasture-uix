@@ -9,6 +9,7 @@ import Cookies from "js-cookie";
 import { authCookies, AUTH_COOKIES } from "./authCookies";
 import { refreshAccessToken, forceLogout } from "./tokenRefresh";
 import { logger } from "./logger";
+import { shouldRetryColdStart, COLD_START_TIMEOUT_MS } from "./coldStartRetry";
 
 let cachedIpInfo: any = null;
 
@@ -100,6 +101,15 @@ axiosInstance.interceptors.response.use(
 				await forceLogout({ redirect: true });
 				return Promise.reject(refreshError);
 			}
+		}
+
+		// A read that never got an answer is almost always the API waking from
+		// idle (~44s cold, against a 15s timeout). Give it one more go with room
+		// to finish rather than showing "Couldn't load products" on first load.
+		if (shouldRetryColdStart(error, originalRequest)) {
+			originalRequest._coldStartRetry = true;
+			originalRequest.timeout = COLD_START_TIMEOUT_MS;
+			return axiosInstance(originalRequest);
 		}
 
 		console.error("API Error:", error.response || error.message);
