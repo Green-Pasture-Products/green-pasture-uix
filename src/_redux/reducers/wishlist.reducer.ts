@@ -6,6 +6,8 @@ import {
 	clearWishlistAsync,
 	syncWishlistOnLoginAsync,
 } from "../actions/wishlist.action";
+import { logoutAsync } from "../actions/auth.action";
+import { logout } from "./auth.reducer";
 
 interface WishlistState {
 	items: Product[];
@@ -104,6 +106,15 @@ const wishlistSlice = createSlice({
 			})
 			.addCase(syncWishlistOnLoginAsync.rejected, (state) => {
 				state.loading = false;
+			});
+
+		// Persisted like the cart, and cleared on sign-out for the same reason.
+		builder
+			.addCase(logout, (state) => {
+				wishlistSlice.caseReducers.clearWishlist(state);
+			})
+			.addCase(logoutAsync.fulfilled, (state) => {
+				wishlistSlice.caseReducers.clearWishlist(state);
 			});
 	},
 });

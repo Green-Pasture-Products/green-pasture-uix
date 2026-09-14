@@ -152,24 +152,41 @@ export const clearCartAsync = createAsyncThunk(
 	}
 );
 
+/**
+ * Pulls the server cart down and makes it local state.
+ *
+ * `mergeLocal` is the login transition ONLY: local items accumulated while
+ * signed out are genuinely new and have to be pushed up first. On an
+ * already-authenticated visit it must stay false -- every local item there
+ * already came from the server, so pushing them back up resurrects lines the
+ * customer deleted on another device (and re-adds the whole cart after a
+ * checkout emptied it server-side).
+ */
 export const syncCartOnLoginAsync = createAsyncThunk<
 	any,
-	void,
+	boolean | void,
 	{ rejectValue: string }
 >(
 	"cart/syncOnLogin",
-	async (_, { rejectWithValue, getState }) => {
+	async (mergeLocal, { rejectWithValue, getState }) => {
 		try {
 			const state = getState() as RootState;
-			const localItems = state.cart.items;
+			const localItems = mergeLocal ? state.cart.items : [];
 
-			// Try to fetch existing cart
+			// Try to fetch the existing cart. GET cart/mine answers 200 with a
+			// null body when the customer has no cart row yet -- it does not
+			// 404 -- so a missing cart has to be detected from the payload, not
+			// from a thrown error. Creating one only in the catch meant a
+			// first-time login found no cart, pushed nothing, and wiped the
+			// items the customer had added while signed out.
 			let cartData: any;
 			try {
 				const cartRes = await axiosInstance.get("cart/mine");
 				cartData = cartRes.data?.data;
 			} catch {
-				// No cart exists, create one
+				cartData = null;
+			}
+			if (!cartData?.id) {
 				const createRes = await axiosInstance.post("cart/create");
 				cartData = createRes.data?.data;
 			}
