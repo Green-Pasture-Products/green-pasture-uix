@@ -11,7 +11,7 @@ import {
 	clearWishlistAsync,
 	syncWishlistOnLoginAsync,
 } from "@/_redux/actions/wishlist.action";
-import { addToCart } from "@/_redux/reducers/cart.reducer";
+import { addToCartAsync } from "@/_redux/actions/cart.action";
 import Products from "@/_components/Products";
 import Layout from "@/_components/Layout";
 import EmptyState from "@/_UI/EmptyState";
@@ -56,7 +56,7 @@ const WishlistPage: React.FC = () => {
 		items.forEach((product) => {
 			const isInCart = cartItems.some((item) => item.id === product.id);
 			if (isInStock(product) && !isInCart) {
-				dispatch(addToCart(product));
+				dispatch(addToCartAsync(product));
 				// Local removal first — the toast/count below is computed
 				// synchronously, so the visible list must update in step with it
 				// rather than waiting on the background sync thunk to resolve.
