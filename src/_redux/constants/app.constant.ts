@@ -7,14 +7,14 @@ export const appConstants = {
 
 	WHATSAPP_URL:
 		process.env.WHATSAPP_URL ||
-		`https://chat.whatsapp.com/EvV74KvWbB34wU0Zyte1tN`,
+		`https://wa.me/p/33449286387995571/2347018845177`,
 
 	FACEBOOK_URL:
 		process.env.FACEBOOK_URL || `https://www.facebook.com/share/1GGim6eNuU/`,
 
 	INSTAGRAM_URL:
 		process.env.INSTAGRAM_URL ||
-		`https://www.instagram.com/greenpastureorganics`,
+		`https://www.instagram.com/greenpasture.organics/`,
 
 	ROOT_STORAGE: "Green_Pastures_GlObAl-StAtE_v2" as const,
 
