@@ -72,7 +72,7 @@ const CartPage: React.FC = () => {
 
 	const [isClearing, setIsClearing] = useState(false);
 	const [showClearConfirm, setShowClearConfirm] = useState(false);
-	const [syncing, setSyncing] = useState(false);
+	const [syncing, setSyncing] = useState(true);
 	const [storeConfig, setStoreConfig] = useState<any>(null);
 
 	// Clear stale errors on mount
@@ -186,7 +186,7 @@ const CartPage: React.FC = () => {
 	// --- Loading State ---
 	// Only when there is nothing to show yet. Once the cart has items, a sync
 	// refreshes them in place rather than collapsing the page into a loader.
-	if (loading && items.length === 0) {
+	if ((loading || (syncing && isAuthenticated)) && items.length === 0) {
 		return (
 			<Layout>
 				<PageLoader fullScreen={false} message="Loading your cart..." />

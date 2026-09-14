@@ -17,11 +17,12 @@ import Layout from "@/_components/Layout";
 import EmptyState from "@/_UI/EmptyState";
 import Button from "@/_UI/Button";
 import Badge from "@/_UI/Badge";
+import PageLoader from "@/_UI/PageLoader";
 
 const WishlistPage: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const cartItems = useAppSelector((state) => state.cart.items);
-	const { items, wishlistItemCount } = useAppSelector(
+	const { items, wishlistItemCount, loading } = useAppSelector(
 		(state) => state.wishlist
 	);
 	const { isAuthenticated } = useAppSelector((state) => state.auth);
@@ -74,6 +75,14 @@ const WishlistPage: React.FC = () => {
 			toast.error("Nothing to add — items are out of stock or already in your cart");
 		}
 	};
+
+	if (loading && items.length === 0) {
+		return (
+			<Layout pageTitle="Wishlist">
+				<PageLoader fullScreen={false} message="Loading your wishlist..." />
+			</Layout>
+		);
+	}
 
 	if (items.length === 0) {
 		return (

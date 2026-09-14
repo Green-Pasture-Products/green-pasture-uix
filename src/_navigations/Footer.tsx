@@ -32,7 +32,7 @@ interface SocialLink {
 
 const socialLinks: SocialLink[] = [
 	{
-		href: process.env.WHATSAPP_URL,
+		href: appConstants.WHATSAPP_URL,
 		label: "Visit WhatsApp",
 		title: "Visit our WhatsApp",
 		icon: WhatsAppIcon,

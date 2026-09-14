@@ -6,13 +6,17 @@ export const appConstants = {
 	IPINFO_TOKEN: process.env.IPINFO_TOKEN || `81a1cbe5574c88`,
 
 	WHATSAPP_URL:
+		process.env.NEXT_PUBLIC_WHATSAPP_URL ||
 		process.env.WHATSAPP_URL ||
 		`https://wa.me/p/33449286387995571/2347018845177`,
 
 	FACEBOOK_URL:
-		process.env.FACEBOOK_URL || `https://www.facebook.com/share/1GGim6eNuU/`,
+		process.env.NEXT_PUBLIC_FACEBOOK_URL ||
+		process.env.FACEBOOK_URL ||
+		`https://www.facebook.com/share/1GGim6eNuU/`,
 
 	INSTAGRAM_URL:
+		process.env.NEXT_PUBLIC_INSTAGRAM_URL ||
 		process.env.INSTAGRAM_URL ||
 		`https://www.instagram.com/greenpasture.organics/`,
 
