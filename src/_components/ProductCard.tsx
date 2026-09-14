@@ -209,184 +209,186 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 			</Link>
 
 			{/* Details */}
-			<div className="flex flex-1 flex-col pt-3.5">
-				<Link href={`/product/${product.id}`}>
-					<h3
-						className="font-display text-[0.95rem] leading-snug mb-1 line-clamp-2 transition-colors"
-						style={{ color: "var(--text-primary)", fontWeight: 500 }}
+			<div className="flex flex-1 flex-col justify-between pt-3">
+				{/* Top Info */}
+				<div className="flex flex-col">
+					<Link href={`/product/${product.id}`} className="block">
+						<h3
+							className="font-display text-[0.95rem] leading-snug line-clamp-2 min-h-[2.6rem] mb-1 transition-colors hover:text-primary-600 dark:hover:text-primary-400"
+							style={{ color: "var(--text-primary)", fontWeight: 500 }}
+						>
+							{product.name}
+						</h3>
+					</Link>
+
+					{/* Pack size sits with the name */}
+					<div className="min-h-[1.1rem] mb-1">
+						{packSize ? (
+							<p className="text-[0.7rem] font-medium" style={{ color: "var(--text-secondary)" }}>
+								{packSize}
+							</p>
+						) : null}
+					</div>
+
+					<p
+						className="text-[0.7rem] line-clamp-2 leading-relaxed min-h-[2.1rem] mb-2"
+						style={{ color: "var(--text-hint)" }}
 					>
-						{product.name}
-					</h3>
-				</Link>
-
-				{/* Pack size sits with the name: it is what separates the 100g
-				    listing from the 200g one. */}
-				{packSize && (
-					<p className="mb-1.5 text-[0.7rem] font-medium" style={{ color: "var(--text-secondary)" }}>
-						{packSize}
+						{htmlToText(product.description)}
 					</p>
-				)}
 
-				<p
-					className="text-[0.7rem] line-clamp-2 leading-relaxed mb-2.5"
-					style={{ color: "var(--text-hint)" }}
-				>
-					{htmlToText(product.description)}
-				</p>
-
-				{/* Rating — only once there is one. An empty star row on every
-				    card reads as broken rather than as "no reviews yet". */}
-				{reviewCount > 0 && (
-					<div className="flex items-center gap-1.5 mb-2.5">
-						<div className="flex items-center gap-px">
-							{[...Array(5)].map((_, i) => (
-								<Star
-									key={i}
-									className={`h-3 w-3 ${i < Math.floor(rating) ? "text-amber-400 fill-amber-400" : ""}`}
-									style={i >= Math.floor(rating) ? { color: "var(--text-disabled)" } : undefined}
-								/>
-							))}
-						</div>
-						<span className="text-[0.6rem] tabular-nums" style={{ color: "var(--text-hint)" }}>
-							{Number(rating).toFixed(1)} ({reviewCount})
-						</span>
+					{/* Rating — consistent height container so cards with/without reviews stay aligned */}
+					<div className="flex items-center gap-1.5 min-h-[1.25rem] mb-2">
+						{reviewCount > 0 ? (
+							<>
+								<div className="flex items-center gap-px">
+									{[...Array(5)].map((_, i) => (
+										<Star
+											key={i}
+											className={`h-3 w-3 ${i < Math.floor(rating) ? "text-amber-400 fill-amber-400" : ""}`}
+											style={i >= Math.floor(rating) ? { color: "var(--text-disabled)" } : undefined}
+										/>
+									))}
+								</div>
+								<span className="text-[0.6rem] tabular-nums" style={{ color: "var(--text-hint)" }}>
+									{Number(rating).toFixed(1)} ({reviewCount})
+								</span>
+							</>
+						) : null}
 					</div>
-				)}
-
-				{/* Price. Stacked, not inline: side by side the two numbers compete,
-				    and the struck one has to shrink so far to stay out of the way
-				    that it stops reading as a price at all. */}
-				<div className="mb-3">
-					<div className="font-display text-lg leading-tight tabular-nums" style={{ color: "var(--text-primary)", fontWeight: 500 }}>
-						{priceVaries && (
-							<span className="mr-1 text-[0.7rem] font-normal align-middle" style={{ color: "var(--text-hint)" }}>
-								from
-							</span>
-						)}
-						{formatPrice(priceVaries ? lowestPrice : price)}
-					</div>
-					{!priceVaries && originalPrice && originalPrice > price && (
-						<div className="mt-0.5 text-sm line-through tabular-nums" style={{ color: "var(--text-disabled)" }}>
-							{formatPrice(originalPrice)}
-						</div>
-					)}
 				</div>
 
-				{/* Actions */}
-				<div className="mt-auto flex gap-2">
-					{isAdmin ? (
-						<Link
-							href={`/product/${product.id}`}
-							className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold border border-outline dark:border-white/15 text-primary-700 dark:text-primary-400 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] dark:hover:bg-white/5 dark:hover:shadow-[0_0_10px_rgba(154,202,60,0.25)] transition-all"
-						>
-							View Details
-						</Link>
-					) : variants.length > 0 && choosingSize && !justAdded ? (
-						/* The size step, in place on the card. The card still cannot
-						   guess which SKU was meant -- but asking here keeps the
-						   customer in the listing instead of sending them to the
-						   detail page to answer one question. */
-						<motion.div
-							key="sizes"
-							initial={{ opacity: 0, y: 4 }}
-							animate={{ opacity: 1, y: 0 }}
-							className="flex-1"
-						>
-							<div className="mb-1.5 flex items-center justify-between">
-								<span className="text-[0.6rem] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--text-hint)" }}>
-									Choose size
+				{/* Bottom Section: Price + Action Button (Anchored to baseline) */}
+				<div className="mt-auto flex flex-col justify-end pt-2">
+					<div className="mb-2.5 min-h-[1.75rem] flex flex-col justify-center">
+						<div className="font-display text-lg leading-tight tabular-nums" style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+							{priceVaries && (
+								<span className="mr-1 text-[0.7rem] font-normal align-middle" style={{ color: "var(--text-hint)" }}>
+									from
 								</span>
-								<button
-									type="button"
-									onClick={() => setChoosingSize(false)}
-									aria-label="Cancel size selection"
-									className="text-[0.6rem] font-medium cursor-pointer"
-									style={{ color: "var(--text-hint)" }}
-								>
-									Cancel
-								</button>
+							)}
+							{formatPrice(priceVaries ? lowestPrice : price)}
+						</div>
+						{!priceVaries && originalPrice && originalPrice > price && (
+							<div className="mt-0.5 text-xs line-through tabular-nums" style={{ color: "var(--text-disabled)" }}>
+								{formatPrice(originalPrice)}
 							</div>
-							<div className="flex flex-wrap gap-1.5">
-								{variants.map((variant: any) => {
-									const soldOut = !(Number(variant.unit) > 0);
-									return (
-										<button
-											key={variant.id}
-											type="button"
-											disabled={soldOut}
-											onClick={() => handleAddVariant(variant)}
-											className={`rounded-full px-2.5 py-1.5 text-[0.65rem] font-semibold transition-all ${soldOut ? "cursor-not-allowed line-through opacity-45" : "cursor-pointer hover:bg-primary-50 dark:hover:bg-white/5"}`}
-											style={{
-												border: "1px solid var(--border-light)",
-												color: "var(--text-primary)",
-											}}
-										>
-											{formatWeight(variant.weightValue, variant.weightUnit) || "One size"}
-										</button>
-									);
-								})}
-							</div>
-						</motion.div>
-					) : (
-					<AnimatePresence mode="wait">
-						{justAdded ? (
+						)}
+					</div>
+
+					{/* Actions */}
+					<div className="flex items-center gap-2">
+						{isAdmin ? (
+							<Link
+								href={`/product/${product.id}`}
+								className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold border border-outline dark:border-white/15 text-primary-700 dark:text-primary-400 hover:bg-primary-50 hover:shadow-[0_0_12px_rgba(154,202,60,0.5)] dark:hover:bg-white/5 dark:hover:shadow-[0_0_10px_rgba(154,202,60,0.25)] transition-all"
+							>
+								View Details
+							</Link>
+						) : variants.length > 0 && choosingSize && !justAdded ? (
 							<motion.div
-								key="added"
-								initial={{ opacity: 0, scale: 0.8 }}
-								animate={{ opacity: 1, scale: 1 }}
-								exit={{ opacity: 0, scale: 0.8 }}
-								className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold"
-								style={{ background: "rgba(154,202,60,0.14)", color: "var(--color-primary)" }}
+								key="sizes"
+								initial={{ opacity: 0, y: 4 }}
+								animate={{ opacity: 1, y: 0 }}
+								className="flex-1"
 							>
-								<Check className="h-3.5 w-3.5" />
-								Added!
+								<div className="mb-1.5 flex items-center justify-between">
+									<span className="text-[0.6rem] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--text-hint)" }}>
+										Choose size
+									</span>
+									<button
+										type="button"
+										onClick={() => setChoosingSize(false)}
+										aria-label="Cancel size selection"
+										className="text-[0.6rem] font-medium cursor-pointer"
+										style={{ color: "var(--text-hint)" }}
+									>
+										Cancel
+									</button>
+								</div>
+								<div className="flex flex-wrap gap-1.5">
+									{variants.map((variant: any) => {
+										const soldOut = !(Number(variant.unit) > 0);
+										return (
+											<button
+												key={variant.id}
+												type="button"
+												disabled={soldOut}
+												onClick={() => handleAddVariant(variant)}
+												className={`rounded-full px-2.5 py-1.5 text-[0.65rem] font-semibold transition-all ${soldOut ? "cursor-not-allowed line-through opacity-45" : "cursor-pointer hover:bg-primary-50 dark:hover:bg-white/5"}`}
+												style={{
+													border: "1px solid var(--border-light)",
+													color: "var(--text-primary)",
+												}}
+											>
+												{formatWeight(variant.weightValue, variant.weightUnit) || "One size"}
+											</button>
+										);
+									})}
+								</div>
 							</motion.div>
-						) : isInCart && variants.length === 0 ? (
-							<motion.button
-								key="remove"
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								exit={{ opacity: 0 }}
-								onClick={handleAddToCart}
-								className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer"
-								style={{ border: "1px solid #ef4444", color: "#ef4444" }}
-								whileTap={{ scale: 0.95 }}
-							>
-								<XCircle className="h-3.5 w-3.5" />
-								Remove
-							</motion.button>
 						) : (
+						<AnimatePresence mode="wait">
+							{justAdded ? (
+								<motion.div
+									key="added"
+									initial={{ opacity: 0, scale: 0.8 }}
+									animate={{ opacity: 1, scale: 1 }}
+									exit={{ opacity: 0, scale: 0.8 }}
+									className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold"
+									style={{ background: "rgba(154,202,60,0.14)", color: "var(--color-primary)" }}
+								>
+									<Check className="h-3.5 w-3.5" />
+									Added!
+								</motion.div>
+							) : isInCart && variants.length === 0 ? (
+								<motion.button
+									key="remove"
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									onClick={handleAddToCart}
+									className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer"
+									style={{ border: "1px solid #ef4444", color: "#ef4444" }}
+									whileTap={{ scale: 0.95 }}
+								>
+									<XCircle className="h-3.5 w-3.5" />
+									Remove
+								</motion.button>
+							) : (
+								<motion.button
+									key="add"
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									onClick={variants.length > 0 ? () => setChoosingSize(true) : handleAddToCart}
+									disabled={!inStock}
+									className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed shadow-xs hover:shadow-md"
+									whileHover={{ scale: 1.02 }}
+									whileTap={{ scale: 0.95 }}
+								>
+									<ShoppingCart className="h-3.5 w-3.5" />
+									{inStock ? "Add to Cart" : "Out of Stock"}
+								</motion.button>
+							)}
+						</AnimatePresence>
+						)}
+
+						{isWishlistPage && !isAdmin && (
 							<motion.button
-								key="add"
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								exit={{ opacity: 0 }}
-								onClick={variants.length > 0 ? () => setChoosingSize(true) : handleAddToCart}
-								disabled={!inStock}
-								className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-								whileHover={{ scale: 1.02 }}
-								whileTap={{ scale: 0.95 }}
+								onClick={() => {
+									dispatch(removeFromWishlist(product.id));
+									dispatch(removeFromWishlistAsync(product.id));
+								}}
+								className="p-2.5 rounded-full cursor-pointer"
+								style={{ border: "1px solid #ef4444", color: "#ef4444" }}
+								whileTap={{ scale: 0.9 }}
+								aria-label="Remove from wishlist"
 							>
-								<ShoppingCart className="h-3.5 w-3.5" />
-								{inStock ? "Add to Cart" : "Out of Stock"}
+								<Trash2 className="h-3.5 w-3.5" />
 							</motion.button>
 						)}
-					</AnimatePresence>
-					)}
-
-					{isWishlistPage && !isAdmin && (
-						<motion.button
-							onClick={() => {
-								dispatch(removeFromWishlist(product.id));
-								dispatch(removeFromWishlistAsync(product.id));
-							}}
-							className="p-2 rounded-lg cursor-pointer"
-							style={{ border: "1px solid #ef4444", color: "#ef4444" }}
-							whileTap={{ scale: 0.9 }}
-						>
-							<Trash2 className="h-3.5 w-3.5" />
-						</motion.button>
-					)}
+					</div>
 				</div>
 			</div>
 		</motion.div>
