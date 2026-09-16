@@ -35,7 +35,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 				<SidebarInset>
 					<TopBar />
 					<TabBar />
-					<main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+					<div className="flex-1 overflow-auto p-4 md:p-6 min-w-0 max-w-full">{children}</div>
 				</SidebarInset>
 			</SidebarProvider>
 		</TooltipProvider>

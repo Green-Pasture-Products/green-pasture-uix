@@ -18,13 +18,18 @@ import {
 } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { addToCart, removeFromCart } from "@/_redux/reducers/cart.reducer";
+import { removeFromCart } from "@/_redux/reducers/cart.reducer";
+import { addToCartAsync, removeFromCartAsync, updateQuantityAsync } from "@/_redux/actions/cart.action";
 import { Product } from "@/types";
 import Products from "@/_components/Products";
 import {
 	addToWishlist,
 	removeFromWishlist,
 } from "@/_redux/reducers/wishlist.reducer";
+import {
+	addToWishlistAsync,
+	removeFromWishlistAsync,
+} from "@/_redux/actions/wishlist.action";
 import Layout from "@/_components/Layout";
 import { appConstants } from "@/_redux/constants";
 import { useFreeShipping, useShowDiscountBadges } from "@/_hooks/useStoreSettings";
@@ -115,15 +120,20 @@ const ProductDetailsPage: React.FC = () => {
 		);
 	}
 
-	const handleCartToggle = () => {
+	const handleCartToggle = async () => {
 		if (isInCart) {
-			for (let i = 0; i < quantity; i++) {
-				dispatch(removeFromCart(product.id));
-			}
+			dispatch(removeFromCart(product.id));
+			dispatch(removeFromCartAsync(product.id));
 			toast.error(`${product.name} removed from cart`);
 		} else {
-			for (let i = 0; i < quantity; i++) {
-				dispatch(addToCart(product));
+			// Add once, then set the quantity. The old loop dispatched the local
+			// add N times, which was fine locally but would have written quantity
+			// 1 to the server N times -- cart-item/create SETS the quantity, it
+			// does not increment. Awaiting the add matters too: cart-item/update
+			// 404s on a line the server does not have yet.
+			await dispatch(addToCartAsync(product)).unwrap();
+			if (quantity > 1) {
+				dispatch(updateQuantityAsync({ id: product.id, quantity }));
 			}
 			toast.success(`${product.name} added to cart`);
 		}
@@ -138,11 +148,16 @@ const ProductDetailsPage: React.FC = () => {
 
 	const handleWishlistToggle = (e: MouseEvent<HTMLButtonElement>) => {
 		e.stopPropagation();
+		// Local update first — always succeeds, so the toast reflects what
+		// actually happened; the *Async thunk is a fire-and-forget background
+		// sync, same split useCartOperations uses for cart.
 		if (isInWishlist) {
 			dispatch(removeFromWishlist(product.id));
+			dispatch(removeFromWishlistAsync(product.id));
 			toast.error(`${product.name} removed from wishlist`);
 		} else {
 			dispatch(addToWishlist(product));
+			dispatch(addToWishlistAsync(product));
 			toast.success(`${product.name} added to wishlist`);
 		}
 	};
@@ -176,7 +191,14 @@ const ProductDetailsPage: React.FC = () => {
 						items={[
 							{ label: "Home", href: "/" },
 							{ label: "Products", href: "/products" },
-							{ label: productCategory || "Products", href: `/products?category=${(productCategory || "").toLowerCase()}` },
+							{
+								label: productCategory || "Products",
+								// Must match the category exactly as stored — filterAndSortProducts
+								// compares with `===`, not case-insensitively — and be encoded, since
+								// category names routinely contain "&" (e.g. "Herbal Teas & Infusions"),
+								// which would otherwise split the query string.
+								href: productCategory ? `/products?category=${encodeURIComponent(productCategory)}` : "/products",
+							},
 							{ label: product?.name },
 						]}
 					/>
@@ -413,7 +435,7 @@ const ProductDetailsPage: React.FC = () => {
 								<button
 									aria-label="Add to Wishlist"
 									onClick={(e) => handleWishlistToggle(e)}
-									className={`p-3 border rounded-radius-md transition-all ${
+									className={`p-3 border rounded-radius-md transition-all cursor-pointer ${
 										isInWishlist
 											? "bg-red-500 border-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
 											: ""

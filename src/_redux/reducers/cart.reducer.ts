@@ -8,7 +8,10 @@ import {
 	updateQuantityAsync,
 	syncCartOnLoginAsync,
 	fetchCartAsync,
+	createCartAsync,
 } from "../actions/cart.action";
+import { logoutAsync } from "../actions/auth.action";
+import { logout } from "./auth.reducer";
 
 const initialState: CartState & { cartId: string | null } = {
 	items: [],
@@ -111,69 +114,74 @@ const cartSlice = createSlice({
 		},
 	},
 	extraReducers: (builder) => {
+		// `loading` is a cart-level flag: it belongs to fetching/syncing the whole
+		// cart, not to item mutations. Item mutations are applied optimistically
+		// and already show a per-item spinner (useCartOperations' isUpdating), so
+		// flipping the global flag here made the cart page swap itself for a
+		// full-page loader on every quantity change — a full "refresh" that only
+		// logged-in users saw, since guests never dispatch these thunks.
+
 		// Add to cart async
 		builder
 			.addCase(addToCartAsync.pending, (state) => {
-				state.loading = true;
 				state.error = null;
 			})
 			.addCase(addToCartAsync.fulfilled, (state, action) => {
-				state.loading = false;
 				cartSlice.caseReducers.addToCart(state, action);
 			})
 			.addCase(addToCartAsync.rejected, (state, action) => {
-				state.loading = false;
 				state.error = action.payload as string;
 			});
 
 		// Remove from cart async
 		builder
 			.addCase(removeFromCartAsync.pending, (state) => {
-				state.loading = true;
 				state.error = null;
 			})
 			.addCase(removeFromCartAsync.fulfilled, (state, action) => {
-				state.loading = false;
 				cartSlice.caseReducers.removeFromCart(state, action);
 			})
 			.addCase(removeFromCartAsync.rejected, (state, action) => {
-				state.loading = false;
 				state.error = action.payload as string;
 			});
 
 		// Update quantity async
 		builder
 			.addCase(updateQuantityAsync.pending, (state) => {
-				state.loading = true;
 				state.error = null;
 			})
 			.addCase(updateQuantityAsync.fulfilled, (state, action) => {
-				state.loading = false;
 				cartSlice.caseReducers.updateQuantity(state, action);
 			})
 			.addCase(updateQuantityAsync.rejected, (state, action) => {
-				state.loading = false;
 				state.error = action.payload as string;
 			});
 
 		// Clear cart async
 		builder
 			.addCase(clearCartAsync.pending, (state) => {
-				state.loading = true;
 				state.error = null;
 			})
 			.addCase(clearCartAsync.fulfilled, (state) => {
-				state.loading = false;
 				cartSlice.caseReducers.clearCart(state);
 			})
 			.addCase(clearCartAsync.rejected, (state, action) => {
-				state.loading = false;
 				state.error = action.payload as string;
 			});
 
 		// Fetch cart
 		builder
 			.addCase(fetchCartAsync.fulfilled, (state, action) => {
+				const cart = action.payload?.data;
+				if (cart?.id) {
+					state.cartId = cart.id;
+				}
+			});
+
+		// Create (get-or-create) cart -- the id has to land in state, or the very
+		// next add resolves the cart all over again.
+		builder
+			.addCase(createCartAsync.fulfilled, (state, action) => {
 				const cart = action.payload?.data;
 				if (cart?.id) {
 					state.cartId = cart.id;
@@ -230,6 +238,19 @@ const cartSlice = createSlice({
 			})
 			.addCase(syncCartOnLoginAsync.rejected, (state) => {
 				state.loading = false;
+			});
+
+		// The cart is persisted to localStorage, so signing out used to leave
+		// the previous session's items sitting there for whoever signed in
+		// next -- on the same browser, or on this device while the real cart
+		// moved on elsewhere. Dropping it here is what makes "sign out and
+		// back in" a predictable reset.
+		builder
+			.addCase(logout, (state) => {
+				cartSlice.caseReducers.clearCart(state);
+			})
+			.addCase(logoutAsync.fulfilled, (state) => {
+				cartSlice.caseReducers.clearCart(state);
 			});
 	},
 });

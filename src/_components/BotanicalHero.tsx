@@ -17,8 +17,6 @@ import { ArrowRight, Sprout } from "lucide-react";
  * white background; a dark-mode hero would need a second asset, not CSS.
  */
 
-const HERO_BG = "#ffffff";
-
 const BotanicalHero: React.FC = () => {
 	const reduced = !!useReducedMotion();
 	const rootRef = useRef<HTMLElement>(null);
@@ -34,13 +32,16 @@ const BotanicalHero: React.FC = () => {
 	});
 
 	return (
-		<section ref={rootRef} className="relative isolate overflow-hidden" style={{ background: HERO_BG }}>
+		<section
+			ref={rootRef}
+			className="relative isolate overflow-hidden bg-white dark:bg-[#0c1425] transition-colors duration-300"
+		>
 			{/* Photograph. In flow on small screens, pinned to the right half from lg up. */}
 			<motion.div
 				initial={{ opacity: 0, scale: reduced ? 1 : 1.04 }}
 				animate={{ opacity: 1, scale: 1 }}
 				transition={{ duration: reduced ? 0 : 1.2, ease: [0.22, 1, 0.36, 1] }}
-				className="relative h-[300px] w-full sm:h-[380px] lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[58%]"
+				className="relative h-[280px] w-full sm:h-[380px] lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[58%]"
 			>
 				<Image
 					src="/images/landing_page_image.png"
@@ -49,39 +50,41 @@ const BotanicalHero: React.FC = () => {
 					priority
 					quality={95}
 					sizes="(max-width: 1024px) 100vw, 58vw"
-					className="object-cover object-right"
+					className="object-cover object-center sm:object-right"
 				/>
-				{/* Feathers the crop edge into the copy column instead of a hard seam */}
+				{/* Feathers the crop edge into the copy column on desktop */}
 				<div
 					aria-hidden
-					className="pointer-events-none absolute inset-y-0 left-0 hidden w-40 lg:block"
-					style={{ background: `linear-gradient(to right, ${HERO_BG}, transparent)` }}
+					className="pointer-events-none absolute inset-y-0 left-0 hidden w-40 lg:block bg-gradient-to-r from-white dark:from-[#0c1425] to-transparent"
+				/>
+				{/* Bottom fade on mobile so photograph seamlessly blends into content */}
+				<div
+					aria-hidden
+					className="pointer-events-none absolute inset-x-0 bottom-0 h-16 block lg:hidden bg-gradient-to-t from-white dark:from-[#0c1425] to-transparent"
 				/>
 			</motion.div>
 
-			<motion.div style={{ opacity: fade }} className="page-wrapper relative z-10 py-16 md:py-24 lg:py-32">
+			<motion.div style={{ opacity: fade }} className="page-wrapper relative z-10 py-10 sm:py-16 md:py-24 lg:py-32">
 				<motion.div style={{ y: copyY }} className="max-w-xl lg:max-w-[46%]">
 					<motion.div
 						{...rise(0.05)}
-						className="mb-7 inline-flex items-center gap-2 rounded-full py-1.5 pl-2 pr-4"
-						style={{ background: "rgba(122,171,45,0.10)", border: "1px solid rgba(122,171,45,0.35)" }}
+						className="mb-6 sm:mb-7 inline-flex items-center gap-2 rounded-full py-1.5 pl-2 pr-4 bg-[rgba(122,171,45,0.10)] dark:bg-[rgba(154,202,60,0.16)] border border-[rgba(122,171,45,0.35)] dark:border-[rgba(154,202,60,0.35)]"
 					>
 						<span
-							className="flex h-6 w-6 items-center justify-center rounded-full"
-							style={{ background: "rgba(122,171,45,0.18)" }}
+							className="flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(122,171,45,0.18)] dark:bg-[rgba(154,202,60,0.22)]"
 						>
-							<Sprout className="h-3.5 w-3.5" style={{ color: "#5c8a1e" }} />
+							<Sprout className="h-3.5 w-3.5 text-[#5c8a1e] dark:text-[#9aca3c]" />
 						</span>
-						<span className="text-[0.7rem] font-medium uppercase tracking-[0.18em]" style={{ color: "#5c8a1e" }}>
+						<span className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[#5c8a1e] dark:text-[#9aca3c]">
 							Grown, never manufactured
 						</span>
 					</motion.div>
 
-					<h1 className="font-display text-[2.9rem] leading-[0.94] tracking-[-0.02em] sm:text-6xl lg:text-[4.4rem]" style={{ color: "#10231f" }}>
+					<h1 className="font-display text-[2.6rem] leading-[0.96] tracking-[-0.02em] sm:text-6xl lg:text-[4.4rem] text-[#10231f] dark:text-slate-100">
 						<motion.span {...rise(0.14)} className="block" style={{ fontWeight: 300 }}>
 							Wellness that
 						</motion.span>
-						<motion.span {...rise(0.24)} className="block italic" style={{ fontWeight: 500, color: "#5c8a1e" }}>
+						<motion.span {...rise(0.24)} className="block italic text-[#5c8a1e] dark:text-[#9aca3c]" style={{ fontWeight: 500 }}>
 							remembers
 						</motion.span>
 						<motion.span {...rise(0.34)} className="block" style={{ fontWeight: 300 }}>
@@ -91,17 +94,16 @@ const BotanicalHero: React.FC = () => {
 
 					<motion.p
 						{...rise(0.46)}
-						className="mt-7 max-w-md text-base leading-relaxed sm:text-lg"
-						style={{ color: "rgba(16,35,31,0.68)" }}
+						className="mt-6 sm:mt-7 max-w-md text-base leading-relaxed sm:text-lg text-[#10231f]/75 dark:text-slate-300"
 					>
 						Immunity and fertility supplements pressed from organically farmed roots, leaves and seeds —
 						traced from Northern Nigerian soil to the jar in your hand.
 					</motion.p>
 
-					<motion.div {...rise(0.56)} className="mt-9 flex flex-wrap items-center gap-3">
+					<motion.div {...rise(0.56)} className="mt-8 sm:mt-9 flex flex-wrap items-center gap-3">
 						<Link
 							href="/products"
-							className="group inline-flex items-center gap-2.5 rounded-full px-7 py-3.5 text-sm font-semibold transition-all duration-300 hover:shadow-[0_10px_30px_-8px_rgba(122,171,45,0.65)]"
+							className="group inline-flex items-center gap-2.5 rounded-full px-7 py-3.5 text-sm font-semibold transition-all duration-300 hover:shadow-[0_10px_30px_-8px_rgba(122,171,45,0.65)] active:scale-[0.98]"
 							style={{ background: "#9aca3c", color: "#0c2b25" }}
 						>
 							Shop the range
@@ -109,8 +111,7 @@ const BotanicalHero: React.FC = () => {
 						</Link>
 						<Link
 							href="/about"
-							className="rounded-full px-7 py-3.5 text-sm font-medium transition-colors duration-300 hover:bg-[rgba(16,35,31,0.04)]"
-							style={{ border: "1px solid rgba(16,35,31,0.18)", color: "#10231f" }}
+							className="rounded-full px-7 py-3.5 text-sm font-medium transition-colors duration-300 hover:bg-black/5 dark:hover:bg-white/10 active:scale-[0.98] border border-[#10231f]/20 dark:border-white/20 text-[#10231f] dark:text-slate-100"
 						>
 							How we source
 						</Link>
@@ -119,8 +120,7 @@ const BotanicalHero: React.FC = () => {
 					{/* Provenance strip — concrete claims, not vague trust badges */}
 					<motion.dl
 						{...rise(0.68)}
-						className="mt-12 grid max-w-md grid-cols-3 gap-6 border-t pt-7"
-						style={{ borderColor: "rgba(16,35,31,0.12)" }}
+						className="mt-10 sm:mt-12 grid max-w-md grid-cols-3 gap-6 border-t pt-6 sm:pt-7 border-[#10231f]/12 dark:border-white/12"
 					>
 						{[
 							{ n: "100%", l: "Certified organic" },
@@ -128,10 +128,10 @@ const BotanicalHero: React.FC = () => {
 							{ n: "48h", l: "Farm to dispatch" },
 						].map((s) => (
 							<div key={s.l}>
-								<dt className="font-display text-2xl tabular-nums sm:text-3xl" style={{ color: "#5c8a1e", fontWeight: 500 }}>
+								<dt className="font-display text-2xl tabular-nums sm:text-3xl text-[#5c8a1e] dark:text-[#9aca3c]" style={{ fontWeight: 500 }}>
 									{s.n}
 								</dt>
-								<dd className="mt-1 text-[0.68rem] uppercase tracking-[0.12em]" style={{ color: "rgba(16,35,31,0.55)" }}>
+								<dd className="mt-1 text-[0.68rem] uppercase tracking-[0.12em] text-[#10231f]/60 dark:text-slate-400">
 									{s.l}
 								</dd>
 							</div>

@@ -67,10 +67,20 @@ const LoginPage: React.FC = () => {
 			const syncCart = async () => {
 				try {
 					const { syncCartOnLoginAsync } = await import("@/_redux/actions/cart.action");
-					await dispatch(syncCartOnLoginAsync()).unwrap();
+					await dispatch(syncCartOnLoginAsync(true)).unwrap();
 				} catch {}
 			};
 			syncCart();
+
+			// Same reconciliation for the wishlist — local (guest) items get
+			// pushed up, then the backend list becomes the source of truth.
+			const syncWishlist = async () => {
+				try {
+					const { syncWishlistOnLoginAsync } = await import("@/_redux/actions/wishlist.action");
+					await dispatch(syncWishlistOnLoginAsync(true)).unwrap();
+				} catch {}
+			};
+			syncWishlist();
 
 			router.push(redirect);
 		}

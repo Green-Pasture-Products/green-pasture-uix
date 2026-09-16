@@ -262,6 +262,7 @@ const FilteredProducts: React.FC = () => {
 										key={product.id}
 										variants={gridItemVariants}
 										layout
+										className="h-full flex flex-col"
 									>
 										<ProductCard product={product} />
 									</motion.div>

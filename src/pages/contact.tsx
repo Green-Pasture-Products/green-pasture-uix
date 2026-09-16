@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Phone, Mail, MapPin, Send, Clock, PackageSearch, Sprout } from "lucide-react";
+import { Phone, Mail, MapPin, Send, Clock, PackageSearch, Sprout, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 import Layout from "@/_components/Layout";
@@ -8,10 +8,14 @@ import SectionHeading from "@/_UI/SectionHeading";
 import Input from "@/_UI/Input";
 import Button from "@/_UI/Button";
 import { appConstants } from "@/_redux/constants";
+import toast from "react-hot-toast";
+import axiosInstance from "@/_utils/axiosInstance";
+import { extractErrorMessage } from "@/_utils/apiHelpers";
 
 const contactInfo = [
-	{ icon: Phone, title: "Phone", detail: appConstants.CONTACT.PHONE, subtitle: "Mon–Fri, 9am–5pm WAT" },
-	{ icon: Mail, title: "Email", detail: appConstants.CONTACT.EMAIL, subtitle: "We reply within 24 hours" },
+	{ icon: Phone, title: "Phone", detail: appConstants.CONTACT.PHONE, subtitle: "Mon–Fri, 9am–5pm WAT", href: appConstants.CONTACT.PHONE_HREF },
+	{ icon: MessageCircle, title: "WhatsApp", detail: "+234 701 884 5177", subtitle: "Chat with us instantly", href: appConstants.WHATSAPP_URL },
+	{ icon: Mail, title: "Email", detail: appConstants.CONTACT.EMAIL, subtitle: "We reply within 24 hours", href: appConstants.CONTACT.EMAIL_HREF },
 	{ icon: MapPin, title: "Office", detail: appConstants.CONTACT.ADDRESS, subtitle: "Visit by appointment" },
 ];
 
@@ -35,15 +39,38 @@ const quickAnswers = [
 ];
 
 const Contact = () => {
-	const [formData, setFormData] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
+	const EMPTY_FORM = { name: "", email: "", phone: "", subject: "", message: "" };
+	const [formData, setFormData] = useState(EMPTY_FORM);
+	const [sending, setSending] = useState(false);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		// Handle form submission
+		if (sending) return;
+
+		setSending(true);
+		try {
+			// The backend caps this at 10 characters too -- checking here as well
+			// turns a 400 into a straight answer next to the field.
+			if (formData.message.trim().length < 10) {
+				toast.error("Please tell us a little more — at least 10 characters.");
+				return;
+			}
+
+			const res = await axiosInstance.post("store/contact", {
+				...formData,
+				phone: formData.phone.trim() || undefined,
+			});
+			toast.success(res.data?.message ?? "Message sent — we'll get back to you shortly.");
+			setFormData(EMPTY_FORM);
+		} catch (error: any) {
+			toast.error(extractErrorMessage(error));
+		} finally {
+			setSending(false);
+		}
 	};
 
 	return (
@@ -169,8 +196,8 @@ const Contact = () => {
 											}}
 										/>
 									</div>
-									<Button type="submit" variant="filled" size="lg" rightIcon={Send} fullWidth>
-										Send Message
+									<Button type="submit" variant="filled" size="lg" rightIcon={Send} fullWidth loading={sending}>
+										{sending ? "Sending…" : "Send Message"}
 									</Button>
 								</form>
 							</div>
@@ -181,23 +208,15 @@ const Contact = () => {
 							<div className="space-y-4">
 								{contactInfo.map((info, index) => {
 									const Icon = info.icon;
-									return (
-										<motion.div
-											key={info.title}
-											initial={{ opacity: 0, x: 20 }}
-											whileInView={{ opacity: 1, x: 0 }}
-											viewport={{ once: true }}
-											transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
-											className="group flex items-start gap-4 rounded-2xl p-6 transition-colors duration-300"
-											style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}
-										>
+									const CardContent = (
+										<>
 											<span
 												className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
 												style={{ background: "rgba(154,202,60,0.12)" }}
 											>
 												<Icon className="h-5 w-5" style={{ color: "var(--color-primary)" }} strokeWidth={1.6} />
 											</span>
-											<div className="min-w-0">
+											<div className="min-w-0 flex-1">
 												<p className="text-[0.68rem] uppercase tracking-[0.16em]" style={{ color: "var(--text-hint)" }}>
 													{info.title}
 												</p>
@@ -208,6 +227,35 @@ const Contact = () => {
 													{info.subtitle}
 												</p>
 											</div>
+										</>
+									);
+
+									return info.href ? (
+										<motion.a
+											key={info.title}
+											href={info.href}
+											target={info.href.startsWith("http") ? "_blank" : undefined}
+											rel={info.href.startsWith("http") ? "noopener noreferrer" : undefined}
+											initial={{ opacity: 0, x: 20 }}
+											whileInView={{ opacity: 1, x: 0 }}
+											viewport={{ once: true }}
+											transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+											className="group flex items-start gap-4 rounded-2xl p-6 transition-all duration-300 hover:scale-[1.01] hover:shadow-md cursor-pointer block"
+											style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}
+										>
+											{CardContent}
+										</motion.a>
+									) : (
+										<motion.div
+											key={info.title}
+											initial={{ opacity: 0, x: 20 }}
+											whileInView={{ opacity: 1, x: 0 }}
+											viewport={{ once: true }}
+											transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+											className="group flex items-start gap-4 rounded-2xl p-6 transition-colors duration-300"
+											style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}
+										>
+											{CardContent}
 										</motion.div>
 									);
 								})}

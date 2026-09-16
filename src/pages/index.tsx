@@ -149,7 +149,7 @@ const HomePage: React.FC = () => {
 
 					{categories.length > 0 && (
 						<AnimatedSection delay={0.08}>
-							<div className="hide-scrollbar -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+							<div className="hide-scrollbar -mx-4 mb-3 flex items-center gap-2 overflow-x-auto px-4 pb-1.5 sm:mx-0 sm:flex-wrap sm:px-0">
 								{[ALL, ...categories].map((name) => (
 									<FilterChip key={name} active={category === name} onClick={() => setCategory(name)}>
 										{name}
@@ -161,8 +161,8 @@ const HomePage: React.FC = () => {
 
 					{availableTags.length > 0 && (
 						<AnimatedSection delay={0.12}>
-							<div className="hide-scrollbar -mx-4 mb-8 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-								<span className="shrink-0 pr-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--text-hint)" }}>
+							<div className="hide-scrollbar -mx-4 mb-8 flex items-center gap-2 overflow-x-auto px-4 pb-1.5 sm:mx-0 sm:flex-wrap sm:px-0">
+								<span className="shrink-0 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--text-hint)", background: "var(--surface-medium)" }}>
 									For
 								</span>
 								{[{ id: ALL, name: "Everyone", slug: ALL }, ...availableTags].map((t) => (
@@ -188,7 +188,7 @@ const HomePage: React.FC = () => {
 						<AnimatedSection delay={0.16}>
 							<CardRail label="Products">
 								{visible.slice(0, RAIL_LIMIT).map((product) => (
-									<div key={product.id} className="w-[45%] shrink-0 snap-start sm:w-[236px]">
+									<div key={product.id} className="w-[64vw] min-w-[195px] max-w-[250px] shrink-0 snap-start sm:w-[236px]">
 										<ProductCard product={product} />
 									</div>
 								))}
@@ -290,6 +290,7 @@ const HomePage: React.FC = () => {
 			<Testimonials featured />
 
 			{/* ── Newsletter ───────────────────────────────────────── */}
+				{/*
 			<section className="py-20 md:py-28" style={{ background: "var(--background)" }}>
 				<div className="page-wrapper">
 					<AnimatedSection>
@@ -341,6 +342,7 @@ const HomePage: React.FC = () => {
 					</AnimatedSection>
 				</div>
 			</section>
+				*/}
 		</Layout>
 	);
 };
@@ -371,9 +373,9 @@ const FilterChip: React.FC<{
 
 /** Placeholder rail so the first paint isn't the "No products yet" empty state. */
 const RailSkeleton: React.FC = () => (
-	<div className="flex gap-5 overflow-hidden">
+	<div className="hide-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 sm:mx-0 sm:gap-5 sm:px-0">
 		{[...Array(5)].map((_, i) => (
-			<div key={i} className="w-[45%] shrink-0 animate-pulse sm:w-[236px]">
+			<div key={i} className="w-[64vw] min-w-[195px] max-w-[250px] shrink-0 animate-pulse sm:w-[236px]">
 				<div className="aspect-square rounded-xl" style={{ background: "var(--surface-tile)" }} />
 				<div className="space-y-2.5 pt-3.5">
 					<div className="h-4 w-3/4 rounded-full" style={{ background: "var(--surface-medium)" }} />

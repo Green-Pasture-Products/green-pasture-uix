@@ -94,7 +94,7 @@ export async function signInAsAdmin(context: BrowserContext, baseURL: string) {
 				key,
 				JSON.stringify({
 					auth: authSlice,
-					_persist: JSON.stringify({ version: -1, rehydrated: true }),
+					_persist: JSON.stringify({ version: 1, rehydrated: true }),
 				}),
 			);
 		},

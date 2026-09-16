@@ -8,6 +8,9 @@ import { OutcomeProvider } from "@/_UI/Outcome";
 import { initAuth } from "@/_utils/authInit";
 import { hydrateAuth } from "@/_redux/reducers/auth.reducer";
 import { profileAction } from "@/_redux/actions/profile.action";
+import { cartAction } from "@/_redux/actions/cart.action";
+import { wishlistAction } from "@/_redux/actions/wishlist.action";
+import { appConstants } from "@/_redux/constants";
 import { fetchStoreSettings } from "@/_redux/reducers/settings.reducer";
 import { scheduleProactiveRefresh, stopAuthScheduler } from "@/_utils/tokenRefresh";
 import "@/styles/globals.css";
@@ -25,6 +28,9 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
 	const dispatch = useAppDispatch();
 	const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 	const user = useAppSelector((state) => state.auth.user);
+	const isAdmin = appConstants.ADMIN_ROLES.includes(
+		(user?.profileType?.toUpperCase() as any) || ""
+	);
 
 	useEffect(() => {
 		initAuth(dispatch);
@@ -33,6 +39,40 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
 		dispatch(fetchStoreSettings());
 		return () => stopAuthScheduler();
 	}, [dispatch]);
+
+	// Synchronize cart and wishlist from backend on app boot / authentication,
+	// so the header notification badge is always accurate across all devices immediately.
+	useEffect(() => {
+		if (isAuthenticated && !isAdmin) {
+			dispatch(cartAction.syncCartOnLoginAsync(false) as any);
+			dispatch(wishlistAction.syncWishlistOnLoginAsync(false) as any);
+		}
+	}, [isAuthenticated, isAdmin, dispatch]);
+
+	// Re-synchronize when the user returns to the tab or app (e.g. switching back from web/mobile)
+	useEffect(() => {
+		if (!isAuthenticated || isAdmin) return;
+
+		let lastSync = Date.now();
+		const handleActiveSync = () => {
+			if (
+				(document.visibilityState === "visible" || document.hasFocus()) &&
+				Date.now() - lastSync > 6000
+			) {
+				lastSync = Date.now();
+				dispatch(cartAction.syncCartOnLoginAsync(false) as any);
+				dispatch(wishlistAction.syncWishlistOnLoginAsync(false) as any);
+			}
+		};
+
+		window.addEventListener("focus", handleActiveSync);
+		document.addEventListener("visibilitychange", handleActiveSync);
+
+		return () => {
+			window.removeEventListener("focus", handleActiveSync);
+			document.removeEventListener("visibilitychange", handleActiveSync);
+		};
+	}, [isAuthenticated, isAdmin, dispatch]);
 
 	// (Re)arm the silent-refresh timer whenever the user becomes authenticated
 	// (login or boot success); cancel it on logout. Refreshes reschedule
