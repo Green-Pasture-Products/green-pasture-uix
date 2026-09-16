@@ -77,7 +77,7 @@ const CreditDashboard: React.FC = () => {
 		}
 	}, [isAuthenticated, fetchCreditData]);
 
-	if (showAuthPrompt) return <AuthPrompt />;
+	if (showAuthPrompt) return <AuthPrompt isOpen={showAuthPrompt} />;
 	if (loading) return <PageLoader />;
 	if (!creditAccount) return <div className="p-6">No credit account found</div>;
 

@@ -28,13 +28,13 @@ const CreditTransactionsTable: React.FC<CreditTransactionsTableProps> = ({
 	const getVariant = (type: string) => {
 		switch (type) {
 			case "DEBIT":
-				return "danger";
+				return "error";
 			case "CREDIT":
 				return "success";
 			case "ADJUSTMENT":
 				return "info";
 			default:
-				return "default";
+				return "neutral";
 		}
 	};
 

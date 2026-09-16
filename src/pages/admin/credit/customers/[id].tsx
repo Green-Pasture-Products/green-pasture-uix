@@ -36,7 +36,7 @@ const AdminCreditCustomerDetail: React.FC = () => {
 	const [formData, setFormData] = useState({
 		creditLimit: 0,
 		paymentTermDays: 30,
-		status: "ACTIVE" as const,
+		status: "ACTIVE" as "ACTIVE" | "SUSPENDED" | "DISABLED",
 	});
 
 	useEffect(() => {
@@ -207,7 +207,7 @@ const AdminCreditCustomerDetail: React.FC = () => {
 													? "success"
 													: customer.creditAccount.creditStatus === "SUSPENDED"
 														? "warning"
-														: "danger"
+															: "error"
 											}
 										>
 											{customer.creditAccount.creditStatus}

@@ -110,7 +110,7 @@ const SubmitPayment: React.FC = () => {
 		}
 	};
 
-	if (showAuthPrompt) return <AuthPrompt />;
+	if (showAuthPrompt) return <AuthPrompt isOpen={showAuthPrompt} />;
 
 	return (
 		<Layout>

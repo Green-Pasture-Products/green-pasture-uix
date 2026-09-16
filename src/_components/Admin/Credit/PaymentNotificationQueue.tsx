@@ -33,7 +33,7 @@ const PaymentNotificationQueue: React.FC<PaymentNotificationQueueProps> = ({
 			case "VERIFIED":
 				return "success";
 			case "REJECTED":
-				return "danger";
+				return "error";
 			default:
 				return "info";
 		}

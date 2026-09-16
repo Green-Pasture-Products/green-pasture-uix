@@ -12,6 +12,7 @@ import reviewReducer from "./review.reducer";
 import profileReducer from "./profile.reducer";
 import settingsReducer from "./settings.reducer";
 import tagReducer from "./tag.reducer";
+import { creditReducer } from "./credit.reducer";
 
 const rootReducer = combineReducers({
 	auth: authReducer,
@@ -27,6 +28,7 @@ const rootReducer = combineReducers({
 	profile: profileReducer,
 	settings: settingsReducer,
 	tag: tagReducer,
+	credit: creditReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

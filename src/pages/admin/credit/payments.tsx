@@ -74,7 +74,7 @@ const AdminCreditPayments: React.FC = () => {
 			case "VERIFIED":
 				return "success";
 			case "REJECTED":
-				return "danger";
+				return "error";
 			default:
 				return "info";
 		}

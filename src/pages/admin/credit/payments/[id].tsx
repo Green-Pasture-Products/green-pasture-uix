@@ -161,7 +161,7 @@ const AdminPaymentDetail: React.FC = () => {
 								? "warning"
 								: payment.notificationStatus === "VERIFIED"
 									? "success"
-									: "danger"
+															: "error"
 						}
 					>
 						{payment.notificationStatus}

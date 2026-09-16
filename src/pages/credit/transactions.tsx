@@ -155,7 +155,7 @@ const CreditTransactions: React.FC = () => {
 												<Badge
 													variant={
 														transaction.transactionType === "DEBIT"
-															? "danger"
+																? "error"
 															: transaction.transactionType === "CREDIT"
 																? "success"
 																: "info"

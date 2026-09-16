@@ -34,7 +34,7 @@ const AdminCreditCustomersTable: React.FC<AdminCreditCustomersTableProps> = ({
 			case "SUSPENDED":
 				return "warning";
 			case "DISABLED":
-				return "danger";
+				return "error";
 			default:
 				return "info";
 		}

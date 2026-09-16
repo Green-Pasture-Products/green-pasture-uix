@@ -74,7 +74,7 @@ const AdminCreditCustomers: React.FC = () => {
 			case "SUSPENDED":
 				return "warning";
 			case "DISABLED":
-				return "danger";
+				return "error";
 			default:
 				return "info";
 		}

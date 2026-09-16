@@ -70,7 +70,7 @@ const CreditOrders: React.FC = () => {
 			case "PENDING":
 				return "warning";
 			case "CANCELLED":
-				return "danger";
+				return "error";
 			default:
 				return "info";
 		}
