@@ -64,6 +64,14 @@ const Navbar: React.FC = () => {
 	);
 
 	useEffect(() => {
+		if (typeof window !== 'undefined') {
+			console.log('DEBUG Navbar - User profileType:', user?.profileType);
+			console.log('DEBUG Navbar - Is Admin:', isAdmin);
+			console.log('DEBUG Navbar - Full user:', user);
+		}
+	}, [user]);
+
+	useEffect(() => {
 		// bio now comes from auth.user, no need to fetch from storage
 	}, []);
 
@@ -227,8 +235,9 @@ const Navbar: React.FC = () => {
 										Profile
 									</Link>
 									{!isAdmin && (
-										<Link
-											href="/my-orders"
+										<>
+											<Link
+												href="/my-orders"
 											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
 											onClick={() =>
 												setIsUserMenuOpen(false)
@@ -237,12 +246,24 @@ const Navbar: React.FC = () => {
 											<ShoppingBag className="h-4 w-4" />
 											My Orders
 										</Link>
+										<Link
+											href="/credit"
+											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
+											onClick={() =>
+												setIsUserMenuOpen(false)
+											}
+										>
+											<ShoppingCart className="h-4 w-4" />
+											Buy Now Pay Later
+										</Link>
+										</>
 									)}
 									{appConstants.ADMIN_ROLES.includes(
 										bio?.profileType?.toUpperCase() as any || ""
 									) && (
-										<Link
-											href="/admin/dashboard"
+										<>
+											<Link
+												href="/admin/dashboard"
 											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
 											onClick={() =>
 												setIsUserMenuOpen(false)
@@ -251,6 +272,17 @@ const Navbar: React.FC = () => {
 											<ShoppingCart className="h-4 w-4" />
 											Admin Dashboard
 										</Link>
+										<Link
+											href="/admin/credit/dashboard"
+											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
+											onClick={() =>
+												setIsUserMenuOpen(false)
+											}
+										>
+											<ShoppingBag className="h-4 w-4" />
+											Credit Management
+										</Link>
+										</>
 									)}
 									<div className="border-t border-outline-variant dark:border-white/8 my-1" />
 									<button
