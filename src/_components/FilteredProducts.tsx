@@ -6,7 +6,6 @@ import {
 	List,
 	SlidersHorizontal,
 	X,
-	Star,
 } from "lucide-react";
 
 import EmptyState from "@/_UI/EmptyState";
@@ -15,13 +14,12 @@ import SearchFiltersComponent from "@/_components/SearchFilters";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { filterAndSortProducts } from "@/_utils";
 import { groupVariants } from "@/_utils/groupVariants";
-import { variantSummary } from "@/_utils/variantSummary";
 import { useProductFilters } from "@/_hooks/useProductFilters";
 import ProductCard from "@/_components/ProductCard";
+import ProductListRow from "@/_components/ProductListRow";
 import SearchBar from "@/_components/SearchBar";
 import { usePathname } from "next/navigation";
 import { productsAction } from "@/_redux/actions";
-import { htmlToText } from "@/_utils/htmlToText";
 
 const gridContainerVariants = {
 	hidden: {},
@@ -50,7 +48,6 @@ const FilteredProducts: React.FC = () => {
 	const { products, isFetchingAllProducts } = useAppSelector(
 		(state) => state.product
 	);
-	const showDiscount = useAppSelector((state) => state.settings.showDiscountBadges);
 
 	const [showFilters, setShowFilters] = useState(false);
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -277,148 +274,9 @@ const FilteredProducts: React.FC = () => {
 							animate="visible"
 							key="list"
 						>
-							{filteredProducts?.map((product, i) => {
-								const p = product as any;
-								const { packSize, priceVaries, lowestPrice } = variantSummary(p);
-								const imageUrl =
-									p.photos?.[0]?.url || p.image || "";
-								const price = Number(p.price || 0);
-								const originalPrice =
-										showDiscount && p.originalPrice ? Number(p.originalPrice) : null;
-								const discount = originalPrice && originalPrice > price
-									? Math.round(((originalPrice - price) / originalPrice) * 100)
-									: null;
-								const rating =
-									p.ratingStats?.average ??
-									p.rating ??
-									0;
-								const reviewCount =
-									p.ratingStats?.count ??
-									p.reviews ??
-									0;
-								return (
-									<div
-										key={product.id}
-										onClick={() =>
-											router.push(
-												`/product/${product.id}`
-											)
-										}
-										className="flex items-center gap-4 p-4 rounded-xl transition-all cursor-pointer animate-row-enter"
-										style={{
-											background:
-												"var(--surface-paper)",
-											border: "1px solid var(--border-light)",
-											animationDelay: `${i * 30}ms`,
-										}}
-										onMouseEnter={(e) => {
-											e.currentTarget.style.boxShadow =
-												"var(--shadow-md)";
-											e.currentTarget.style.transform =
-												"translateY(-1px)";
-										}}
-										onMouseLeave={(e) => {
-											e.currentTarget.style.boxShadow =
-												"none";
-											e.currentTarget.style.transform =
-												"none";
-										}}
-									>
-										<div className="relative shrink-0">
-											{imageUrl ? (
-												<img
-													src={imageUrl}
-													alt={product.name}
-													className="w-20 h-20 rounded-lg object-cover"
-													style={{
-														border: "1px solid var(--border-light)",
-													}}
-												/>
-											) : (
-												<div
-													className="w-20 h-20 rounded-lg flex items-center justify-center text-xl font-bold"
-													style={{
-														background:
-															"var(--surface-medium)",
-														color: "var(--text-disabled)",
-													}}
-												>
-													{product.name
-														?.charAt(0)
-														?.toUpperCase()}
-												</div>
-											)}
-											{!priceVaries && discount && discount > 0 && (
-												<span className="absolute top-1.5 left-1.5 text-[0.6rem] font-bold px-1 py-0.5 rounded text-white leading-none" style={{ background: '#ef4444' }}>
-													-{discount}%
-												</span>
-											)}
-										</div>
-										<div className="flex-1 min-w-0">
-											<h3
-												className="font-semibold text-sm truncate"
-												style={{
-													color: "var(--text-primary)",
-												}}
-											>
-												{product.name}
-											</h3>
-											{packSize && (
-												<p
-													className="text-xs mt-0.5"
-													style={{
-														color: "var(--text-hint)",
-													}}
-												>
-													{packSize}
-												</p>
-											)}
-											<p
-												className="text-xs mt-0.5 line-clamp-1"
-												style={{
-													color: "var(--text-hint)",
-												}}
-											>
-												{htmlToText(product.description)}
-											</p>
-											<div className="flex items-center gap-3 mt-2">
-												<span
-													className="text-sm font-bold"
-													style={{
-														color: "var(--color-primary)",
-													}}
-												>
-													{priceVaries && (
-														<span className="mr-0.5 text-[0.65rem] font-normal" style={{ color: "var(--text-hint)" }}>
-															from
-														</span>
-													)}
-													₦{(priceVaries ? lowestPrice : price).toLocaleString()}
-												</span>
-												{!priceVaries && originalPrice && discount && discount > 0 && (
-													<span className="text-xs line-through" style={{ color: 'var(--text-hint)' }}>
-														₦{originalPrice.toLocaleString()}
-													</span>
-												)}
-												<div className="flex items-center gap-0.5">
-													<Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-													<span
-														className="text-[0.65rem]"
-														style={{
-															color: "var(--text-hint)",
-														}}
-													>
-														{Number(
-															rating
-														).toFixed(1)}{" "}
-														({reviewCount})
-													</span>
-												</div>
-											</div>
-										</div>
-									</div>
-								);
-							})}
+							{filteredProducts?.map((product, i) => (
+								<ProductListRow key={product.id} product={product} index={i} />
+							))}
 						</motion.div>
 					)}
 				</div>

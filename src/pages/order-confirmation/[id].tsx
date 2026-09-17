@@ -22,13 +22,11 @@ const getStatusVariant = (status: string): "success" | "warning" | "error" | "in
 			return "warning";
 		case "PROCESSING":
 			return "info";
-		case "SHIPPED":
+		case "IN_TRANSIT":
 			return "info";
 		case "DELIVERED":
-		case "COMPLETED":
 			return "success";
 		case "CANCELLED":
-		case "REFUNDED":
 			return "error";
 		default:
 			return "neutral";
@@ -126,8 +124,9 @@ const OrderConfirmationPage: React.FC = () => {
 		(sum: number, item: BackendOrderItem) => sum + item.unitPrice * item.quantity,
 		0,
 	);
-	const taxAndShipping = order.totalAmount - subtotal;
-	const tax = taxAndShipping > 0 ? taxAndShipping : 0;
+	// Not shipping for now, so the total-subtotal diff is just tax.
+	const taxDiff = order.totalAmount - subtotal;
+	const tax = taxDiff > 0 ? taxDiff : 0;
 
 	return (
 		<Layout pageTitle="Order Confirmed">
@@ -186,7 +185,7 @@ const OrderConfirmationPage: React.FC = () => {
 							</p>
 						</div>
 						<Badge variant={getStatusVariant(order.orderStatus)} dot>
-							{order.orderStatus}
+							{order.orderStatus.replace(/_/g, " ")}
 						</Badge>
 					</div>
 				</Card>
@@ -268,7 +267,7 @@ const OrderConfirmationPage: React.FC = () => {
 						</div>
 						{tax > 0 && (
 							<div className="flex justify-between text-sm">
-								<span style={{ color: "var(--text-secondary)" }}>Tax & Shipping</span>
+								<span style={{ color: "var(--text-secondary)" }}>Tax</span>
 								<span className="font-medium tabular-nums" style={{ color: "var(--text-primary)" }}>
 									{formatCurrency(tax)}
 								</span>

@@ -12,7 +12,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
 	CreditCard,
-	Truck,
 	CheckCircle,
 	Loader2,
 	DollarSign,
@@ -57,9 +56,9 @@ const checkoutFormSchema = z.object({
 		country: z.string().min(1, "Country is required"),
 		postalCode: z.string().min(1, "Postal code is required"),
 	}),
-	// The id of an admin-configured shipping method — not a fixed set, so this
-	// is validated as "picked something" rather than against a closed list.
-	shippingMethod: z.string().min(1, "Please select a shipping method"),
+	// Not shipping for now — no method to pick, but the field stays (sent to
+	// the backend as an empty string) so the request shape is unchanged.
+	shippingMethod: z.string(),
 	paymentMethod: z.enum(["CARD", "CASH_ON_DELIVERY"]),
 });
 
@@ -283,7 +282,6 @@ const CheckoutPage: React.FC = () => {
 		},
 	});
 
-	const selectedShipping = useWatch({ control, name: "shippingMethod" });
 	const selectedPayment = useWatch({ control, name: "paymentMethod" });
 
 	/* Derive visual step based on form completion (all sections visible) */
@@ -304,7 +302,7 @@ const CheckoutPage: React.FC = () => {
 		dispatch(clearCheckoutError());
 	}, [dispatch]);
 
-	// Fetch store settings for tax/shipping
+	// Fetch store settings for tax
 	useEffect(() => {
 		const fetchConfig = async () => {
 			try {
@@ -319,34 +317,12 @@ const CheckoutPage: React.FC = () => {
 	}, []);
 
 	const taxRate = Number(storeConfig?.orderSettings?.taxRate) || 0;
-	const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold) || 0;
-
-	// Price the method the customer picked, matched by id — matching by name
-	// meant a renamed method silently fell through to methods[0], so express
-	// was displayed and charged at standard cost. Disabled methods aren't
-	// offered at all, so they can never be the active selection.
-	const shippingMethods = storeConfig?.shippingConfig?.methods ?? [];
-	const enabledShippingMethods = shippingMethods.filter((m: any) => m?.enabled !== false);
-	const activeMethod = enabledShippingMethods.find((m: any) => m.id === selectedShipping) ?? enabledShippingMethods[0];
-	const shippingFee = Number(activeMethod?.baseCost) || 0;
-
-	// Default (and re-default if the store config changes underneath the form,
-	// e.g. the admin disabled the previously-selected method) to the first
-	// enabled method's id.
-	useEffect(() => {
-		if (enabledShippingMethods.length === 0) return;
-		if (!enabledShippingMethods.some((m: any) => m.id === selectedShipping)) {
-			setValue("shippingMethod", enabledShippingMethods[0].id);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [storeConfig]);
 
 	const subtotal = total;
-	const shipping = freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : shippingFee;
 	const tax = Math.round(subtotal * taxRate);
 	// Display only — the server recomputes all of this at checkout and the
 	// order is charged from its figures, not these.
-	const finalTotal = Math.max(0, subtotal + shipping + tax - couponDiscount);
+	const finalTotal = Math.max(0, subtotal + tax - couponDiscount);
 
 	const handleApplyCoupon = async () => {
 		if (!couponCode.trim()) return;
@@ -954,50 +930,6 @@ const CheckoutPage: React.FC = () => {
 							</div>
 						</motion.section>
 
-						{/* ===== Shipping Method ===== */}
-						<motion.section
-							variants={sectionVariants}
-							className="rounded-2xl p-6 md:p-8"
-							style={{
-								background: "var(--surface-paper)",
-								border: "1px solid var(--border-light)",
-							}}
-						>
-							<h2
-								className="text-lg font-semibold mb-5 flex items-center gap-2"
-								style={{ color: "var(--text-primary)" }}
-							>
-								<Truck size={18} style={{ color: "var(--color-primary)" }} />
-								Shipping Method
-							</h2>
-
-							<div className="space-y-3">
-								{configLoading ? (
-									<div className="h-16 rounded-xl animate-pulse" style={{ background: "var(--surface-medium)" }} />
-								) : enabledShippingMethods.length === 0 ? (
-									<div
-										className="rounded-lg p-4 text-sm"
-										style={{ background: "var(--surface-medium)", color: "var(--text-secondary)" }}
-									>
-										No shipping methods are currently available. Please check back later or contact support.
-									</div>
-								) : (
-									enabledShippingMethods.map((opt: any) => (
-										<OptionCard
-											key={opt.id}
-											selected={selectedShipping === opt.id}
-											Icon={Truck}
-											label={opt.name}
-											desc={`${opt.estimatedDays ? `${opt.estimatedDays} • ` : ""}₦${Number(opt.baseCost).toLocaleString()}`}
-											value={opt.id}
-											name="shippingMethod"
-											onChange={() => setValue("shippingMethod", opt.id)}
-										/>
-									))
-								)}
-							</div>
-						</motion.section>
-
 						{/* ===== Payment Method ===== */}
 						<motion.section
 							variants={sectionVariants}
@@ -1156,7 +1088,7 @@ const CheckoutPage: React.FC = () => {
 								</div>
 							) : !storeConfig ? (
 								<div className="rounded-lg p-3 mb-5 text-xs" style={{ background: "var(--surface-medium)", color: "var(--text-secondary)" }}>
-									Tax and shipping info is currently unavailable. Totals shown may not include tax or shipping fees.
+									Tax info is currently unavailable. Totals shown may not include tax.
 								</div>
 							) : (
 							<div className="space-y-2.5 mb-5">
@@ -1164,12 +1096,6 @@ const CheckoutPage: React.FC = () => {
 									<span style={{ color: "var(--text-secondary)" }}>Subtotal</span>
 									<span className="font-medium" style={{ color: "var(--text-primary)" }}>
 										&#8358;{subtotal.toLocaleString()}
-									</span>
-								</div>
-								<div className="flex justify-between text-sm">
-									<span style={{ color: "var(--text-secondary)" }}>Shipping</span>
-									<span className="font-medium" style={{ color: shipping === 0 ? "var(--color-primary)" : "var(--text-primary)" }}>
-										{shipping === 0 ? "Free" : `\u20A6${shipping.toLocaleString()}`}
 									</span>
 								</div>
 								<div className="flex justify-between text-sm">
@@ -1209,7 +1135,7 @@ const CheckoutPage: React.FC = () => {
 								size="lg"
 								fullWidth
 								loading={isProcessing}
-								disabled={isProcessing || configLoading || enabledShippingMethods.length === 0}
+								disabled={isProcessing || configLoading}
 							>
 								{isProcessing ? "Processing..." : "Place Order"}
 							</Button>

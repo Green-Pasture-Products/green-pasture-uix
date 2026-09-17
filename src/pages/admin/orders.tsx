@@ -32,10 +32,9 @@ const ORDER_STATUS_FILTERS: FilterDef[] = [
 		options: [
 			{ value: "PENDING", label: "Pending" },
 			{ value: "PROCESSING", label: "Processing" },
+			{ value: "IN_TRANSIT", label: "In Transit" },
 			{ value: "DELIVERED", label: "Delivered" },
 			{ value: "CANCELLED", label: "Cancelled" },
-			{ value: "COMPLETED", label: "Completed" },
-			{ value: "FAILED", label: "Failed" },
 		],
 	},
 ];
@@ -46,15 +45,11 @@ const getStatusBadgeVariant = (status: string): "success" | "warning" | "error" 
 			return "warning";
 		case "PROCESSING":
 			return "info";
-		case "SHIPPED":
+		case "IN_TRANSIT":
 			return "info";
 		case "DELIVERED":
-		case "COMPLETED":
 			return "success";
 		case "CANCELLED":
-		case "FAILED":
-			return "error";
-		case "REFUNDED":
 			return "error";
 		default:
 			return "neutral";
@@ -162,7 +157,7 @@ const AdminOrders: React.FC = () => {
 			header: "Status",
 			cell: ({ getValue }) => (
 				<Badge variant={getStatusBadgeVariant(String(getValue()))} dot>
-					{String(getValue())}
+					{String(getValue()).replace(/_/g, " ")}
 				</Badge>
 			),
 		},
@@ -184,7 +179,7 @@ const AdminOrders: React.FC = () => {
 			cell: ({ row }) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/order/${row.original.orderReference}`) },
-					{ label: "Cancel", icon: DELETE_ICON, onClick: () => setCancelTarget(row.original), variant: "danger" as const, hidden: row.original.orderStatus === "CANCELLED" },
+					{ label: "Cancel", icon: DELETE_ICON, onClick: () => setCancelTarget(row.original), variant: "danger" as const, hidden: ["CANCELLED", "DELIVERED"].includes(row.original.orderStatus) },
 				]} />
 			),
 		},

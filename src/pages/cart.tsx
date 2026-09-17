@@ -14,7 +14,6 @@ import {
 	RefreshCw,
 	ArrowLeft,
 	ShieldCheck,
-	Truck,
 	Lock,
 	X,
 } from "lucide-react";
@@ -87,7 +86,7 @@ const CartPage: React.FC = () => {
 			try {
 				const axiosInstance = (await import("@/_utils/axiosInstance")).default;
 
-				// Fetch store settings (tax, shipping, thresholds)
+				// Fetch store settings (tax)
 				try {
 					const storeRes = await axiosInstance.get("store/settings");
 					setStoreConfig(storeRes.data?.data);
@@ -113,38 +112,20 @@ const CartPage: React.FC = () => {
 
 	// Server-driven values — no hardcoded fallbacks
 	const taxRate = Number(storeConfig?.orderSettings?.taxRate) || 0;
-	const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold) || 0;
-	const shippingFee = Number(storeConfig?.shippingConfig?.methods?.find((m: any) => m?.enabled !== false)?.baseCost) || 0;
 	const defaultCurrency = storeConfig?.orderSettings?.defaultCurrency ?? "NGN";
-	// Free shipping is threshold AND region. The cart has no delivery address
-	// yet, so this is a preview: name the regions rather than promise the
-	// waiver. The backend is the authority and re-decides at checkout.
-	const freeShippingRegions: string[] = storeConfig?.orderSettings?.freeShippingRegions ?? [];
 
 	const calculations = useMemo(() => {
 		const subtotal = total || 0;
-		const shipping = subtotal >= freeShippingThreshold ? 0 : shippingFee;
 		const tax = Math.round(subtotal * taxRate);
-		const finalTotal = subtotal + shipping + tax;
-		const remainingForFreeShipping = Math.max(
-			0,
-			freeShippingThreshold - subtotal
-		);
+		const finalTotal = subtotal + tax;
 
 		return {
 			subtotal,
-			shipping,
 			tax,
 			taxRate,
 			finalTotal,
-			freeShippingThreshold,
-			remainingForFreeShipping,
-			hasQualifiedForFreeShipping: subtotal >= freeShippingThreshold,
 		};
-	}, [total, taxRate, freeShippingThreshold, shippingFee]);
-
-	// The free-shipping threshold now comes from the admin-owned settings slice
-	// (see useFreeShipping) — nothing to push into the cart slice here.
+	}, [total, taxRate]);
 
 	const handleClearCart = useCallback(async () => {
 		if (!showClearConfirm) {
@@ -174,14 +155,6 @@ const CartPage: React.FC = () => {
 	const isItemInStock = (item: any): boolean => {
 		return (item as any).unit > 0 || item.inStock;
 	};
-
-	const shippingProgress = useMemo(() => {
-		if (!calculations) return 0;
-		return Math.min(
-			100,
-			(calculations.subtotal / calculations.freeShippingThreshold) * 100
-		);
-	}, [calculations]);
 
 	// --- Loading State ---
 	// Only when there is nothing to show yet. Once the cart has items, a sync
@@ -559,83 +532,6 @@ const CartPage: React.FC = () => {
 						</AnimatePresence>
 					</div>
 				</motion.div>
-
-				{/* Free Shipping Progress Bar */}
-				{!calculations?.hasQualifiedForFreeShipping &&
-					calculations?.remainingForFreeShipping > 0 && (
-						<motion.div
-							initial="hidden"
-							animate="visible"
-							variants={fadeUp}
-							style={{
-								padding: "1rem 1.25rem",
-								borderRadius: "14px",
-								backgroundColor: "var(--surface-paper)",
-								border: "1px solid var(--border-light)",
-								boxShadow: "var(--shadow-sm)",
-								marginBottom: "1.5rem",
-							}}
-						>
-							<div className="flex items-center justify-between mb-2.5">
-								<span className="flex items-center gap-2" style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--text-primary)" }}>
-									<Truck style={{ width: "16px", height: "16px", color: "var(--color-primary)" }} />
-									Free shipping progress
-								</span>
-								<span className="tabular-nums" style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--color-primary)" }}>
-									{"\u20A6"}{calculations?.remainingForFreeShipping.toLocaleString()} away
-								</span>
-							</div>
-							{freeShippingRegions.length > 0 && (
-								<p className="mb-2.5" style={{ fontSize: "0.72rem", color: "var(--text-hint)" }}>
-									Applies to deliveries within {freeShippingRegions.join(", ")}.
-								</p>
-							)}
-							<div
-								style={{
-									width: "100%",
-									height: "8px",
-									borderRadius: "4px",
-									backgroundColor: "var(--surface-medium)",
-									overflow: "hidden",
-								}}
-							>
-								<motion.div
-									initial={{ width: 0 }}
-									animate={{ width: `${shippingProgress}%` }}
-									transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
-									style={{
-										height: "100%",
-										borderRadius: "4px",
-										background: `linear-gradient(90deg, var(--color-primary), var(--color-primary-light))`,
-									}}
-								/>
-							</div>
-						</motion.div>
-					)}
-
-				{/* Qualified for free shipping */}
-				{calculations?.hasQualifiedForFreeShipping && (
-					<motion.div
-						initial={{ opacity: 0, y: -10 }}
-						animate={{ opacity: 1, y: 0 }}
-						style={{
-							padding: "0.75rem 1.25rem",
-							borderRadius: "14px",
-							backgroundColor: "var(--surface-paper)",
-							border: "1px solid var(--color-primary)",
-							boxShadow: "var(--shadow-sm)",
-							marginBottom: "1.5rem",
-							display: "flex",
-							alignItems: "center",
-							gap: "0.75rem",
-						}}
-					>
-						<Truck style={{ width: "18px", height: "18px", color: "var(--color-primary)", flexShrink: 0 }} />
-						<span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-primary)" }}>
-							You have qualified for free shipping!
-						</span>
-					</motion.div>
-				)}
 
 				{/* Main Grid */}
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1026,31 +922,6 @@ const CartPage: React.FC = () => {
 
 								<div className="flex justify-between items-center">
 									<span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-										Shipping
-										{calculations?.hasQualifiedForFreeShipping && (
-											<span style={{ color: "var(--color-primary)", marginLeft: "4px", fontWeight: 600 }}>
-												(Free!)
-											</span>
-										)}
-									</span>
-									<motion.span
-										key={calculations?.shipping}
-										initial={{ opacity: 0.6 }}
-										animate={{ opacity: 1 }}
-										transition={{ duration: 0.25 }}
-										className="tabular-nums"
-										style={{
-											fontSize: "0.9rem",
-											fontWeight: 600,
-											color: calculations?.shipping === 0 ? "var(--color-primary)" : "var(--text-primary)",
-										}}
-									>
-										{calculations?.shipping === 0 ? "Free" : `\u20A6${calculations?.shipping?.toLocaleString()}`}
-									</motion.span>
-								</div>
-
-								<div className="flex justify-between items-center">
-									<span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
 										Tax ({formatRateAsPercent(calculations.taxRate)})
 									</span>
 									<motion.span
@@ -1184,10 +1055,6 @@ const CartPage: React.FC = () => {
 								<div className="flex items-center gap-1.5" style={{ color: "var(--text-hint)", fontSize: "0.7rem" }}>
 									<Lock style={{ width: "14px", height: "14px" }} />
 									<span>Encrypted</span>
-								</div>
-								<div className="flex items-center gap-1.5" style={{ color: "var(--text-hint)", fontSize: "0.7rem" }}>
-									<Truck style={{ width: "14px", height: "14px" }} />
-									<span>Tracked</span>
 								</div>
 							</div>
 						</motion.div>

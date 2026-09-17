@@ -11,6 +11,7 @@ import { profileAction } from "@/_redux/actions/profile.action";
 import { profileSchema, ProfileFormData } from "@/_validations/profile";
 import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
+import { FormSelect } from "@/_UI/FormField";
 import Button from "@/_UI/Button";
 import PageLoader from "@/_UI/PageLoader";
 import AuthPrompt from "@/_UI/AuthPrompt";
@@ -219,21 +220,16 @@ const Profile = () => {
 								placeholder="e.g. +234 800 000 0000"
 							/>
 
-							<div>
-								<label className="block text-sm font-medium text-on-surface/80 dark:text-gray-200 mb-1.5">
-									Gender
-								</label>
-								<select
-									{...register("gender")}
-									className="w-full border rounded-radius-md px-3 py-2.5 bg-transparent focus:outline-none focus:ring-2 focus:ring-primary-600/20 focus:border-primary-600 transition-colors"
-									style={{ borderColor: "var(--border-light)", color: "var(--text-primary)" }}
-								>
-									<option value="">Select gender</option>
-									<option value="Male">Male</option>
-									<option value="Female">Female</option>
-									<option value="Other">Other</option>
-								</select>
-							</div>
+							<FormSelect
+								label="Gender"
+								placeholder="Select gender"
+								options={[
+									{ value: "Male", label: "Male" },
+									{ value: "Female", label: "Female" },
+									{ value: "Other", label: "Other" },
+								]}
+								{...register("gender")}
+							/>
 
 							<div className="flex items-center space-x-3 pt-2">
 								<Button

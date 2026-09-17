@@ -13,9 +13,10 @@ interface Step {
 	label: string;
 	key: string;
 	date?: string;
+	description: string;
 }
 
-const STATUS_ORDER = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"];
+const STATUS_ORDER = ["PENDING", "PROCESSING", "IN_TRANSIT", "DELIVERED"];
 
 function getActiveIndex(status: string): number {
 	const upper = status?.toUpperCase() ?? "";
@@ -49,16 +50,37 @@ function formatDate(dateStr?: string): string {
 	}
 }
 
+const CANCELLED_DESCRIPTION = "Order has been cancelled and will no longer be fulfilled.";
+
 const OrderTimeline: React.FC<OrderTimelineProps> = ({ status, createdAt, shippingDate, deliveredDate }) => {
 	const isCancelled = status?.toUpperCase() === "CANCELLED";
-	const isRefunded = status?.toUpperCase() === "REFUNDED";
-	const activeIndex = isCancelled || isRefunded ? -1 : getActiveIndex(status);
+	const activeIndex = isCancelled ? -1 : getActiveIndex(status);
 
 	const steps: Step[] = [
-		{ label: "Order Placed", key: "PENDING", date: createdAt },
-		{ label: "Processing", key: "PROCESSING", date: undefined },
-		{ label: "Shipped", key: "SHIPPED", date: shippingDate },
-		{ label: "Delivered", key: "DELIVERED", date: deliveredDate },
+		{
+			label: "Order Placed",
+			key: "PENDING",
+			date: createdAt,
+			description: "Order has been placed but fulfilment has not started.",
+		},
+		{
+			label: "Processing",
+			key: "PROCESSING",
+			date: undefined,
+			description: "Order has been confirmed and is being prepared/packed.",
+		},
+		{
+			label: "In Transit",
+			key: "IN_TRANSIT",
+			date: shippingDate,
+			description: "Order has been handed over for delivery and is on its way to the customer.",
+		},
+		{
+			label: "Delivered",
+			key: "DELIVERED",
+			date: deliveredDate,
+			description: "Order has successfully reached the customer.",
+		},
 	];
 
 	return (
@@ -80,7 +102,7 @@ const OrderTimeline: React.FC<OrderTimelineProps> = ({ status, createdAt, shippi
 			</div>
 
 			<div className="px-5 py-6">
-				{isCancelled || isRefunded ? (
+				{isCancelled ? (
 					<div className="flex items-center gap-3 px-4 py-3 rounded-lg" style={{ background: "rgba(239, 68, 68, 0.08)" }}>
 						<div
 							className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
@@ -90,7 +112,10 @@ const OrderTimeline: React.FC<OrderTimelineProps> = ({ status, createdAt, shippi
 						</div>
 						<div>
 							<p className="text-sm font-semibold" style={{ color: "var(--color-error, #ef4444)" }}>
-								Order {isCancelled ? "Cancelled" : "Refunded"}
+								Order Cancelled
+							</p>
+							<p className="text-xs mt-0.5" style={{ color: "var(--text-hint)" }}>
+								{CANCELLED_DESCRIPTION}
 							</p>
 							<p className="text-xs mt-0.5" style={{ color: "var(--text-hint)" }}>
 								{formatDate(createdAt)}
@@ -106,7 +131,7 @@ const OrderTimeline: React.FC<OrderTimelineProps> = ({ status, createdAt, shippi
 
 							return (
 								<React.Fragment key={step.key}>
-									<div className="flex flex-col items-center text-center" style={{ minWidth: 70 }}>
+									<div className="flex flex-col items-center text-center" style={{ minWidth: 70 }} title={step.description}>
 										{/* Circle */}
 										<div
 											className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300"

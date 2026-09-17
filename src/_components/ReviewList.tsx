@@ -7,14 +7,26 @@ import { BackendReview } from "@/types";
 
 interface ReviewListProps {
 	itemId: string;
+	/**
+	 * The item's ratingStats from the API — averaged over every review in the
+	 * variant group. Passed in rather than derived here: this list holds only
+	 * the pages loaded so far, so averaging it would headline a different
+	 * number than the product header directly above it shows.
+	 */
+	averageRating: number;
+	totalReviews: number;
 }
 
-const ReviewList: React.FC<ReviewListProps> = ({ itemId }) => {
+const ReviewList: React.FC<ReviewListProps> = ({ itemId, averageRating, totalReviews }) => {
 	const dispatch = useAppDispatch();
 	const { reviews, pagination, isLoading } = useAppSelector((state) => state.review);
 	const [page, setPage] = useState(1);
 
 	useEffect(() => {
+		// Switching pack size is a shallow route change, so this component is
+		// never unmounted — the page counter has to be reset by hand or "Load
+		// More" asks the new product for page 3.
+		setPage(1);
 		dispatch(reviewAction.fetchItemReviewsAsync({ itemId, page: 1, limit: 10 }));
 	}, [dispatch, itemId]);
 
@@ -25,11 +37,6 @@ const ReviewList: React.FC<ReviewListProps> = ({ itemId }) => {
 	};
 
 	const hasMore = pagination && pagination.currentPage < pagination.totalPages;
-
-	const averageRating =
-		reviews.length > 0
-			? reviews.reduce((sum: number, r: BackendReview) => sum + r.rating, 0) / reviews.length
-			: 0;
 
 	const formatDate = (dateString: string) => {
 		const date = new Date(dateString);
@@ -68,7 +75,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ itemId }) => {
 								<Star
 									key={i}
 									className={`h-4 w-4 ${
-										i < Math.floor(averageRating)
+										i < Math.round(averageRating)
 											? "text-yellow-400 fill-current"
 											: "text-gray-300"
 									}`}
@@ -76,7 +83,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ itemId }) => {
 							))}
 						</div>
 						<div className="text-sm text-gray-600 mt-1">
-							{pagination?.totalItems ?? reviews.length} review{(pagination?.totalItems ?? reviews.length) !== 1 ? "s" : ""}
+							{totalReviews} review{totalReviews !== 1 ? "s" : ""}
 						</div>
 					</div>
 				</div>

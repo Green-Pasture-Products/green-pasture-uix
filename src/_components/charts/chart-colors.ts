@@ -34,27 +34,17 @@ export const TREND = {
 
 /**
  * Semantic status → colour, keyed to this app's real OrderStatus enum
- * (src/common/enumerations/order_status.enum.ts in the API repo) rather than
- * ogaryde's ride-hailing statuses, which don't exist in green-pasture's data.
- * COMPLETED/DELIVERED read as brand-green success; CANCELLED/FAILED/RETURNED
- * as red; PENDING/PROCESSING/PRE_PAYMENT/ON_HOLD as in-progress amber/blue;
- * REFUNDED/EXCHANGED as violet — carrying forward the same REFUNDED → violet
- * mapping the old src/pages/admin/dashboard.tsx already used, so this isn't a
- * new colour decision, just the one already made in this codebase.
+ * (src/common/enumerations/order_status.enum.ts in the API repo): PENDING is
+ * amber (awaiting action), PROCESSING/IN_TRANSIT are blue (in progress),
+ * DELIVERED is brand-green success, CANCELLED is red.
  * Statuses not listed fall back to the categorical order, then Other.
  */
 const STATUS_COLORS: Record<string, string> = {
-  COMPLETED: "#0e9f6e",
   DELIVERED: "#0e9f6e",
   PROCESSING: "#2f6fed",
+  IN_TRANSIT: "#2f6fed",
   PENDING: "#d97706",
-  PRE_PAYMENT: "#d97706",
-  ON_HOLD: "#d97706",
-  REFUNDED: "#8b5cf6",
-  EXCHANGED: "#8b5cf6",
   CANCELLED: "#dc2626",
-  FAILED: "#dc2626",
-  RETURNED: "#dc2626",
 };
 
 /** Colour for a status slice — semantic when known, else stable-by-index categorical. */
