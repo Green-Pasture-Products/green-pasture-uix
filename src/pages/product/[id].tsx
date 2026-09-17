@@ -20,6 +20,7 @@ import {
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { removeFromCart } from "@/_redux/reducers/cart.reducer";
 import { addToCartAsync, removeFromCartAsync, updateQuantityAsync } from "@/_redux/actions/cart.action";
+import { productsAction } from "@/_redux/actions/products.action";
 import { Product } from "@/types";
 import Products from "@/_components/Products";
 import {
@@ -124,7 +125,7 @@ const ProductDetailsPage: React.FC = () => {
 		if (isInCart) {
 			dispatch(removeFromCart(product.id));
 			dispatch(removeFromCartAsync(product.id));
-			toast.error(`${product.name} removed from cart`);
+			toast(`${product.name} removed from cart`);
 		} else {
 			// Add once, then set the quantity. The old loop dispatched the local
 			// add N times, which was fine locally but would have written quantity
@@ -154,7 +155,7 @@ const ProductDetailsPage: React.FC = () => {
 		if (isInWishlist) {
 			dispatch(removeFromWishlist(product.id));
 			dispatch(removeFromWishlistAsync(product.id));
-			toast.error(`${product.name} removed from wishlist`);
+			toast(`${product.name} removed from wishlist`);
 		} else {
 			dispatch(addToWishlist(product));
 			dispatch(addToWishlistAsync(product));
@@ -167,8 +168,10 @@ const ProductDetailsPage: React.FC = () => {
 	const productImages = itemData.photos?.length > 0
 		? itemData.photos.map((photo: any) => photo.url)
 		: itemData.image ? [itemData.image] : [];
-	const itemRating = itemData.ratingStats?.average ?? itemData.rating ?? 0;
-	const itemReviewCount = itemData.ratingStats?.count ?? itemData.reviews ?? 0;
+	// ratingStats is the only source for these. The old fallbacks read
+	// `itemData.reviews`, which is an array, not a count.
+	const itemRating = Number(itemData.ratingStats?.average ?? 0);
+	const itemReviewCount = Number(itemData.ratingStats?.count ?? 0);
 	const itemInStock = itemData.unit > 0 || itemData.inStock;
 	// Same admin kill-switch the cards honour — the detail page was reading
 	// originalPrice raw, so it ignored the toggle entirely.
@@ -323,24 +326,30 @@ const ProductDetailsPage: React.FC = () => {
 
 						{/* Rating */}
 						<div className="flex items-center space-x-4">
-							<div className="flex items-center space-x-1">
-								{[...Array(5)].map((_, i) => (
-									<Star
-										key={i}
-										className={`h-5 w-5 ${
-											i < Math.floor(itemRating)
-												? "text-amber-400 fill-amber-400"
-												: "text-on-surface/30 dark:text-gray-600"
-										}`}
-									/>
-								))}
-							</div>
-							<span className="text-lg font-medium text-on-surface dark:text-white">
-								{itemRating}
-							</span>
-							<span className="text-on-surface-variant dark:text-gray-400">
-								({itemReviewCount} reviews)
-							</span>
+							{itemReviewCount > 0 ? (
+								<>
+									<div className="flex items-center space-x-1">
+										{[...Array(5)].map((_, i) => (
+											<Star
+												key={i}
+												className={`h-5 w-5 ${
+													i < Math.round(itemRating)
+														? "text-amber-400 fill-amber-400"
+														: "text-on-surface/30 dark:text-gray-600"
+												}`}
+											/>
+										))}
+									</div>
+									<span className="text-lg font-medium text-on-surface dark:text-white">
+										{itemRating.toFixed(1)}
+									</span>
+									<span className="text-on-surface-variant dark:text-gray-400">
+										({itemReviewCount} review{itemReviewCount !== 1 ? "s" : ""})
+									</span>
+								</>
+							) : (
+								<span className="text-on-surface-variant dark:text-gray-400">No reviews yet</span>
+							)}
 						</div>
 
 						{/* Price */}
@@ -548,10 +557,13 @@ const ProductDetailsPage: React.FC = () => {
 									Customer Reviews
 								</h3>
 								<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
-									<ReviewList itemId={String(id)} />
+									<ReviewList itemId={String(id)} averageRating={itemRating} totalReviews={itemReviewCount} />
 								</Card>
 								<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
-									<ReviewForm itemId={String(id)} />
+									<ReviewForm
+										itemId={String(id)}
+										onSubmitted={() => dispatch(productsAction.fetchAllProducts({ activeOnly: true }))}
+									/>
 								</Card>
 							</div>
 						)}

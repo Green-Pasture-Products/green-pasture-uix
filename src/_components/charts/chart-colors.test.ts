@@ -14,7 +14,7 @@ test("categoricalColor: folds anything past the palette length into Other grey",
 });
 
 test("statusColor: known order statuses map to their semantic colour, case-insensitively", () => {
-  assert.equal(statusColor("COMPLETED", 0), "#0e9f6e");
+  assert.equal(statusColor("DELIVERED", 0), "#0e9f6e");
   assert.equal(statusColor("cancelled", 0), "#dc2626");
 });
 

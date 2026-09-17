@@ -165,6 +165,9 @@ const AdminProducts: React.FC = () => {
 				const value: any = getValue();
 				const avg = value?.average ?? 0;
 				const count = value?.count ?? 0;
+				if (!count) {
+					return <span className="text-xs" style={{ color: "var(--text-hint)" }}>—</span>;
+				}
 				return (
 					<div className="flex items-center gap-1.5">
 						<Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />

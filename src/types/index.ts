@@ -111,20 +111,6 @@ export interface Address {
 	country: string;
 }
 
-export interface Order {
-	id: string;
-	customer: Customer;
-	shippingAddress: Address;
-	billingAddress: Address;
-	items: CartItem[];
-	subtotal: number;
-	shipping: number;
-	tax: number;
-	total: number;
-	status: "pending" | "confirmed" | "shipped" | "delivered";
-	createdAt: string;
-}
-
 // Define the IP info structure
 export interface IpInfo {
 	ip: string;
@@ -297,7 +283,6 @@ export interface BackendReview {
 	item?: BackendItem;
 	status: string;
 	createdAt: string;
-	updatedAt: string;
 }
 
 export interface BackendOrder {
@@ -367,7 +352,7 @@ export interface ShippingAddress {
 export type OrderStatusType =
 	| "PENDING"
 	| "PROCESSING"
-	| "SHIPPED"
+	| "IN_TRANSIT"
 	| "DELIVERED"
 	| "CANCELLED";
 
@@ -391,8 +376,13 @@ export interface CheckoutState {
 }
 
 export interface ReviewState {
+	/** Storefront list for a product page — paged in and appended, not replaced. */
 	reviews: BackendReview[];
 	pagination: PaginationMeta | null;
+	/** Admin moderation table — server-paged, so each page replaces the last. */
+	moderationReviews: BackendReview[];
+	moderationPagination: PaginationMeta | null;
+	isLoadingModeration: boolean;
 	/** Public highlight reel for the home page — paged in and appended, not replaced. */
 	testimonials: BackendReview[];
 	testimonialsPagination: PaginationMeta | null;
