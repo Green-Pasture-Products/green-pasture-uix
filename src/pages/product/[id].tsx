@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import {
 	Star,
 	ShoppingCart,
+	ShoppingBag,
 	Heart,
 	Minus,
 	Plus,
@@ -63,6 +64,7 @@ const ProductDetailsPage: React.FC = () => {
 	const [quantity, setQuantity] = useState(1);
 	const [selectedImage, setSelectedImage] = useState(0);
 	const [activeTab, setActiveTab] = useState("description");
+	const [isFlying, setIsFlying] = useState(false);
 
 	const p = product as any;
 	const productCategory = p?.product?.name || p?.category || "";
@@ -127,6 +129,8 @@ const ProductDetailsPage: React.FC = () => {
 			dispatch(removeFromCartAsync(product.id));
 			toast(`${product.name} removed from cart`);
 		} else {
+			setIsFlying(true);
+			setTimeout(() => setIsFlying(false), 1200);
 			// Add once, then set the quantity. The old loop dispatched the local
 			// add N times, which was fine locally but would have written quantity
 			// 1 to the server N times -- cart-item/create SETS the quantity, it
@@ -416,7 +420,15 @@ const ProductDetailsPage: React.FC = () => {
 								)}
 							</div>
 
-							<div className="flex space-x-4">
+							<div className="relative flex space-x-4">
+								{/* Flying Bag Microinteraction */}
+								{isFlying && (
+									<div className="absolute left-1/3 top-1/2 animate-fly-to-cart z-50 pointer-events-none">
+										<div className="bg-primary-600 text-white p-2 rounded-full shadow-xl">
+											<ShoppingBag className="h-5 w-5" />
+										</div>
+									</div>
+								)}
 								{isInCart ? (
 									<Button
 										variant="outlined"
