@@ -279,7 +279,8 @@ const Navbar: React.FC = () => {
 											<ShoppingBag className="h-4 w-4" />
 											My Orders
 										</Link>
-										<Link
+										{/* Commented out - Buy Now Pay Later feature */}
+										{/* <Link
 											href="/credit"
 											className="flex items-center gap-2 px-4 py-2.5 text-sm text-on-surface/80 dark:text-white/70 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-white/5 dark:hover:text-white transition-colors duration-150"
 											onClick={() =>
@@ -288,7 +289,7 @@ const Navbar: React.FC = () => {
 										>
 											<ShoppingCart className="h-4 w-4" />
 											Buy Now Pay Later
-										</Link>
+										</Link> */}
 										</>
 									)}
 									{appConstants.ADMIN_ROLES.includes(
