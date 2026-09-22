@@ -1,4 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { uuidv7 } from "uuidv7";
 import axiosInstance from "@/_utils/axiosInstance";
 import { extractErrorMessage } from "@/_utils/apiHelpers";
 
@@ -41,7 +42,10 @@ const submitReviewAsync = createAsyncThunk<any, { rating: number; comment?: stri
 	"review/submitReview",
 	async (payload, { rejectWithValue }) => {
 		try {
-			const response = await axiosInstance.post("reviews", payload);
+			// One key per submit click, reused automatically by axiosInstance's
+			// 401-refresh retry (same request config) so that retry doesn't
+			// double-create the review.
+			const response = await axiosInstance.post("reviews", payload, { headers: { "Idempotency-Key": uuidv7() } });
 			return response.data;
 		} catch (error: any) {
 			return rejectWithValue(extractErrorMessage(error));
