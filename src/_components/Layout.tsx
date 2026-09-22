@@ -47,7 +47,7 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 				<meta
 					property="og:url"
-					content="https://greenpastures.vercel.app"
+					content="https://greenpasturesorganics.com"
 				/>
 				<meta property="og:site_name" content="Green Pastures" />
 

@@ -58,7 +58,7 @@ const AdminLayout = ({ children, pageTitle, breadcrumbLabel }: LayoutProps) => {
 				/>
 				<meta
 					property="og:url"
-					content="https://greenpastures.vercel.app"
+					content="https://greenpasturesorganics.com"
 				/>
 				<meta property="og:site_name" content="Green Pastures" />
 				<link
