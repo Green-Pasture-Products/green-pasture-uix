@@ -49,6 +49,7 @@ const cartSlice = createSlice({
 		removeFromCart: (state, action: PayloadAction<string>) => {
 			state.items = state.items.filter((item) => item.id !== action.payload);
 			cartSlice.caseReducers.calculateTotals(state);
+			state.lastUpdated = Date.now();
 		},
 		updateQuantity: (
 			state,
@@ -150,9 +151,10 @@ const cartSlice = createSlice({
 			.addCase(updateQuantityAsync.pending, (state) => {
 				state.error = null;
 			})
-			.addCase(updateQuantityAsync.fulfilled, (state, action) => {
-				cartSlice.caseReducers.updateQuantity(state, action);
-			})
+			// No-op on success: callers apply the quantity locally before
+			// dispatching. Re-applying it here let a slow response for an older
+			// click overwrite a newer quantity (3 -> 4 -> back to 3).
+			.addCase(updateQuantityAsync.fulfilled, () => {})
 			.addCase(updateQuantityAsync.rejected, (state, action) => {
 				state.error = action.payload as string;
 			});
@@ -198,7 +200,20 @@ const cartSlice = createSlice({
 				if (action.payload) {
 					state.cartId = action.payload.cartId;
 
-					// Replace local state with server cart (source of truth)
+					// The customer changed the cart while this sync was in flight, so
+					// the server snapshot is older than local state. Applying it would
+					// revert those quantities or resurrect removed lines; the next
+					// sync reconciles once the background writes have landed.
+					if (state.lastUpdated && state.lastUpdated > action.payload.startedAt) {
+						return;
+					}
+
+					// Replace local state with server cart (source of truth), but keep
+					// the order the customer already sees -- the server returns lines
+					// in its own order, which moved an item every time it was edited
+					// and the cart re-synced (e.g. on window focus).
+					const localOrder = new Map(state.items.map((item, i) => [item.id, i]));
+					const localCreatedAt = new Map(state.items.map((item) => [item.id, item.createdAt]));
 					const backendItems = action.payload.items;
 					state.items = Array.isArray(backendItems)
 						? backendItems.map((bItem: any) => {
@@ -216,10 +231,14 @@ const cartSlice = createSlice({
 									reviews: itemData.ratingStats?.count || 0,
 									weightValue: itemData.weightValue ?? null,
 									weightUnit: itemData.weightUnit ?? null,
-									createdAt: Date.now(),
+									createdAt: localCreatedAt.get(String(itemData.id || bItem.itemId)) ?? Date.now(),
 								} as any;
 							})
 						: [];
+					state.items.sort(
+						(a, b) =>
+							(localOrder.get(a.id) ?? Infinity) - (localOrder.get(b.id) ?? Infinity)
+					);
 
 					// Recalculate totals
 					state.itemCount = state.items.length;

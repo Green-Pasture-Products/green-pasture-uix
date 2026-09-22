@@ -537,7 +537,12 @@ const CartPage: React.FC = () => {
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 					{/* Cart Items Column */}
 					<div className="lg:col-span-2">
-						<AnimatePresence mode="popLayout">
+						{/* No `layout`/popLayout here: popLayout yanked a removed card out of
+						    flow while its exit was still collapsing its height, so the cards
+						    below snapped up, and `layout` scale-animated cards whenever their
+						    size or order changed. The exit's height collapse alone lets the
+						    list close the gap smoothly. */}
+						<AnimatePresence>
 							{items?.map((item, index) => (
 								<motion.div
 									key={item?.id}
@@ -546,7 +551,6 @@ const CartPage: React.FC = () => {
 									initial="hidden"
 									animate="visible"
 									exit="exit"
-									layout
 									style={{
 										backgroundColor: "var(--surface-paper)",
 										borderRadius: "16px",
