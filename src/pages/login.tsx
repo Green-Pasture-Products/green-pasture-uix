@@ -113,7 +113,7 @@ const LoginPage: React.FC = () => {
 			<motion.div
 				className="absolute top-1/3 right-20 opacity-10"
 				animate={{ rotate: 360 }}
-				transition={{ duration: 20, repeat: Infinity, linear: true }}
+				transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
 			>
 				<Heart className="w-20 h-20 text-green-600" strokeWidth={1} />
 			</motion.div>
@@ -287,7 +287,7 @@ const LoginPage: React.FC = () => {
 									<span className="flex items-center justify-center gap-2">
 										<motion.div
 											animate={{ rotate: 360 }}
-											transition={{ duration: 1, repeat: Infinity, linear: true }}
+											transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
 										>
 											<Leaf className="w-4 h-4" />
 										</motion.div>
