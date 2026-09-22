@@ -192,7 +192,7 @@ const SignupPage: React.FC = () => {
 								<GoogleLogin
 									onSuccess={handleGoogleSuccess}
 									onError={handleGoogleError}
-									theme="outlined"
+									theme="outline"
 									size="large"
 									width="100%"
 								/>
