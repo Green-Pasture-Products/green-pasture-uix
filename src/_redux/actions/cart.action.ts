@@ -183,6 +183,9 @@ export const syncCartOnLoginAsync = createAsyncThunk<
 >(
 	"cart/syncOnLogin",
 	async (mergeLocal, { rejectWithValue, getState }) => {
+		// Lets the reducer tell whether local state changed after this
+		// snapshot was requested.
+		const startedAt = Date.now();
 		try {
 			const state = getState() as RootState;
 			const localItems = mergeLocal ? state.cart.items : [];
@@ -228,6 +231,7 @@ export const syncCartOnLoginAsync = createAsyncThunk<
 			return {
 				cartId: cartData.id,
 				items: itemsRes.data?.data ?? [],
+				startedAt,
 			};
 		} catch (error: any) {
 			return rejectWithValue(extractErrorMessage(error));

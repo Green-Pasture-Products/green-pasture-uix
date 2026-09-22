@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { removeFromCart } from "@/_redux/reducers/cart.reducer";
+import { removeFromCart, updateQuantity } from "@/_redux/reducers/cart.reducer";
 import { addToCartAsync, removeFromCartAsync, updateQuantityAsync } from "@/_redux/actions/cart.action";
 import { productsAction } from "@/_redux/actions/products.action";
 import { Product } from "@/types";
@@ -138,6 +138,7 @@ const ProductDetailsPage: React.FC = () => {
 			// 404s on a line the server does not have yet.
 			await dispatch(addToCartAsync(product)).unwrap();
 			if (quantity > 1) {
+				dispatch(updateQuantity({ id: product.id, quantity }));
 				dispatch(updateQuantityAsync({ id: product.id, quantity }));
 			}
 			toast.success(`${product.name} added to cart`);
