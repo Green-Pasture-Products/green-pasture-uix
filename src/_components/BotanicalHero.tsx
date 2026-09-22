@@ -96,8 +96,9 @@ const BotanicalHero: React.FC = () => {
 						{...rise(0.46)}
 						className="mt-6 sm:mt-7 max-w-md text-base leading-relaxed sm:text-lg text-[#10231f]/75 dark:text-slate-300"
 					>
-						Immunity and fertility supplements pressed from organically farmed roots, leaves and seeds —
-						traced from Northern Nigerian soil to the jar in your hand.
+						Green Pastures Organics is an online store for immunity, fertility, and wellness supplements
+						pressed from organically farmed roots, leaves, and seeds — traced from Northern Nigerian soil to
+						the jar in your hand.
 					</motion.p>
 
 					<motion.div {...rise(0.56)} className="mt-8 sm:mt-9 flex flex-wrap items-center gap-3">

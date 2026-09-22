@@ -25,7 +25,7 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 				<meta
 					name="description"
-					content="Green Pastures - Living healthy with fresh, organic products and insightful blogs."
+					content="Green Pastures Organics is an online store for organic immunity, fertility, and wellness supplements grown and prepared in Nigeria."
 				/>
 				<meta
 					name="keywords"
@@ -39,7 +39,7 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 				<meta
 					property="og:description"
-					content="Discover fresh organic products to support immunity, fertility, and wellness."
+					content="Shop organic immunity, fertility, and wellness supplements from Green Pastures Organics, traced from Nigerian farms to your door."
 				/>
 				<meta
 					property="og:image"
