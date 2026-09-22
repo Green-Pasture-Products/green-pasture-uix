@@ -229,10 +229,10 @@ const PrivacyPolicy = () => {
 								<li>
 									<strong>Email:</strong>{" "}
 									<a
-										href="mailto:hello@gporganics.com"
+										href="mailto:admin@greenpasturesorganics.com"
 										className="text-primary-600 dark:text-primary-400 hover:underline"
 									>
-										hello@gporganics.com
+										admin@greenpasturesorganics.com
 									</a>
 								</li>
 								<li>
