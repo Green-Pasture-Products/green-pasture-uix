@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import {
@@ -11,6 +12,7 @@ import {
 	setLoading,
 } from "@/_redux/reducers/auth.reducer";
 import { LoginFormData, loginSchema } from "@/_validations/auth";
+import { useGoogleAuth } from "@/_hooks/useGoogleAuth";
 import Image from "next/image";
 import { loginAsync } from "@/_redux/actions/auth.action";
 import { appConstants } from "@/_redux/constants";
@@ -26,6 +28,7 @@ const LoginPage: React.FC = () => {
 	const { isLoading, error, user, isAuthenticated } = useAppSelector(
 		(state) => state.auth
 	);
+	const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth();
 	const [showPassword, setShowPassword] = useState(false);
 
 	const {
@@ -195,6 +198,21 @@ const LoginPage: React.FC = () => {
 					</Button>
 
 					</form>
+
+					<div className="mt-6 pt-6 border-t border-on-surface/10 dark:border-white/10">
+						<div className="flex items-center gap-3 mb-4">
+							<div className="flex-1 h-px bg-on-surface/10 dark:bg-white/10" />
+							<span className="text-xs text-on-surface-variant dark:text-white/50">Or continue with</span>
+							<div className="flex-1 h-px bg-on-surface/10 dark:bg-white/10" />
+						</div>
+						<GoogleLogin
+							onSuccess={handleGoogleSuccess}
+							onError={handleGoogleError}
+							theme="outlined"
+							size="large"
+							width="100%"
+						/>
+					</div>
 			</Card>
 		</div>
 	);

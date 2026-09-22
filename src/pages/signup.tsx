@@ -5,11 +5,13 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, AlertCircle, ArrowRight, ArrowLeft, Check, User, Mail, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { GoogleLogin } from "@react-oauth/google";
 
 import { clearError } from "@/_redux/reducers/auth.reducer";
 import { signupSchema, signupStep1Schema, signupStep2Schema, SignupFormData } from "@/_validations/auth";
 import { signupAsync } from "@/_redux/actions/auth.action";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import { useGoogleAuth } from "@/_hooks/useGoogleAuth";
 import Image from "next/image";
 import { FormInput, FormSelect } from "@/_UI/FormField";
 import PhoneInput from "@/_UI/PhoneInput";
@@ -36,10 +38,12 @@ const SignupPage: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { isLoading, error } = useAppSelector((state) => state.auth);
+	const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth();
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [step, setStep] = useState(1);
 	const [direction, setDirection] = useState(1);
+	const [showGoogleForm, setShowGoogleForm] = useState(true);
 	const phoneDialCodeRef = React.useRef("+234");
 
 	const {
@@ -176,6 +180,30 @@ const SignupPage: React.FC = () => {
 							Sign in
 						</Link>
 					</p>
+
+					{/* Google Sign-Up Option */}
+					{showGoogleForm && (
+						<motion.div
+							initial={{ opacity: 0, y: -10 }}
+							animate={{ opacity: 1, y: 0 }}
+							className="mb-4"
+						>
+							<div className="relative">
+								<GoogleLogin
+									onSuccess={handleGoogleSuccess}
+									onError={handleGoogleError}
+									theme="outlined"
+									size="large"
+									width="100%"
+								/>
+							</div>
+							<div className="flex items-center gap-3 my-4">
+								<div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
+								<span className="text-xs" style={{ color: "var(--text-hint)" }}>Or continue with email</span>
+								<div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
+							</div>
+						</motion.div>
+					)}
 
 					{/* Step Indicator */}
 					<div className="flex items-center justify-center gap-0 mb-6">
