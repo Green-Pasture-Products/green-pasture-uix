@@ -18,12 +18,19 @@ import { BackendReview } from "@/types";
  */
 const AdminReviews: React.FC = () => {
 	const dispatch = useAppDispatch();
-	const { reviews, pagination, isLoading } = useAppSelector((state) => state.review);
+	// Moderation state, not the storefront's: this table has to see deactivated
+	// reviews, and it pages server-side rather than accumulating like the
+	// product page's "Load More" list does.
+	const {
+		moderationReviews: reviews,
+		moderationPagination: pagination,
+		isLoadingModeration: isLoading,
+	} = useAppSelector((state) => state.review);
 	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
 	const [togglingId, setTogglingId] = useState<string | null>(null);
 
 	const refresh = useCallback(() => {
-		dispatch(reviewAction.fetchItemReviewsAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
+		dispatch(reviewAction.fetchModerationReviewsAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
 	}, [dispatch, currentPage, pageSize, searchTerm]);
 
 	useEffect(() => {

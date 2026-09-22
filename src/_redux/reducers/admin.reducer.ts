@@ -1,4 +1,4 @@
-import { AdminState, AdminStats, AdminUser, Order, PaginationMeta, Product, ProductCategory } from "@/types";
+import { AdminState, AdminStats, AdminUser, PaginationMeta, Product, ProductCategory } from "@/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { adminAction } from "../actions/admin.action";
 
@@ -56,23 +56,11 @@ const adminSlice = createSlice({
 			state.isAuthenticated = false;
 			state.user = null;
 		},
-		updateOrderStatus: (
-			state,
-			action: PayloadAction<{ id: string; status: Order["status"] }>
-		) => {
-			const order = state.orders.find((o) => o.id === action.payload.id);
-			if (order) {
-				order.status = action.payload.status;
-			}
-		},
 		selectProduct: (state, action: PayloadAction<Product>) => {
 			state.selectedProduct = action.payload;
 		},
 		selectCategory: (state, action: PayloadAction<ProductCategory>) => {
 			state.selectedCategory = action.payload;
-		},
-		selectOrder: (state, action: PayloadAction<Order>) => {
-			state.selectedOrder = action.payload;
 		},
 		updateStats: (state, action: PayloadAction<Partial<AdminStats>>) => {
 			state.stats = { ...state.stats, ...action.payload };
@@ -186,10 +174,8 @@ const adminSlice = createSlice({
 export const {
 	login,
 	logout,
-	updateOrderStatus,
 	selectProduct,
 	selectCategory,
-	selectOrder,
 	updateStats,
 } = adminSlice.actions;
 export default adminSlice.reducer;

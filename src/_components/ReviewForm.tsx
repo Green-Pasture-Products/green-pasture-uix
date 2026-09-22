@@ -11,9 +11,15 @@ import { reviewSchema, ReviewFormData } from "@/_validations/review";
 
 interface ReviewFormProps {
 	itemId: string;
+	/**
+	 * Fired after a review lands. The new rating changes the item's
+	 * ratingStats, which this component does not own — without this the
+	 * header keeps showing the pre-review average until a reload.
+	 */
+	onSubmitted?: () => void;
 }
 
-const ReviewForm: React.FC<ReviewFormProps> = ({ itemId }) => {
+const ReviewForm: React.FC<ReviewFormProps> = ({ itemId, onSubmitted }) => {
 	const dispatch = useAppDispatch();
 	const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 	const isSubmitting = useAppSelector((state) => state.review.isSubmitting);
@@ -52,7 +58,8 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ itemId }) => {
 			toast.success("Review submitted successfully!");
 			reset();
 			setHoverRating(0);
-			dispatch(reviewAction.fetchItemReviewsAsync({ itemId }));
+			dispatch(reviewAction.fetchItemReviewsAsync({ itemId, page: 1, limit: 10 }));
+			onSubmitted?.();
 		} catch (error: any) {
 			toast.error(error || "Failed to submit review");
 		}

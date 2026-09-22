@@ -56,6 +56,19 @@ const Navbar: React.FC = () => {
 
 
 	const itemCount = useAppSelector((state) => state.cart.itemCount);
+	const [isCartBouncing, setIsCartBouncing] = useState(false);
+	const prevItemCountRef = useRef(itemCount);
+
+	useEffect(() => {
+		if (itemCount > prevItemCountRef.current) {
+			setIsCartBouncing(true);
+			const timer = setTimeout(() => setIsCartBouncing(false), 650);
+			prevItemCountRef.current = itemCount;
+			return () => clearTimeout(timer);
+		}
+		prevItemCountRef.current = itemCount;
+	}, [itemCount]);
+
 	const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 	const { profile } = useAppSelector((state) => state.profile);
 	const bio = user;
@@ -350,15 +363,18 @@ const Navbar: React.FC = () => {
 					{!isAdmin && (
 						<Link
 							href="/cart"
+							id="header-cart-btn"
 							className={`relative p-2 rounded-radius-md transition-colors duration-200 press-effect ${
 								isActive("/cart")
 									? "text-primary-600 dark:text-primary-400"
 									: "text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
-							}`}
+							} ${isCartBouncing ? "animate-cart-bounce" : ""}`}
 						>
 							<ShoppingCart className="h-5 w-5" />
 							{itemCount > 0 && (
-								<span className="bg-primary-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5">
+								<span className={`bg-primary-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5 ${
+									isCartBouncing ? "animate-badge-pop" : ""
+								}`}>
 									{itemCount}
 								</span>
 							)}

@@ -1,118 +1,52 @@
 "use client";
 
-import React, { MouseEvent, useState } from "react";
+import React from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ShoppingCart, Heart, XCircle, Trash2, Check } from "lucide-react";
+import { Star, ShoppingCart, ShoppingBag, Heart, XCircle, Trash2, Check } from "lucide-react";
 import { Product } from "../types";
-import toast from "react-hot-toast";
-import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import { useAppDispatch } from "@/_redux/store";
 import { useCurrency } from "@/_hooks/useCurrency";
-import { removeFromCart } from "@/_redux/reducers/cart.reducer";
-import { addToCartAsync, removeFromCartAsync } from "@/_redux/actions/cart.action";
+import { removeFromWishlist } from "@/_redux/reducers/wishlist.reducer";
+import { removeFromWishlistAsync } from "@/_redux/actions/wishlist.action";
 import Link from "next/link";
-import {
-	addToWishlist,
-	removeFromWishlist,
-} from "@/_redux/reducers/wishlist.reducer";
-import {
-	addToWishlistAsync,
-	removeFromWishlistAsync,
-} from "@/_redux/actions/wishlist.action";
-import { usePathname } from "next/navigation";
-import { appConstants } from "@/_redux/constants";
 import { htmlToText } from "@/_utils/htmlToText";
-import { variantSummary } from "@/_utils/variantSummary";
 import { formatWeight } from "@/_utils/formatWeight";
+import { useProductActions } from "@/_hooks/useProductActions";
 
 interface ProductCardProps {
 	product: Product;
 }
 
-const ADMIN_ROLES: readonly string[] = appConstants.ADMIN_ROLES;
-
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-	const pathname = usePathname();
 	const dispatch = useAppDispatch();
 	const { formatPrice } = useCurrency();
-	const { user } = useAppSelector((state) => state.auth);
-	const isAdmin = ADMIN_ROLES.includes(user?.profileType?.toUpperCase() || "");
-	const isWishlistPage = pathname === "/wishlist";
-	const cartItems = useAppSelector((state) => state.cart.items);
-	const isInCart = cartItems.some((item) => item.id === product.id);
-	const wishlistItems = useAppSelector((state) => state.wishlist.items);
-	const isInWishlist = wishlistItems?.some((item) => item.id === product.id);
-	const [justAdded, setJustAdded] = useState(false);
-	// A multi-size card leads with "Add to Cart" and only asks which size once
-	// the customer has said they want it -- "Choose size" as the resting label
-	// read as a detour rather than a purchase.
-	const [choosingSize, setChoosingSize] = useState(false);
+	const {
+		isAdmin,
+		isWishlistPage,
+		isInCart,
+		isInWishlist,
+		justAdded,
+		choosingSize,
+		setChoosingSize,
+		inStock,
+		price,
+		variants,
+		packSize,
+		priceVaries,
+		lowestPrice,
+		originalPrice,
+		discount,
+		handleAddToCart,
+		handleAddVariant,
+		handleWishlistToggle,
+	} = useProductActions(product);
 
 	// Backend item shape adaptation
 	const p = product as any;
 	const imageUrl = p.photos?.[0]?.url || p.image || "";
 	const rating = p.ratingStats?.average ?? p.rating ?? 0;
 	const reviewCount = p.ratingStats?.count ?? p.reviews ?? 0;
-	const inStock = p.unit > 0 || p.inStock;
-	const price = Number(p.price || 0);
-	// `variants` is present only when the card came through groupVariants. A
-	// card rendered from a raw item (wishlist, cart) keeps its single size.
-	const { variants, packSize, priceVaries, lowestPrice } = variantSummary(p);
-	// Admin kill-switch: hide the sale treatment site-wide without touching the
-	// stored originalPrice, so it can be switched back on unchanged.
-	const showDiscount = useAppSelector((state) => state.settings.showDiscountBadges);
-	const originalPrice =
-		showDiscount && p.originalPrice ? Number(p.originalPrice) : null;
-	const discount = originalPrice && originalPrice > price
-		? Math.round(((originalPrice - price) / originalPrice) * 100)
-		: null;
-
-	const flashAdded = (name: string) => {
-		setJustAdded(true);
-		toast.success(`${name} added to cart`);
-		setTimeout(() => setJustAdded(false), 1500);
-	};
-
-	const handleAddToCart = () => {
-		if (isInCart) {
-			dispatch(removeFromCart(product.id));
-			dispatch(removeFromCartAsync(product.id));
-			toast.error(`${product.name} removed from cart`);
-		} else {
-			// addToCartAsync, not the bare reducer: it applies the same local add
-			// and, for a signed-in customer, writes the line to the server cart.
-			// Adding locally only meant the next cart sync replaced the item with
-			// the (empty) server cart and it vanished.
-			dispatch(addToCartAsync(product));
-			flashAdded(product.name);
-		}
-	};
-
-	const handleAddVariant = (variant: any) => {
-		dispatch(addToCartAsync(variant));
-		setChoosingSize(false);
-		flashAdded(`${variant.name}${formatWeight(variant.weightValue, variant.weightUnit) ? ` (${formatWeight(variant.weightValue, variant.weightUnit)})` : ""}`);
-	};
-
-	const handleWishlistToggle = (e: MouseEvent<HTMLButtonElement>) => {
-		e.stopPropagation();
-		e.preventDefault();
-		// Local update first — always succeeds, so the toast (and the heart icon,
-		// driven by the same state) reflect what actually happened. The *Async
-		// thunk below is a fire-and-forget background sync to the backend; same
-		// "optimistic local, silent background sync" split useCartOperations
-		// uses for cart, so a network failure (e.g. a 429) can't make the toast
-		// claim success while the heart never fills in.
-		if (isInWishlist) {
-			dispatch(removeFromWishlist(product.id));
-			dispatch(removeFromWishlistAsync(product.id));
-			toast.error(`${product.name} removed from wishlist`);
-		} else {
-			dispatch(addToWishlist(product));
-			dispatch(addToWishlistAsync(product));
-			toast.success(`${product.name} added to wishlist`);
-		}
-	};
 
 	return (
 		<motion.div
@@ -214,8 +148,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 				<div className="flex flex-col">
 					<Link href={`/product/${product.id}`} className="block">
 						<h3
-							className="font-display text-[0.95rem] leading-snug line-clamp-2 min-h-[2.6rem] mb-1 transition-colors hover:text-primary-600 dark:hover:text-primary-400"
-							style={{ color: "var(--text-primary)", fontWeight: 500 }}
+							className="font-semibold text-sm leading-snug line-clamp-2 min-h-[2.6rem] mb-1 transition-colors hover:text-primary-600 dark:hover:text-primary-400"
+							style={{ color: "var(--text-primary)" }}
 						>
 							{product.name}
 						</h3>
@@ -245,8 +179,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 									{[...Array(5)].map((_, i) => (
 										<Star
 											key={i}
-											className={`h-3 w-3 ${i < Math.floor(rating) ? "text-amber-400 fill-amber-400" : ""}`}
-											style={i >= Math.floor(rating) ? { color: "var(--text-disabled)" } : undefined}
+											className={`h-3 w-3 ${i < Math.round(rating) ? "text-amber-400 fill-amber-400" : ""}`}
+											style={i >= Math.round(rating) ? { color: "var(--text-disabled)" } : undefined}
 										/>
 									))}
 								</div>
@@ -261,7 +195,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 				{/* Bottom Section: Price + Action Button (Anchored to baseline) */}
 				<div className="mt-auto flex flex-col justify-end pt-2">
 					<div className="mb-2.5 min-h-[1.75rem] flex flex-col justify-center">
-						<div className="font-display text-lg leading-tight tabular-nums" style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+						<div className="font-bold text-sm leading-tight tabular-nums" style={{ color: "var(--text-primary)" }}>
 							{priceVaries && (
 								<span className="mr-1 text-[0.7rem] font-normal align-middle" style={{ color: "var(--text-hint)" }}>
 									from
@@ -335,9 +269,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 									initial={{ opacity: 0, scale: 0.8 }}
 									animate={{ opacity: 1, scale: 1 }}
 									exit={{ opacity: 0, scale: 0.8 }}
-									className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold"
+									className="relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold"
 									style={{ background: "rgba(154,202,60,0.14)", color: "var(--color-primary)" }}
 								>
+									{/* Flying Bag Microinteraction */}
+									<div className="absolute left-1/2 top-1/2 animate-fly-to-cart z-50 pointer-events-none">
+										<div className="bg-primary-600 text-white p-1.5 rounded-full shadow-lg">
+											<ShoppingBag className="h-4 w-4" />
+										</div>
+									</div>
 									<Check className="h-3.5 w-3.5" />
 									Added!
 								</motion.div>

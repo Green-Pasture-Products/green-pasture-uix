@@ -26,13 +26,11 @@ const getStatusVariant = (status: string): "success" | "warning" | "error" | "in
 			return "warning";
 		case "PROCESSING":
 			return "info";
-		case "SHIPPED":
+		case "IN_TRANSIT":
 			return "info";
 		case "DELIVERED":
-		case "COMPLETED":
 			return "success";
 		case "CANCELLED":
-		case "REFUNDED":
 			return "error";
 		default:
 			return "neutral";
@@ -156,7 +154,7 @@ const MyOrders: React.FC = () => {
 			header: "Status",
 			cell: ({ getValue }) => (
 				<Badge variant={getStatusVariant(getValue() as string)} dot size="sm">
-					{getValue() as string}
+					{(getValue() as string).replace(/_/g, " ")}
 				</Badge>
 			),
 		},

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { CheckCircle, Package, MapPin, Calendar, ShoppingBag } from "lucide-react";
+import { CheckCircle, Package, MapPin, Calendar, ShoppingBag, Printer } from "lucide-react";
 import { motion } from "framer-motion";
 
 import Layout from "@/_components/Layout";
@@ -15,6 +15,8 @@ import Card from "@/_UI/Card";
 import { formatCurrency } from "@/_UI/FormatValue";
 import { formatWeight } from "@/_utils/formatWeight";
 import { BackendOrder, BackendOrderItem } from "@/types";
+import { ReceiptModal } from "@/_UI/ReceiptModal";
+import type { ReceiptData } from "@/_UI/ReceiptPrinter";
 
 const getStatusVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
 	switch (status?.toUpperCase()) {
@@ -22,13 +24,11 @@ const getStatusVariant = (status: string): "success" | "warning" | "error" | "in
 			return "warning";
 		case "PROCESSING":
 			return "info";
-		case "SHIPPED":
+		case "IN_TRANSIT":
 			return "info";
 		case "DELIVERED":
-		case "COMPLETED":
 			return "success";
 		case "CANCELLED":
-		case "REFUNDED":
 			return "error";
 		default:
 			return "neutral";
@@ -55,6 +55,7 @@ const OrderConfirmationPage: React.FC = () => {
 
 	const [order, setOrder] = useState<BackendOrder | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
 
 	useEffect(() => {
 		if (!isAuthenticated) {
@@ -126,8 +127,9 @@ const OrderConfirmationPage: React.FC = () => {
 		(sum: number, item: BackendOrderItem) => sum + item.unitPrice * item.quantity,
 		0,
 	);
-	const taxAndShipping = order.totalAmount - subtotal;
-	const tax = taxAndShipping > 0 ? taxAndShipping : 0;
+	// Not shipping for now, so the total-subtotal diff is just tax.
+	const taxDiff = order.totalAmount - subtotal;
+	const tax = taxDiff > 0 ? taxDiff : 0;
 
 	return (
 		<Layout pageTitle="Order Confirmed">
@@ -186,7 +188,7 @@ const OrderConfirmationPage: React.FC = () => {
 							</p>
 						</div>
 						<Badge variant={getStatusVariant(order.orderStatus)} dot>
-							{order.orderStatus}
+							{order.orderStatus.replace(/_/g, " ")}
 						</Badge>
 					</div>
 				</Card>
@@ -268,7 +270,7 @@ const OrderConfirmationPage: React.FC = () => {
 						</div>
 						{tax > 0 && (
 							<div className="flex justify-between text-sm">
-								<span style={{ color: "var(--text-secondary)" }}>Tax & Shipping</span>
+								<span style={{ color: "var(--text-secondary)" }}>Tax</span>
 								<span className="font-medium tabular-nums" style={{ color: "var(--text-primary)" }}>
 									{formatCurrency(tax)}
 								</span>
@@ -332,6 +334,15 @@ const OrderConfirmationPage: React.FC = () => {
 						variant="filled"
 						size="lg"
 						fullWidth
+						leftIcon={Printer}
+						onClick={() => setIsReceiptModalOpen(true)}
+					>
+						Print Thermal Receipt
+					</Button>
+					<Button
+						variant="outlined"
+						size="lg"
+						fullWidth
 						onClick={() => router.push("/products")}
 					>
 						Continue Shopping
@@ -345,6 +356,38 @@ const OrderConfirmationPage: React.FC = () => {
 						View My Orders
 					</Button>
 				</div>
+
+				{/* Advance Thermal Receipt Modal */}
+				{order && (
+					<ReceiptModal
+						isOpen={isReceiptModalOpen}
+						onClose={() => setIsReceiptModalOpen(false)}
+						autoStart={true}
+						receipt={{
+							agencyName: "GREEN PASTURES FARMS OFFICIAL RECEIPT",
+							receiptNumber: `GP-ORD-${order.orderReference || order.id}`,
+							clientName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Valued Customer",
+							amount: Number(order.totalAmount || 0),
+							currency: "NGN",
+							date: new Date(order.createdAt).toLocaleDateString("en-NG", {
+								day: "2-digit",
+								month: "short",
+								year: "numeric",
+								hour: "2-digit",
+								minute: "2-digit",
+							}),
+							cacReg: "RC-1849204",
+							lineItems: (order.items || []).map((orderItem) => ({
+								description: orderItem.itemName || orderItem.item?.name || "Produce Item",
+								quantity: orderItem.quantity,
+								amount: Number(orderItem.unitPrice || 0) * Number(orderItem.quantity || 1),
+							})),
+							paymentMethod: (order as any).paymentMethod || "Direct Payment",
+							transactionRef: order.orderReference || String(order.id),
+							statusText: order.orderStatus === "CANCELLED" ? "CANCELLED" : "PAID",
+						}}
+					/>
+				)}
 			</div>
 		</Layout>
 	);

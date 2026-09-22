@@ -20,13 +20,11 @@ const getStatusBadgeVariant = (status: string): "success" | "warning" | "error" 
 		case "PENDING":
 			return "warning";
 		case "PROCESSING":
-		case "ON_HOLD":
+		case "IN_TRANSIT":
 			return "info";
-		case "COMPLETED":
 		case "DELIVERED":
 			return "success";
 		case "CANCELLED":
-		case "FAILED":
 			return "error";
 		default:
 			return "neutral";
@@ -34,11 +32,9 @@ const getStatusBadgeVariant = (status: string): "success" | "warning" | "error" 
 };
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-	PENDING: ["PROCESSING", "CANCELLED", "ON_HOLD"],
-	PROCESSING: ["COMPLETED", "CANCELLED", "ON_HOLD"],
-	COMPLETED: ["DELIVERED", "RETURNED"],
-	ON_HOLD: ["PROCESSING", "CANCELLED"],
-	DELIVERED: ["RETURNED", "EXCHANGED"],
+	PENDING: ["PROCESSING", "CANCELLED"],
+	PROCESSING: ["IN_TRANSIT", "CANCELLED"],
+	IN_TRANSIT: ["DELIVERED"],
 };
 
 const OrderDetail: React.FC = () => {
@@ -195,7 +191,7 @@ const OrderDetail: React.FC = () => {
 					})}
 					status={
 						<Badge variant={getStatusBadgeVariant(order.orderStatus)} dot>
-							{order.orderStatus}
+							{order.orderStatus.replace(/_/g, " ")}
 						</Badge>
 					}
 					metrics={[
@@ -210,7 +206,7 @@ const OrderDetail: React.FC = () => {
 						label="Status"
 						value={
 							<Badge variant={getStatusBadgeVariant(order.orderStatus)} dot>
-								{order.orderStatus}
+								{order.orderStatus.replace(/_/g, " ")}
 							</Badge>
 						}
 					/>

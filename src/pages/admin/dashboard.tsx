@@ -64,13 +64,11 @@ function statusBadgeVariant(status: string): "success" | "warning" | "error" | "
 		case "PENDING":
 			return "warning";
 		case "PROCESSING":
-		case "SHIPPED":
+		case "IN_TRANSIT":
 			return "info";
 		case "DELIVERED":
-		case "COMPLETED":
 			return "success";
 		case "CANCELLED":
-		case "FAILED":
 			return "error";
 		default:
 			return "neutral";
@@ -112,7 +110,7 @@ const orderColumns: ColumnDef<RecentOrder, any>[] = [
 		header: "STATUS",
 		cell: ({ getValue }) => (
 			<Badge variant={statusBadgeVariant(String(getValue()))} dot>
-				{String(getValue())}
+				{String(getValue()).replace(/_/g, " ")}
 			</Badge>
 		),
 	},
