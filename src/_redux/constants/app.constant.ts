@@ -3,6 +3,10 @@ export const appConstants = {
 		process.env.NEXT_PUBLIC_API_BASE_URL ||
 		`https://green-pasture-api.onrender.com/api/v1/`,
 
+	GOOGLE_CLIENT_ID:
+		process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+		`767220108906-963942jrqqn1ocmof7vplo18uc1uakv6.apps.googleusercontent.com`,
+
 	IPINFO_TOKEN: process.env.IPINFO_TOKEN || `81a1cbe5574c88`,
 
 	WHATSAPP_URL:
