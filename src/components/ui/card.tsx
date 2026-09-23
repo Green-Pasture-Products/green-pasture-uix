@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 // dependency of _components/charts/chart-card.tsx that this codebase didn't
 // have yet. Standard shadcn/ui primitive; every color it uses (bg-card,
 // text-card-foreground) is already registered in globals.css's @theme block.
-
+// trigger deployment
 function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
