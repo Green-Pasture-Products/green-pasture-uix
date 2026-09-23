@@ -136,7 +136,7 @@ export default function App({ Component, pageProps }: AppProps) {
 	const isAdminRoute = router.pathname.startsWith("/admin");
 	return (
 		<ErrorBoundary>
-			<GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+			<GoogleOAuthProvider clientId={"767220108906-963942jrqqn1ocmof7vplo18uc1uakv6.apps.googleusercontent.com"}>
 				<Provider store={store}>
 					<PersistGate loading={null} persistor={persistor}>
 						<AuthBootstrap>
