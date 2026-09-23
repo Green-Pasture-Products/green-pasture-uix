@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, AlertCircle, ArrowRight, ArrowLeft, Check, User, Mail, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,8 +13,7 @@ import { signupAsync } from "@/_redux/actions/auth.action";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useGoogleAuth } from "@/_hooks/useGoogleAuth";
 import Image from "next/image";
-import { FormInput, FormSelect } from "@/_UI/FormField";
-import PhoneInput from "@/_UI/PhoneInput";
+import { FormInput } from "@/_UI/FormField";
 
 const STEPS = [
 	{ id: 1, label: "Personal", icon: User },
@@ -43,20 +42,18 @@ const SignupPage: React.FC = () => {
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [step, setStep] = useState(1);
 	const [direction, setDirection] = useState(1);
-	const [showGoogleForm, setShowGoogleForm] = useState(true);
-	const phoneDialCodeRef = React.useRef("+234");
+	const showGoogleForm = true;
 
 	const {
 		register,
 		handleSubmit,
 		watch,
-		control,
 		setError,
 		clearErrors,
 		formState: { errors },
 	} = useForm<SignupFormData>({
 		resolver: zodResolver(signupSchema) as any,
-		defaultValues: { firstName: "", lastName: "", email: "", phoneNumber: "", gender: "NOT_SPECIFIED", password: "", confirmPassword: "" },
+		defaultValues: { firstName: "", lastName: "", email: "", password: "", confirmPassword: "" },
 		mode: "onSubmit",
 	});
 
@@ -71,9 +68,7 @@ const SignupPage: React.FC = () => {
 					firstName: data.firstName,
 					lastName: data.lastName,
 					email: data.email,
-					phoneNumber: `${phoneDialCodeRef.current}${data.phoneNumber}`,
 					password: data.password,
-					gender: data.gender,
 					profileType: "CLIENT",
 				} as any)
 			).unwrap();
@@ -100,8 +95,8 @@ const SignupPage: React.FC = () => {
 
 		if (!result.success) {
 			// Clear previous errors for this step before setting new ones
-			if (step === 1) clearErrors(["firstName", "lastName", "gender"]);
-			if (step === 2) clearErrors(["email", "phoneNumber"]);
+			if (step === 1) clearErrors(["firstName", "lastName"]);
+			if (step === 2) clearErrors(["email"]);
 			for (const issue of result.error.issues) {
 				const field = issue.path[0] as keyof SignupFormData;
 				setError(field, { message: issue.message });
@@ -326,16 +321,6 @@ const SignupPage: React.FC = () => {
 											error={errors.lastName?.message}
 										/>
 									</div>
-									<FormSelect
-										label="Gender"
-										options={[
-											{ value: "NOT_SPECIFIED", label: "Prefer not to say" },
-											{ value: "MALE", label: "Male" },
-											{ value: "FEMALE", label: "Female" },
-										]}
-										{...register("gender")}
-										error={errors.gender?.message}
-									/>
 								</motion.div>
 							)}
 
@@ -358,20 +343,6 @@ const SignupPage: React.FC = () => {
 										required
 										{...register("email")}
 										error={errors.email?.message}
-									/>
-									<Controller
-										name="phoneNumber"
-										control={control}
-										render={({ field }) => (
-											<PhoneInput
-												label="Phone Number"
-												required
-												value={field.value}
-												onChange={(val) => field.onChange(val)}
-												onCountryChange={(dial) => { phoneDialCodeRef.current = dial; }}
-												error={errors.phoneNumber?.message}
-											/>
-										)}
 									/>
 								</motion.div>
 							)}

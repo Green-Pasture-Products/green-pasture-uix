@@ -8,15 +8,10 @@ export const loginSchema = z.object({
 export const signupStep1Schema = z.object({
 	firstName: z.string().min(1, "First name is required"),
 	lastName: z.string().min(1, "Last name is required"),
-	gender: z.enum(["MALE", "FEMALE", "NOT_SPECIFIED"]).default("NOT_SPECIFIED"),
 });
 
 export const signupStep2Schema = z.object({
 	email: z.string().email("Please enter a valid email address"),
-	phoneNumber: z
-		.string()
-		.min(1, "Phone number is required")
-		.min(10, "Phone number must have at least 10 digits"),
 });
 
 export const signupSchema = z
@@ -24,11 +19,6 @@ export const signupSchema = z
 		firstName: z.string().min(1, "First name is required"),
 		lastName: z.string().min(1, "Last name is required"),
 		email: z.string().email("Please enter a valid email address"),
-		phoneNumber: z
-			.string()
-			.min(1, "Phone number is required")
-			.min(10, "Phone number must have at least 10 digits"),
-		gender: z.enum(["MALE", "FEMALE", "NOT_SPECIFIED"]).default("NOT_SPECIFIED"),
 		password: z
 			.string()
 			.min(8, "Password must be at least 8 characters")
