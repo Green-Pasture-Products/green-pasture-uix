@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { uuidv7 } from "uuidv7";
 import {
 	resolveIdempotencyKey,
@@ -37,6 +37,7 @@ import Button from "@/_UI/Button";
 import PageLoader from "@/_UI/PageLoader";
 import AuthPrompt from "@/_UI/AuthPrompt";
 import { appConstants } from "@/_redux/constants";
+import { InteractiveCreditCard } from "@/_components/Checkout/InteractiveCreditCard";
 
 /* ------------------------------------------------------------------ */
 /*  Zod schema                                                        */
@@ -261,6 +262,22 @@ const CheckoutPage: React.FC = () => {
 	const [couponError, setCouponError] = useState("");
 	const [emailExists, setEmailExists] = useState(false);
 	const [checkingEmail, setCheckingEmail] = useState(false);
+	const [isCardFlipped, setIsCardFlipped] = useState(false);
+	const [cardPreview, setCardPreview] = useState({
+		cardNumber: "",
+		cardHolder: "",
+		expiry: "",
+		cvv: "",
+	});
+
+	useEffect(() => {
+		if (user?.firstName && !cardPreview.cardHolder) {
+			setCardPreview((prev) => ({
+				...prev,
+				cardHolder: `${user.firstName} ${user.lastName || ""}`.trim().toUpperCase(),
+			}));
+		}
+	}, [user, cardPreview.cardHolder]);
 
 	const {
 		register,
@@ -283,6 +300,7 @@ const CheckoutPage: React.FC = () => {
 	});
 
 	const selectedPayment = useWatch({ control, name: "paymentMethod" });
+	const shippingState = useWatch({ control, name: "shippingAddress.state" });
 
 	/* Derive visual step based on form completion (all sections visible) */
 	const hasShippingErrors =
@@ -320,9 +338,24 @@ const CheckoutPage: React.FC = () => {
 
 	const subtotal = total;
 	const tax = Math.round(subtotal * taxRate);
+
+	// Mirrors order.service.ts's shipping calc so the total shown here matches
+	// what the server actually charges — this used to omit shipping entirely,
+	// so the reviewed total could be several thousand naira under the real one.
+	const shippingFee = useMemo(() => {
+		const methods = (storeConfig?.shippingConfig?.methods ?? []).filter((m: any) => m?.enabled !== false);
+		const baseCost = Number(methods[0]?.baseCost ?? 0);
+		const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold ?? 50000);
+		const freeShippingRegions: string[] = storeConfig?.orderSettings?.freeShippingRegions ?? [];
+		const normalize = (v: unknown) => (typeof v === "string" ? v.trim().toLowerCase() : "");
+		const regionQualifies =
+			freeShippingRegions.length === 0 || freeShippingRegions.some((r) => normalize(r) === normalize(shippingState) && normalize(r) !== "");
+		return subtotal >= freeShippingThreshold && regionQualifies ? 0 : baseCost;
+	}, [storeConfig, subtotal, shippingState]);
+
 	// Display only — the server recomputes all of this at checkout and the
 	// order is charged from its figures, not these.
-	const finalTotal = Math.max(0, subtotal + tax - couponDiscount);
+	const finalTotal = Math.max(0, subtotal + shippingFee + tax - couponDiscount);
 
 	const handleApplyCoupon = async () => {
 		if (!couponCode.trim()) return;
@@ -962,6 +995,109 @@ const CheckoutPage: React.FC = () => {
 								))}
 							</div>
 
+							{/* 3D Interactive Card Preview for Card Payment */}
+							<AnimatePresence>
+								{selectedPayment === "CARD" && (
+									<motion.div
+										initial={{ opacity: 0, height: 0 }}
+										animate={{ opacity: 1, height: "auto" }}
+										exit={{ opacity: 0, height: 0 }}
+										transition={{ duration: 0.35, ease: "easeInOut" }}
+										className="overflow-hidden pt-6 mt-4 border-t border-outline-variant dark:border-white/10"
+									>
+										<div className="mb-6">
+											<InteractiveCreditCard
+												data={cardPreview}
+												isFlipped={isCardFlipped}
+												onFlipToggle={() => setIsCardFlipped(!isCardFlipped)}
+											/>
+										</div>
+
+										<div className="space-y-4 max-w-sm mx-auto bg-surface-low dark:bg-white/[0.03] p-4 rounded-xl border border-outline-variant dark:border-white/10">
+											<div>
+												<label className="block text-xs font-semibold text-on-surface/80 dark:text-gray-300 mb-1.5">
+													Card Number
+												</label>
+												<input
+													type="text"
+													maxLength={19}
+													placeholder="4123 4567 8901 2345"
+													value={cardPreview.cardNumber}
+													onFocus={() => setIsCardFlipped(false)}
+													onChange={(e) => {
+														const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
+														const spaced = raw.match(/.{1,4}/g)?.join(" ") || raw;
+														setCardPreview((prev) => ({ ...prev, cardNumber: spaced }));
+													}}
+													className="w-full px-3.5 py-2.5 rounded-lg text-sm bg-white dark:bg-[#121224] border border-outline-variant dark:border-white/15 focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-on-surface dark:text-white"
+												/>
+											</div>
+
+											<div>
+												<label className="block text-xs font-semibold text-on-surface/80 dark:text-gray-300 mb-1.5">
+													Cardholder Name
+												</label>
+												<input
+													type="text"
+													placeholder="NAME ON CARD"
+													value={cardPreview.cardHolder}
+													onFocus={() => setIsCardFlipped(false)}
+													onChange={(e) => {
+														setCardPreview((prev) => ({ ...prev, cardHolder: e.target.value.toUpperCase() }));
+													}}
+													className="w-full px-3.5 py-2.5 rounded-lg text-sm bg-white dark:bg-[#121224] border border-outline-variant dark:border-white/15 focus:outline-none focus:ring-2 focus:ring-primary-500 text-on-surface dark:text-white uppercase"
+												/>
+											</div>
+
+											<div className="grid grid-cols-2 gap-3">
+												<div>
+													<label className="block text-xs font-semibold text-on-surface/80 dark:text-gray-300 mb-1.5">
+														Expiry Date
+													</label>
+													<input
+														type="text"
+														maxLength={5}
+														placeholder="MM/YY"
+														value={cardPreview.expiry}
+														onFocus={() => setIsCardFlipped(false)}
+														onChange={(e) => {
+															let val = e.target.value.replace(/\D/g, "").slice(0, 4);
+															if (val.length >= 3) {
+																val = `${val.slice(0, 2)}/${val.slice(2)}`;
+															}
+															setCardPreview((prev) => ({ ...prev, expiry: val }));
+														}}
+														className="w-full px-3.5 py-2.5 rounded-lg text-sm bg-white dark:bg-[#121224] border border-outline-variant dark:border-white/15 focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-on-surface dark:text-white"
+													/>
+												</div>
+												<div>
+													<label className="block text-xs font-semibold text-on-surface/80 dark:text-gray-300 mb-1.5 flex items-center justify-between">
+														<span>CVV / CVC</span>
+														<span className="text-[10px] text-primary-600 font-normal">Flips card</span>
+													</label>
+													<input
+														type="password"
+														maxLength={4}
+														placeholder="•••"
+														value={cardPreview.cvv}
+														onFocus={() => setIsCardFlipped(true)}
+														onBlur={() => setIsCardFlipped(false)}
+														onChange={(e) => {
+															const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+															setCardPreview((prev) => ({ ...prev, cvv: val }));
+														}}
+														className="w-full px-3.5 py-2.5 rounded-lg text-sm bg-white dark:bg-[#121224] border border-outline-variant dark:border-white/15 focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-on-surface dark:text-white"
+													/>
+												</div>
+											</div>
+											<p className="text-[11px] text-on-surface/60 dark:text-gray-400 text-center pt-1">
+												🔒 Transactions are securely processed via Paystack.
+											</p>
+										</div>
+									</motion.div>
+								)}
+							</AnimatePresence>
+
 							{/* Security badges */}
 							<div
 								className="mt-5 flex items-center gap-4 text-xs pt-4"
@@ -1102,6 +1238,13 @@ const CheckoutPage: React.FC = () => {
 									<span style={{ color: "var(--text-secondary)" }}>Tax ({formatRateAsPercent(taxRate)})</span>
 									<span className="font-medium" style={{ color: "var(--text-primary)" }}>
 										&#8358;{tax.toLocaleString()}
+									</span>
+								</div>
+
+								<div className="flex justify-between text-sm">
+									<span style={{ color: "var(--text-secondary)" }}>Shipping</span>
+									<span className="font-medium" style={{ color: shippingFee === 0 ? "var(--color-primary)" : "var(--text-primary)" }}>
+										{shippingFee === 0 ? "Free" : `₦${shippingFee.toLocaleString()}`}
 									</span>
 								</div>
 

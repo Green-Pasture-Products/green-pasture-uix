@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { orderAction } from "@/_redux/actions/order.action";
 import { BackButton, DetailHeader, DetailSection } from "@/_UI/DetailField";
 import Badge from "@/_UI/Badge";
+import Button from "@/_UI/Button";
 import { DataTable } from "@/_components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatCurrency } from "@/_UI/FormatValue";
@@ -15,6 +16,8 @@ import OrderTimeline from "@/_UI/OrderTimeline";
 import AuthPrompt from "@/_UI/AuthPrompt";
 import { BackendOrder, BackendOrderItem } from "@/types";
 import { appConstants } from "@/_redux/constants";
+import { Printer } from "lucide-react";
+import { ReceiptModal } from "@/_UI/ReceiptModal";
 
 const getStatusVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
 	switch (status?.toUpperCase()) {
@@ -43,6 +46,7 @@ const MyOrderDetail: React.FC = () => {
 	const [loading, setLoading] = useState(true);
 	const [refreshing, setRefreshing] = useState(false);
 	const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+	const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
 	useEffect(() => {
 		if (!isAuthenticated) {
@@ -211,6 +215,17 @@ const MyOrderDetail: React.FC = () => {
 					]}
 				/>
 
+				<div className="flex justify-end">
+					<Button
+						variant="filled"
+						size="sm"
+						leftIcon={Printer}
+						onClick={() => setIsReceiptOpen(true)}
+					>
+						Print Thermal Receipt
+					</Button>
+				</div>
+
 				<OrderTimeline
 					status={order.orderStatus}
 					createdAt={order.createdAt}
@@ -250,6 +265,37 @@ const MyOrderDetail: React.FC = () => {
 							)}
 						</div>
 					</DetailSection>
+				)}
+
+				{order && (
+					<ReceiptModal
+						isOpen={isReceiptOpen}
+						onClose={() => setIsReceiptOpen(false)}
+						autoStart={true}
+						receipt={{
+							agencyName: "GREEN PASTURES FARMS OFFICIAL RECEIPT",
+							receiptNumber: `GP-ORD-${order.orderReference || order.id}`,
+							clientName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Valued Customer",
+							amount: Number(order.totalAmount || 0),
+							currency: "NGN",
+							date: new Date(order.createdAt).toLocaleDateString("en-NG", {
+								day: "2-digit",
+								month: "short",
+								year: "numeric",
+								hour: "2-digit",
+								minute: "2-digit",
+							}),
+							cacReg: "RC-1849204",
+							lineItems: (order.items || []).map((item: any) => ({
+								description: item.productName || item.product?.name || "Produce Item",
+								quantity: item.quantity,
+								amount: Number(item.unitPrice || 0) * Number(item.quantity || 1),
+							})),
+							paymentMethod: "Online / Bank Payment",
+							transactionRef: order.orderReference || String(order.id),
+							statusText: order.orderStatus === "CANCELLED" ? "CANCELLED" : "PAID",
+						}}
+					/>
 				)}
 			</div>
 		</Layout>

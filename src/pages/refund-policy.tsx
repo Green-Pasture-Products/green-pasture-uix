@@ -70,10 +70,10 @@ const RefundPolicy = () => {
 								<li>
 									Send an email to{" "}
 									<a
-										href="mailto:hello@gporganics.com"
+										href="mailto:support@greenpasturesorganics.com"
 										className="text-primary-600 dark:text-primary-400 hover:underline"
 									>
-										hello@gporganics.com
+										support@greenpasturesorganics.com
 									</a>{" "}
 									with the subject line &quot;Return Request&quot;.
 								</li>
@@ -169,10 +169,10 @@ const RefundPolicy = () => {
 								<li>
 									<strong>Email:</strong>{" "}
 									<a
-										href="mailto:hello@gporganics.com"
+										href="mailto:support@greenpasturesorganics.com"
 										className="text-primary-600 dark:text-primary-400 hover:underline"
 									>
-										hello@gporganics.com
+										support@greenpasturesorganics.com
 									</a>
 								</li>
 								<li>

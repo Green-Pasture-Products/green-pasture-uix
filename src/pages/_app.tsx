@@ -21,6 +21,7 @@ import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 // Reconciles auth state against the cookie once persist has rehydrated, and
 // owns the proactive-refresh timer for the lifetime of the session.
@@ -135,39 +136,40 @@ export default function App({ Component, pageProps }: AppProps) {
 	const isAdminRoute = router.pathname.startsWith("/admin");
 	return (
 		<ErrorBoundary>
-			<Provider store={store}>
-				<PersistGate loading={null} persistor={persistor}>
-					<AuthBootstrap>
-						<ThemeProvider>
-							<CurrencyProvider>
-								<OutcomeProvider>
-										<NuqsAdapter>
-											{/*
-											 * The admin shell (sidebar, top bar, tab strip) is mounted HERE,
-											 * outside PageTransition, not inside AdminLayout. PageTransition
-											 * keys its motion.div on router.pathname, so anything below it is
-											 * unmounted and rebuilt on every navigation — which tore down the
-											 * whole shell each time a tab was opened, switched, or closed.
-											 * Only the page content should animate.
-											 */}
-											{isAdminRoute ? (
-												<AppShell>
+			<GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+				<Provider store={store}>
+					<PersistGate loading={null} persistor={persistor}>
+						<AuthBootstrap>
+							<ThemeProvider>
+								<CurrencyProvider>
+									<OutcomeProvider>
+											<NuqsAdapter>
+												{/*
+												 * The admin shell (sidebar, top bar, tab strip) is mounted HERE,
+												 * outside PageTransition, not inside AdminLayout. PageTransition
+												 * keys its motion.div on router.pathname, so anything below it is
+												 * unmounted and rebuilt on every navigation — which tore down the
+												 * whole shell each time a tab was opened, switched, or closed.
+												 * Only the page content should animate.
+												 */}
+												{isAdminRoute ? (
+													<AppShell>
+														<PageTransition>
+															<Component key={nuqsDevKey} {...pageProps} />
+														</PageTransition>
+													</AppShell>
+												) : (
 													<PageTransition>
 														<Component key={nuqsDevKey} {...pageProps} />
 													</PageTransition>
-												</AppShell>
-											) : (
-												<PageTransition>
-													<Component key={nuqsDevKey} {...pageProps} />
-												</PageTransition>
-											)}
-										</NuqsAdapter>
-									</OutcomeProvider>
-							</CurrencyProvider>
-						</ThemeProvider>
-					</AuthBootstrap>
+												)}
+											</NuqsAdapter>
+										</OutcomeProvider>
+								</CurrencyProvider>
+							</ThemeProvider>
+						</AuthBootstrap>
 
-					<Toaster
+						<Toaster
 						position="top-right"
 						toastOptions={{
 							duration: 4000,
@@ -206,6 +208,9 @@ export default function App({ Component, pageProps }: AppProps) {
 					/>
 				</PersistGate>
 			</Provider>
-		</ErrorBoundary>
+
+			</GoogleOAuthProvider>
+	</ErrorBoundary>
 	);
 }
+

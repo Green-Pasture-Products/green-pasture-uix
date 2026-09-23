@@ -30,8 +30,8 @@ export const appConstants = {
 	CONTACT: {
 		PHONE: "+234 701 884 5177",
 		PHONE_HREF: "tel:+2347018845177",
-		EMAIL: "hello@gporganics.com",
-		EMAIL_HREF: "mailto:hello@gporganics.com",
+		EMAIL: "support@greenpasturesorganics.com",
+		EMAIL_HREF: "mailto:support@greenpasturesorganics.com",
 		ADDRESS: "Lagos, Nigeria",
 	} as const,
 

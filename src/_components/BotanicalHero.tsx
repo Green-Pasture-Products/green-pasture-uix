@@ -13,8 +13,9 @@ import { ArrowRight, Sprout } from "lucide-react";
  * from the right so the image's own white field becomes the copy column. The
  * arch is baked into the asset, so nothing here masks or clips it.
  *
- * ponytail: hard-coded light palette rather than themed. The photo carries a
- * white background; a dark-mode hero would need a second asset, not CSS.
+ * Colors run through the app's CSS custom properties (--background,
+ * --text-primary, etc.) instead of hardcoded hex, so the hero themes with the
+ * rest of the site instead of fighting it in dark mode.
  */
 
 const BotanicalHero: React.FC = () => {
@@ -34,14 +35,19 @@ const BotanicalHero: React.FC = () => {
 	return (
 		<section
 			ref={rootRef}
-			className="relative isolate overflow-hidden bg-white dark:bg-[#0c1425] transition-colors duration-300"
+			className="relative isolate overflow-hidden transition-colors duration-300"
+			style={{ background: "var(--background)" }}
 		>
-			{/* Photograph. In flow on small screens, pinned to the right half from lg up. */}
+			{/* Photograph. In flow on small screens, pinned to the right half from lg up.
+			    Below lg the box is sized to the source photo's own ratio (1717:916) so
+			    the whole frame shows — a fixed viewport-height box was narrower than the
+			    photo and forced object-cover to crop both edges off it. From lg up the
+			    image fills the full section height by design, so cropping there is fine. */}
 			<motion.div
 				initial={{ opacity: 0, scale: reduced ? 1 : 1.04 }}
 				animate={{ opacity: 1, scale: 1 }}
 				transition={{ duration: reduced ? 0 : 1.2, ease: [0.22, 1, 0.36, 1] }}
-				className="relative h-[280px] w-full sm:h-[380px] lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[58%]"
+				className="relative aspect-[1717/916] w-full lg:aspect-auto lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[58%]"
 			>
 				<Image
 					src="/images/landing_page_image.png"
@@ -50,21 +56,20 @@ const BotanicalHero: React.FC = () => {
 					priority
 					quality={95}
 					sizes="(max-width: 1024px) 100vw, 58vw"
-					className="object-cover object-center sm:object-right"
+					className="object-contain lg:object-cover lg:object-right"
 				/>
-				{/* Feathers the crop edge into the copy column on desktop */}
+				{/* Feathers the crop edge into the copy column on desktop only — no
+				    overlay on mobile, where the photo sits above the copy in flow
+				    rather than behind it, so there is nothing to blend and no
+				    hardcoded color fighting the theme. */}
 				<div
 					aria-hidden
-					className="pointer-events-none absolute inset-y-0 left-0 hidden w-40 lg:block bg-gradient-to-r from-white dark:from-[#0c1425] to-transparent"
-				/>
-				{/* Bottom fade on mobile so photograph seamlessly blends into content */}
-				<div
-					aria-hidden
-					className="pointer-events-none absolute inset-x-0 bottom-0 h-16 block lg:hidden bg-gradient-to-t from-white dark:from-[#0c1425] to-transparent"
+					className="pointer-events-none absolute inset-y-0 left-0 hidden w-40 lg:block"
+					style={{ background: "linear-gradient(to right, var(--background), transparent)" }}
 				/>
 			</motion.div>
 
-			<motion.div style={{ opacity: fade }} className="page-wrapper relative z-10 py-10 sm:py-16 md:py-24 lg:py-32">
+			<motion.div style={{ opacity: fade }} className="page-wrapper relative z-10 py-8 sm:py-16 md:py-24 lg:py-32">
 				<motion.div style={{ y: copyY }} className="max-w-xl lg:max-w-[46%]">
 					<motion.div
 						{...rise(0.05)}
@@ -96,14 +101,18 @@ const BotanicalHero: React.FC = () => {
 						{...rise(0.46)}
 						className="mt-6 sm:mt-7 max-w-md text-base leading-relaxed sm:text-lg text-[#10231f]/75 dark:text-slate-300"
 					>
-						Immunity and fertility supplements pressed from organically farmed roots, leaves and seeds —
-						traced from Northern Nigerian soil to the jar in your hand.
+						Green Pastures Organics is an online store for immunity, fertility, and wellness supplements
+						pressed from organically farmed roots, leaves, and seeds — traced from Northern Nigerian soil to
+						the jar in your hand.
 					</motion.p>
 
-					<motion.div {...rise(0.56)} className="mt-8 sm:mt-9 flex flex-wrap items-center gap-3">
+					{/* Stacked full-width on mobile rather than left to flex-wrap: two
+					    pill buttons at this padding don't both fit one row below ~420px,
+					    and wrap would squeeze them before actually breaking. */}
+					<motion.div {...rise(0.56)} className="mt-8 sm:mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
 						<Link
 							href="/products"
-							className="group inline-flex items-center gap-2.5 rounded-full px-7 py-3.5 text-sm font-semibold transition-all duration-300 hover:shadow-[0_10px_30px_-8px_rgba(122,171,45,0.65)] active:scale-[0.98]"
+							className="group inline-flex items-center justify-center gap-2.5 rounded-full px-7 py-3.5 text-sm font-semibold transition-all duration-300 hover:shadow-[0_10px_30px_-8px_rgba(122,171,45,0.65)] active:scale-[0.98]"
 							style={{ background: "#9aca3c", color: "#0c2b25" }}
 						>
 							Shop the range
@@ -111,7 +120,7 @@ const BotanicalHero: React.FC = () => {
 						</Link>
 						<Link
 							href="/about"
-							className="rounded-full px-7 py-3.5 text-sm font-medium transition-colors duration-300 hover:bg-black/5 dark:hover:bg-white/10 active:scale-[0.98] border border-[#10231f]/20 dark:border-white/20 text-[#10231f] dark:text-slate-100"
+							className="rounded-full px-7 py-3.5 text-center text-sm font-medium transition-colors duration-300 hover:bg-black/5 dark:hover:bg-white/10 active:scale-[0.98] border border-[#10231f]/20 dark:border-white/20 text-[#10231f] dark:text-slate-100"
 						>
 							How we source
 						</Link>

@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ShoppingCart, Heart, XCircle, Trash2, Check } from "lucide-react";
+import { Star, ShoppingCart, ShoppingBag, Heart, XCircle, Trash2, Check } from "lucide-react";
 import { Product } from "../types";
 import { useAppDispatch } from "@/_redux/store";
 import { useCurrency } from "@/_hooks/useCurrency";
@@ -269,9 +269,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 									initial={{ opacity: 0, scale: 0.8 }}
 									animate={{ opacity: 1, scale: 1 }}
 									exit={{ opacity: 0, scale: 0.8 }}
-									className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold"
+									className="relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-xs font-semibold"
 									style={{ background: "rgba(154,202,60,0.14)", color: "var(--color-primary)" }}
 								>
+									{/* Flying Bag Microinteraction */}
+									<div className="absolute left-1/2 top-1/2 animate-fly-to-cart z-50 pointer-events-none">
+										<div className="bg-primary-600 text-white p-1.5 rounded-full shadow-lg">
+											<ShoppingBag className="h-4 w-4" />
+										</div>
+									</div>
 									<Check className="h-3.5 w-3.5" />
 									Added!
 								</motion.div>

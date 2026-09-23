@@ -7,6 +7,7 @@ interface CardProps {
 	hoverable?: boolean;
 	padding?: "none" | "sm" | "md" | "lg";
 	className?: string;
+	style?: React.CSSProperties;
 	children: React.ReactNode;
 }
 
@@ -30,10 +31,12 @@ const Card: React.FC<CardProps> = ({
 	hoverable = false,
 	padding = "md",
 	className = "",
+	style,
 	children,
 }) => {
 	return (
 		<div
+			style={style}
 			className={[
 				"bg-white dark:bg-white/[0.04] rounded-xl border border-[rgba(16,54,48,0.08)] dark:border-white/8 transition-all duration-300",
 				elevationStyles[elevation],

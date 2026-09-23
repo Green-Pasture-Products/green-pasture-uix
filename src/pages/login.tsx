@@ -4,13 +4,16 @@ import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
-
+import { GoogleLogin } from "@react-oauth/google";
+import { motion } from "framer-motion";
+// triger deployment
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import {
 	clearError,
 	setLoading,
 } from "@/_redux/reducers/auth.reducer";
 import { LoginFormData, loginSchema } from "@/_validations/auth";
+import { useGoogleAuth } from "@/_hooks/useGoogleAuth";
 import Image from "next/image";
 import { loginAsync } from "@/_redux/actions/auth.action";
 import { appConstants } from "@/_redux/constants";
@@ -26,6 +29,7 @@ const LoginPage: React.FC = () => {
 	const { isLoading, error, user, isAuthenticated } = useAppSelector(
 		(state) => state.auth
 	);
+	const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth();
 	const [showPassword, setShowPassword] = useState(false);
 
 	const {
@@ -87,115 +91,130 @@ const LoginPage: React.FC = () => {
 	}, [isAuthenticated, user, dispatch, router]);
 
 	return (
-		<div className="min-h-screen bg-mint-50 dark:bg-[#0e0e1a] flex items-center justify-center p-4">
-			<Card
-				elevation={2}
-				padding="lg"
-				className="max-w-md w-full rounded-radius-lg animate-page-enter"
+		<div
+			className="min-h-screen flex items-center justify-center p-4"
+			style={{ background: "var(--background)" }}
+		>
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+				className="w-full max-w-md rounded-2xl overflow-hidden"
+				style={{
+					background: "var(--surface-paper)",
+					border: "1px solid var(--border-light)",
+					boxShadow: "var(--shadow-xl)",
+				}}
 			>
-				{/* Logo */}
-				<div className="flex justify-center mb-6">
-					<Link href="/" className="flex items-center space-x-2">
-						<div className="relative w-[2.2rem] aspect-square bg-transparent">
-							<Image
-								src="/images/GP Organic Logo (Primary).png"
-								alt="Green Pastures Logo"
-								height={100}
-								width={100}
-								priority
-								sizes="(max-width: 768px) 2rem, (max-width: 1200px) 2.2rem, 3rem"
-								className="object-contain"
-							/>
-						</div>
-						<span className="text-md md:text-lg font-bold text-primary-800 dark:text-primary-300">
-							Green Pastures Organics
-						</span>
-					</Link>
-				</div>
-
-				<h2 className="text-center text-2xl md:text-3xl font-bold text-on-surface dark:text-white/90 mb-2">
-					Sign in to your account
-				</h2>
-				<p className="text-center text-sm text-on-surface-variant dark:text-white/50 mb-8">
-					Or{" "}
-					<Link
-						href="/signup"
-						className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
-					>
-						create a new account
-					</Link>
-				</p>
-
-				<form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
-					{error && (
-						<div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-radius-md p-4">
-							<div className="flex">
-								<AlertCircle className="h-5 w-5 text-red-400 dark:text-red-500" />
-								<div className="ml-3">
-									<p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-								</div>
+				<Card elevation={0} padding="lg" className="!border-0 !bg-transparent !rounded-none">
+					{/* Logo */}
+					<div className="flex justify-center mb-5">
+						<Link href="/" className="flex items-center gap-2">
+							<div className="relative w-8 h-8">
+								<Image
+									src="/images/GP Organic Logo (Primary).png"
+									alt="Green Pastures Logo"
+									height={32}
+									width={32}
+									priority
+									sizes="2rem"
+									className="object-contain"
+								/>
 							</div>
-						</div>
-					)}
-
-					<Input
-						label="Email Address"
-						{...register("email")}
-						type="email"
-						autoComplete="email"
-						placeholder="Enter your email"
-						leftIcon={Mail}
-						error={errors.email?.message}
-					/>
-
-					<div>
-						<div className="flex items-center justify-between mb-1">
-							<label className="block text-xs md:text-sm font-bold" style={{ color: "var(--text-secondary)" }}>
-								Password
-							</label>
-							<Link
-								href="/forgot-password"
-								className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
-							>
-								Forgot password?
-							</Link>
-						</div>
-						<Input
-							{...register("password")}
-							type={showPassword ? "text" : "password"}
-							autoComplete="current-password"
-							placeholder="Enter your password"
-							leftIcon={Lock}
-							error={errors.password?.message}
-							rightElement={
-								<button
-									type="button"
-									className="text-on-surface/50 dark:text-white/30 hover:text-on-surface-variant dark:hover:text-gray-300 transition-colors"
-									onClick={() => setShowPassword(!showPassword)}
-								>
-									{showPassword ? (
-										<EyeOff className="h-5 w-5" />
-									) : (
-										<Eye className="h-5 w-5" />
-									)}
-								</button>
-							}
-						/>
+							<span className="text-base font-bold" style={{ color: "var(--color-primary)" }}>
+								Green Pastures
+							</span>
+						</Link>
 					</div>
 
-					<Button
-						type="submit"
-						variant="filled"
-						size="lg"
-						fullWidth
-						loading={isLoading}
-						disabled={isLoading}
-					>
-						{isLoading ? "Signing in..." : "Sign in"}
-					</Button>
+					<h2 className="text-center text-xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
+						Welcome back
+					</h2>
+					<p className="text-center text-xs mb-6" style={{ color: "var(--text-hint)" }}>
+						Don't have an account?{" "}
+						<Link href="/signup" className="font-medium" style={{ color: "var(--color-primary)" }}>
+							Sign up
+						</Link>
+					</p>
 
+					{/* Google Sign-In */}
+					<div className="mb-4">
+						<GoogleLogin
+							onSuccess={handleGoogleSuccess}
+							onError={handleGoogleError}
+							theme="outline"
+							size="large"
+							width="100%"
+						/>
+						<div className="flex items-center gap-3 my-4">
+							<div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
+							<span className="text-xs" style={{ color: "var(--text-hint)" }}>Or continue with email</span>
+							<div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
+						</div>
+					</div>
+
+					<form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+						{error && (
+							<motion.div
+								initial={{ opacity: 0, y: -8 }}
+								animate={{ opacity: 1, y: 0 }}
+								className="flex items-start gap-2 p-3 rounded-lg text-xs"
+								style={{
+									background: "rgba(239,68,68,0.08)",
+									border: "1px solid rgba(239,68,68,0.2)",
+									color: "#dc2626",
+								}}
+							>
+								<AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+								<span>{error}</span>
+							</motion.div>
+						)}
+
+						<Input
+							label="Email Address"
+							{...register("email")}
+							type="email"
+							autoComplete="email"
+							placeholder="your@email.com"
+							leftIcon={Mail}
+							error={errors.email?.message}
+						/>
+
+						<div>
+							<div className="flex items-center justify-between mb-1">
+								<label className="block text-xs md:text-sm font-bold" style={{ color: "var(--text-secondary)" }}>
+									Password
+								</label>
+								<Link href="/forgot-password" className="text-xs font-medium" style={{ color: "var(--color-primary)" }}>
+									Forgot?
+								</Link>
+							</div>
+							<Input
+								{...register("password")}
+								type={showPassword ? "text" : "password"}
+								autoComplete="current-password"
+								placeholder="••••••••"
+								leftIcon={Lock}
+								error={errors.password?.message}
+								rightElement={
+									<button
+										type="button"
+										className="transition-colors"
+										style={{ color: "var(--text-hint)" }}
+										onClick={() => setShowPassword(!showPassword)}
+									>
+										{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+									</button>
+								}
+							/>
+						</div>
+
+						<Button type="submit" size="lg" fullWidth loading={isLoading} disabled={isLoading}>
+							{isLoading ? "Signing in..." : "Sign In"}
+						</Button>
 					</form>
-			</Card>
+				</Card>
+			</motion.div>
 		</div>
 	);
 };
