@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { uuidv7 } from "uuidv7";
 import {
 	resolveIdempotencyKey,
@@ -300,6 +300,7 @@ const CheckoutPage: React.FC = () => {
 	});
 
 	const selectedPayment = useWatch({ control, name: "paymentMethod" });
+	const shippingState = useWatch({ control, name: "shippingAddress.state" });
 
 	/* Derive visual step based on form completion (all sections visible) */
 	const hasShippingErrors =
@@ -337,9 +338,24 @@ const CheckoutPage: React.FC = () => {
 
 	const subtotal = total;
 	const tax = Math.round(subtotal * taxRate);
+
+	// Mirrors order.service.ts's shipping calc so the total shown here matches
+	// what the server actually charges — this used to omit shipping entirely,
+	// so the reviewed total could be several thousand naira under the real one.
+	const shippingFee = useMemo(() => {
+		const methods = (storeConfig?.shippingConfig?.methods ?? []).filter((m: any) => m?.enabled !== false);
+		const baseCost = Number(methods[0]?.baseCost ?? 0);
+		const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold ?? 50000);
+		const freeShippingRegions: string[] = storeConfig?.orderSettings?.freeShippingRegions ?? [];
+		const normalize = (v: unknown) => (typeof v === "string" ? v.trim().toLowerCase() : "");
+		const regionQualifies =
+			freeShippingRegions.length === 0 || freeShippingRegions.some((r) => normalize(r) === normalize(shippingState) && normalize(r) !== "");
+		return subtotal >= freeShippingThreshold && regionQualifies ? 0 : baseCost;
+	}, [storeConfig, subtotal, shippingState]);
+
 	// Display only — the server recomputes all of this at checkout and the
 	// order is charged from its figures, not these.
-	const finalTotal = Math.max(0, subtotal + tax - couponDiscount);
+	const finalTotal = Math.max(0, subtotal + shippingFee + tax - couponDiscount);
 
 	const handleApplyCoupon = async () => {
 		if (!couponCode.trim()) return;
@@ -1222,6 +1238,13 @@ const CheckoutPage: React.FC = () => {
 									<span style={{ color: "var(--text-secondary)" }}>Tax ({formatRateAsPercent(taxRate)})</span>
 									<span className="font-medium" style={{ color: "var(--text-primary)" }}>
 										&#8358;{tax.toLocaleString()}
+									</span>
+								</div>
+
+								<div className="flex justify-between text-sm">
+									<span style={{ color: "var(--text-secondary)" }}>Shipping</span>
+									<span className="font-medium" style={{ color: shippingFee === 0 ? "var(--color-primary)" : "var(--text-primary)" }}>
+										{shippingFee === 0 ? "Free" : `₦${shippingFee.toLocaleString()}`}
 									</span>
 								</div>
 

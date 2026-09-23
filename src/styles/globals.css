@@ -612,6 +612,16 @@ input[type="password"]::-ms-clear {
 	display: none;
 }
 
+/* Fades the trailing edge of a horizontally-scrollable row (filter chips) so a
+   cut-off last item reads as "more this way, swipe" instead of "clipped".
+   Only needed while the row actually scrolls — chips wrap instead from sm up. */
+@media (max-width: 639px) {
+	.scroll-fade-x {
+		-webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+		mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+	}
+}
+
 /* ==========================================================================
    Delete Button Microinteraction ("Bin eats the label")
    ========================================================================== */

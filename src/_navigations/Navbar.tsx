@@ -172,10 +172,11 @@ const Navbar: React.FC = () => {
 
 				{/* Right: Actions */}
 				<div className="flex items-center gap-1 sm:gap-2">
-					{/* Theme Toggle */}
+					{/* Theme Toggle — mobile keeps this in the hamburger panel instead, so the
+					    top bar doesn't stack six icons next to the logo on small screens. */}
 					<button
 						onClick={toggleTheme}
-						className="p-2 rounded-radius-md text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect cursor-pointer"
+						className="hidden md:inline-flex p-2 rounded-radius-md text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white transition-colors duration-200 press-effect cursor-pointer"
 						aria-label="Toggle theme"
 					>
 						{isDark ? (
@@ -199,11 +200,12 @@ const Navbar: React.FC = () => {
 						</Link>
 					)}
 
-					{/* Wishlist — customers only */}
+					{/* Wishlist — customers only. Hidden on mobile top bar; lives in the
+					    hamburger panel there instead. */}
 					{!isAdmin && (
 						<Link
 							href="/wishlist"
-							className={`relative p-2 rounded-radius-md transition-colors duration-200 press-effect ${
+							className={`relative hidden md:inline-flex p-2 rounded-radius-md transition-colors duration-200 press-effect ${
 								isActive("/wishlist")
 									? "text-primary-600 dark:text-primary-400"
 									: "text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
@@ -218,10 +220,11 @@ const Navbar: React.FC = () => {
 						</Link>
 					)}
 
-	
-					{/* User Menu */}
+
+					{/* User Menu — hidden on mobile top bar; the hamburger panel already
+					    carries login/profile/sign-out there. */}
 					{isAuthenticated && bio ? (
-						<div className="relative" ref={userMenuRef}>
+						<div className="relative hidden md:block" ref={userMenuRef}>
 							<button
 								onClick={() =>
 									setIsUserMenuOpen(!isUserMenuOpen)
@@ -333,7 +336,7 @@ const Navbar: React.FC = () => {
 							)}
 						</div>
 					) : (
-						<div className="relative" ref={userMenuRef}>
+						<div className="relative hidden md:block" ref={userMenuRef}>
 							<button
 								onClick={() =>
 									setIsUserMenuOpen(!isUserMenuOpen)
@@ -412,6 +415,33 @@ const Navbar: React.FC = () => {
 							<Search className="h-5 w-5" />
 							<span className="text-sm font-medium">Search</span>
 						</Link>
+
+						{/* Wishlist — customers only. Lives here on mobile instead of the top bar. */}
+						{!isAdmin && (
+							<Link
+								href="/wishlist"
+								className="flex items-center gap-3 px-3 py-2.5 rounded-radius-md text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+								onClick={() => setIsMobileMenuOpen(false)}
+							>
+								<Heart className="h-5 w-5" />
+								<span className="text-sm font-medium">Wishlist</span>
+								{wishlistCount > 0 && (
+									<span className="ml-auto bg-primary-600 text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center">
+										{wishlistCount}
+									</span>
+								)}
+							</Link>
+						)}
+
+						{/* Theme toggle */}
+						<button
+							type="button"
+							onClick={toggleTheme}
+							className="flex w-full items-center gap-3 px-3 py-2.5 rounded-radius-md text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150 cursor-pointer"
+						>
+							{isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+							<span className="text-sm font-medium">{isDark ? "Light mode" : "Dark mode"}</span>
+						</button>
 
 						<div className="border-t border-outline-variant dark:border-white/8 my-2" />
 
