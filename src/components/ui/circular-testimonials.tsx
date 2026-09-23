@@ -207,17 +207,26 @@ export const CircularTestimonials = ({
 								{activeTestimonial.designation}
 							</p>
 							<motion.p className="quote" style={{ color: colorTestimony, fontSize: fontSizeQuote }}>
-								{activeTestimonial.quote.split(" ").map((word, i) => (
-									<motion.span
-										key={i}
-										initial={{ filter: "blur(10px)", opacity: 0, y: 5 }}
-										animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
-										transition={{ duration: 0.22, ease: "easeInOut", delay: 0.025 * i }}
-										style={{ display: "inline-block" }}
-									>
-										{word}&nbsp;
-									</motion.span>
-								))}
+								{/* A runaway review (copy-paste spam, an over-long comment) shouldn't be
+								    able to blow the card past the viewport — cap the word count and let the
+								    CSS line-clamp below cap the height regardless of word length. */}
+								{(() => {
+									const words = activeTestimonial.quote.split(" ").filter(Boolean);
+									const truncated = words.length > 60;
+									return words.slice(0, 60).map((word, i) => (
+										<motion.span
+											key={i}
+											initial={{ filter: "blur(10px)", opacity: 0, y: 5 }}
+											animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+											transition={{ duration: 0.22, ease: "easeInOut", delay: 0.025 * i }}
+											style={{ display: "inline-block" }}
+										>
+											{word}
+											{truncated && i === 59 ? "…" : ""}
+											&nbsp;
+										</motion.span>
+									));
+								})()}
 							</motion.p>
 						</motion.div>
 					</AnimatePresence>
@@ -249,16 +258,20 @@ export const CircularTestimonials = ({
 				.testimonial-container {
 					width: 100%;
 					max-width: 56rem;
-					padding: 2rem;
+					padding: 1.25rem;
+					margin: 0 auto;
+					box-sizing: border-box;
 				}
 				.testimonial-grid {
 					display: grid;
-					gap: 5rem;
+					gap: 2.5rem;
+					justify-items: center;
 				}
 				.image-container {
 					position: relative;
 					width: 100%;
-					height: 24rem;
+					max-width: 22rem;
+					height: 18rem;
 					perspective: 1000px;
 				}
 				.testimonial-image {
@@ -272,22 +285,34 @@ export const CircularTestimonials = ({
 				.testimonial-content {
 					display: flex;
 					flex-direction: column;
-					justify-content: space-between;
+					justify-content: flex-start;
+					width: 100%;
+					max-width: 32rem;
+					text-align: center;
 				}
 				.name {
 					font-weight: bold;
 					margin-bottom: 0.25rem;
+					overflow-wrap: break-word;
 				}
 				.designation {
-					margin-bottom: 2rem;
+					margin-bottom: 1.5rem;
 				}
 				.quote {
 					line-height: 1.75;
+					overflow-wrap: break-word;
+					/* Hard cap on visible height — a spammy/duplicated review can't push
+					   the arrows and the rest of the page down with it. */
+					display: -webkit-box;
+					-webkit-box-orient: vertical;
+					-webkit-line-clamp: 6;
+					overflow: hidden;
 				}
 				.arrow-buttons {
 					display: flex;
+					justify-content: center;
 					gap: 1.5rem;
-					padding-top: 3rem;
+					padding-top: 2rem;
 				}
 				.arrow-button {
 					width: 2.7rem;
@@ -301,11 +326,25 @@ export const CircularTestimonials = ({
 					border: none;
 				}
 				@media (min-width: 768px) {
+					.testimonial-container {
+						padding: 2rem;
+					}
 					.testimonial-grid {
 						grid-template-columns: 1fr 1fr;
+						gap: 5rem;
+						justify-items: stretch;
+					}
+					.image-container {
+						max-width: none;
+						height: 24rem;
+					}
+					.testimonial-content {
+						max-width: none;
+						text-align: left;
 					}
 					.arrow-buttons {
-						padding-top: 0;
+						justify-content: flex-start;
+						padding-top: 3rem;
 					}
 				}
 			`}</style>

@@ -149,27 +149,31 @@ const HomePage: React.FC = () => {
 
 					{categories.length > 0 && (
 						<AnimatedSection delay={0.08}>
-							<div className="hide-scrollbar -mx-4 mb-3 flex items-center gap-2 overflow-x-auto px-4 pb-1.5 sm:mx-0 sm:flex-wrap sm:px-0">
-								{[ALL, ...categories].map((name) => (
-									<FilterChip key={name} active={category === name} onClick={() => setCategory(name)}>
-										{name}
-									</FilterChip>
-								))}
+							<div className="scroll-fade-x -mx-4 mb-3 sm:mx-0">
+								<div className="hide-scrollbar flex items-center gap-2 overflow-x-auto px-4 pb-1.5 sm:flex-wrap sm:px-0">
+									{[ALL, ...categories].map((name) => (
+										<FilterChip key={name} active={category === name} onClick={() => setCategory(name)}>
+											{name}
+										</FilterChip>
+									))}
+								</div>
 							</div>
 						</AnimatedSection>
 					)}
 
 					{availableTags.length > 0 && (
 						<AnimatedSection delay={0.12}>
-							<div className="hide-scrollbar -mx-4 mb-8 flex items-center gap-2 overflow-x-auto px-4 pb-1.5 sm:mx-0 sm:flex-wrap sm:px-0">
-								<span className="shrink-0 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--text-hint)", background: "var(--surface-medium)" }}>
-									For
-								</span>
-								{[{ id: ALL, name: "Everyone", slug: ALL }, ...availableTags].map((t) => (
-									<FilterChip key={t.id} active={tag === t.slug} onClick={() => setTag(t.slug)} subtle>
-										{t.name}
-									</FilterChip>
-								))}
+							<div className="scroll-fade-x -mx-4 mb-8 sm:mx-0">
+								<div className="hide-scrollbar flex items-center gap-2 overflow-x-auto px-4 pb-1.5 sm:flex-wrap sm:px-0">
+									<span className="shrink-0 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--text-hint)", background: "var(--surface-medium)" }}>
+										For
+									</span>
+									{[{ id: ALL, name: "Everyone", slug: ALL }, ...availableTags].map((t) => (
+										<FilterChip key={t.id} active={tag === t.slug} onClick={() => setTag(t.slug)} subtle>
+											{t.name}
+										</FilterChip>
+									))}
+								</div>
 							</div>
 						</AnimatedSection>
 					)}
@@ -188,7 +192,7 @@ const HomePage: React.FC = () => {
 						<AnimatedSection delay={0.16}>
 							<CardRail label="Products">
 								{visible.slice(0, RAIL_LIMIT).map((product) => (
-									<div key={product.id} className="w-[64vw] min-w-[195px] max-w-[250px] shrink-0 snap-start sm:w-[236px]">
+									<div key={product.id} className="w-[44vw] min-w-[150px] max-w-[210px] shrink-0 snap-start sm:w-[236px]">
 										<ProductCard product={product} />
 									</div>
 								))}
@@ -375,7 +379,7 @@ const FilterChip: React.FC<{
 const RailSkeleton: React.FC = () => (
 	<div className="hide-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 sm:mx-0 sm:gap-5 sm:px-0">
 		{[...Array(5)].map((_, i) => (
-			<div key={i} className="w-[64vw] min-w-[195px] max-w-[250px] shrink-0 animate-pulse sm:w-[236px]">
+			<div key={i} className="w-[44vw] min-w-[150px] max-w-[210px] shrink-0 animate-pulse sm:w-[236px]">
 				<div className="aspect-square rounded-xl" style={{ background: "var(--surface-tile)" }} />
 				<div className="space-y-2.5 pt-3.5">
 					<div className="h-4 w-3/4 rounded-full" style={{ background: "var(--surface-medium)" }} />
