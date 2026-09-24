@@ -197,7 +197,7 @@ export const InteractiveCreditCard: React.FC<InteractiveCreditCardProps> = ({
 									backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.04) 5px, rgba(0,0,0,0.04) 10px)",
 								}}
 							>
-								{data.cardHolder || "Green Pastures Customer"}
+								{data.cardHolder || "Green Pasture Organics Customer"}
 							</div>
 							<div className="w-14 h-8 bg-amber-50 rounded border border-amber-200 flex items-center justify-center font-mono font-bold text-sm text-gray-900 shadow-inner">
 								{data.cvv ? data.cvv : "•••"}

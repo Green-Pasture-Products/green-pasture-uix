@@ -22,6 +22,7 @@ import { logger } from "@/_utils";
 import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
 import Button from "@/_UI/Button";
+import WhatsAppIcon from "@/_UI/WhatsAppIcon";
 
 const LoginPage: React.FC = () => {
 	const router = useRouter();
@@ -92,9 +93,25 @@ const LoginPage: React.FC = () => {
 
 	return (
 		<div
-			className="min-h-screen flex items-center justify-center p-4"
+			className="min-h-screen flex flex-col items-center justify-center gap-6 p-4"
 			style={{ background: "var(--background)" }}
 		>
+			<div className="flex flex-col items-center gap-2 text-center">
+				<Link href="/" aria-label="Green Pasture Organics home" className="flex flex-col items-center gap-2">
+					<Image
+						src="/images/GP Organic Logo (Primary).png"
+						alt="Green Pasture Organics logo"
+						height={96}
+						width={96}
+						priority
+						className="object-contain"
+					/>
+					<span className="text-2xl font-bold" style={{ color: "var(--color-primary)" }}>
+						Green Pasture Organics
+					</span>
+				</Link>
+			</div>
+
 			<motion.div
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
@@ -107,26 +124,6 @@ const LoginPage: React.FC = () => {
 				}}
 			>
 				<Card elevation={0} padding="lg" className="!border-0 !bg-transparent !rounded-none">
-					{/* Logo */}
-					<div className="flex justify-center mb-5">
-						<Link href="/" className="flex items-center gap-2">
-							<div className="relative w-8 h-8">
-								<Image
-									src="/images/GP Organic Logo (Primary).png"
-									alt="Green Pastures Logo"
-									height={32}
-									width={32}
-									priority
-									sizes="2rem"
-									className="object-contain"
-								/>
-							</div>
-							<span className="text-base font-bold" style={{ color: "var(--color-primary)" }}>
-								Green Pastures
-							</span>
-						</Link>
-					</div>
-
 					<h2 className="text-center text-xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
 						Welcome back
 					</h2>
@@ -223,8 +220,34 @@ const LoginPage: React.FC = () => {
 							{isLoading ? "Signing in..." : "Sign In"}
 						</Button>
 					</form>
+
 				</Card>
 			</motion.div>
+
+			<div
+				className="fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-xl px-4 py-2.5 shadow-lg"
+				style={{ background: "var(--color-primary)" }}
+			>
+				<span className="text-xs font-semibold text-white">
+					Message us
+				</span>
+				<a
+					href={appConstants.WHATSAPP_URL}
+					target="_blank"
+					rel="noreferrer"
+					aria-label="Message us on WhatsApp"
+					className="p-1 rounded-full transition-colors text-white"
+				>
+					<WhatsAppIcon size={20} />
+				</a>
+				<a
+					href={appConstants.CONTACT.EMAIL_HREF}
+					aria-label="Email us"
+					className="p-1 rounded-full transition-colors text-white"
+				>
+					<Mail className="h-5 w-5" />
+				</a>
+			</div>
 		</div>
 	);
 };

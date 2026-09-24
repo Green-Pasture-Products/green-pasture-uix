@@ -3,17 +3,19 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, AlertCircle, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, ArrowLeft, ArrowRight, Check, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GoogleLogin } from "@react-oauth/google";
 
 import { clearError } from "@/_redux/reducers/auth.reducer";
+import { appConstants } from "@/_redux/constants";
 import { signupSchema, signupStep1Schema, SignupFormData } from "@/_validations/auth";
 import { signupAsync } from "@/_redux/actions/auth.action";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useGoogleAuth } from "@/_hooks/useGoogleAuth";
 import Image from "next/image";
 import { FormInput } from "@/_UI/FormField";
+import WhatsAppIcon from "@/_UI/WhatsAppIcon";
 
 const slideVariants = {
 	enter: (direction: number) => ({
@@ -111,9 +113,25 @@ const SignupPage: React.FC = () => {
 
 	return (
 		<div
-			className="min-h-screen flex items-center justify-center p-4"
+			className="min-h-screen flex flex-col items-center justify-center gap-6 p-4"
 			style={{ background: "var(--background)" }}
 		>
+			<div className="flex flex-col items-center gap-2 text-center">
+				<Link href="/" aria-label="Green Pasture Organics home" className="flex flex-col items-center gap-2">
+					<Image
+						src="/images/GP Organic Logo (Primary).png"
+						alt="Green Pasture Organics logo"
+						height={96}
+						width={96}
+						priority
+						className="object-contain"
+					/>
+					<span className="text-2xl font-bold" style={{ color: "var(--color-primary)" }}>
+						Green Pasture Organics
+					</span>
+				</Link>
+			</div>
+
 			<motion.div
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
@@ -125,26 +143,7 @@ const SignupPage: React.FC = () => {
 					boxShadow: "var(--shadow-xl)",
 				}}
 			>
-				{/* Header */}
 				<div className="px-8 pt-8 pb-2">
-					<div className="flex justify-center mb-5">
-						<Link href="/" className="flex items-center gap-2">
-							<div className="relative w-8 h-8">
-								<Image
-									src="/images/GP Organic Logo (Primary).png"
-									alt="Logo"
-									height={32}
-									width={32}
-									priority
-									className="object-contain"
-								/>
-							</div>
-							<span className="text-base font-bold" style={{ color: "var(--color-primary)" }}>
-								Green Pastures
-							</span>
-						</Link>
-					</div>
-
 					<h2
 						className="text-center text-xl font-bold mb-1"
 						style={{ color: "var(--text-primary)" }}
@@ -381,7 +380,33 @@ const SignupPage: React.FC = () => {
 						)}
 					</div>
 				</form>
+
 			</motion.div>
+
+			<div
+				className="fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-xl px-4 py-2.5 shadow-lg"
+				style={{ background: "var(--color-primary)" }}
+			>
+				<span className="text-xs font-semibold text-white">
+					Message us
+				</span>
+				<a
+					href={appConstants.WHATSAPP_URL}
+					target="_blank"
+					rel="noreferrer"
+					aria-label="Message us on WhatsApp"
+					className="p-1 rounded-full transition-colors text-white"
+				>
+					<WhatsAppIcon size={20} />
+				</a>
+				<a
+					href={appConstants.CONTACT.EMAIL_HREF}
+					aria-label="Email us"
+					className="p-1 rounded-full transition-colors text-white"
+				>
+					<Mail className="h-5 w-5" />
+				</a>
+			</div>
 		</div>
 	);
 };

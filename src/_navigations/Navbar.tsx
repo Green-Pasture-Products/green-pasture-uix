@@ -137,7 +137,7 @@ const Navbar: React.FC = () => {
 					<div className="relative w-9 h-9 flex-shrink-0">
 						<Image
 							src="/images/GP Organic Logo (Primary).png"
-							alt="Green Pastures Logo"
+							alt="Green Pasture Organics Logo"
 							height={100}
 							width={100}
 							priority
@@ -146,7 +146,7 @@ const Navbar: React.FC = () => {
 						/>
 					</div>
 					<span className="hidden lg:inline-block text-lg font-bold text-on-surface dark:text-white tracking-tight">
-						Green Pastures
+						Green Pasture Organics
 					</span>
 				</Link>
 
