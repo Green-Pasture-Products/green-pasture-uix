@@ -133,7 +133,7 @@ const AdminReviews: React.FC = () => {
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
-					searchPlaceholder="Search review comments..."
+					searchPlaceholder="Search by comment..."
 					pageIndex={currentPage - 1}
 					pageSize={pageSize}
 					pageCount={pagination?.totalPages ?? 1}

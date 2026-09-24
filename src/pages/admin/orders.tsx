@@ -75,22 +75,19 @@ const AdminOrders: React.FC = () => {
 
 	// Extracted so the toolbar's refresh icon re-runs exactly the fetch the page loads with.
 	const refresh = useCallback(() => {
-		dispatch(adminAction.fetchOrdersAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
-	}, [currentPage, searchTerm, pageSize]);
+		dispatch(adminAction.fetchOrdersAsync({
+			page: currentPage,
+			limit: pageSize,
+			search: searchTerm || undefined,
+			filter: filterValues.status || undefined,
+		}));
+	}, [currentPage, searchTerm, pageSize, filterValues.status]);
 
 	useEffect(() => {
 		refresh();
 	}, [refresh]);
 
-	const filteredOrders = orders?.filter((order: any) => {
-		const statusFilter = filterValues.status;
-		if (!statusFilter) return true;
-		return order.orderStatus?.toUpperCase() === statusFilter.toUpperCase();
-	});
-
-	// Status narrows the already-fetched page client-side, so don't reset the server page
-	const handleFilterChange = (key: string, value: string) =>
-		setFilter(key, value, { resetPage: false });
+	const handleFilterChange = (key: string, value: string) => setFilter(key, value);
 
 	const handleCancelOrder = async () => {
 		if (!cancelTarget) return;
@@ -191,14 +188,14 @@ const AdminOrders: React.FC = () => {
 				{/* Orders Table */}
 				<DataTable
 					columns={columns}
-					data={filteredOrders ?? []}
+					data={orders ?? []}
 					isLoading={ordersLoading}
 					onRefresh={refresh}
 					refreshing={ordersLoading}
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
-					searchPlaceholder="Search orders..."
+					searchPlaceholder="Search by order ref, customer name or email..."
 					filters={ORDER_STATUS_FILTERS}
 					filterValues={filterValues}
 					onFilterChange={handleFilterChange}
