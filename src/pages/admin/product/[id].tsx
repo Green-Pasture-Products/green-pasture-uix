@@ -189,7 +189,6 @@ const ProductDetail: React.FC = () => {
 				description: editForm.description,
 				price: Number(editForm.price),
 				originalPrice: editForm.originalPrice !== "" ? Number(editForm.originalPrice) : null,
-				unit: Number(editForm.unit),
 				weightValue: editForm.weightValue !== "" ? Number(editForm.weightValue) : null,
 				weightUnit: editForm.weightUnit.trim() || null,
 				// Always sent, so clearing every tag actually clears them. The
@@ -209,6 +208,13 @@ const ProductDetail: React.FC = () => {
 
 			if (editForm.category) {
 				payload.productId = editForm.category;
+			}
+
+			// Only send stock when the admin changed it. The API sets it as an
+			// absolute count, so re-sending the count this page loaded would undo
+			// any sale made while the form was open.
+			if (editForm.unit !== String(item?.unit ?? (item as any)?.availableQuantity ?? "")) {
+				payload.unit = Number(editForm.unit);
 			}
 
 			await axiosInstance.patch(`items/${id}`, payload);
