@@ -17,7 +17,7 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 	return (
 		<>
 			<Head>
-				<title>{page_name} | Green Pastures Organics</title>
+				<title>{page_name} | Green Pasture Organics</title>
 				{/* <meta charset="UTF-8" /> */}
 				<meta
 					name="viewport"
@@ -25,21 +25,21 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 				/>
 				<meta
 					name="description"
-					content="Green Pastures Organics is an online store for organic immunity, fertility, and wellness supplements grown and prepared in Nigeria."
+					content="Green Pasture Organics is an online store for organic immunity, fertility, and wellness supplements grown and prepared in Nigeria."
 				/>
 				<meta
 					name="keywords"
 					content="organic, health, wellness, immunity, fertility, blog, supplements"
 				/>
-				<meta name="author" content="Green Pastures Organics" />
+				<meta name="author" content="Green Pasture Organics" />
 				<meta property="og:type" content="website" />
 				<meta
 					property="og:title"
-					content="Green Pastures | Living Healthy"
+					content="Green Pasture Organics | Living Healthy"
 				/>
 				<meta
 					property="og:description"
-					content="Shop organic immunity, fertility, and wellness supplements from Green Pastures Organics, traced from Nigerian farms to your door."
+					content="Shop organic immunity, fertility, and wellness supplements from Green Pasture Organics, traced from Nigerian farms to your door."
 				/>
 				<meta
 					property="og:image"
@@ -49,7 +49,7 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 					property="og:url"
 					content="https://greenpasturesorganics.com"
 				/>
-				<meta property="og:site_name" content="Green Pastures" />
+				<meta property="og:site_name" content="Green Pasture Organics" />
 
 				{/* Favicons are in _document.tsx */}
 			</Head>

@@ -103,7 +103,7 @@ const SetPasswordPage: React.FC = () => {
 						<div className="relative w-[2.2rem] aspect-square bg-transparent">
 							<Image
 								src="/images/GP Organic Logo (Primary).png"
-								alt="Green Pastures Logo"
+								alt="Green Pasture Organics Logo"
 								height={100}
 								width={100}
 								priority
@@ -112,7 +112,7 @@ const SetPasswordPage: React.FC = () => {
 							/>
 						</div>
 						<span className="text-md md:text-lg font-bold text-primary-800 dark:text-primary-300">
-							Green Pastures Organics
+							Green Pasture Organics
 						</span>
 					</Link>
 				</div>

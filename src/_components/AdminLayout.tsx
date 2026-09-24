@@ -29,24 +29,24 @@ const AdminLayout = ({ children, pageTitle, breadcrumbLabel }: LayoutProps) => {
 	return (
 		<>
 			<Head>
-				<title>{page_name} | Green Pastures Admin</title>
+				<title>{page_name} | Green Pasture Organics Admin</title>
 				<meta
 					name="viewport"
 					content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
 				/>
 				<meta
 					name="description"
-					content="Green Pastures - Living healthy with fresh, organic products and insightful blogs."
+					content="Green Pasture Organics - Living healthy with fresh, organic products and insightful blogs."
 				/>
 				<meta
 					name="keywords"
 					content="organic, health, wellness, immunity, fertility, blog, supplements"
 				/>
-				<meta name="author" content="Green Pastures Organics" />
+				<meta name="author" content="Green Pasture Organics" />
 				<meta property="og:type" content="website" />
 				<meta
 					property="og:title"
-					content="Green Pastures | Living Healthy"
+					content="Green Pasture Organics | Living Healthy"
 				/>
 				<meta
 					property="og:description"
@@ -60,7 +60,7 @@ const AdminLayout = ({ children, pageTitle, breadcrumbLabel }: LayoutProps) => {
 					property="og:url"
 					content="https://greenpasturesorganics.com"
 				/>
-				<meta property="og:site_name" content="Green Pastures" />
+				<meta property="og:site_name" content="Green Pasture Organics" />
 				<link
 					rel="icon"
 					href="./icons/favicon.ico"

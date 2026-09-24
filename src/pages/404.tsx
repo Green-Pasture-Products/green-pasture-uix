@@ -28,7 +28,7 @@ const Custom404: React.FC = () => {
 					<div className="relative w-8 h-8">
 						<Image
 							src="/images/GP Organic Logo (Primary).png"
-							alt="Green Pastures Logo"
+							alt="Green Pasture Organics Logo"
 							height={32}
 							width={32}
 							priority
@@ -39,7 +39,7 @@ const Custom404: React.FC = () => {
 						className="text-sm font-semibold"
 						style={{ color: "var(--text-primary)" }}
 					>
-						Green Pastures
+						Green Pasture Organics
 					</span>
 				</Link>
 

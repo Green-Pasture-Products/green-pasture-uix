@@ -9,7 +9,7 @@ interface PageLoaderProps {
 }
 
 /**
- * Premium loading indicator with the Green Pastures logo.
+ * Premium loading indicator with the Green Pasture Organics logo.
  * Use for page loads, API calls, and transitions.
  *
  * Usage:

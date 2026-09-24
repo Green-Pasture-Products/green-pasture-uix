@@ -149,8 +149,8 @@ const HomePage: React.FC = () => {
 
 					{categories.length > 0 && (
 						<AnimatedSection delay={0.08}>
-							<div className="scroll-fade-x -mx-4 mb-3 sm:mx-0">
-								<div className="hide-scrollbar flex items-center gap-2 overflow-x-auto px-4 pb-1.5 sm:flex-wrap sm:px-0">
+							<div className="mb-3">
+								<div className="flex flex-wrap items-center gap-2">
 									{[ALL, ...categories].map((name) => (
 										<FilterChip key={name} active={category === name} onClick={() => setCategory(name)}>
 											{name}
@@ -163,8 +163,8 @@ const HomePage: React.FC = () => {
 
 					{availableTags.length > 0 && (
 						<AnimatedSection delay={0.12}>
-							<div className="scroll-fade-x -mx-4 mb-8 sm:mx-0">
-								<div className="hide-scrollbar flex items-center gap-2 overflow-x-auto px-4 pb-1.5 sm:flex-wrap sm:px-0">
+							<div className="mb-8">
+								<div className="flex flex-wrap items-center gap-2">
 									<span className="shrink-0 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--text-hint)", background: "var(--surface-medium)" }}>
 										For
 									</span>
@@ -192,7 +192,7 @@ const HomePage: React.FC = () => {
 						<AnimatedSection delay={0.16}>
 							<CardRail label="Products">
 								{visible.slice(0, RAIL_LIMIT).map((product) => (
-									<div key={product.id} className="w-[44vw] min-w-[150px] max-w-[210px] shrink-0 snap-start sm:w-[236px]">
+									<div key={product.id} className="w-[40vw] min-w-[140px] max-w-[180px] shrink-0 snap-start sm:w-[236px] sm:max-w-none">
 										<ProductCard product={product} />
 									</div>
 								))}

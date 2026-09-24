@@ -85,7 +85,7 @@ const Footer = () => {
 							className="inline-flex items-center gap-2 mb-4"
 						>
 							<span className="text-xl font-bold text-white tracking-tight">
-								Green Pastures
+								Green Pasture Organics
 							</span>
 						</Link>
 						<p className="text-gray-400 text-sm leading-relaxed mb-5 max-w-md">
@@ -187,7 +187,7 @@ const Footer = () => {
 				{/* Bottom Bar */}
 				<div className="border-t border-gray-800 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500">
 					<p>
-						&copy; 2024 - {new Date().getFullYear()} Green Pastures
+						&copy; 2024 - {new Date().getFullYear()} Green Pasture Organics
 						Organics. All rights reserved.
 					</p>
 					<div className="flex items-center gap-4">

@@ -39,15 +39,16 @@ const BotanicalHero: React.FC = () => {
 			style={{ background: "var(--background)" }}
 		>
 			{/* Photograph. In flow on small screens, pinned to the right half from lg up.
-			    Below lg the box is sized to the source photo's own ratio (1717:916) so
-			    the whole frame shows — a fixed viewport-height box was narrower than the
-			    photo and forced object-cover to crop both edges off it. From lg up the
-			    image fills the full section height by design, so cropping there is fine. */}
+			    The source's left ~45% is a baked-in white fade (1717x916, family starts
+			    around x=760). Showing it read as a white slab in dark mode and pushed the
+			    family off-center, so every breakpoint crops to the family with
+			    object-cover + object-right and a hard edge -- no fade overlays, nothing
+			    that has to match the theme. */}
 			<motion.div
 				initial={{ opacity: 0, scale: reduced ? 1 : 1.04 }}
 				animate={{ opacity: 1, scale: 1 }}
 				transition={{ duration: reduced ? 0 : 1.2, ease: [0.22, 1, 0.36, 1] }}
-				className="relative aspect-[1717/916] w-full lg:aspect-auto lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[58%]"
+				className="relative aspect-[11/10] w-full sm:aspect-[16/10] lg:aspect-auto lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[50%]"
 			>
 				<Image
 					src="/images/landing_page_image.png"
@@ -55,22 +56,13 @@ const BotanicalHero: React.FC = () => {
 					fill
 					priority
 					quality={95}
-					sizes="(max-width: 1024px) 100vw, 58vw"
-					className="object-contain lg:object-cover lg:object-right"
-				/>
-				{/* Feathers the crop edge into the copy column on desktop only — no
-				    overlay on mobile, where the photo sits above the copy in flow
-				    rather than behind it, so there is nothing to blend and no
-				    hardcoded color fighting the theme. */}
-				<div
-					aria-hidden
-					className="pointer-events-none absolute inset-y-0 left-0 hidden w-40 lg:block"
-					style={{ background: "linear-gradient(to right, var(--background), transparent)" }}
+					sizes="(max-width: 1024px) 100vw, 50vw"
+					className="object-cover object-right"
 				/>
 			</motion.div>
 
 			<motion.div style={{ opacity: fade }} className="page-wrapper relative z-10 py-8 sm:py-16 md:py-24 lg:py-32">
-				<motion.div style={{ y: copyY }} className="max-w-xl lg:max-w-[46%]">
+				<motion.div style={{ y: copyY }} className="max-w-xl lg:max-w-[44%]">
 					<motion.div
 						{...rise(0.05)}
 						className="mb-6 sm:mb-7 inline-flex items-center gap-2 rounded-full py-1.5 pl-2 pr-4 bg-[rgba(122,171,45,0.10)] dark:bg-[rgba(154,202,60,0.16)] border border-[rgba(122,171,45,0.35)] dark:border-[rgba(154,202,60,0.35)]"
@@ -101,7 +93,7 @@ const BotanicalHero: React.FC = () => {
 						{...rise(0.46)}
 						className="mt-6 sm:mt-7 max-w-md text-base leading-relaxed sm:text-lg text-[#10231f]/75 dark:text-slate-300"
 					>
-						Green Pastures Organics is an online store for immunity, fertility, and wellness supplements
+						Green Pasture Organics is an online store for immunity, fertility, and wellness supplements
 						pressed from organically farmed roots, leaves, and seeds — traced from Northern Nigerian soil to
 						the jar in your hand.
 					</motion.p>

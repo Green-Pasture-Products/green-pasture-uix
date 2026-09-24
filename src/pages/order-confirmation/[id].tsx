@@ -364,7 +364,7 @@ const OrderConfirmationPage: React.FC = () => {
 						onClose={() => setIsReceiptModalOpen(false)}
 						autoStart={true}
 						receipt={{
-							agencyName: "GREEN PASTURES FARMS OFFICIAL RECEIPT",
+							agencyName: "GREEN PASTURE ORGANICS OFFICIAL RECEIPT",
 							receiptNumber: `GP-ORD-${order.orderReference || order.id}`,
 							clientName: `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Valued Customer",
 							amount: Number(order.totalAmount || 0),
