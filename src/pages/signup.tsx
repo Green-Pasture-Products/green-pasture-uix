@@ -3,12 +3,12 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, AlertCircle, ArrowRight, ArrowLeft, Check, User, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, ArrowRight, ArrowLeft, Check, User, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GoogleLogin } from "@react-oauth/google";
 
 import { clearError } from "@/_redux/reducers/auth.reducer";
-import { signupSchema, signupStep1Schema, signupStep2Schema, SignupFormData } from "@/_validations/auth";
+import { signupSchema, signupStep1Schema, SignupFormData } from "@/_validations/auth";
 import { signupAsync } from "@/_redux/actions/auth.action";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useGoogleAuth } from "@/_hooks/useGoogleAuth";
@@ -16,9 +16,8 @@ import Image from "next/image";
 import { FormInput } from "@/_UI/FormField";
 
 const STEPS = [
-	{ id: 1, label: "Personal", icon: User },
-	{ id: 2, label: "Contact", icon: Mail },
-	{ id: 3, label: "Security", icon: Lock },
+	{ id: 1, label: "Personal & Contact", icon: User },
+	{ id: 2, label: "Security", icon: Lock },
 ];
 
 const slideVariants = {
@@ -87,8 +86,6 @@ const SignupPage: React.FC = () => {
 
 		if (step === 1) {
 			result = signupStep1Schema.safeParse(values);
-		} else if (step === 2) {
-			result = signupStep2Schema.safeParse(values);
 		} else {
 			return;
 		}
@@ -96,7 +93,7 @@ const SignupPage: React.FC = () => {
 		if (!result.success) {
 			// Clear previous errors for this step before setting new ones
 			if (step === 1) clearErrors(["firstName", "lastName"]);
-			if (step === 2) clearErrors(["email"]);
+			if (step === 1) clearErrors(["email"]);
 			for (const issue of result.error.issues) {
 				const field = issue.path[0] as keyof SignupFormData;
 				setError(field, { message: issue.message });
@@ -107,7 +104,7 @@ const SignupPage: React.FC = () => {
 		// Clear all errors before advancing to prevent stale errors on the next step
 		clearErrors();
 		setDirection(1);
-		setStep((s) => Math.min(s + 1, 3));
+		setStep((s) => Math.min(s + 1, 2));
 	};
 
 	const goBack = () => {
@@ -178,27 +175,31 @@ const SignupPage: React.FC = () => {
 
 					{/* Google Sign-Up Option */}
 					{showGoogleForm && (
-						<motion.div
-							initial={{ opacity: 0, y: -10 }}
-							animate={{ opacity: 1, y: 0 }}
-							className="mb-4"
-						>
-							<div className="relative">
-								<GoogleLogin
-									onSuccess={handleGoogleSuccess}
-									onError={handleGoogleError}
-									theme="outline"
-									size="large"
-									width="100%"
-								/>
-							</div>
-							<div className="flex items-center gap-3 my-4">
-								<div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
-								<span className="text-xs" style={{ color: "var(--text-hint)" }}>Or continue with email</span>
-								<div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
-							</div>
-						</motion.div>
-					)}
+    <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-4"
+    >
+        <div className="w-full flex justify-center overflow-hidden min-h-[44px]">
+            <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="outline"
+                size="large"
+                text="signin_with"
+                shape="rectangular"
+                logo_alignment="left"
+                width="350"
+                useOneTap={false}
+            />
+        </div>
+        <div className="flex items-center gap-3 my-4">
+            <div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
+            <span className="text-xs" style={{ color: "var(--text-hint)" }}>Or continue with email</span>
+            <div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
+        </div>
+    </motion.div>
+)}
 
 					{/* Step Indicator */}
 					<div className="flex items-center justify-center gap-0 mb-6">
@@ -276,7 +277,7 @@ const SignupPage: React.FC = () => {
 				{/* Form */}
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<div className="px-8 overflow-hidden" style={{ minHeight: 220 }}>
-						{errorMessage && step === 3 && (
+						{errorMessage && step === 2 && (
 							<motion.div
 								initial={{ opacity: 0, y: -8 }}
 								animate={{ opacity: 1, y: 0 }}
@@ -293,7 +294,7 @@ const SignupPage: React.FC = () => {
 						)}
 
 						<AnimatePresence mode="wait" custom={direction}>
-							{/* Step 1: Personal */}
+							{/* Step 1: Personal and Contact */}
 							{step === 1 && (
 								<motion.div
 									key="step1"
@@ -321,21 +322,6 @@ const SignupPage: React.FC = () => {
 											error={errors.lastName?.message}
 										/>
 									</div>
-								</motion.div>
-							)}
-
-							{/* Step 2: Contact */}
-							{step === 2 && (
-								<motion.div
-									key="step2"
-									custom={direction}
-									variants={slideVariants}
-									initial="enter"
-									animate="center"
-									exit="exit"
-									transition={{ duration: 0.25, ease: "easeInOut" }}
-									className="space-y-4"
-								>
 									<FormInput
 										label="Email Address"
 										type="email"
@@ -347,10 +333,10 @@ const SignupPage: React.FC = () => {
 								</motion.div>
 							)}
 
-							{/* Step 3: Security */}
-							{step === 3 && (
+							{/* Step 2: Security */}
+							{step === 2 && (
 								<motion.div
-									key="step3"
+									key="step2"
 									custom={direction}
 									variants={slideVariants}
 									initial="enter"
@@ -451,7 +437,7 @@ const SignupPage: React.FC = () => {
 							<div />
 						)}
 
-						{step < 3 ? (
+						{step < 2 ? (
 							<button
 								type="button"
 								onClick={goNext}
