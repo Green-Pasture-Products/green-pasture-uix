@@ -138,20 +138,30 @@ const LoginPage: React.FC = () => {
 					</p>
 
 					{/* Google Sign-In */}
-					<div className="mb-4">
-						<GoogleLogin
-							onSuccess={handleGoogleSuccess}
-							onError={handleGoogleError}
-							theme="outline"
-							size="large"
-							width="100%"
-						/>
-						<div className="flex items-center gap-3 my-4">
-							<div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
-							<span className="text-xs" style={{ color: "var(--text-hint)" }}>Or continue with email</span>
-							<div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
-						</div>
-					</div>
+					{/* Google Sign-In */}
+<div className="mb-4">
+    <div className="w-full flex justify-center overflow-hidden min-h-[44px]">
+        <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="outline"
+            size="large"
+            text="signin_with"
+            shape="rectangular"
+            logo_alignment="left"
+            // Set explicit container width (e.g. 380 max to fit max-w-md Card inside padding)
+            width="350"
+            useOneTap={false}
+        />
+    </div>
+    <div className="flex items-center gap-3 my-4">
+        <div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
+        <span className="text-xs" style={{ color: "var(--text-hint)" }}>
+            Or continue with email
+        </span>
+        <div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
+    </div>
+</div>
 
 					<form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
 						{error && (
