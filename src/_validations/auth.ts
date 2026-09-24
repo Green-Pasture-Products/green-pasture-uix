@@ -8,6 +8,7 @@ export const loginSchema = z.object({
 export const signupStep1Schema = z.object({
 	firstName: z.string().min(1, "First name is required"),
 	lastName: z.string().min(1, "Last name is required"),
+	email: z.string().email("Please enter a valid email address"),
 });
 
 export const signupStep2Schema = z.object({

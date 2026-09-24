@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, AlertCircle, ArrowRight, ArrowLeft, Check, User, Lock } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GoogleLogin } from "@react-oauth/google";
 
@@ -14,11 +14,6 @@ import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useGoogleAuth } from "@/_hooks/useGoogleAuth";
 import Image from "next/image";
 import { FormInput } from "@/_UI/FormField";
-
-const STEPS = [
-	{ id: 1, label: "Personal & Contact", icon: User },
-	{ id: 2, label: "Security", icon: Lock },
-];
 
 const slideVariants = {
 	enter: (direction: number) => ({
@@ -80,38 +75,6 @@ const SignupPage: React.FC = () => {
 		} catch {}
 	};
 
-	const goNext = async () => {
-		const values = watch();
-		let result: { success: boolean; error?: any };
-
-		if (step === 1) {
-			result = signupStep1Schema.safeParse(values);
-		} else {
-			return;
-		}
-
-		if (!result.success) {
-			// Clear previous errors for this step before setting new ones
-			if (step === 1) clearErrors(["firstName", "lastName"]);
-			if (step === 1) clearErrors(["email"]);
-			for (const issue of result.error.issues) {
-				const field = issue.path[0] as keyof SignupFormData;
-				setError(field, { message: issue.message });
-			}
-			return;
-		}
-
-		// Clear all errors before advancing to prevent stale errors on the next step
-		clearErrors();
-		setDirection(1);
-		setStep((s) => Math.min(s + 1, 2));
-	};
-
-	const goBack = () => {
-		setDirection(-1);
-		setStep((s) => Math.max(s - 1, 1));
-	};
-
 	const errorMessage = error
 		? typeof error === "string"
 			? error
@@ -123,6 +86,28 @@ const SignupPage: React.FC = () => {
 	// Watch values for step summary
 	const firstName = watch("firstName");
 	const email = watch("email");
+	const lastName = watch("lastName");
+
+	const goNext = () => {
+		const result = signupStep1Schema.safeParse({ firstName, lastName, email });
+		if (!result.success) {
+			clearErrors(["firstName", "lastName", "email"]);
+			for (const issue of result.error.issues) {
+				const field = issue.path[0] as keyof SignupFormData;
+				setError(field, { message: issue.message });
+			}
+			return;
+		}
+
+		clearErrors();
+		setDirection(1);
+		setStep(2);
+	};
+
+	const goBack = () => {
+		setDirection(-1);
+		setStep(1);
+	};
 
 	return (
 		<div
@@ -202,82 +187,11 @@ const SignupPage: React.FC = () => {
     </motion.div>
 )}
 
-					{/* Step Indicator */}
-					<div className="flex items-center justify-center gap-0 mb-6">
-						{STEPS.map((s, i) => {
-							const Icon = s.icon;
-							const isActive = step === s.id;
-							const isCompleted = step > s.id;
-							return (
-								<React.Fragment key={s.id}>
-									{i > 0 && (
-										<div
-											className="w-10 h-[2px] mx-1"
-											style={{
-												background: isCompleted
-													? "var(--color-primary)"
-													: "var(--border-light)",
-												transition: "background 0.3s",
-											}}
-										/>
-									)}
-									<button
-										type="button"
-										onClick={() => {
-											if (isCompleted) {
-												setDirection(s.id < step ? -1 : 1);
-												setStep(s.id);
-											}
-										}}
-										className="flex items-center gap-1.5 transition-all"
-										style={{
-											cursor: isCompleted ? "pointer" : "default",
-										}}
-									>
-										<div
-											className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300"
-											style={{
-												background: isCompleted
-													? "var(--color-primary)"
-													: isActive
-														? "rgba(22,163,74,0.12)"
-														: "var(--surface-medium)",
-												color: isCompleted
-													? "#fff"
-													: isActive
-														? "var(--color-primary)"
-														: "var(--text-disabled)",
-												border: isActive
-													? "2px solid var(--color-primary)"
-													: "2px solid transparent",
-											}}
-										>
-											{isCompleted ? (
-												<Check className="w-3.5 h-3.5" />
-											) : (
-												<Icon className="w-3.5 h-3.5" />
-											)}
-										</div>
-										<span
-											className="text-[0.65rem] font-semibold hidden sm:inline"
-											style={{
-												color: isActive || isCompleted
-													? "var(--text-primary)"
-													: "var(--text-disabled)",
-											}}
-										>
-											{s.label}
-										</span>
-									</button>
-								</React.Fragment>
-							);
-						})}
-					</div>
 				</div>
 
 				{/* Form */}
 				<form onSubmit={handleSubmit(onSubmit)}>
-					<div className="px-8 overflow-hidden" style={{ minHeight: 220 }}>
+					<div className="px-8 overflow-hidden" style={{ minHeight: 180 }}>
 						{errorMessage && step === 2 && (
 							<motion.div
 								initial={{ opacity: 0, y: -8 }}
@@ -419,26 +333,10 @@ const SignupPage: React.FC = () => {
 
 					{/* Footer Buttons */}
 					<div
-						className="px-8 py-5 mt-4 flex items-center justify-between"
+						className="px-8 py-4 flex items-center justify-between"
 						style={{ borderTop: "1px solid var(--border-light)" }}
 					>
-						{step > 1 ? (
-							<button
-								type="button"
-								onClick={goBack}
-								className="flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer press-effect px-3 py-2 rounded-lg"
-								style={{ color: "var(--text-secondary)" }}
-								onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-low)"; }}
-								onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-							>
-								<ArrowLeft className="w-3.5 h-3.5" />
-								Back
-							</button>
-						) : (
-							<div />
-						)}
-
-						{step < 2 ? (
+						{step === 1 ? (
 							<button
 								type="button"
 								onClick={goNext}
@@ -449,12 +347,22 @@ const SignupPage: React.FC = () => {
 								<ArrowRight className="w-3.5 h-3.5" />
 							</button>
 						) : (
-							<button
-								type="submit"
-								disabled={isLoading}
-								className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-semibold text-white transition-all cursor-pointer press-effect disabled:opacity-60 disabled:cursor-not-allowed"
-								style={{ background: "var(--color-primary)", boxShadow: "var(--shadow-sm)" }}
-							>
+							<>
+								<button
+									type="button"
+									onClick={goBack}
+									className="flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer press-effect px-3 py-2 rounded-lg"
+									style={{ color: "var(--text-secondary)" }}
+								>
+									<ArrowLeft className="w-3.5 h-3.5" />
+									Back
+								</button>
+								<button
+									type="submit"
+									disabled={isLoading}
+									className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-semibold text-white transition-all cursor-pointer press-effect disabled:opacity-60 disabled:cursor-not-allowed"
+									style={{ background: "var(--color-primary)", boxShadow: "var(--shadow-sm)" }}
+								>
 								{isLoading ? (
 									<>
 										<svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
@@ -468,7 +376,8 @@ const SignupPage: React.FC = () => {
 										<Check className="w-3.5 h-3.5" />
 									</>
 								)}
-							</button>
+								</button>
+							</>
 						)}
 					</div>
 				</form>
