@@ -174,7 +174,7 @@ const SignupPage: React.FC = () => {
 					</p>
 
 					{/* Google Sign-Up Option */}
-					{showGoogleForm && (
+				{showGoogleForm && (
     <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -184,12 +184,13 @@ const SignupPage: React.FC = () => {
             <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
+                type="standard"
                 theme="outline"
                 size="large"
                 text="signin_with"
                 shape="rectangular"
                 logo_alignment="left"
-                width="350"
+                width="300"
                 useOneTap={false}
             />
         </div>

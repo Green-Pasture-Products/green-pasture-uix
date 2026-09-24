@@ -144,13 +144,13 @@ const LoginPage: React.FC = () => {
         <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleError}
+            type="standard"
             theme="outline"
             size="large"
             text="signin_with"
             shape="rectangular"
             logo_alignment="left"
-            // Set explicit container width (e.g. 380 max to fit max-w-md Card inside padding)
-            width="350"
+            width="300"
             useOneTap={false}
         />
     </div>
