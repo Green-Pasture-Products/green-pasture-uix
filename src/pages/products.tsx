@@ -5,7 +5,7 @@ import Layout from "@/_components/Layout";
 const ProductsPage: React.FC = () => {
 	return (
 		<Layout pageTitle={"Products"}>
-			<FilteredProducts />;
+			<FilteredProducts />
 		</Layout>
 	);
 };

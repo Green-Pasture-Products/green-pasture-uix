@@ -15,7 +15,7 @@ import {
 import { LoginFormData, loginSchema } from "@/_validations/auth";
 import { useGoogleAuth } from "@/_hooks/useGoogleAuth";
 import Image from "next/image";
-import { loginAsync } from "@/_redux/actions/auth.action";
+import { loginAsync, resendOtpAsync } from "@/_redux/actions/auth.action";
 import { appConstants } from "@/_redux/constants";
 import { safeRedirectTarget } from "@/_utils/redirect";
 import { logger } from "@/_utils";
@@ -47,10 +47,19 @@ const LoginPage: React.FC = () => {
 	}, [dispatch]);
 
 	const onSubmit = async (data: LoginFormData) => {
-		try {
-			await dispatch(loginAsync(data)).unwrap();
-		} catch (err: any) {
-			logger.log({ logginError: err });
+		const result = await dispatch(loginAsync(data));
+		if (!loginAsync.rejected.match(result)) return;
+		logger.log({ logginError: result.payload });
+
+		// Unverified account: send a fresh OTP and take them to enter it, instead
+		// of leaving them stuck on "Profile has not been verified".
+		if (result.meta.code === "PROFILE_NOT_VERIFIED") {
+			const res = await dispatch(resendOtpAsync({ email: data.email }));
+			const expiresIn = resendOtpAsync.fulfilled.match(res) ? res.payload?.data?.expiresIn : undefined;
+			dispatch(clearError());
+			router.push(
+				`/verify-account?email=${encodeURIComponent(data.email)}${expiresIn ? `&expiresIn=${expiresIn}` : ""}`
+			);
 		}
 	};
 

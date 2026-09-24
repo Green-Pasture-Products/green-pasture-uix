@@ -45,9 +45,13 @@ export const signupAsync = createAsyncThunk(
 	}
 );
 
-export const loginAsync = createAsyncThunk(
+export const loginAsync = createAsyncThunk<
+	any,
+	{ email: string; password: string },
+	{ rejectValue: string; rejectedMeta: { code?: string } }
+>(
 	"auth/loginAsync",
-	async (user: { email: string; password: string }, { rejectWithValue }) => {
+	async (user, { rejectWithValue }) => {
 		try {
 			// console.log("Login payload:", user);
 			const response = await axios.post( //Use axiosInstance ONLY for protected APIs
@@ -64,7 +68,10 @@ export const loginAsync = createAsyncThunk(
           message = "Please try again later.";
         }
       }
-			return rejectWithValue(message);
+			// Backend error code (e.g. PROFILE_NOT_VERIFIED) rides on meta so the
+			// payload stays the plain message the reducer and UI already expect.
+			const code = axios.isAxiosError(error) ? error.response?.data?.code : undefined;
+			return rejectWithValue(message, { code });
 		}
 	}
 );
