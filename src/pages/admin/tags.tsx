@@ -153,7 +153,7 @@ const AdminTags: React.FC = () => {
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
-					searchPlaceholder="Search tags..."
+					searchPlaceholder="Search by name..."
 					pageIndex={currentPage - 1}
 					pageSize={pageSize}
 					pageCount={tableMeta?.totalPages ?? 1}
