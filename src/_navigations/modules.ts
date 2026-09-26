@@ -1,4 +1,4 @@
-import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, MailPlus, Shield, Settings, Globe, MessageSquareQuote, Tags, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, MailPlus, Shield, Settings, Globe, MessageSquareQuote, Tags, ImagePlus, type LucideIcon } from "lucide-react";
 
 /** One admin module: drives the sidebar nav, tab metadata, and privilege gating. */
 export interface ModuleDef {
