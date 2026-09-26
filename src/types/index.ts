@@ -275,14 +275,21 @@ export interface BackendReview {
 	id: string;
 	rating: number;
 	comment?: string;
-	customer: string;
+	customer?: string;
 	customerImage?: string;
+	reviewerName?: string;
+	imageUrl?: string;
+	/** Source: 'customer' (user-submitted) or 'admin' (manually created testimonial) */
+	source?: 'customer' | 'admin';
 	/** Curated by a moderator to lead the marketing pages. */
 	featured?: boolean;
 	itemImage?: string;
 	item?: BackendItem;
 	status: string;
 	createdAt: string;
+	createdBy?: string;
+	updatedAt?: string;
+	updatedBy?: string;
 }
 
 export interface BackendOrder {

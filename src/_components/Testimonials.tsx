@@ -64,9 +64,9 @@ const Testimonials: React.FC<TestimonialsProps> = ({
 
 	const items = testimonials.map((review) => ({
 		quote: review.comment ?? "",
-		name: review.customer,
+		name: review.reviewerName || review.customer || "Customer",
 		designation: review.item?.name ? `${review.rating}★ · ${review.item.name}` : `${review.rating}★ · Verified buyer`,
-		src: review.customerImage || review.itemImage || FALLBACK_IMAGE,
+		src: review.imageUrl || review.customerImage || review.itemImage || FALLBACK_IMAGE,
 	}));
 
 	const body = (
