@@ -88,6 +88,11 @@ export const CircularTestimonials = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [activeIndex]);
 
+	// Reset index when testimonials change
+	useEffect(() => {
+		setActiveIndex(0);
+	}, [testimonialsLength]);
+
 	// Responsive gap calculation
 	useEffect(() => {
 		function handleResize() {
