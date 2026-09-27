@@ -11,10 +11,10 @@ import SectionHeading from "@/_UI/SectionHeading";
 const PAGE_SIZE = 6;
 /** Shown when a reviewer has no avatar and the item they reviewed has no photo. */
 const FALLBACK_IMAGE = "/images/Green_vegggies_1.jpeg";
-
+//dd
 interface TestimonialsProps {
 	/** Scope to one product. Omitted = the site-wide reel on the home page. */
-	itemId?: string;
+	itemId?: string; 
 	/** Prefer moderator-curated quotes (home page). Falls back to the open reel if none are curated yet. */
 	featured?: boolean;
 	eyebrow?: string;
