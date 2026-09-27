@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
 import toast from "react-hot-toast";
 import Button from "@/_UI/Button";
 import axiosInstance from "@/_utils/axiosInstance";
 
 const ResetPasswordPage: React.FC = () => {
 	const router = useRouter();
-	const searchParams = useSearchParams();
-	const token = searchParams.get("token");
+	const { token } = router.query;
 
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
@@ -15,11 +14,11 @@ const ResetPasswordPage: React.FC = () => {
 	const [showPassword, setShowPassword] = useState(false);
 
 	useEffect(() => {
-		if (!token) {
+		if (router.isReady && !token) {
 			toast.error("Invalid or missing reset token");
 			router.push("/login");
 		}
-	}, [token, router]);
+	}, [token, router, router.isReady]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -58,7 +57,7 @@ const ResetPasswordPage: React.FC = () => {
 		}
 	};
 
-	if (!token) {
+	if (!router.isReady || !token) {
 		return null;
 	}
 
