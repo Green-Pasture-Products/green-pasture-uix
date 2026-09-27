@@ -15,8 +15,9 @@ const ResetPasswordPage: React.FC = () => {
 
 	useEffect(() => {
 		if (router.isReady && !token) {
+			toast.dismiss();
 			toast.error("Invalid or missing reset token");
-			router.push("/login");
+			setTimeout(() => router.push("/login"), 1500);
 		}
 	}, [token, router, router.isReady]);
 
@@ -45,10 +46,11 @@ const ResetPasswordPage: React.FC = () => {
 				newPassword: password,
 			});
 
-			toast.success("Password reset successfully! Redirecting to login...");
+			toast.success("Password reset successfully!");
 			setTimeout(() => {
+				toast.dismiss();
 				router.push("/login");
-			}, 2000);
+			}, 1500);
 		} catch (error: any) {
 			const errorMessage = error?.response?.data?.message || "Failed to reset password";
 			toast.error(errorMessage);
