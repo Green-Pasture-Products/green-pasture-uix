@@ -15,9 +15,7 @@ const ResetPasswordPage: React.FC = () => {
 
 	useEffect(() => {
 		if (router.isReady && !token) {
-			toast.dismiss();
-			toast.error("Invalid or missing reset token");
-			setTimeout(() => router.push("/login"), 1500);
+			router.push("/login");
 		}
 	}, [token, router, router.isReady]);
 
