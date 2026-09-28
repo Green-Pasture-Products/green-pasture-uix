@@ -11,10 +11,10 @@ import SectionHeading from "@/_UI/SectionHeading";
 const PAGE_SIZE = 6;
 /** Shown when a reviewer has no avatar and the item they reviewed has no photo. */
 const FALLBACK_IMAGE = "/images/Green_vegggies_1.jpeg";
-
+//dd
 interface TestimonialsProps {
 	/** Scope to one product. Omitted = the site-wide reel on the home page. */
-	itemId?: string;
+	itemId?: string; 
 	/** Prefer moderator-curated quotes (home page). Falls back to the open reel if none are curated yet. */
 	featured?: boolean;
 	eyebrow?: string;
@@ -25,7 +25,7 @@ interface TestimonialsProps {
 }
 
 const Testimonials: React.FC<TestimonialsProps> = ({
-	itemId,
+	itemId: initialItemId,
 	featured = false,
 	inline = false,
 	eyebrow = "In their words",
@@ -35,10 +35,44 @@ const Testimonials: React.FC<TestimonialsProps> = ({
 	const dispatch = useAppDispatch();
 	const { testimonials, testimonialsPagination, isLoadingTestimonials } = useAppSelector((state) => state.review);
 	const [curatedOnly, setCuratedOnly] = useState(featured);
+	const [selectedItemId, setSelectedItemId] = useState<string | undefined>(initialItemId);
+	const [availableProducts, setAvailableProducts] = useState<Array<{ id: string; name: string }>>([]);
+	const [productsLoaded, setProductsLoaded] = useState(false);
 
+	// Fetch all testimonials once to extract available products
 	useEffect(() => {
-		dispatch(reviewAction.fetchTestimonialsAsync({ page: 1, limit: PAGE_SIZE, itemId, featured: curatedOnly }));
-	}, [dispatch, itemId, curatedOnly]);
+		if (featured && !productsLoaded) {
+			// Fetch with high limit to get all products (1000 should cover all)
+			dispatch(reviewAction.fetchTestimonialsAsync({ page: 1, limit: 1000, featured: true }));
+		}
+	}, [dispatch, featured, productsLoaded]);
+
+	// Extract unique products from testimonials
+	useEffect(() => {
+		if (featured && testimonials.length > 0 && !productsLoaded) {
+			const productsMap = new Map<string, { id: string; name: string }>();
+			testimonials.forEach((t) => {
+				if (t.item?.id && t.item?.name) {
+					productsMap.set(t.item.id, { id: t.item.id, name: t.item.name });
+				}
+			});
+			const products = Array.from(productsMap.values());
+			if (products.length > 0) {
+				setAvailableProducts(products);
+				if (!selectedItemId) {
+					setSelectedItemId(products[0].id);
+				}
+				setProductsLoaded(true);
+			}
+		}
+	}, [testimonials, featured, productsLoaded, selectedItemId]);
+
+	// Fetch testimonials for selected product
+	useEffect(() => {
+		if (selectedItemId && featured && productsLoaded) {
+			dispatch(reviewAction.fetchTestimonialsAsync({ page: 1, limit: PAGE_SIZE, itemId: selectedItemId, featured: true }));
+		}
+	}, [dispatch, selectedItemId, featured, productsLoaded]);
 
 	/* Nobody has curated anything yet — show the highest-rated recent reviews
 	   rather than an empty section. Once a moderator features one, this stops firing. */
@@ -56,7 +90,7 @@ const Testimonials: React.FC<TestimonialsProps> = ({
 	const handleIndexChange = (index: number) => {
 		if (!hasMore || isLoadingTestimonials) return;
 		if (index < testimonials.length - 2) return;
-		dispatch(reviewAction.fetchTestimonialsAsync({ page: currentPage + 1, limit: PAGE_SIZE, itemId, featured: curatedOnly }));
+		dispatch(reviewAction.fetchTestimonialsAsync({ page: currentPage + 1, limit: PAGE_SIZE, itemId: selectedItemId, featured: curatedOnly }));
 	};
 
 	// Nothing to brag about yet — better no section than a placeholder one.
@@ -64,9 +98,9 @@ const Testimonials: React.FC<TestimonialsProps> = ({
 
 	const items = testimonials.map((review) => ({
 		quote: review.comment ?? "",
-		name: review.customer,
+		name: review.reviewerName || review.customer || "Customer",
 		designation: review.item?.name ? `${review.rating}★ · ${review.item.name}` : `${review.rating}★ · Verified buyer`,
-		src: review.customerImage || review.itemImage || FALLBACK_IMAGE,
+		src: review.imageUrl || review.customerImage || review.itemImage || FALLBACK_IMAGE,
 	}));
 
 	const body = (
@@ -74,6 +108,31 @@ const Testimonials: React.FC<TestimonialsProps> = ({
 			<AnimatedSection>
 				<SectionHeading eyebrow={eyebrow} title={title} accent={accent} centered />
 			</AnimatedSection>
+			{/* Product Filter */}
+			{featured && availableProducts.length > 0 && (
+				<AnimatedSection delay={0.1}>
+					<div className="mt-8 flex flex-wrap justify-center gap-2">
+						{availableProducts.map((product) => (
+							<button
+								key={product.id}
+								onClick={() => setSelectedItemId(product.id)}
+								className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+									selectedItemId === product.id
+										? "text-white"
+										: "text-gray-600 hover:bg-gray-100"
+								}`}
+								style={
+									selectedItemId === product.id
+										? { backgroundColor: "var(--color-primary)" }
+										: {}
+								}
+							>
+								{product.name}
+							</button>
+						))}
+					</div>
+				</AnimatedSection>
+			)}
 			<AnimatedSection delay={0.15}>
 				<div className="mt-12 flex justify-center">
 					<CircularTestimonials
