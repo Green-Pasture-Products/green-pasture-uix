@@ -83,7 +83,9 @@ axiosInstance.interceptors.response.use(
 
 		if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
 			// Only attempt a refresh for users who were actually logged in.
+			// No refresh token means the session can't be salvaged — end it.
 			if (!Cookies.get(AUTH_COOKIES.refreshToken)) {
+				await forceLogout({ redirect: true });
 				return Promise.reject(error);
 			}
 
