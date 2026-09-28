@@ -38,8 +38,8 @@ const decodeJwtPayload = (token: string): Record<string, any> | null => {
 		// base64url -> base64
 		const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
 		const json =
-			typeof window !== "undefined"
-				? window.atob(base64)
+			typeof atob !== "undefined"
+				? atob(base64)
 				: Buffer.from(base64, "base64").toString("binary");
 		return JSON.parse(json);
 	} catch {
@@ -48,12 +48,14 @@ const decodeJwtPayload = (token: string): Record<string, any> | null => {
 };
 
 /**
- * True when the JWT carries an `exp` claim that is already in the past.
- * Tokens without an `exp` are treated as not-expired (let the API reject them).
+ * True when the JWT is undecodable (can't be treated as valid) or carries an
+ * `exp` claim that is already in the past. A token that decodes fine but has
+ * no `exp` claim is treated as not-expired (let the API reject it).
  */
 export const isJwtExpired = (token: string): boolean => {
 	const payload = decodeJwtPayload(token);
-	if (!payload || typeof payload.exp !== "number") return false;
+	if (!payload) return true;
+	if (typeof payload.exp !== "number") return false;
 	return payload.exp * 1000 <= Date.now();
 };
 

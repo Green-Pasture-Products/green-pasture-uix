@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AUTH_COOKIES } from "@/_utils/authCookies";
+import { AUTH_COOKIES, isJwtExpired } from "@/_utils/authCookies";
 import { appConstants } from "@/_redux/constants";
 import { safeRedirectTarget } from "@/_utils/redirect";
 
@@ -8,7 +8,8 @@ const ADMIN_ROLES = appConstants.ADMIN_ROLES.map((r) => r.toLowerCase());
 
 export function middleware(req: NextRequest) {
 	const { pathname, search } = req.nextUrl;
-	const hasToken = Boolean(req.cookies.get(AUTH_COOKIES.accessToken)?.value);
+	const accessToken = req.cookies.get(AUTH_COOKIES.accessToken)?.value;
+	const hasToken = Boolean(accessToken) && !isJwtExpired(accessToken as string);
 	const role = req.cookies.get(AUTH_COOKIES.role)?.value;
 
 	// Not logged in → send to login, preserving where they were headed.
@@ -40,5 +41,7 @@ export const config = {
 		"/my-orders/:path*",
 		"/checkout",
 		"/order-confirmation/:path*",
+		"/products",
+		"/product/:path*",
 	],
 };
