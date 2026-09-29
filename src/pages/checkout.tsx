@@ -20,6 +20,7 @@ import {
 	ShieldCheck,
 	MapPin,
 	Check,
+	Landmark,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
@@ -60,7 +61,18 @@ const checkoutFormSchema = z.object({
 	// Not shipping for now — no method to pick, but the field stays (sent to
 	// the backend as an empty string) so the request shape is unchanged.
 	shippingMethod: z.string(),
-	paymentMethod: z.enum(["CARD", "CASH_ON_DELIVERY"]),
+	paymentMethod: z.enum(["CARD", "CASH_ON_DELIVERY", "MANUAL_TRANSFER"]),
+	// Phone number required for manual bank transfer payments
+	phoneNumber: z.string().optional(),
+}).refine((data) => {
+	// If manual transfer, phone number is required
+	if (data.paymentMethod === "MANUAL_TRANSFER") {
+		return data.phoneNumber && data.phoneNumber.trim().length > 0;
+	}
+	return true;
+}, {
+	message: "Phone number is required for bank transfer",
+	path: ["phoneNumber"],
 });
 
 type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
@@ -71,6 +83,7 @@ type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
 
 const paymentOptions = [
 	{ value: "CARD" as const, label: "Pay with Card", desc: "Secure payment via Paystack", Icon: CreditCard },
+	{ value: "MANUAL_TRANSFER" as const, label: "Bank Transfer", desc: "Direct bank transfer payment", Icon: Landmark },
 	{ value: "CASH_ON_DELIVERY" as const, label: "Cash on Delivery", desc: "Pay when you receive your order", Icon: DollarSign },
 ];
 
@@ -527,13 +540,19 @@ const CheckoutPage: React.FC = () => {
 						cartId: activeCartId,
 						couponCode: couponApplied ? couponCode : undefined,
 						shippingMethod: data.shippingMethod,
+						paymentMethod: data.paymentMethod,
+						phoneNumber: data.paymentMethod === "MANUAL_TRANSFER" ? data.phoneNumber : undefined,
 						idempotencyKey,
 					})
 				).unwrap();
 
 				const orderId = orderResult?.data?.id;
 				const orderReference = orderResult?.data?.orderReference;
+				console.log("Order result:", orderResult);
+				console.log("Order ID:", orderId);
+				console.log("Order reference:", orderReference);
 				if (!orderId) {
+					console.error("Order ID is missing from response:", orderResult);
 					failure({
 							title: "We couldn't place your order",
 							message:
@@ -544,8 +563,6 @@ const CheckoutPage: React.FC = () => {
 				}
 
 				// Step 5: Handle payment method
-				const backendPaymentMethod = data.paymentMethod === "CARD" ? "Paystack" : "Cash On Delivery";
-
 				if (data.paymentMethod === "CASH_ON_DELIVERY") {
 					dispatch(clearCart());
 					dispatch(resetCheckout());
@@ -554,12 +571,21 @@ const CheckoutPage: React.FC = () => {
 					return;
 				}
 
+				if (data.paymentMethod === "MANUAL_TRANSFER") {
+					dispatch(clearCart());
+					dispatch(resetCheckout());
+					toast.success("Order placed! Please proceed to upload your payment receipt.");
+					console.log("Redirecting to payment instructions for order:", orderId);
+					await router.push(`/payment-instructions/${orderId}`);
+					return;
+				}
+
 				// Step 6: Initialize payment (idempotent — returns existing transaction if one exists)
 				const paymentResult = await dispatch(
 					checkoutAction.placeOrderAsync({
 						orderId,
 						shippingMethod: data.shippingMethod,
-						paymentMethod: backendPaymentMethod as any,
+						paymentMethod: data.paymentMethod,
 						shippingAddress: {
 							...data.shippingAddress,
 							latitude: "0",
@@ -622,7 +648,8 @@ const CheckoutPage: React.FC = () => {
 						phoneNumber: data.guestPhone,
 						items: guestItems,
 						shippingMethod: data.shippingMethod,
-						paymentMethod: data.paymentMethod === "CARD" ? "Paystack" : "Cash On Delivery",
+						paymentMethod: data.paymentMethod,
+						...(data.paymentMethod === "MANUAL_TRANSFER" && { phoneNumber: data.phoneNumber }),
 						couponCode: couponApplied ? couponCode : undefined,
 						shippingAddress: {
 							houseAddress: data.shippingAddress.street,
@@ -640,7 +667,11 @@ const CheckoutPage: React.FC = () => {
 
 				const orderId = guestRes.data?.data?.orderId;
 				const guestOrderReference = guestRes.data?.data?.orderReference;
+				console.log("Guest order result:", guestRes.data);
+				console.log("Guest Order ID:", orderId);
+				console.log("Guest Order reference:", guestOrderReference);
 				if (!orderId) {
+					console.error("Order ID is missing from guest response:", guestRes.data);
 					failure({
 							title: "We couldn't place your order",
 							message:
@@ -654,6 +685,14 @@ const CheckoutPage: React.FC = () => {
 					dispatch(clearCart());
 					toast.success("Order placed successfully!");
 					router.push(`/order-confirmation/${guestOrderReference ?? orderId}`);
+					return;
+				}
+
+				if (data.paymentMethod === "MANUAL_TRANSFER") {
+					dispatch(clearCart());
+					toast.success("Order placed! Please proceed to upload your payment receipt.");
+					console.log("Redirecting to payment instructions for guest order:", orderId);
+					await router.push(`/payment-instructions/${orderId}`);
 					return;
 				}
 
@@ -1094,6 +1133,35 @@ const CheckoutPage: React.FC = () => {
 												🔒 Transactions are securely processed via Paystack.
 											</p>
 										</div>
+									</motion.div>
+								)}
+							</AnimatePresence>
+
+							{/* Phone Number for Manual Transfer */}
+							<AnimatePresence>
+								{selectedPayment === "MANUAL_TRANSFER" && (
+									<motion.div
+										initial={{ opacity: 0, height: 0 }}
+										animate={{ opacity: 1, height: "auto" }}
+										exit={{ opacity: 0, height: 0 }}
+										transition={{ duration: 0.35, ease: "easeInOut" }}
+										className="overflow-hidden pt-6 mt-4 border-t border-outline-variant dark:border-white/10"
+									>
+										<div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg mb-4" style={{ borderLeft: "4px solid var(--color-primary)" }}>
+											<p className="text-sm" style={{ color: "var(--text-primary)" }}>
+												📞 We'll contact you on this number to coordinate the bank transfer and delivery.
+											</p>
+										</div>
+										<FormInput
+											label="Phone Number *"
+											placeholder="08012345678"
+											{...register("phoneNumber")}
+											error={
+												selectedPayment === "MANUAL_TRANSFER"
+													? errors.phoneNumber?.message
+													: undefined
+											}
+										/>
 									</motion.div>
 								)}
 							</AnimatePresence>

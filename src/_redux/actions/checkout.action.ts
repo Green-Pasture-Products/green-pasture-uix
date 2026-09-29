@@ -17,6 +17,8 @@ export interface CheckoutCartPayload {
 	/** Server re-validates and prices this; the client's discount figure is ignored. */
 	couponCode?: string;
 	shippingMethod?: ShippingMethodType;
+	paymentMethod?: PaymentMethodType;
+	phoneNumber?: string;
 	/** Stable per checkout attempt — see checkout.tsx. Sent as a header, not part of the body. */
 	idempotencyKey: string;
 }
@@ -25,13 +27,15 @@ const checkoutCartAsync = createAsyncThunk<
 	any,
 	CheckoutCartPayload,
 	{ rejectValue: string }
->("checkout/checkoutCart", async ({ cartId, couponCode, shippingMethod, idempotencyKey }, { rejectWithValue }) => {
+>("checkout/checkoutCart", async ({ cartId, couponCode, shippingMethod, paymentMethod, phoneNumber, idempotencyKey }, { rejectWithValue }) => {
 	try {
 		const response = await axiosInstance.post(
 			`order/checkout/${cartId}`,
 			{
 				...(couponCode ? { couponCode } : {}),
 				...(shippingMethod ? { shippingMethod } : {}),
+				...(paymentMethod ? { paymentMethod } : {}),
+				...(phoneNumber ? { phoneNumber } : {}),
 			},
 			{ headers: { "Idempotency-Key": idempotencyKey } },
 		);

@@ -1,3 +1,17 @@
+// ─── Payment Types ─────────────────────────────────────────────────
+
+export type PaymentStatus =
+  | 'PENDING'
+  | 'AWAITING_VERIFICATION'
+  | 'VERIFIED'
+  | 'DECLINED'
+  | 'PAID'
+  | 'NOT_PAID';
+
+export type PaymentMethod = 'PAYSTACK' | 'MANUAL_TRANSFER' | 'CASH_ON_DELIVERY';
+
+// ─── Product & Category Types ──────────────────────────────────────
+
 export interface ProductCategory{
 id: string;
 name: string;
@@ -367,7 +381,7 @@ export type OrderStatusType =
 // accepts any configured method id as a plain string — not a fixed set.
 export type ShippingMethodType = string;
 
-export type PaymentMethodType = "CARD" | "CASH_ON_DELIVERY" | "WALLET";
+export type PaymentMethodType = "CARD" | "CASH_ON_DELIVERY" | "MANUAL_TRANSFER";
 
 // ─── Extended State Types ───────────────────────────────────────────────
 
