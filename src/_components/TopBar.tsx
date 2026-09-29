@@ -25,7 +25,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 function usePageTitle(): string {
 	const router = useRouter();
 	const pathname = router.asPath.split("?")[0];
-	return findOwningModule(pathname)?.title ?? "Green Pastures Admin";
+	return findOwningModule(pathname)?.title ?? "Green Pasture Organics Admin";
 }
 
 export function TopBar() {

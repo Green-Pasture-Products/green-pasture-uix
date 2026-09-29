@@ -139,7 +139,7 @@ const Users: React.FC = () => {
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
-					searchPlaceholder="Search users..."
+					searchPlaceholder="Search by name or email..."
 					pageIndex={currentPage - 1}
 					pageSize={50}
 					pageCount={customersPagination?.totalPages ?? 1}

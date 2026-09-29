@@ -498,7 +498,8 @@ const ProductDetailsPage: React.FC = () => {
 						{/* Shipping Info */}
 						<Card elevation={0} padding="md" className="bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800">
 							<div className="space-y-2">
-								{freeShipping.isActive && (
+								{/* Free-shipping promo hidden for now -- flip to `freeShipping.isActive` to bring it back. */}
+								{false && freeShipping.isActive && (
 									<div className="flex items-center space-x-2 text-primary-800 dark:text-primary-300">
 										<Truck className="h-5 w-5 shrink-0" />
 										<span className="font-medium">

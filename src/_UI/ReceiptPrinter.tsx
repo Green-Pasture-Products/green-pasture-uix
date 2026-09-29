@@ -178,7 +178,7 @@ export interface ReceiptPrinterProps {
 }
 
 const DEFAULT_RECEIPT: ReceiptData = {
-	agencyName: "GREEN PASTURES FARMS OFFICIAL RECEIPT",
+	agencyName: "GREEN PASTURE ORGANICS OFFICIAL RECEIPT",
 	receiptNumber: "GP-REC-2026-9041",
 	clientName: "VICTOR CHIDI",
 	amount: 4285185.0,
@@ -457,7 +457,7 @@ export function ReceiptPrinter({
 									<p className="text-[9px] font-mono font-bold text-neutral-700 mt-1 uppercase">
 										CAC Reg: {mergedReceipt.cacReg}
 									</p>
-									<p className="text-[8px] font-mono text-neutral-500">Green Pastures Farms Ltd</p>
+									<p className="text-[8px] font-mono text-neutral-500">Green Pasture Organics</p>
 								</div>
 							</div>
 

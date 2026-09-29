@@ -235,7 +235,7 @@ const AdminProducts: React.FC = () => {
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
-					searchPlaceholder="Search products..."
+					searchPlaceholder="Search by name..."
 					pageIndex={currentPage - 1}
 					pageSize={pageSize}
 					pageCount={adminItemsPagination?.totalPages ?? 1}

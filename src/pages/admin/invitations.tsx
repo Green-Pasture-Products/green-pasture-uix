@@ -285,7 +285,7 @@ const Invitations: React.FC = () => {
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
-					searchPlaceholder="Search invitations..."
+					searchPlaceholder="Search by name or email..."
 					pageIndex={currentPage - 1}
 					pageSize={pageSize}
 					pageCount={totalPages}

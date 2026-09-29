@@ -94,7 +94,7 @@ export function AppSidebar() {
 					<div className="relative size-8 shrink-0">
 						<Image
 							src="/images/GP Organic Logo (Primary).png"
-							alt="Green Pastures Logo"
+							alt="Green Pasture Organics Logo"
 							fill
 							sizes="32px"
 							priority

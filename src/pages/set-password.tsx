@@ -10,7 +10,10 @@ import Image from "next/image";
 import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
 import Button from "@/_UI/Button";
-import axiosInstance from "@/_utils/axiosInstance";
+// Public endpoint: plain axios so a stale session token is never attached (and a 401
+// can't trigger the refresh-then-logout redirect), matching forgotPasswordAsync.
+import axios from "axios";
+import { appConstants } from "@/_redux/constants";
 
 const setPasswordSchema = z
 	.object({
@@ -32,7 +35,26 @@ type SetPasswordFormData = z.infer<typeof setPasswordSchema>;
 
 const SetPasswordPage: React.FC = () => {
 	const router = useRouter();
-	const token = router.query.token as string;
+	// Reset links carry mode=reset; guest-setup links (and older links) have no mode.
+	const token = typeof router.query.token === "string" ? router.query.token : "";
+	const isReset = router.query.mode === "reset";
+	const copy = isReset
+		? {
+				title: "Reset your password",
+				subtitle: "Choose a new password for your account",
+				submit: "Reset Password",
+				submitting: "Resetting password...",
+				done: "Password Reset!",
+				doneBody: "Your password has been reset. You can now sign in with your new password.",
+			}
+		: {
+				title: "Set your password",
+				subtitle: "Create a password for your new account",
+				submit: "Set Password",
+				submitting: "Setting password...",
+				done: "Password Set!",
+				doneBody: "Password set successfully! You can now log in.",
+			};
 
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -49,14 +71,10 @@ const SetPasswordPage: React.FC = () => {
 	});
 
 	const onSubmit = async (data: SetPasswordFormData) => {
-		if (!token) {
-			setError("Missing token. Please use the link from your email.");
-			return;
-		}
 		setIsLoading(true);
 		setError(null);
 		try {
-			await axiosInstance.post("auth/set-password", {
+			await axios.post(`${appConstants.API_BASE_URL}auth/set-password`, {
 				token,
 				newPassword: data.password,
 			});
@@ -75,15 +93,35 @@ const SetPasswordPage: React.FC = () => {
 				<Card elevation={2} padding="lg" className="max-w-md w-full text-center animate-page-enter">
 					<CheckCircle className="h-24 w-24 text-primary-600 dark:text-primary-400 mx-auto mb-6" />
 					<h2 className="text-3xl font-bold text-on-surface dark:text-white">
-						Password Set!
+						{copy.done}
 					</h2>
 					<p className="mt-4 text-on-surface-variant dark:text-gray-400">
-						Password set successfully! You can now log in.
+						{copy.doneBody}
 					</p>
 					<div className="mt-6">
-						<Link href="/login">
-							<Button variant="filled" size="lg">Sign In</Button>
-						</Link>
+						<Button variant="filled" size="lg" onClick={() => router.push("/login")}>
+							Sign In
+						</Button>
+					</div>
+				</Card>
+			</div>
+		);
+	}
+
+	// Wait for the query string before deciding the link is broken.
+	if (router.isReady && !token) {
+		return (
+			<div className="min-h-screen bg-mint-50 dark:bg-[#0e0e1a] flex items-center justify-center p-4">
+				<Card elevation={2} padding="lg" className="max-w-md w-full text-center animate-page-enter">
+					<AlertCircle className="h-16 w-16 text-red-400 dark:text-red-500 mx-auto mb-6" />
+					<h2 className="text-2xl font-bold text-on-surface dark:text-white">This link isn&apos;t valid</h2>
+					<p className="mt-4 text-on-surface-variant dark:text-gray-400">
+						The link is missing its token. Please open the link from your email again, or request a new one.
+					</p>
+					<div className="mt-6">
+						<Button variant="filled" size="lg" onClick={() => router.push("/forgot-password")}>
+							Request a new link
+						</Button>
 					</div>
 				</Card>
 			</div>
@@ -103,7 +141,7 @@ const SetPasswordPage: React.FC = () => {
 						<div className="relative w-[2.2rem] aspect-square bg-transparent">
 							<Image
 								src="/images/GP Organic Logo (Primary).png"
-								alt="Green Pastures Logo"
+								alt="Green Pasture Organics Logo"
 								height={100}
 								width={100}
 								priority
@@ -112,16 +150,16 @@ const SetPasswordPage: React.FC = () => {
 							/>
 						</div>
 						<span className="text-md md:text-lg font-bold text-primary-800 dark:text-primary-300">
-							Green Pastures Organics
+							Green Pasture Organics
 						</span>
 					</Link>
 				</div>
 
 				<h2 className="text-center text-2xl md:text-3xl font-bold text-on-surface dark:text-white/90 mb-2">
-					Set your password
+					{copy.title}
 				</h2>
 				<p className="text-center text-sm text-on-surface-variant dark:text-white/50 mb-8">
-					Create a password for your new account
+					{copy.subtitle}
 				</p>
 
 				<form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
@@ -131,6 +169,12 @@ const SetPasswordPage: React.FC = () => {
 								<AlertCircle className="h-5 w-5 text-red-400 dark:text-red-500" />
 								<div className="ml-3">
 									<p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+									<Link
+										href="/forgot-password"
+										className="mt-1 inline-block text-sm font-medium text-red-800 dark:text-red-300 underline"
+									>
+										Request a new link
+									</Link>
 								</div>
 							</div>
 						</div>
@@ -180,14 +224,14 @@ const SetPasswordPage: React.FC = () => {
 						size="lg"
 						fullWidth
 						loading={isLoading}
-						disabled={isLoading}
+						disabled={isLoading || !router.isReady}
 					>
-						{isLoading ? "Setting password..." : "Set Password"}
+						{isLoading ? copy.submitting : copy.submit}
 					</Button>
 				</form>
 
 				<p className="text-center text-sm text-on-surface-variant dark:text-white/50 mt-6">
-					Already have an account?{" "}
+					{isReset ? "Remembered it?" : "Already have an account?"}{" "}
 					<Link
 						href="/login"
 						className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"

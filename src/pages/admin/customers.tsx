@@ -185,7 +185,7 @@ const AdminCustomers: React.FC = () => {
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
-					searchPlaceholder="Search customers..."
+					searchPlaceholder="Search by name or email..."
 					filters={CUSTOMER_STATUS_FILTERS}
 					filterValues={filterValues}
 					onFilterChange={setFilter}

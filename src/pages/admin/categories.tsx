@@ -111,7 +111,7 @@ const AdminCategories: React.FC = () => {
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
-					searchPlaceholder="Search categories..."
+					searchPlaceholder="Search by name..."
 					pageIndex={currentPage - 1}
 					pageSize={pageSize}
 					pageCount={pagination?.totalPages ?? 1}

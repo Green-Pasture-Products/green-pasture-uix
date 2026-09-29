@@ -81,11 +81,13 @@ const CardRail: React.FC<CardRailProps> = ({ children, label }) => {
 			{arrow(-1, atStart)}
 			{arrow(1, atEnd)}
 
+			{/* scroll-px matches px: snap-start aligns to the scrollport edge, not
+			    the padding, so without it the first card snapped flush to the screen. */}
 			<div
 				ref={ref}
 				role="region"
 				aria-label={label}
-				className="hide-scrollbar -mx-4 flex snap-x snap-mandatory items-stretch gap-5 overflow-x-auto scroll-smooth px-4 pb-2 sm:mx-0 sm:px-0"
+				className="hide-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 items-stretch gap-3 overflow-x-auto scroll-smooth px-4 pb-2 sm:mx-0 sm:scroll-px-0 sm:gap-5 sm:px-0"
 			>
 				{children}
 			</div>

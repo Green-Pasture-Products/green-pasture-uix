@@ -178,7 +178,7 @@ const Staff: React.FC = () => {
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
-					searchPlaceholder="Search staff..."
+					searchPlaceholder="Search by name or email..."
 					pageIndex={currentPage - 1}
 					pageSize={pageSize}
 					pageCount={staffPagination?.totalPages ?? 1}

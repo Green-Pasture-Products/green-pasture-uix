@@ -1,14 +1,13 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/router";
+import { AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
 import Link from "next/link";
-import { AlertCircle, Clock, CheckCircle, XCircle } from "lucide-react";
+import { useRouter } from "next/router";
+import React, { useCallback, useEffect, useState } from "react";
 
 import Layout from "@/_components/Layout";
-import toast from "react-hot-toast";
 import { useAppSelector } from "@/_redux/store";
-import PageLoader from "@/_UI/PageLoader";
-import Badge from "@/_UI/Badge";
 import { formatCurrency } from "@/_UI/FormatValue";
+import PageLoader from "@/_UI/PageLoader";
+import toast from "react-hot-toast";
 
 interface DashboardMetrics {
 	pendingPaymentNotifications: number;

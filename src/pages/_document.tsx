@@ -30,12 +30,12 @@ export default function Document() {
 				<meta name="theme-color" content="#16a34a" />
 				<meta name="apple-mobile-web-app-capable" content="yes" />
 				<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-				<meta name="apple-mobile-web-app-title" content="Green Pastures" />
+				<meta name="apple-mobile-web-app-title" content="Green Pasture Organics" />
 
 				{/* Default SEO */}
-				<meta name="description" content="Green Pastures Organics — Premium organic dietary supplements for immunity, fertility, and wellness. Fresh, healthy, sustainably grown." />
+				<meta name="description" content="Green Pasture Organics — Premium organic dietary supplements for immunity, fertility, and wellness. Fresh, healthy, sustainably grown." />
 				<meta property="og:type" content="website" />
-				<meta property="og:site_name" content="Green Pastures Organics" />
+				<meta property="og:site_name" content="Green Pasture Organics" />
 				<meta property="og:image" content="/icons/android-chrome-512x512.png" />
 
 				{/* Fonts */}

@@ -226,7 +226,6 @@ const Profile = () => {
 								options={[
 									{ value: "Male", label: "Male" },
 									{ value: "Female", label: "Female" },
-									{ value: "Other", label: "Other" },
 								]}
 								{...register("gender")}
 							/>

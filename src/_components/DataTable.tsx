@@ -367,13 +367,13 @@ export function DataTable<T>({
   return (
     <div className="space-y-3" data-testid={testId}>
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <Search className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2" />
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder={searchPlaceholder}
-            className="h-9 w-56 pl-8"
+            className="h-9 w-full pl-8 sm:w-96"
             data-testid={`${testId}-search`}
           />
         </div>
