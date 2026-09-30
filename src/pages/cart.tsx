@@ -155,6 +155,13 @@ const CartPage: React.FC = () => {
 	const isItemInStock = (item: any): boolean => {
 		return (item as any).unit > 0 || item.inStock;
 	};
+	
+	// Cap at available stock (same figure handleQuantityChange validates against);
+	// unknown stock means no cap here.
+	const getMaxQuantity = (item: any): number => {
+		const stock = Number(item?.availableQuantity ?? item?.unit);
+		return Number.isFinite(stock) && stock > 0 ? stock : Infinity;
+	};
 
 	// --- Loading State ---
 	// Only when there is nothing to show yet. Once the cart has items, a sync
@@ -769,7 +776,7 @@ const CartPage: React.FC = () => {
 																disabled={
 																	isUpdating === item?.id ||
 																	(isItemInStock(item) &&
-																		item?.quantity >= 10)
+																		item?.quantity >= getMaxQuantity(item))
 																}
 																className="press-effect"
 																aria-label="Increase quantity"
@@ -787,7 +794,7 @@ const CartPage: React.FC = () => {
 																	opacity:
 																		isUpdating === item?.id ||
 																		(isItemInStock(item) &&
-																			item?.quantity >= 10)
+																			item?.quantity >= getMaxQuantity(item))
 																			? 0.4
 																			: 1,
 																}}
@@ -796,7 +803,7 @@ const CartPage: React.FC = () => {
 																		!(
 																			isUpdating === item?.id ||
 																			(isItemInStock(item) &&
-																				item?.quantity >= 10)
+																				item?.quantity >= getMaxQuantity(item))
 																		)
 																	) {
 																		e.currentTarget.style.backgroundColor = "var(--surface-medium)";
