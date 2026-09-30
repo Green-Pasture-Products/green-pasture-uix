@@ -339,19 +339,22 @@ const CheckoutPage: React.FC = () => {
 	const subtotal = total;
 	const tax = Math.round(subtotal * taxRate);
 
-	// Mirrors order.service.ts's shipping calc so the total shown here matches
-	// what the server actually charges — this used to omit shipping entirely,
-	// so the reviewed total could be several thousand naira under the real one.
-	const shippingFee = useMemo(() => {
-		const methods = (storeConfig?.shippingConfig?.methods ?? []).filter((m: any) => m?.enabled !== false);
-		const baseCost = Number(methods[0]?.baseCost ?? 0);
-		const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold ?? 50000);
-		const freeShippingRegions: string[] = storeConfig?.orderSettings?.freeShippingRegions ?? [];
-		const normalize = (v: unknown) => (typeof v === "string" ? v.trim().toLowerCase() : "");
-		const regionQualifies =
-			freeShippingRegions.length === 0 || freeShippingRegions.some((r) => normalize(r) === normalize(shippingState) && normalize(r) !== "");
-		return subtotal >= freeShippingThreshold && regionQualifies ? 0 : baseCost;
-	}, [storeConfig, subtotal, shippingState]);
+	// TODO: Shipping hidden temporarily — restore the calculation below when shipping returns
+	// (and set the shipping base cost back in admin settings).
+	const shippingFee = 0;
+	// // Mirrors order.service.ts's shipping calc so the total shown here matches
+	// // what the server actually charges — this used to omit shipping entirely,
+	// // so the reviewed total could be several thousand naira under the real one.
+	// const shippingFee = useMemo(() => {
+	// 	const methods = (storeConfig?.shippingConfig?.methods ?? []).filter((m: any) => m?.enabled !== false);
+	// 	const baseCost = Number(methods[0]?.baseCost ?? 0);
+	// 	const freeShippingThreshold = Number(storeConfig?.orderSettings?.freeShippingThreshold ?? 50000);
+	// 	const freeShippingRegions: string[] = storeConfig?.orderSettings?.freeShippingRegions ?? [];
+	// 	const normalize = (v: unknown) => (typeof v === "string" ? v.trim().toLowerCase() : "");
+	// 	const regionQualifies =
+	// 		freeShippingRegions.length === 0 || freeShippingRegions.some((r) => normalize(r) === normalize(shippingState) && normalize(r) !== "");
+	// 	return subtotal >= freeShippingThreshold && regionQualifies ? 0 : baseCost;
+	// }, [storeConfig, subtotal, shippingState]);
 
 	// Display only — the server recomputes all of this at checkout and the
 	// order is charged from its figures, not these.
@@ -1241,12 +1244,14 @@ const CheckoutPage: React.FC = () => {
 									</span>
 								</div>
 
+								{/* TODO: Shipping hidden temporarily — restore when shipping returns.
 								<div className="flex justify-between text-sm">
 									<span style={{ color: "var(--text-secondary)" }}>Shipping</span>
 									<span className="font-medium" style={{ color: shippingFee === 0 ? "var(--color-primary)" : "var(--text-primary)" }}>
 										{shippingFee === 0 ? "Free" : `₦${shippingFee.toLocaleString()}`}
 									</span>
 								</div>
+								*/}
 
 								{couponDiscount > 0 && (
 									<div className="flex justify-between text-sm">
