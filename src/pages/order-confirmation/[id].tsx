@@ -314,7 +314,7 @@ const OrderConfirmationPage: React.FC = () => {
 					</Card>
 				)}
 
-				{/* Estimated Delivery */}
+				{/* TODO: Estimated Delivery hidden temporarily — restore when shipping returns.
 				<Card padding="md">
 					<h2
 						className="text-sm font-semibold mb-3 flex items-center gap-2"
@@ -327,6 +327,7 @@ const OrderConfirmationPage: React.FC = () => {
 						{getEstimatedDelivery(order.createdAt)}
 					</p>
 				</Card>
+				*/}
 
 				{/* Action Buttons */}
 				<div className="flex flex-col sm:flex-row gap-3 pt-2 pb-8">
