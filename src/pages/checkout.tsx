@@ -309,6 +309,13 @@ const CheckoutPage: React.FC = () => {
 			guestLastName: "",
 			guestEmail: "",
 			guestPhone: "",
+			shippingAddress: {
+				street: "",
+				city: "",
+				state: "",
+				country: "",
+				postalCode: "",
+			},
 		},
 	});
 
@@ -346,6 +353,42 @@ const CheckoutPage: React.FC = () => {
 		};
 		fetchConfig();
 	}, []);
+
+	// Auto-populate shipping address from previous order
+	useEffect(() => {
+		if (!isAuthenticated) return;
+		const populatePreviousAddress = async () => {
+			try {
+				const axiosInstance = (await import("@/_utils/axiosInstance")).default;
+				const res = await axiosInstance.get("order/my-orders", {
+					params: { page: 1, limit: 1 }
+				});
+				const lastOrder = res.data?.data?.items?.[0];
+
+				if (lastOrder) {
+					const addr = lastOrder.shippingAddress || {};
+					console.log("Loading previous address:", addr);
+
+					const streetValue = addr.houseAddress || addr.street || "";
+					const cityValue = addr.city || "";
+					const stateValue = addr.region || addr.state || "";
+					const countryValue = addr.country || "";
+					const postalValue = addr.postalCode || "";
+
+					if (streetValue || cityValue || stateValue || countryValue) {
+						setValue("shippingAddress.street", streetValue);
+						setValue("shippingAddress.city", cityValue);
+						setValue("shippingAddress.state", stateValue);
+						setValue("shippingAddress.country", countryValue);
+						setValue("shippingAddress.postalCode", postalValue);
+					}
+				}
+			} catch (error) {
+				console.error("Failed to load previous shipping address:", error);
+			}
+		};
+		populatePreviousAddress();
+	}, [isAuthenticated, setValue]);
 
 	const taxRate = Number(storeConfig?.orderSettings?.taxRate) || 0;
 
@@ -564,6 +607,7 @@ const CheckoutPage: React.FC = () => {
 
 				// Step 5: Handle payment method
 				if (data.paymentMethod === "CASH_ON_DELIVERY") {
+					setOrderPlaced(true);
 					dispatch(clearCart());
 					dispatch(resetCheckout());
 					toast.success("Order placed successfully!");
@@ -572,6 +616,7 @@ const CheckoutPage: React.FC = () => {
 				}
 
 				if (data.paymentMethod === "MANUAL_TRANSFER") {
+					setOrderPlaced(true);
 					dispatch(clearCart());
 					dispatch(resetCheckout());
 					toast.success("Order placed! Please proceed to upload your payment receipt.");
@@ -601,6 +646,7 @@ const CheckoutPage: React.FC = () => {
 				const paystackData = paymentResult?.data?.data ?? paymentResult?.data;
 				const authUrl = paystackData?.authorization_url;
 				if (authUrl) {
+					setOrderPlaced(true);
 					redirectToPaystack(authUrl);
 				} else {
 					failure({
@@ -682,6 +728,7 @@ const CheckoutPage: React.FC = () => {
 				}
 
 				if (data.paymentMethod === "CASH_ON_DELIVERY") {
+					setOrderPlaced(true);
 					dispatch(clearCart());
 					toast.success("Order placed successfully!");
 					router.push(`/order-confirmation/${guestOrderReference ?? orderId}`);
@@ -689,6 +736,7 @@ const CheckoutPage: React.FC = () => {
 				}
 
 				if (data.paymentMethod === "MANUAL_TRANSFER") {
+					setOrderPlaced(true);
 					dispatch(clearCart());
 					toast.success("Order placed! Please proceed to upload your payment receipt.");
 					console.log("Redirecting to payment instructions for guest order:", orderId);
@@ -720,6 +768,7 @@ const CheckoutPage: React.FC = () => {
 				const paystackData = paymentRes.data?.data?.data ?? paymentRes.data?.data;
 				const authUrl = paystackData?.authorization_url;
 				if (authUrl) {
+					setOrderPlaced(true);
 					redirectToPaystack(authUrl);
 				} else {
 					failure({

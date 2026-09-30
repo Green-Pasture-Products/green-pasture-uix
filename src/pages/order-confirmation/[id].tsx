@@ -384,7 +384,7 @@ const OrderConfirmationPage: React.FC = () => {
 							})),
 							paymentMethod: (order as any).paymentMethod || "Direct Payment",
 							transactionRef: order.orderReference || String(order.id),
-							statusText: order.orderStatus === "CANCELLED" ? "CANCELLED" : "PAID",
+							statusText: order.orderStatus === "CANCELLED" ? "CANCELLED" : ((order as any).payment?.paymentStatus || "PENDING").replace(/_/g, " "),
 						}}
 					/>
 				)}

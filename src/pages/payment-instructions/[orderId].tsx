@@ -83,12 +83,9 @@ const PaymentInstructionsPage: React.FC = () => {
   };
 
   const formatAmount = (amount: number, currency: string) => {
-    const formatter = new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: currency || "NGN",
-      minimumFractionDigits: 0,
-    });
-    return formatter.format(amount / 100);
+    // Display exact amount without currency formatting to avoid rounding issues
+    const nairaAmount = (amount / 100).toFixed(2);
+    return `₦${nairaAmount}`;
   };
 
   if (isLoading) {
@@ -167,7 +164,7 @@ const PaymentInstructionsPage: React.FC = () => {
             className="text-4xl font-bold"
             style={{ color: "var(--color-primary)" }}
           >
-            {orderInfo ? formatAmount(orderInfo.totalAmount, orderInfo.currency) : "Loading..."}
+            {orderInfo ? `₦${(orderInfo.totalAmount / 100).toFixed(2)}` : "Loading..."}
           </p>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-2">
             {orderInfo?.currency} ({orderInfo?.currency === "NGN" ? "Nigerian Naira" : orderInfo?.currency})
