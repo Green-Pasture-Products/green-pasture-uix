@@ -154,7 +154,7 @@ export function AppSidebar() {
 								onClick={handleSignOut}
 								aria-label="Sign out"
 								data-testid="sign-out"
-								className="shrink-0 rounded-md p-1.5 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+								className="shrink-0 cursor-pointer rounded-md p-1.5 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
 							>
 								<LogOut className="size-4" />
 							</button>
