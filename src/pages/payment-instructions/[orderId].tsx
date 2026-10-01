@@ -164,7 +164,7 @@ const PaymentInstructionsPage: React.FC = () => {
             className="text-4xl font-bold"
             style={{ color: "var(--color-primary)" }}
           >
-            {orderInfo ? `₦${(orderInfo.totalAmount / 100).toFixed(2)}` : "Loading..."}
+            {orderInfo ? `₦${(orderInfo.totalAmount).toFixed(2)}` : "Loading..."}
           </p>
           <p style={{ color: "var(--text-secondary)" }} className="text-sm mt-2">
             {orderInfo?.currency} ({orderInfo?.currency === "NGN" ? "Nigerian Naira" : orderInfo?.currency})

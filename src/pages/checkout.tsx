@@ -56,8 +56,9 @@ const checkoutFormSchema = z.object({
 		city: z.string().min(1, "City is required"),
 		state: z.string().min(1, "State is required"),
 		country: z.string().min(1, "Country is required"),
-		postalCode: z.string().min(1, "Postal code is required"),
+		postalCode: z.string().optional(),
 	}),
+	useDifferentAddress: z.boolean().optional(),
 	// Not shipping for now — no method to pick, but the field stays (sent to
 	// the backend as an empty string) so the request shape is unchanged.
 	shippingMethod: z.string(),
@@ -268,6 +269,7 @@ const CheckoutPage: React.FC = () => {
 	const isAdmin = appConstants.ADMIN_ROLES.includes(user?.profileType?.toUpperCase() as any || "");
 	const { isCheckingOut, isPlacingOrder, paymentUrl, error } = useAppSelector((state) => state.checkout);
 	const [orderPlaced, setOrderPlaced] = useState(false);
+	const [addressAutoPopulated, setAddressAutoPopulated] = useState(false);
 	const [couponCode, setCouponCode] = useState("");
 	const [couponDiscount, setCouponDiscount] = useState(0);
 	const [couponLoading, setCouponLoading] = useState(false);
@@ -316,11 +318,13 @@ const CheckoutPage: React.FC = () => {
 				country: "",
 				postalCode: "",
 			},
+			useDifferentAddress: false,
 		},
 	});
 
 	const selectedPayment = useWatch({ control, name: "paymentMethod" });
 	const shippingState = useWatch({ control, name: "shippingAddress.state" });
+	const useDifferentAddress = useWatch({ control, name: "useDifferentAddress" });
 
 	/* Derive visual step based on form completion (all sections visible) */
 	const hasShippingErrors =
@@ -356,39 +360,97 @@ const CheckoutPage: React.FC = () => {
 
 	// Auto-populate shipping address from previous order
 	useEffect(() => {
-		if (!isAuthenticated) return;
+		if (!isAuthenticated) {
+			console.log("Not authenticated, skipping address auto-population");
+			return;
+		}
+
 		const populatePreviousAddress = async () => {
 			try {
 				const axiosInstance = (await import("@/_utils/axiosInstance")).default;
+				console.log("Fetching previous orders for address auto-population...");
+
 				const res = await axiosInstance.get("order/my-orders", {
 					params: { page: 1, limit: 1 }
 				});
-				const lastOrder = res.data?.data?.items?.[0];
 
-				if (lastOrder) {
-					const addr = lastOrder.shippingAddress || {};
-					console.log("Loading previous address:", addr);
+				console.log("Orders response:", res.data);
 
-					const streetValue = addr.houseAddress || addr.street || "";
-					const cityValue = addr.city || "";
-					const stateValue = addr.region || addr.state || "";
-					const countryValue = addr.country || "";
-					const postalValue = addr.postalCode || "";
+				// Handle different response structures
+				let lastOrder = null;
+				if (res.data?.data?.items?.[0]) {
+					lastOrder = res.data.data.items[0];
+				} else if (res.data?.data?.[0]) {
+					lastOrder = res.data.data[0];
+				}
 
-					if (streetValue || cityValue || stateValue || countryValue) {
-						setValue("shippingAddress.street", streetValue);
-						setValue("shippingAddress.city", cityValue);
-						setValue("shippingAddress.state", stateValue);
-						setValue("shippingAddress.country", countryValue);
-						setValue("shippingAddress.postalCode", postalValue);
-					}
+				console.log("Last order found:", lastOrder);
+
+				if (!lastOrder) {
+					console.log("No previous orders found");
+					return;
+				}
+
+				console.log("Last order shippingAddress field:", lastOrder.shippingAddress);
+
+				// Get shipping address from order (stored directly on Order entity)
+				const addr = lastOrder.shippingAddress;
+
+				console.log("Extracted address:", addr);
+
+				if (!addr) {
+					console.log("No shipping address in previous order");
+					return;
+				}
+
+				console.log("Loading previous address:", addr);
+
+				const streetValue = addr.houseAddress || addr.street || "";
+				const cityValue = addr.city || "";
+				const stateValue = addr.region || addr.state || "";
+				const countryValue = addr.country || "";
+				const postalValue = addr.postalCode || "";
+
+				if (streetValue || cityValue || stateValue || countryValue) {
+					console.log("Setting address values:", {
+						street: streetValue,
+						city: cityValue,
+						state: stateValue,
+						country: countryValue,
+						postal: postalValue
+					});
+
+					setValue("shippingAddress.street", streetValue);
+					setValue("shippingAddress.city", cityValue);
+					setValue("shippingAddress.state", stateValue);
+					setValue("shippingAddress.country", countryValue);
+					setValue("shippingAddress.postalCode", postalValue);
+					setAddressAutoPopulated(true);
 				}
 			} catch (error) {
 				console.error("Failed to load previous shipping address:", error);
 			}
 		};
-		populatePreviousAddress();
+
+		// Small delay to ensure form is ready
+		const timer = setTimeout(() => {
+			populatePreviousAddress();
+		}, 100);
+
+		return () => clearTimeout(timer);
 	}, [isAuthenticated, setValue]);
+
+	// Clear address fields when user checks "use different address"
+	useEffect(() => {
+		if (useDifferentAddress) {
+			console.log("Clearing address fields for new address entry");
+			setValue("shippingAddress.street", "");
+			setValue("shippingAddress.city", "");
+			setValue("shippingAddress.state", "");
+			setValue("shippingAddress.country", "");
+			setValue("shippingAddress.postalCode", "");
+		}
+	}, [useDifferentAddress, setValue]);
 
 	const taxRate = Number(storeConfig?.orderSettings?.taxRate) || 0;
 
@@ -578,11 +640,19 @@ const CheckoutPage: React.FC = () => {
 				}
 
 				// Step 4: Create order from cart (idempotent — returns existing if cart already checked out)
+				console.log("Checkout data being sent:", {
+					cartId: activeCartId,
+					shippingAddress: data.shippingAddress,
+					shippingMethod: data.shippingMethod,
+					paymentMethod: data.paymentMethod,
+				});
+
 				const orderResult = await dispatch(
 					checkoutAction.checkoutCartAsync({
 						cartId: activeCartId,
 						couponCode: couponApplied ? couponCode : undefined,
 						shippingMethod: data.shippingMethod,
+						shippingAddress: data.shippingAddress,
 						paymentMethod: data.paymentMethod,
 						phoneNumber: data.paymentMethod === "MANUAL_TRANSFER" ? data.phoneNumber : undefined,
 						idempotencyKey,
@@ -685,29 +755,30 @@ const CheckoutPage: React.FC = () => {
 				const idempotencyKey = idempotencyStateRef.current.key as string;
 
 				// Call guest-checkout endpoint
+				const guestPayload = {
+					firstName: data.guestFirstName,
+					lastName: data.guestLastName || "",
+					email: data.guestEmail,
+					phoneNumber: data.guestPhone,
+					items: guestItems,
+					shippingMethod: data.shippingMethod,
+					paymentMethod: data.paymentMethod,
+					...(data.paymentMethod === "MANUAL_TRANSFER" && { phoneNumber: data.phoneNumber }),
+					couponCode: couponApplied ? couponCode : undefined,
+					shippingAddress: {
+						street: data.shippingAddress.street,
+						city: data.shippingAddress.city,
+						state: data.shippingAddress.state || "",
+						country: data.shippingAddress.country,
+						postalCode: data.shippingAddress.postalCode || "",
+					},
+				};
+
+				console.log("Guest checkout payload being sent:", guestPayload);
+
 				const guestRes = await axiosInstance.post(
 					"order/guest-checkout",
-					{
-						firstName: data.guestFirstName,
-						lastName: data.guestLastName || "",
-						email: data.guestEmail,
-						phoneNumber: data.guestPhone,
-						items: guestItems,
-						shippingMethod: data.shippingMethod,
-						paymentMethod: data.paymentMethod,
-						...(data.paymentMethod === "MANUAL_TRANSFER" && { phoneNumber: data.phoneNumber }),
-						couponCode: couponApplied ? couponCode : undefined,
-						shippingAddress: {
-							houseAddress: data.shippingAddress.street,
-							city: data.shippingAddress.city,
-							region: data.shippingAddress.state || "",
-							state: data.shippingAddress.state || "",
-							country: data.shippingAddress.country,
-							postalCode: data.shippingAddress.postalCode || "",
-							latitude: "0",
-							longitude: "0",
-						},
-					},
+					guestPayload,
 					{ headers: { "Idempotency-Key": idempotencyKey } },
 				);
 
@@ -1006,6 +1077,25 @@ const CheckoutPage: React.FC = () => {
 								Shipping Address
 							</h2>
 
+							{isAuthenticated && addressAutoPopulated && (
+								<div className="mb-6 flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: "var(--surface-low)" }}>
+									<input
+										type="checkbox"
+										{...register("useDifferentAddress")}
+										className="w-4 h-4 mt-1 rounded"
+										style={{ accentColor: "var(--color-primary)" }}
+									/>
+									<div>
+										<label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+											Use a different address
+										</label>
+										<p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
+											Clear the auto-filled address to enter a new shipping address
+										</p>
+									</div>
+								</div>
+							)}
+
 							<div className="space-y-4">
 								<FormInput
 									label="Street Address"
@@ -1032,22 +1122,13 @@ const CheckoutPage: React.FC = () => {
 									/>
 								</div>
 
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									<FormInput
-										label="Postal Code"
-										required
-										placeholder="100001"
-										{...register("shippingAddress.postalCode")}
-										error={errors.shippingAddress?.postalCode?.message}
-									/>
-									<FormInput
-										label="Country"
-										required
-										defaultValue="Nigeria"
-										{...register("shippingAddress.country")}
-										error={errors.shippingAddress?.country?.message}
-									/>
-								</div>
+								<FormInput
+									label="Country"
+									required
+									defaultValue="Nigeria"
+									{...register("shippingAddress.country")}
+									error={errors.shippingAddress?.country?.message}
+								/>
 							</div>
 						</motion.section>
 

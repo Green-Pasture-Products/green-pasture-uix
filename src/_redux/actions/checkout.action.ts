@@ -19,6 +19,7 @@ export interface CheckoutCartPayload {
 	shippingMethod?: ShippingMethodType;
 	paymentMethod?: PaymentMethodType;
 	phoneNumber?: string;
+	shippingAddress?: any;
 	/** Stable per checkout attempt — see checkout.tsx. Sent as a header, not part of the body. */
 	idempotencyKey: string;
 }
@@ -27,7 +28,7 @@ const checkoutCartAsync = createAsyncThunk<
 	any,
 	CheckoutCartPayload,
 	{ rejectValue: string }
->("checkout/checkoutCart", async ({ cartId, couponCode, shippingMethod, paymentMethod, phoneNumber, idempotencyKey }, { rejectWithValue }) => {
+>("checkout/checkoutCart", async ({ cartId, couponCode, shippingMethod, paymentMethod, phoneNumber, shippingAddress, idempotencyKey }, { rejectWithValue }) => {
 	try {
 		const response = await axiosInstance.post(
 			`order/checkout/${cartId}`,
@@ -36,6 +37,7 @@ const checkoutCartAsync = createAsyncThunk<
 				...(shippingMethod ? { shippingMethod } : {}),
 				...(paymentMethod ? { paymentMethod } : {}),
 				...(phoneNumber ? { phoneNumber } : {}),
+				...(shippingAddress ? { shippingAddress } : {}),
 			},
 			{ headers: { "Idempotency-Key": idempotencyKey } },
 		);
