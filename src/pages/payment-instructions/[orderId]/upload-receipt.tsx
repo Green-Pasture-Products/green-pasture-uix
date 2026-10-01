@@ -71,10 +71,7 @@ const UploadReceiptPage: React.FC = () => {
       setUploadSuccess(true);
       toast.success("Receipt uploaded successfully!");
 
-      // Redirect to my orders after 3 seconds
-      setTimeout(() => {
-        router.push("/my-orders");
-      }, 3000);
+      router.push("/my-orders");
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Failed to upload receipt",
