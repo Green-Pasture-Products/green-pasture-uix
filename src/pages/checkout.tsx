@@ -63,16 +63,25 @@ const checkoutFormSchema = z.object({
 	// the backend as an empty string) so the request shape is unchanged.
 	shippingMethod: z.string(),
 	paymentMethod: z.enum(["CARD", "CASH_ON_DELIVERY", "MANUAL_TRANSFER"]),
-	// Phone number required for manual bank transfer payments
+	// Phone number optional, but required for card and manual transfer
 	phoneNumber: z.string().optional(),
 }).refine((data) => {
-	// If manual transfer, phone number is required
-	if (data.paymentMethod === "MANUAL_TRANSFER") {
-		return data.phoneNumber && data.phoneNumber.trim().length > 0;
+	// Card payment is not yet available
+	if (data.paymentMethod === "CARD") {
+		return false;
 	}
 	return true;
 }, {
-	message: "Phone number is required for bank transfer",
+	message: "Card payment is currently being worked on. Please use manual transfer or cash on delivery.",
+	path: ["paymentMethod"],
+}).refine((data) => {
+	// Phone number required for card and manual transfer
+	if ((data.paymentMethod === "MANUAL_TRANSFER" || data.paymentMethod === "CARD") && !data.phoneNumber?.trim()) {
+		return false;
+	}
+	return true;
+}, {
+	message: "Phone number is required for this payment method",
 	path: ["phoneNumber"],
 });
 
@@ -83,7 +92,7 @@ type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
 /* ------------------------------------------------------------------ */
 
 const paymentOptions = [
-	{ value: "CARD" as const, label: "Pay with Card", desc: "Secure payment via Paystack", Icon: CreditCard },
+	{ value: "CARD" as const, label: "Pay with Card", desc: "Coming Soon", Icon: CreditCard, disabled: true, badge: "Coming Soon" },
 	{ value: "MANUAL_TRANSFER" as const, label: "Bank Transfer", desc: "Direct bank transfer payment", Icon: Landmark },
 	{ value: "CASH_ON_DELIVERY" as const, label: "Cash on Delivery", desc: "Pay when you receive your order", Icon: DollarSign },
 ];
@@ -306,7 +315,7 @@ const CheckoutPage: React.FC = () => {
 			// Set once the store config loads and the enabled methods are known
 			// (see the effect below) — there is no fixed default id to assume.
 			shippingMethod: "",
-			paymentMethod: "CARD",
+			paymentMethod: "MANUAL_TRANSFER",
 			guestFirstName: "",
 			guestLastName: "",
 			guestEmail: "",
@@ -1151,22 +1160,30 @@ const CheckoutPage: React.FC = () => {
 
 							<div className="space-y-3">
 								{paymentOptions.map((opt) => (
-									<OptionCard
-										key={opt.value}
-										selected={selectedPayment === opt.value}
-										Icon={opt.Icon}
-										label={opt.label}
-										desc={opt.desc}
-										value={opt.value}
-										name="paymentMethod"
-										onChange={() => setValue("paymentMethod", opt.value)}
-									/>
+									<div key={opt.value} className={`relative ${opt.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+										<div className={opt.disabled ? 'pointer-events-none' : ''}>
+											<OptionCard
+												selected={selectedPayment === opt.value}
+												Icon={opt.Icon}
+												label={opt.label}
+												desc={opt.desc}
+												value={opt.value}
+												name="paymentMethod"
+												onChange={() => !opt.disabled && setValue("paymentMethod", opt.value)}
+											/>
+										</div>
+										{opt.badge && (
+											<span className="absolute top-3 right-3 bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">
+												{opt.badge}
+											</span>
+										)}
+									</div>
 								))}
 							</div>
 
 							{/* 3D Interactive Card Preview for Card Payment */}
 							<AnimatePresence>
-								{selectedPayment === "CARD" && (
+								{selectedPayment === "CARD" && !paymentOptions.find(o => o.value === "CARD")?.disabled && (
 									<motion.div
 										initial={{ opacity: 0, height: 0 }}
 										animate={{ opacity: 1, height: "auto" }}
