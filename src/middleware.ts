@@ -41,7 +41,5 @@ export const config = {
 		"/my-orders/:path*",
 		"/checkout",
 		"/order-confirmation/:path*",
-		"/products",
-		"/product/:path*",
 	],
 };
