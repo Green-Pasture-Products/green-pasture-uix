@@ -295,7 +295,7 @@ const MyOrderDetail: React.FC = () => {
 							})),
 							paymentMethod: "Online / Bank Payment",
 							transactionRef: order.orderReference || String(order.id),
-							statusText: order.orderStatus === "CANCELLED" ? "CANCELLED" : "PAID",
+							statusText: order.orderStatus === "CANCELLED" ? "CANCELLED" : order.orderStatus === "PENDING" ? "AWAITING VERIFICATION" : "PAID",
 						}}
 					/>
 				)}
