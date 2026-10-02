@@ -272,7 +272,7 @@ const HomePage: React.FC = () => {
 			</section>
 
 			{/* ── Journey timeline ─────────────────────────────────── */}
-			<section className="py-20 md:py-28" style={{ background: "var(--surface-low)" }}>
+			{/* <section className="py-20 md:py-28" style={{ background: "var(--surface-low)" }}>
 				<div className="page-wrapper">
 					<AnimatedSection>
 						<SectionHeading
@@ -286,7 +286,7 @@ const HomePage: React.FC = () => {
 						<Timeline items={journey} />
 					</div>
 				</div>
-			</section>
+			</section> */}
 
 			{/* ── Testimonials (real reviews, paged in) ────────────── */}
 			<Testimonials featured />

@@ -250,7 +250,9 @@ const MyOrderDetail: React.FC = () => {
 									Shipping Address
 								</span>
 								<p className="text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>
-									{(order as any).shippingAddress}
+									{typeof (order as any).shippingAddress === 'object'
+										? `${(order as any).shippingAddress?.street}, ${(order as any).shippingAddress?.city}, ${(order as any).shippingAddress?.state}, ${(order as any).shippingAddress?.country} ${(order as any).shippingAddress?.postalCode}`
+										: (order as any).shippingAddress}
 								</p>
 							</div>
 							{(order as any).shippingMethod && (
