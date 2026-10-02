@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 // ponytail: lucide instead of react-icons — the arrows are the only icons used,
 // and lucide is already a dependency.
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Testimonial {
@@ -66,6 +66,7 @@ export const CircularTestimonials = ({
 	const [hoverPrev, setHoverPrev] = useState(false);
 	const [hoverNext, setHoverNext] = useState(false);
 	const [containerWidth, setContainerWidth] = useState(1200);
+	const [viewingImage, setViewingImage] = useState<string | null>(null);
 
 	const imageContainerRef = useRef<HTMLDivElement>(null);
 	const autoplayIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -191,6 +192,7 @@ export const CircularTestimonials = ({
 							className="testimonial-image"
 							data-index={index}
 							style={getImageStyle(index)}
+							onClick={() => setViewingImage(testimonial.src)}
 						/>
 					))}
 				</div>
@@ -258,6 +260,34 @@ export const CircularTestimonials = ({
 						</button>
 					</div>
 				</div>
+
+				{/* Image Viewer Modal */}
+				{viewingImage && (
+					<div
+						className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+						onClick={() => setViewingImage(null)}
+					>
+						<div
+							className="relative max-h-screen max-w-4xl rounded-lg bg-white p-4"
+							onClick={(e) => e.stopPropagation()}
+						>
+							<button
+								onClick={() => setViewingImage(null)}
+								className="absolute -top-10 right-0 text-white hover:opacity-70 transition-opacity"
+								title="Close"
+								aria-label="Close image"
+							>
+								<X size={28} />
+							</button>
+							{/* eslint-disable-next-line @next/next/no-img-element */}
+							<img
+								src={viewingImage}
+								alt="Testimonial"
+								className="max-h-[80vh] max-w-full object-contain rounded"
+							/>
+						</div>
+					</div>
+				)}
 			</div>
 			<style jsx>{`
 				.testimonial-container {
@@ -286,6 +316,11 @@ export const CircularTestimonials = ({
 					object-fit: cover;
 					border-radius: 1.5rem;
 					box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+					cursor: pointer;
+					transition: transform 0.2s ease;
+				}
+				.testimonial-image:hover {
+					transform: scale(1.02);
 				}
 				.testimonial-content {
 					display: flex;
