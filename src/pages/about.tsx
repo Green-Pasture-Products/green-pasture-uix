@@ -2,7 +2,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Leaf, Heart, Shield, ArrowRight, Handshake, Map, Microscope, Users } from "lucide-react";
+import { Leaf, Heart, Shield, ArrowRight, Handshake, Map, Microscope, Users, Sprout } from "lucide-react";
 
 import Layout from "@/_components/Layout";
 import AnimatedSection from "@/_UI/AnimatedSection";
@@ -71,106 +71,103 @@ const About = () => {
 	return (
 		<Layout pageTitle="About">
 			{/* ── Editorial hero ───────────────────────────────────── */}
-			{/* Full-bleed field at sunset. Copy sits in the open sky on the left,
-			    where the photograph is quietest — the basket keeps the right. */}
-			<section className="relative isolate overflow-hidden lg:flex lg:min-h-[38rem] lg:items-center" style={{ background: "#0a1a12" }}>
-				{/* Photograph: in-flow block above the copy on mobile; full-bleed backdrop from lg up */}
-				<div className="relative h-[300px] w-full sm:h-[380px] lg:absolute lg:inset-0 lg:h-full lg:w-full">
-					<Image
-						src="/images/about_banner.png"
-						alt="Green Pasture products in a basket at the edge of a field at sunset"
-						fill
-						priority
-						quality={95}
-						sizes="100vw"
-						className="object-cover object-[70%_center] lg:object-center"
-					/>
-					{/* Blends the photo into the backdrop that carries the copy below, on mobile */}
-					<div
-						aria-hidden
-						className="absolute inset-0 lg:hidden"
-						style={{ background: "linear-gradient(to bottom, transparent 60%, #0a1a12 100%)" }}
-					/>
-					{/* Darkens the left edge so the overlaid copy stays legible, from lg up */}
-					<div
-						aria-hidden
-						className="absolute inset-0 hidden lg:block"
-						style={{
-							background:
-								"linear-gradient(100deg,rgba(10,26,18,0.90) 0%,rgba(10,26,18,0.72) 38%,rgba(10,26,18,0.28) 62%,transparent 82%)",
-						}}
-					/>
-				</div>
-
-				<div className="page-wrapper relative z-10 w-full py-10 sm:py-12 md:py-16 lg:py-28">
-					<div className="max-w-xl">
-						<motion.p
-							initial={{ opacity: 0, y: 16 }}
+			<section className="overflow-hidden py-8 sm:py-12 lg:py-16" style={{ background: "var(--surface-low)" }}>
+				<div className="page-wrapper grid items-center gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-14">
+					<div className="order-2 py-2 sm:py-4 lg:order-1 lg:py-10">
+						<motion.div
+							initial={{ opacity: 0, y: 14 }}
 							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.6 }}
-							className="mb-5 text-[0.68rem] font-semibold uppercase tracking-[0.22em]"
-							style={{ color: "#b9dd72" }}
+							transition={{ duration: 0.55 }}
+							className="mb-5 inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.16em]"
+							style={{ background: "rgba(154,202,60,0.14)", color: "var(--color-primary)" }}
 						>
-							About us
-						</motion.p>
+							<Sprout size={15} strokeWidth={1.8} />
+							Rooted in Nigerian soil
+						</motion.div>
 						<motion.h1
-							initial={{ opacity: 0, y: 24 }}
+							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.75, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-							className="font-display text-4xl leading-[1.03] tracking-[-0.02em] sm:text-5xl lg:text-[3.6rem]"
-							style={{ color: "#f4f8e8", fontWeight: 300 }}
+							transition={{ duration: 0.7, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+							className="max-w-xl font-display text-[2.65rem] leading-[1.02] tracking-[-0.035em] sm:text-5xl lg:text-[3.7rem]"
+							style={{ color: "var(--text-primary)", fontWeight: 300 }}
 						>
-							We did not invent
-							<br />
-							these remedies.
-							<br />
-							<span className="italic" style={{ color: "#b9dd72", fontWeight: 500 }}>
+							We did not invent these remedies.
+							<span className="mt-1 block italic" style={{ color: "var(--color-primary)", fontWeight: 500 }}>
 								We made them traceable.
 							</span>
 						</motion.h1>
 						<motion.p
-							initial={{ opacity: 0, y: 20 }}
+							initial={{ opacity: 0, y: 16 }}
 							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.7, delay: 0.22 }}
-							className="mt-8 max-w-lg text-base leading-relaxed sm:text-lg"
-							style={{ color: "rgba(226,238,206,0.78)" }}
+							transition={{ duration: 0.65, delay: 0.16 }}
+							className="mt-6 max-w-lg text-base leading-relaxed sm:text-lg"
+							style={{ color: "var(--text-secondary)" }}
 						>
-							Green Pasture Organics bridges generations of Nigerian agricultural knowledge
-							and the evidence modern buyers deserve — potent botanicals, grown well, tested
-							honestly, and documented from the row to the jar.
+							Green Pasture Organics brings generations of Nigerian growing knowledge together
+							with thoughtful testing and clear provenance — from the field to the jar.
 						</motion.p>
-
-						<motion.dl
-							initial={{ opacity: 0, y: 20 }}
+						<motion.div
+							initial={{ opacity: 0, y: 14 }}
 							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.7, delay: 0.34 }}
-							className="mt-10 grid max-w-md grid-cols-3 gap-6 border-t pt-7"
-							style={{ borderColor: "rgba(226,238,206,0.22)" }}
+							transition={{ duration: 0.6, delay: 0.24 }}
+							className="mt-7 flex flex-wrap items-center gap-3"
+						>
+							<Link
+								href="#our-story"
+								className="group inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5"
+								style={{ background: "var(--color-primary)", color: "white" }}
+							>
+								Meet our story <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+							</Link>
+							<Link
+								href="/products"
+								className="rounded-full px-5 py-3 text-sm font-medium transition-colors hover:bg-white/60"
+								style={{ color: "var(--text-primary)", border: "1px solid var(--border-medium)" }}
+							>
+								Browse our range
+							</Link>
+						</motion.div>
+						<motion.dl
+							initial={{ opacity: 0, y: 12 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.6, delay: 0.32 }}
+							className="mt-9 grid max-w-md grid-cols-3 gap-4 border-t pt-5 sm:gap-6"
+							style={{ borderColor: "var(--border-light)" }}
 						>
 							{[
 								{ n: "12", l: "Partner farms" },
 								{ n: "2", l: "States sourced" },
 								{ n: "2019", l: "Growing since" },
-							].map((s) => (
-								<div key={s.l}>
-									<dt className="font-display text-2xl tabular-nums sm:text-3xl" style={{ color: "#b9dd72", fontWeight: 500 }}>
-										{s.n}
-									</dt>
-									<dd className="mt-1 text-[0.68rem] uppercase tracking-[0.12em]" style={{ color: "rgba(226,238,206,0.6)" }}>
-										{s.l}
-									</dd>
+							].map((stat) => (
+								<div key={stat.l}>
+									<dt className="font-display text-2xl tabular-nums sm:text-3xl" style={{ color: "var(--color-primary)", fontWeight: 500 }}>{stat.n}</dt>
+									<dd className="mt-1 text-[0.62rem] font-medium uppercase tracking-[0.1em] sm:text-[0.68rem]" style={{ color: "var(--text-hint)" }}>{stat.l}</dd>
 								</div>
 							))}
 						</motion.dl>
 					</div>
-				</div>
 
-				{/* Hand-off into the values section below */}
-				<div
-					aria-hidden
-					className="pointer-events-none absolute inset-x-0 bottom-0 h-24"
-					style={{ background: "linear-gradient(to bottom,transparent,var(--surface-low))" }}
-				/>
+					<motion.div
+						initial={{ opacity: 0, scale: 0.985 }}
+						animate={{ opacity: 1, scale: 1 }}
+						transition={{ duration: 0.8, delay: 0.08 }}
+						className="relative order-1 h-[260px] overflow-hidden rounded-[1.5rem] sm:h-[380px] sm:rounded-[2rem] lg:order-2 lg:h-[560px]"
+						style={{ background: "var(--surface-medium)" }}
+					>
+						<Image
+							src="/images/about_banner.png"
+							alt="Green Pasture products gathered in a basket beside a sunlit field"
+							fill
+							priority
+							quality={95}
+							sizes="(max-width: 1024px) 100vw, 56vw"
+							className="object-cover object-[72%_center]"
+						/>
+						<div className="absolute bottom-4 left-4 rounded-full border px-4 py-2 text-xs font-medium shadow-sm backdrop-blur-sm sm:bottom-6 sm:left-6 sm:px-5 sm:py-2.5" style={{ background: "rgba(250,248,239,0.9)", borderColor: "rgba(255,255,255,0.7)", color: "#284637" }}>
+							Grown with care. Traced with honesty.
+						</div>
+					</motion.div>
+				</div>
 			</section>
 
 			{/* ── Values ───────────────────────────────────────────── */}
@@ -221,7 +218,7 @@ const About = () => {
 			</section>
 
 			{/* ── Story timeline ───────────────────────────────────── */}
-			<section className="py-20 md:py-28" style={{ background: "var(--background)" }}>
+			<section id="our-story" className="scroll-mt-24 py-20 md:py-28" style={{ background: "var(--background)" }}>
 				<div className="page-wrapper">
 					<AnimatedSection>
 						<SectionHeading eyebrow="Our story" title="How a market-stall question" accent="became a supply chain." centered />
