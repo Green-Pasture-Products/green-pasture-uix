@@ -8,14 +8,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GoogleLogin } from "@react-oauth/google";
 
 import { clearError } from "@/_redux/reducers/auth.reducer";
-import { appConstants } from "@/_redux/constants";
 import { signupSchema, signupStep1Schema, SignupFormData } from "@/_validations/auth";
 import { signupAsync } from "@/_redux/actions/auth.action";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useGoogleAuth } from "@/_hooks/useGoogleAuth";
 import Image from "next/image";
 import { FormInput } from "@/_UI/FormField";
-import WhatsAppIcon from "@/_UI/WhatsAppIcon";
 
 const slideVariants = {
 	enter: (direction: number) => ({
@@ -236,14 +234,16 @@ const SignupPage: React.FC = () => {
 											error={errors.lastName?.message}
 										/>
 									</div>
-									<FormInput
-										label="Email Address"
-										type="email"
-										placeholder="john@example.com"
-										required
-										{...register("email")}
-										error={errors.email?.message}
-									/>
+									<div className="hidden md:block">
+										<FormInput
+											label="Email Address"
+											type="email"
+											placeholder="john@example.com"
+											required
+											{...register("email")}
+											error={errors.email?.message}
+										/>
+									</div>
 								</motion.div>
 							)}
 
@@ -382,31 +382,6 @@ const SignupPage: React.FC = () => {
 				</form>
 
 			</motion.div>
-
-			<div
-				className="fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-xl px-4 py-2.5 shadow-lg"
-				style={{ background: "var(--color-primary)" }}
-			>
-				<span className="text-xs font-semibold text-white">
-					Message us
-				</span>
-				<a
-					href={appConstants.WHATSAPP_URL}
-					target="_blank"
-					rel="noreferrer"
-					aria-label="Message us on WhatsApp"
-					className="p-1 rounded-full transition-colors text-white"
-				>
-					<WhatsAppIcon size={20} />
-				</a>
-				<a
-					href={appConstants.CONTACT.EMAIL_HREF}
-					aria-label="Email us"
-					className="p-1 rounded-full transition-colors text-white"
-				>
-					<Mail className="h-5 w-5" />
-				</a>
-			</div>
 		</div>
 	);
 };
