@@ -243,6 +243,93 @@ const AdminOrderDetail: React.FC = () => {
 						</div>
 					</DetailSection>
 				)}
+
+				{order.payments && order.payments.length > 0 && (
+					<DetailSection title="Payment Information">
+						<div className="px-5 py-4 space-y-4">
+							{order.payments.map((payment, idx) => (
+								<div key={payment.id} className="border-b border-border-light pb-4 last:border-b-0">
+									<div className="grid grid-cols-2 gap-4 mb-3">
+										<div>
+											<span className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+												Payment Method
+											</span>
+											<p className="text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>
+												{payment.paymentMethod === 'MANUAL_TRANSFER' ? 'Bank Transfer' : 'Paystack'}
+											</p>
+										</div>
+										<div>
+											<span className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+												Amount
+											</span>
+											<p className="text-sm mt-0.5 font-semibold" style={{ color: "var(--text-primary)" }}>
+												₦{Number(payment.amount).toLocaleString()}
+											</p>
+										</div>
+									</div>
+									<div className="grid grid-cols-2 gap-4 mb-3">
+										<div>
+											<span className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+												Payment Status
+											</span>
+											<p className="text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>
+												{payment.paymentStatus}
+											</p>
+										</div>
+										<div>
+											<span className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+												Created Date
+											</span>
+											<p className="text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>
+												{new Date(payment.createdAt).toLocaleDateString()}
+											</p>
+										</div>
+									</div>
+
+									{payment.receiptUrl && (
+										<div>
+											<span className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+												Payment Receipt/Proof
+											</span>
+											<div className="mt-2">
+												<a
+													href={payment.receiptUrl}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="text-sm font-medium px-3 py-2 rounded-lg"
+													style={{ color: "var(--color-primary)", textDecoration: "none" }}
+												>
+													📎 {payment.receiptFileName || 'View Receipt'}
+												</a>
+											</div>
+										</div>
+									)}
+
+									{payment.verifiedAt && (
+										<div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: "rgba(34,197,94,0.1)", borderLeft: "4px solid rgb(34,197,94)" }}>
+											<p className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>
+												✓ Verified {new Date(payment.verifiedAt).toLocaleDateString()} {payment.verifiedBy && `by ${payment.verifiedBy}`}
+											</p>
+										</div>
+									)}
+
+									{payment.declinedAt && (
+										<div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: "rgba(239,68,68,0.1)", borderLeft: "4px solid rgb(239,68,68)" }}>
+											<p className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>
+												✗ Declined {new Date(payment.declinedAt).toLocaleDateString()} {payment.declinedBy && `by ${payment.declinedBy}`}
+											</p>
+											{payment.adminNote && (
+												<p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
+													Note: {payment.adminNote}
+												</p>
+											)}
+										</div>
+									)}
+								</div>
+							))}
+						</div>
+					</DetailSection>
+				)}
 			</div>
 		</AdminLayout>
 	);

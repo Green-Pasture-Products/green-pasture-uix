@@ -241,8 +241,8 @@ const AdminPaymentDetail: React.FC = () => {
         return "Paystack";
       case "MANUAL_TRANSFER":
         return "Bank Transfer";
-      case "CASH_ON_DELIVERY":
-        return "Cash on Delivery";
+      case "CUSTOMER_PICKUP":
+        return "Customer Pickup";
       default:
         return method;
     }

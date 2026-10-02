@@ -62,7 +62,7 @@ const checkoutFormSchema = z.object({
 	// Not shipping for now — no method to pick, but the field stays (sent to
 	// the backend as an empty string) so the request shape is unchanged.
 	shippingMethod: z.string(),
-	paymentMethod: z.enum(["CARD", "CASH_ON_DELIVERY", "MANUAL_TRANSFER"]),
+	paymentMethod: z.enum(["CARD", "CUSTOMER_PICKUP", "MANUAL_TRANSFER"]),
 	// Phone number optional, but required for card and manual transfer
 	phoneNumber: z.string().optional(),
 }).refine((data) => {
@@ -106,7 +106,7 @@ type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
 const paymentOptions = [
 	{ value: "CARD" as const, label: "Pay with Card", desc: "Coming Soon", Icon: CreditCard, disabled: true, badge: "Coming Soon" },
 	{ value: "MANUAL_TRANSFER" as const, label: "Bank Transfer", desc: "Direct bank transfer payment", Icon: Landmark },
-	{ value: "CASH_ON_DELIVERY" as const, label: "Cash on Delivery", desc: "Pay when you receive your order", Icon: DollarSign },
+	{ value: "CUSTOMER_PICKUP" as const, label: "Customer Pickup", desc: "Pick up items at our location", Icon: DollarSign },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -700,7 +700,7 @@ const CheckoutPage: React.FC = () => {
 				}
 
 				// Step 5: Handle payment method
-				if (data.paymentMethod === "CASH_ON_DELIVERY") {
+				if (data.paymentMethod === "CUSTOMER_PICKUP") {
 					setOrderPlaced(true);
 					dispatch(clearCart());
 					dispatch(resetCheckout());
@@ -822,7 +822,7 @@ const CheckoutPage: React.FC = () => {
 					return;
 				}
 
-				if (data.paymentMethod === "CASH_ON_DELIVERY") {
+				if (data.paymentMethod === "CUSTOMER_PICKUP") {
 					setOrderPlaced(true);
 					dispatch(clearCart());
 					toast.success("Order placed successfully!");
@@ -1269,7 +1269,7 @@ const CheckoutPage: React.FC = () => {
 						</motion.section>
 
 						{/* ===== Shipping Address ===== */}
-						{selectedPayment !== "CASH_ON_DELIVERY" && (
+						{selectedPayment !== "CUSTOMER_PICKUP" && (
 						<motion.section
 							variants={sectionVariants}
 							className="rounded-2xl p-6 md:p-8"

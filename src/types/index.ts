@@ -8,7 +8,7 @@ export type PaymentStatus =
   | 'PAID'
   | 'NOT_PAID';
 
-export type PaymentMethod = 'PAYSTACK' | 'MANUAL_TRANSFER' | 'CASH_ON_DELIVERY';
+export type PaymentMethod = 'PAYSTACK' | 'MANUAL_TRANSFER' | 'CUSTOMER_PICKUP';
 
 // ─── Product & Category Types ──────────────────────────────────────
 
@@ -306,12 +306,32 @@ export interface BackendReview {
 	updatedBy?: string;
 }
 
+export interface BackendPayment {
+	id: string;
+	paymentMethod: string;
+	amount: number;
+	currency: string;
+	paymentStatus: string;
+	receiptUrl?: string;
+	receiptFileName?: string;
+	submittedAt?: string;
+	verifiedAt?: string;
+	verifiedBy?: string;
+	declinedAt?: string;
+	declinedBy?: string;
+	adminNote?: string;
+	status: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
 export interface BackendOrder {
 	id: string;
 	orderReference: string;
 	orderStatus: OrderStatusType;
 	customer?: BackendCustomer;
 	items?: BackendOrderItem[];
+	payments?: BackendPayment[];
 	totalAmount: number;
 	status: string;
 	createdAt: string;
@@ -381,7 +401,7 @@ export type OrderStatusType =
 // accepts any configured method id as a plain string — not a fixed set.
 export type ShippingMethodType = string;
 
-export type PaymentMethodType = "CARD" | "CASH_ON_DELIVERY" | "MANUAL_TRANSFER";
+export type PaymentMethodType = "CARD" | "CUSTOMER_PICKUP" | "MANUAL_TRANSFER";
 
 // ─── Extended State Types ───────────────────────────────────────────────
 
