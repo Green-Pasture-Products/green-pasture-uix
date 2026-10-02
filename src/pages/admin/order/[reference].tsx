@@ -12,6 +12,7 @@ import { formatCurrency } from "@/_UI/FormatValue";
 import { formatWeight } from "@/_utils/formatWeight";
 import PageLoader from "@/_UI/PageLoader";
 import { BackendOrder, BackendOrderItem } from "@/types";
+import { Download, Eye, RefreshCw, X } from "lucide-react";
 
 const getStatusVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
 	switch (status?.toUpperCase()) {
@@ -36,6 +37,10 @@ const AdminOrderDetail: React.FC = () => {
 	const [order, setOrder] = useState<BackendOrder | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [refreshing, setRefreshing] = useState(false);
+	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+	const [selectedStatus, setSelectedStatus] = useState<string>("");
+	const [statusNote, setStatusNote] = useState<string>("");
+	const [receiptToView, setReceiptToView] = useState<{ url: string; fileName: string } | null>(null);
 
 	const loadOrder = useCallback(
 		(silent = false) => {
@@ -62,7 +67,32 @@ const AdminOrderDetail: React.FC = () => {
 
 	useEffect(() => {
 		loadOrder();
-	}, [loadOrder]);
+		if (order?.orderStatus) {
+			setSelectedStatus(order.orderStatus);
+		}
+	}, [loadOrder, order?.orderStatus]);
+
+	const handleStatusUpdate = async () => {
+		if (!order || !selectedStatus || selectedStatus === order.orderStatus) return;
+
+		setIsUpdatingStatus(true);
+		try {
+			const result = await dispatch(
+				adminAction.updateOrderStatusAsync({
+					orderId: order.id,
+					status: selectedStatus,
+					note: statusNote || undefined,
+				})
+			).unwrap();
+			setOrder(result?.data ?? result);
+			setStatusNote("");
+			alert("Order status updated successfully");
+		} catch (error: any) {
+			alert(`Failed to update status: ${error}`);
+		} finally {
+			setIsUpdatingStatus(false);
+		}
+	};
 
 	const itemColumns: ColumnDef<BackendOrderItem, any>[] = [
 		{
@@ -206,6 +236,76 @@ const AdminOrderDetail: React.FC = () => {
 					</div>
 				</DetailSection>
 
+				<DetailSection title="Order Status">
+					<div className="px-5 py-4 space-y-4">
+						<div>
+							<label className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+								Current Status
+							</label>
+							<div className="mt-2">
+								<Badge variant={getStatusVariant(order.orderStatus)} dot>
+									{order.orderStatus.replace(/_/g, " ")}
+								</Badge>
+							</div>
+						</div>
+
+						<div>
+							<label className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+								Update Status
+							</label>
+							<select
+								value={selectedStatus}
+								onChange={(e) => setSelectedStatus(e.target.value)}
+								disabled={isUpdatingStatus}
+								className="w-full mt-2 px-3 py-2 rounded-lg text-sm border"
+								style={{
+									borderColor: "var(--border-light)",
+									backgroundColor: "var(--surface-low)",
+									color: "var(--text-primary)",
+								}}
+							>
+								<option value="">Select new status...</option>
+								<option value="PENDING">Pending</option>
+								<option value="PROCESSING">Processing</option>
+								<option value="IN_TRANSIT">In Transit</option>
+								<option value="DELIVERED">Delivered</option>
+								<option value="CANCELLED">Cancelled</option>
+							</select>
+						</div>
+
+						<div>
+							<label className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+								Add Note (Optional)
+							</label>
+							<textarea
+								value={statusNote}
+								onChange={(e) => setStatusNote(e.target.value)}
+								disabled={isUpdatingStatus}
+								placeholder="Add a note for this status change..."
+								className="w-full mt-2 px-3 py-2 rounded-lg text-sm border resize-none"
+								rows={3}
+								style={{
+									borderColor: "var(--border-light)",
+									backgroundColor: "var(--surface-low)",
+									color: "var(--text-primary)",
+								}}
+							/>
+						</div>
+
+						<button
+							onClick={handleStatusUpdate}
+							disabled={isUpdatingStatus || !selectedStatus || selectedStatus === order.orderStatus}
+							className="w-full px-4 py-2 rounded-lg font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+							style={{
+								backgroundColor: "var(--color-primary)",
+								color: "white",
+							}}
+						>
+							{isUpdatingStatus ? "Updating..." : "Update Status"}
+						</button>
+					</div>
+				</DetailSection>
+
 				<DetailSection title="Order Items">
 					<DataTable
 						columns={itemColumns}
@@ -244,8 +344,22 @@ const AdminOrderDetail: React.FC = () => {
 					</DetailSection>
 				)}
 
-				{order.payments && order.payments.length > 0 && (
-					<DetailSection title="Payment Information">
+				<DetailSection
+					title="Payment Information"
+					action={
+						<button
+							type="button"
+							onClick={() => loadOrder(true)}
+							disabled={refreshing}
+							className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+							style={{ borderColor: "var(--border-light)", color: "var(--text-secondary)" }}
+						>
+							<RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+							Refresh
+						</button>
+					}
+				>
+					{order.payments && order.payments.length > 0 ? (
 						<div className="px-5 py-4 space-y-4">
 							{order.payments.map((payment, idx) => (
 								<div key={payment.id} className="border-b border-border-light pb-4 last:border-b-0">
@@ -263,7 +377,7 @@ const AdminOrderDetail: React.FC = () => {
 												Amount
 											</span>
 											<p className="text-sm mt-0.5 font-semibold" style={{ color: "var(--text-primary)" }}>
-												₦{Number(payment.amount).toLocaleString()}
+													{new Intl.NumberFormat("en-NG", { style: "currency", currency: payment.currency || "NGN", maximumFractionDigits: 0 }).format(Number(payment.amount) / 100)}
 											</p>
 										</div>
 									</div>
@@ -286,24 +400,40 @@ const AdminOrderDetail: React.FC = () => {
 										</div>
 									</div>
 
-									{payment.receiptUrl && (
+										{payment.receiptUrl ? (
 										<div>
 											<span className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
 												Payment Receipt/Proof
 											</span>
-											<div className="mt-2">
+											<div className="mt-2 flex flex-wrap items-center gap-2">
+												<button
+													type="button"
+													onClick={() => setReceiptToView({ url: payment.receiptUrl!, fileName: payment.receiptFileName || "Payment receipt" })}
+													className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white"
+													style={{ backgroundColor: "var(--color-primary)" }}
+												>
+													<Eye size={16} /> View receipt
+												</button>
 												<a
 													href={payment.receiptUrl}
 													target="_blank"
 													rel="noopener noreferrer"
-													className="text-sm font-medium px-3 py-2 rounded-lg"
-													style={{ color: "var(--color-primary)", textDecoration: "none" }}
+													download={payment.receiptFileName || true}
+													className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium"
+													style={{ borderColor: "var(--border-light)", color: "var(--text-primary)" }}
 												>
-													📎 {payment.receiptFileName || 'View Receipt'}
+													<Download size={16} /> Download
 												</a>
 											</div>
+											<p className="mt-1 text-xs" style={{ color: "var(--text-secondary)" }}>
+												{payment.receiptFileName || "Uploaded receipt"}
+											</p>
 										</div>
-									)}
+									) : payment.paymentMethod === "MANUAL_TRANSFER" ? (
+										<p className="text-sm" style={{ color: "var(--text-hint)" }}>
+											No receipt URL is attached to this manual payment.
+										</p>
+									) : null}
 
 									{payment.verifiedAt && (
 										<div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: "rgba(34,197,94,0.1)", borderLeft: "4px solid rgb(34,197,94)" }}>
@@ -328,9 +458,52 @@ const AdminOrderDetail: React.FC = () => {
 								</div>
 							))}
 						</div>
-					</DetailSection>
-				)}
+					) : (
+						<div className="px-5 py-5">
+							<p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+								No payment record was returned for this order.
+							</p>
+							<p className="mt-1 text-xs" style={{ color: "var(--text-hint)" }}>
+								Refresh after restarting the API if this order has a payment. If a payment appears here without a receipt link, no receipt URL is attached to that payment.
+							</p>
+						</div>
+					)}
+				</DetailSection>
 			</div>
+
+			{receiptToView && (
+				<div
+					className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+					role="dialog"
+					aria-modal="true"
+					aria-label={receiptToView.fileName}
+					onClick={(event) => {
+						if (event.target === event.currentTarget) setReceiptToView(null);
+					}}
+				>
+					<div className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+						<div className="flex items-center justify-between gap-4 border-b px-4 py-3">
+							<p className="truncate text-sm font-semibold text-gray-900">{receiptToView.fileName}</p>
+							<div className="flex shrink-0 items-center gap-2">
+								<a href={receiptToView.url} target="_blank" rel="noopener noreferrer" download={receiptToView.fileName} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm text-gray-700">
+									<Download size={16} /> Download
+								</a>
+								<button type="button" onClick={() => setReceiptToView(null)} aria-label="Close receipt viewer" className="rounded-lg p-2 text-gray-600 hover:bg-gray-100">
+									<X size={20} />
+								</button>
+							</div>
+						</div>
+						<div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-gray-100 p-3">
+							{receiptToView.fileName.toLowerCase().endsWith(".pdf") || /\.pdf(?:$|[?#])/i.test(receiptToView.url) ? (
+								<iframe title={receiptToView.fileName} src={receiptToView.url} className="h-[78vh] w-full rounded bg-white" />
+							) : (
+								// eslint-disable-next-line @next/next/no-img-element
+								<img src={receiptToView.url} alt={receiptToView.fileName} className="max-h-[78vh] max-w-full object-contain" />
+							)}
+						</div>
+					</div>
+				</div>
+			)}
 		</AdminLayout>
 	);
 };
