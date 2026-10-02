@@ -190,13 +190,11 @@ const HomePage: React.FC = () => {
 						/>
 					) : visible.length > 0 ? (
 						<AnimatedSection delay={0.16}>
-							<CardRail label="Products">
+							<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
 								{visible.slice(0, RAIL_LIMIT).map((product) => (
-									<div key={product.id} className="w-[40vw] min-w-[140px] max-w-[180px] shrink-0 snap-start sm:w-[236px] sm:max-w-none">
-										<ProductCard product={product} />
-									</div>
+									<ProductCard key={product.id} product={product} />
 								))}
-							</CardRail>
+							</div>
 						</AnimatedSection>
 					) : products?.length ? (
 						<div className="py-10 text-center text-sm" style={{ color: "var(--text-hint)" }}>
@@ -375,11 +373,11 @@ const FilterChip: React.FC<{
 	</button>
 );
 
-/** Placeholder rail so the first paint isn't the "No products yet" empty state. */
+/** Placeholder grid so the first paint isn't the "No products yet" empty state. */
 const RailSkeleton: React.FC = () => (
-	<div className="hide-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 sm:mx-0 sm:gap-5 sm:px-0">
-		{[...Array(5)].map((_, i) => (
-			<div key={i} className="w-[44vw] min-w-[150px] max-w-[210px] shrink-0 animate-pulse sm:w-[236px]">
+	<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+		{[...Array(12)].map((_, i) => (
+			<div key={i} className="animate-pulse">
 				<div className="aspect-square rounded-xl" style={{ background: "var(--surface-tile)" }} />
 				<div className="space-y-2.5 pt-3.5">
 					<div className="h-4 w-3/4 rounded-full" style={{ background: "var(--surface-medium)" }} />
