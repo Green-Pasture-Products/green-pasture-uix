@@ -44,6 +44,13 @@ import { InteractiveCreditCard } from "@/_components/Checkout/InteractiveCreditC
 /*  Zod schema                                                        */
 /* ------------------------------------------------------------------ */
 
+const isValidPhoneNumber = (value: string): boolean => {
+	const normalized = value.trim();
+	if (!/^\+?[\d\s().-]+$/.test(normalized)) return false;
+	const digitCount = normalized.replace(/\D/g, "").length;
+	return digitCount >= 8 && digitCount <= 15;
+};
+
 const checkoutFormSchema = z.object({
 	// Guest identity (only shown/required when not authenticated)
 	guestFirstName: z.string().optional(),
@@ -57,6 +64,16 @@ const checkoutFormSchema = z.object({
 		state: z.string().optional(),
 		country: z.string().optional(),
 		postalCode: z.string().optional(),
+	}).superRefine((address, ctx) => {
+		const city = address.city?.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+		const state = address.state?.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+		if (city && state && city === state) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["city"],
+				message: "City and state must be different",
+			});
+		}
 	}),
 	useDifferentAddress: z.boolean().optional(),
 	// Not shipping for now — no method to pick, but the field stays (sent to
@@ -87,14 +104,16 @@ const checkoutFormSchema = z.object({
 	message: "Shipping address is required for bank transfer",
 	path: ["shippingAddress"],
 }).refine((data) => {
-	// Phone number required for all payment methods
-	if (!data.phoneNumber?.trim()) {
-		return false;
-	}
-	return true;
+	return Boolean(data.phoneNumber?.trim());
 }, {
 	message: "Phone number is required",
 	path: ["phoneNumber"],
+}).refine((data) => isValidPhoneNumber(data.phoneNumber ?? ""), {
+	message: "Enter a valid phone number (8–15 digits)",
+	path: ["phoneNumber"],
+}).refine((data) => !data.guestPhone?.trim() || isValidPhoneNumber(data.guestPhone), {
+	message: "Enter a valid phone number (8–15 digits)",
+	path: ["guestPhone"],
 });
 
 type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
@@ -1071,8 +1090,11 @@ const CheckoutPage: React.FC = () => {
 											type="tel"
 											placeholder="+2348012345678"
 											className="w-full px-3 py-2.5 rounded-md text-sm bg-transparent outline-none transition-colors"
-											style={{ border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+											style={{ border: `1px solid ${errors.guestPhone ? '#ef4444' : 'var(--border-light)'}`, color: "var(--text-primary)" }}
 										/>
+										{errors.guestPhone?.message && (
+											<p className="mt-1 text-xs text-red-600">{errors.guestPhone.message}</p>
+										)}
 									</div>
 								</div>
 								<p className="text-[0.65rem] mt-3" style={{ color: "var(--text-hint)" }}>
