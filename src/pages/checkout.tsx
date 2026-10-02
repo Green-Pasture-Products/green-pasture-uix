@@ -52,10 +52,10 @@ const checkoutFormSchema = z.object({
 	guestPhone: z.string().optional(),
 	// Existing fields
 	shippingAddress: z.object({
-		street: z.string().min(1, "Street is required"),
-		city: z.string().min(1, "City is required"),
-		state: z.string().min(1, "State is required"),
-		country: z.string().min(1, "Country is required"),
+		street: z.string().optional(),
+		city: z.string().optional(),
+		state: z.string().optional(),
+		country: z.string().optional(),
 		postalCode: z.string().optional(),
 	}),
 	useDifferentAddress: z.boolean().optional(),
@@ -74,6 +74,18 @@ const checkoutFormSchema = z.object({
 }, {
 	message: "Card payment is currently being worked on. Please use manual transfer or cash on delivery.",
 	path: ["paymentMethod"],
+}).refine((data) => {
+	// Shipping address required for bank transfer, optional for cash on delivery
+	if (data.paymentMethod === "MANUAL_TRANSFER") {
+		const addr = data.shippingAddress;
+		if (!addr.street?.trim() || !addr.city?.trim() || !addr.state?.trim() || !addr.country?.trim()) {
+			return false;
+		}
+	}
+	return true;
+}, {
+	message: "Shipping address is required for bank transfer",
+	path: ["shippingAddress"],
 }).refine((data) => {
 	// Phone number required for all payment methods
 	if (!data.phoneNumber?.trim()) {
@@ -1072,84 +1084,6 @@ const CheckoutPage: React.FC = () => {
 							</div>
 						)}
 
-						{/* ===== Shipping Address ===== */}
-						<motion.section
-							variants={sectionVariants}
-							className="rounded-2xl p-6 md:p-8"
-							style={{
-								background: "var(--surface-paper)",
-								border: "1px solid var(--border-light)",
-							}}
-						>
-							<h2
-								className="text-lg font-semibold mb-6 flex items-center gap-2"
-								style={{ color: "var(--text-primary)" }}
-							>
-								<MapPin size={18} style={{ color: "var(--color-primary)" }} />
-								Shipping Address
-							</h2>
-
-							<div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "rgba(34,197,94,0.08)", borderLeft: "4px solid rgb(34,197,94)" }}>
-								<p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-								✓ <strong>Shipping & Dispatch</strong> — Dispatch is currently handled offline and is not calculated within this app. After your order is placed, our team will contact you to confirm the available logistics option and any applicable dispatch fee before delivery.
-								</p>
-							</div>
-
-							{isAuthenticated && addressAutoPopulated && (
-								<div className="mb-6 flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: "var(--surface-low)" }}>
-									<input
-										type="checkbox"
-										{...register("useDifferentAddress")}
-										className="w-4 h-4 mt-1 rounded"
-										style={{ accentColor: "var(--color-primary)" }}
-									/>
-									<div>
-										<label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-											Use a different address
-										</label>
-										<p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
-											Clear the auto-filled address to enter a new shipping address
-										</p>
-									</div>
-								</div>
-							)}
-
-							<div className="space-y-4">
-								<FormInput
-									label="Street Address"
-									required
-									placeholder="123 Main Street"
-									{...register("shippingAddress.street")}
-									error={errors.shippingAddress?.street?.message}
-								/>
-
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									<FormInput
-										label="City"
-										required
-										placeholder="Lagos"
-										{...register("shippingAddress.city")}
-										error={errors.shippingAddress?.city?.message}
-									/>
-									<FormInput
-										label="State"
-										required
-										placeholder="Lagos"
-										{...register("shippingAddress.state")}
-										error={errors.shippingAddress?.state?.message}
-									/>
-								</div>
-
-								<FormInput
-									label="Country"
-									required
-									defaultValue="Nigeria"
-									{...register("shippingAddress.country")}
-									error={errors.shippingAddress?.country?.message}
-								/>
-							</div>
-						</motion.section>
-
 						{/* ===== Payment Method ===== */}
 						<motion.section
 							variants={sectionVariants}
@@ -1333,6 +1267,86 @@ const CheckoutPage: React.FC = () => {
 								</span>
 							</div>
 						</motion.section>
+
+						{/* ===== Shipping Address ===== */}
+						{selectedPayment !== "CASH_ON_DELIVERY" && (
+						<motion.section
+							variants={sectionVariants}
+							className="rounded-2xl p-6 md:p-8"
+							style={{
+								background: "var(--surface-paper)",
+								border: "1px solid var(--border-light)",
+							}}
+						>
+							<h2
+								className="text-lg font-semibold mb-6 flex items-center gap-2"
+								style={{ color: "var(--text-primary)" }}
+							>
+								<MapPin size={18} style={{ color: "var(--color-primary)" }} />
+								Shipping Address
+							</h2>
+
+							<div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "rgba(34,197,94,0.08)", borderLeft: "4px solid rgb(34,197,94)" }}>
+								<p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+								✓ <strong>Shipping & Dispatch</strong> — Dispatch is currently handled offline and is not calculated within this app. After your order is placed, our team will contact you to confirm the available logistics option and any applicable dispatch fee before delivery.
+								</p>
+							</div>
+
+							{isAuthenticated && addressAutoPopulated && (
+								<div className="mb-6 flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: "var(--surface-low)" }}>
+									<input
+										type="checkbox"
+										{...register("useDifferentAddress")}
+										className="w-4 h-4 mt-1 rounded"
+										style={{ accentColor: "var(--color-primary)" }}
+									/>
+									<div>
+										<label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+											Use a different address
+										</label>
+										<p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
+											Clear the auto-filled address to enter a new shipping address
+										</p>
+									</div>
+								</div>
+							)}
+
+							<div className="space-y-4">
+								<FormInput
+									label="Street Address"
+									required
+									placeholder="123 Main Street"
+									{...register("shippingAddress.street")}
+									error={errors.shippingAddress?.street?.message}
+								/>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<FormInput
+										label="City"
+										required
+										placeholder="Lagos"
+										{...register("shippingAddress.city")}
+										error={errors.shippingAddress?.city?.message}
+									/>
+									<FormInput
+										label="State"
+										required
+										placeholder="Lagos"
+										{...register("shippingAddress.state")}
+										error={errors.shippingAddress?.state?.message}
+									/>
+								</div>
+
+								<FormInput
+									label="Country"
+									required
+									defaultValue="Nigeria"
+									{...register("shippingAddress.country")}
+									error={errors.shippingAddress?.country?.message}
+								/>
+							</div>
+						</motion.section>
+						)}
 					</motion.div>
 
 					{/* ---- Right column: Order Summary ---- */}
