@@ -75,13 +75,13 @@ const checkoutFormSchema = z.object({
 	message: "Card payment is currently being worked on. Please use manual transfer or cash on delivery.",
 	path: ["paymentMethod"],
 }).refine((data) => {
-	// Phone number required for card and manual transfer
-	if ((data.paymentMethod === "MANUAL_TRANSFER" || data.paymentMethod === "CARD") && !data.phoneNumber?.trim()) {
+	// Phone number required for all payment methods
+	if (!data.phoneNumber?.trim()) {
 		return false;
 	}
 	return true;
 }, {
-	message: "Phone number is required for this payment method",
+	message: "Phone number is required",
 	path: ["phoneNumber"],
 });
 
@@ -1089,6 +1089,12 @@ const CheckoutPage: React.FC = () => {
 								Shipping Address
 							</h2>
 
+							<div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "rgba(34,197,94,0.08)", borderLeft: "4px solid rgb(34,197,94)" }}>
+								<p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+									✓ <strong>No Shipping Fee</strong> — Dispatch is currently handled offline. Your order will be processed and delivered at no additional shipping cost.
+								</p>
+							</div>
+
 							{isAuthenticated && addressAutoPopulated && (
 								<div className="mb-6 flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: "var(--surface-low)" }}>
 									<input
@@ -1287,9 +1293,9 @@ const CheckoutPage: React.FC = () => {
 								)}
 							</AnimatePresence>
 
-							{/* Phone Number for Manual Transfer */}
+							{/* Phone Number for all payment methods */}
 							<AnimatePresence>
-								{selectedPayment === "MANUAL_TRANSFER" && (
+								{selectedPayment && (
 									<motion.div
 										initial={{ opacity: 0, height: 0 }}
 										animate={{ opacity: 1, height: "auto" }}
@@ -1299,18 +1305,14 @@ const CheckoutPage: React.FC = () => {
 									>
 										<div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg mb-4" style={{ borderLeft: "4px solid var(--color-primary)" }}>
 											<p className="text-sm" style={{ color: "var(--text-primary)" }}>
-												📞 We'll contact you on this number to coordinate the bank transfer and delivery.
+												📞 We'll contact you on this number to coordinate payment and delivery.
 											</p>
 										</div>
 										<FormInput
 											label="Phone Number *"
 											placeholder="08012345678"
 											{...register("phoneNumber")}
-											error={
-												selectedPayment === "MANUAL_TRANSFER"
-													? errors.phoneNumber?.message
-													: undefined
-											}
+											error={errors.phoneNumber?.message}
 										/>
 									</motion.div>
 								)}

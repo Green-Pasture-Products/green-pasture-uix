@@ -117,7 +117,7 @@ const AdminOrders: React.FC = () => {
 			accessorKey: "customer",
 			header: "Customer",
 			enableSorting: false,
-			meta: { maxWidth: "220px", truncate: true },
+			meta: { maxWidth: "260px", truncate: true },
 			cell: ({ row }) => (
 				<div>
 					<div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
@@ -125,6 +125,9 @@ const AdminOrders: React.FC = () => {
 					</div>
 					<div className="text-xs truncate" style={{ color: "var(--text-hint)" }}>
 						{row.original.customer?.profile?.email}
+					</div>
+					<div className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
+						{row.original.customer?.profile?.phoneNumber}
 					</div>
 				</div>
 			),
