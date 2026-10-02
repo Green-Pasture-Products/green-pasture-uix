@@ -1091,7 +1091,7 @@ const CheckoutPage: React.FC = () => {
 
 							<div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "rgba(34,197,94,0.08)", borderLeft: "4px solid rgb(34,197,94)" }}>
 								<p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-									✓ <strong>No Shipping Fee</strong> — Dispatch is currently handled offline. Your order will be processed and delivered at no additional shipping cost.
+								✓ <strong>Shipping & Dispatch</strong> — Dispatch is currently handled offline and is not calculated within this app. After your order is placed, our team will contact you to confirm the available logistics option and any applicable dispatch fee before delivery.
 								</p>
 							</div>
 
