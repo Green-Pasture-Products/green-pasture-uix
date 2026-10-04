@@ -16,6 +16,18 @@ const fetchOrdersAsync = createAsyncThunk<any, { page?: number; limit?: number; 
 	}
 );
 
+const fetchOrderDetailAsync = createAsyncThunk<any, string, { rejectValue: string }>(
+	"admin/fetchOrderDetail",
+	async (orderReference, { rejectWithValue }) => {
+		try {
+			const response = await axiosInstance.get(`order/admin/ref/${orderReference}`);
+			return response.data;
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
 const cancelOrderAsync = createAsyncThunk<any, string, { rejectValue: string }>(
 	"admin/cancelOrder",
 	async (orderId, { rejectWithValue }) => {
@@ -159,4 +171,16 @@ const fetchAdminItemsAsync = createAsyncThunk<any, { page?: number; limit?: numb
 	}
 );
 
-export const adminAction = { fetchOrdersAsync, cancelOrderAsync, fetchCustomersAsync, deleteCustomerAsync, updateCustomerStatusAsync, fetchStaffAsync, updateStaffAsync, updateStaffStatusAsync, deleteStaffAsync, fetchAdminItemsAsync, updateItemStatusAsync, updateItemPublishedAsync };
+const updateOrderStatusAsync = createAsyncThunk<any, { orderId: string; status: string; note?: string }, { rejectValue: string }>(
+	"admin/updateOrderStatus",
+	async ({ orderId, status, note }, { rejectWithValue }) => {
+		try {
+			const response = await axiosInstance.patch(`order/status/${orderId}`, { status, note });
+			return response.data;
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
+export const adminAction = { fetchOrdersAsync, fetchOrderDetailAsync, cancelOrderAsync, updateOrderStatusAsync, fetchCustomersAsync, deleteCustomerAsync, updateCustomerStatusAsync, fetchStaffAsync, updateStaffAsync, updateStaffStatusAsync, deleteStaffAsync, fetchAdminItemsAsync, updateItemStatusAsync, updateItemPublishedAsync };

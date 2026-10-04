@@ -392,15 +392,47 @@ export function ReceiptPrinter({
 									{mergedReceipt.currency === "NGN" ? "Nigerian Naira (₦)" : mergedReceipt.currency}
 								</span>
 
-								{/* PAID STAMP */}
+								{/* STATUS STAMP */}
 								{(printState === "stamping" || printState === "completed") && (
 									<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-										<div className="border-[3.5px] border-red-600/90 text-red-600 font-mono font-black text-3xl sm:text-4xl px-5 py-1 rounded-md uppercase tracking-widest shadow-sm rotate-[-14deg] animate-stamp-impact bg-red-600/5 backdrop-blur-[0.5px]">
-											PAID
-											<span className="block text-[8px] tracking-normal font-sans font-extrabold text-red-600/90 text-center -mt-1">
-												VERIFIED PAYMENT
-											</span>
-										</div>
+										{(() => {
+											const statusUpper = (mergedReceipt.statusText || "PENDING").toUpperCase();
+											let borderColor = "border-orange-600/90";
+											let textColor = "text-orange-600";
+											let bgColor = "bg-orange-600/5";
+											let subtext = "AWAITING VERIFICATION";
+
+											if (statusUpper.includes("VERIFIED")) {
+												borderColor = "border-green-600/90";
+												textColor = "text-green-600";
+												bgColor = "bg-green-600/5";
+												subtext = "PAYMENT VERIFIED";
+											} else if (statusUpper === "PAID") {
+												borderColor = "border-green-600/90";
+												textColor = "text-green-600";
+												bgColor = "bg-green-600/5";
+												subtext = "VERIFIED PAYMENT";
+											} else if (statusUpper === "DECLINED") {
+												borderColor = "border-red-600/90";
+												textColor = "text-red-600";
+												bgColor = "bg-red-600/5";
+												subtext = "PAYMENT DECLINED";
+											} else if (statusUpper === "PENDING") {
+												borderColor = "border-orange-600/90";
+												textColor = "text-orange-600";
+												bgColor = "bg-orange-600/5";
+												subtext = "AWAITING VERIFICATION";
+											}
+
+											return (
+												<div className={`border-[3.5px] ${borderColor} ${textColor} font-mono font-black text-3xl sm:text-4xl px-5 py-1 rounded-md uppercase tracking-widest shadow-sm rotate-[-14deg] animate-stamp-impact ${bgColor} backdrop-blur-[0.5px]`}>
+													{statusUpper}
+													<span className={`block text-[8px] tracking-normal font-sans font-extrabold ${textColor} text-center -mt-1`}>
+														{subtext}
+													</span>
+												</div>
+											);
+										})()}
 									</div>
 								)}
 							</div>

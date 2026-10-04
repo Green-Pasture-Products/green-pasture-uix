@@ -20,6 +20,7 @@ import {
 	ShieldCheck,
 	MapPin,
 	Check,
+	Landmark,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
@@ -43,6 +44,13 @@ import { InteractiveCreditCard } from "@/_components/Checkout/InteractiveCreditC
 /*  Zod schema                                                        */
 /* ------------------------------------------------------------------ */
 
+const isValidPhoneNumber = (value: string): boolean => {
+	const normalized = value.trim();
+	if (!/^\+?[\d\s().-]+$/.test(normalized)) return false;
+	const digitCount = normalized.replace(/\D/g, "").length;
+	return digitCount >= 8 && digitCount <= 15;
+};
+
 const checkoutFormSchema = z.object({
 	// Guest identity (only shown/required when not authenticated)
 	guestFirstName: z.string().optional(),
@@ -51,16 +59,61 @@ const checkoutFormSchema = z.object({
 	guestPhone: z.string().optional(),
 	// Existing fields
 	shippingAddress: z.object({
-		street: z.string().min(1, "Street is required"),
-		city: z.string().min(1, "City is required"),
-		state: z.string().min(1, "State is required"),
-		country: z.string().min(1, "Country is required"),
-		postalCode: z.string().min(1, "Postal code is required"),
+		street: z.string().optional(),
+		city: z.string().optional(),
+		state: z.string().optional(),
+		country: z.string().optional(),
+		postalCode: z.string().optional(),
+	}).superRefine((address, ctx) => {
+		const city = address.city?.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+		const state = address.state?.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+		if (city && state && city === state) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["city"],
+				message: "City and state must be different",
+			});
+		}
 	}),
+	useDifferentAddress: z.boolean().optional(),
 	// Not shipping for now — no method to pick, but the field stays (sent to
 	// the backend as an empty string) so the request shape is unchanged.
 	shippingMethod: z.string(),
-	paymentMethod: z.enum(["CARD", "CASH_ON_DELIVERY"]),
+	paymentMethod: z.enum(["CARD", "CUSTOMER_PICKUP", "MANUAL_TRANSFER"]),
+	// Phone number optional, but required for card and manual transfer
+	phoneNumber: z.string().optional(),
+}).refine((data) => {
+	// Card payment is not yet available
+	if (data.paymentMethod === "CARD") {
+		return false;
+	}
+	return true;
+}, {
+	message: "Card payment is currently being worked on. Please use manual transfer or cash on delivery.",
+	path: ["paymentMethod"],
+}).refine((data) => {
+	// Shipping address required for bank transfer, optional for cash on delivery
+	if (data.paymentMethod === "MANUAL_TRANSFER") {
+		const addr = data.shippingAddress;
+		if (!addr.street?.trim() || !addr.city?.trim() || !addr.state?.trim() || !addr.country?.trim()) {
+			return false;
+		}
+	}
+	return true;
+}, {
+	message: "Shipping address is required for bank transfer",
+	path: ["shippingAddress"],
+}).refine((data) => {
+	return Boolean(data.phoneNumber?.trim());
+}, {
+	message: "Phone number is required",
+	path: ["phoneNumber"],
+}).refine((data) => isValidPhoneNumber(data.phoneNumber ?? ""), {
+	message: "Enter a valid phone number (8–15 digits)",
+	path: ["phoneNumber"],
+}).refine((data) => !data.guestPhone?.trim() || isValidPhoneNumber(data.guestPhone), {
+	message: "Enter a valid phone number (8–15 digits)",
+	path: ["guestPhone"],
 });
 
 type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
@@ -70,8 +123,9 @@ type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
 /* ------------------------------------------------------------------ */
 
 const paymentOptions = [
-	{ value: "CARD" as const, label: "Pay with Card", desc: "Secure payment via Paystack", Icon: CreditCard },
-	{ value: "CASH_ON_DELIVERY" as const, label: "Cash on Delivery", desc: "Pay when you receive your order", Icon: DollarSign },
+	{ value: "CARD" as const, label: "Pay with Card", desc: "Coming Soon", Icon: CreditCard, disabled: true, badge: "Coming Soon" },
+	{ value: "MANUAL_TRANSFER" as const, label: "Bank Transfer", desc: "Direct bank transfer payment", Icon: Landmark },
+	{ value: "CUSTOMER_PICKUP" as const, label: "Customer Pickup", desc: "Pick up items at our location", Icon: DollarSign },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -255,6 +309,7 @@ const CheckoutPage: React.FC = () => {
 	const isAdmin = appConstants.ADMIN_ROLES.includes(user?.profileType?.toUpperCase() as any || "");
 	const { isCheckingOut, isPlacingOrder, paymentUrl, error } = useAppSelector((state) => state.checkout);
 	const [orderPlaced, setOrderPlaced] = useState(false);
+	const [addressAutoPopulated, setAddressAutoPopulated] = useState(false);
 	const [couponCode, setCouponCode] = useState("");
 	const [couponDiscount, setCouponDiscount] = useState(0);
 	const [couponLoading, setCouponLoading] = useState(false);
@@ -291,16 +346,25 @@ const CheckoutPage: React.FC = () => {
 			// Set once the store config loads and the enabled methods are known
 			// (see the effect below) — there is no fixed default id to assume.
 			shippingMethod: "",
-			paymentMethod: "CARD",
+			paymentMethod: "MANUAL_TRANSFER",
 			guestFirstName: "",
 			guestLastName: "",
 			guestEmail: "",
 			guestPhone: "",
+			shippingAddress: {
+				street: "",
+				city: "",
+				state: "",
+				country: "",
+				postalCode: "",
+			},
+			useDifferentAddress: false,
 		},
 	});
 
 	const selectedPayment = useWatch({ control, name: "paymentMethod" });
 	const shippingState = useWatch({ control, name: "shippingAddress.state" });
+	const useDifferentAddress = useWatch({ control, name: "useDifferentAddress" });
 
 	/* Derive visual step based on form completion (all sections visible) */
 	const hasShippingErrors =
@@ -333,6 +397,100 @@ const CheckoutPage: React.FC = () => {
 		};
 		fetchConfig();
 	}, []);
+
+	// Auto-populate shipping address from previous order
+	useEffect(() => {
+		if (!isAuthenticated) {
+			console.log("Not authenticated, skipping address auto-population");
+			return;
+		}
+
+		const populatePreviousAddress = async () => {
+			try {
+				const axiosInstance = (await import("@/_utils/axiosInstance")).default;
+				console.log("Fetching previous orders for address auto-population...");
+
+				const res = await axiosInstance.get("order/my-orders", {
+					params: { page: 1, limit: 1 }
+				});
+
+				console.log("Orders response:", res.data);
+
+				// Handle different response structures
+				let lastOrder = null;
+				if (res.data?.data?.items?.[0]) {
+					lastOrder = res.data.data.items[0];
+				} else if (res.data?.data?.[0]) {
+					lastOrder = res.data.data[0];
+				}
+
+				console.log("Last order found:", lastOrder);
+
+				if (!lastOrder) {
+					console.log("No previous orders found");
+					return;
+				}
+
+				console.log("Last order shippingAddress field:", lastOrder.shippingAddress);
+
+				// Get shipping address from order (stored directly on Order entity)
+				const addr = lastOrder.shippingAddress;
+
+				console.log("Extracted address:", addr);
+
+				if (!addr) {
+					console.log("No shipping address in previous order");
+					return;
+				}
+
+				console.log("Loading previous address:", addr);
+
+				const streetValue = addr.houseAddress || addr.street || "";
+				const cityValue = addr.city || "";
+				const stateValue = addr.region || addr.state || "";
+				const countryValue = addr.country || "";
+				const postalValue = addr.postalCode || "";
+
+				if (streetValue || cityValue || stateValue || countryValue) {
+					console.log("Setting address values:", {
+						street: streetValue,
+						city: cityValue,
+						state: stateValue,
+						country: countryValue,
+						postal: postalValue
+					});
+
+					setValue("shippingAddress.street", streetValue);
+					setValue("shippingAddress.city", cityValue);
+					setValue("shippingAddress.state", stateValue);
+					setValue("shippingAddress.country", countryValue);
+					setValue("shippingAddress.postalCode", postalValue);
+					setAddressAutoPopulated(true);
+				}
+			} catch (error) {
+				console.error("Failed to load previous shipping address:", error);
+			}
+		};
+
+		// Small delay to ensure form is ready
+		const timer = setTimeout(() => {
+			populatePreviousAddress();
+		}, 100);
+
+		return () => clearTimeout(timer);
+	}, [isAuthenticated, setValue]);
+
+	// Clear address fields when user checks "use different address"
+	useEffect(() => {
+		if (useDifferentAddress) {
+			console.log("Clearing address fields for new address entry");
+			setValue("shippingAddress.street", "");
+			setValue("shippingAddress.city", "");
+			setValue("shippingAddress.state", "");
+			setValue("shippingAddress.country", "");
+			setValue("shippingAddress.postalCode", "");
+		}
+	}, [useDifferentAddress, setValue]);
 
 	const taxRate = Number(storeConfig?.orderSettings?.taxRate) || 0;
 
@@ -525,18 +683,32 @@ const CheckoutPage: React.FC = () => {
 				}
 
 				// Step 4: Create order from cart (idempotent — returns existing if cart already checked out)
+				console.log("Checkout data being sent:", {
+					cartId: activeCartId,
+					shippingAddress: data.shippingAddress,
+					shippingMethod: data.shippingMethod,
+					paymentMethod: data.paymentMethod,
+				});
+
 				const orderResult = await dispatch(
 					checkoutAction.checkoutCartAsync({
 						cartId: activeCartId,
 						couponCode: couponApplied ? couponCode : undefined,
 						shippingMethod: data.shippingMethod,
+						shippingAddress: data.shippingAddress,
+						paymentMethod: data.paymentMethod,
+						phoneNumber: data.paymentMethod === "MANUAL_TRANSFER" ? data.phoneNumber : undefined,
 						idempotencyKey,
 					})
 				).unwrap();
 
 				const orderId = orderResult?.data?.id;
 				const orderReference = orderResult?.data?.orderReference;
+				console.log("Order result:", orderResult);
+				console.log("Order ID:", orderId);
+				console.log("Order reference:", orderReference);
 				if (!orderId) {
+					console.error("Order ID is missing from response:", orderResult);
 					failure({
 							title: "We couldn't place your order",
 							message:
@@ -547,13 +719,22 @@ const CheckoutPage: React.FC = () => {
 				}
 
 				// Step 5: Handle payment method
-				const backendPaymentMethod = data.paymentMethod === "CARD" ? "Paystack" : "Cash On Delivery";
-
-				if (data.paymentMethod === "CASH_ON_DELIVERY") {
+				if (data.paymentMethod === "CUSTOMER_PICKUP") {
+					setOrderPlaced(true);
 					dispatch(clearCart());
 					dispatch(resetCheckout());
 					toast.success("Order placed successfully!");
 					router.push(`/order-confirmation/${orderReference ?? orderId}`);
+					return;
+				}
+
+				if (data.paymentMethod === "MANUAL_TRANSFER") {
+					setOrderPlaced(true);
+					dispatch(clearCart());
+					dispatch(resetCheckout());
+					toast.success("Order placed! Please proceed to upload your payment receipt.");
+					console.log("Redirecting to payment instructions for order:", orderId);
+					await router.push(`/payment-instructions/${orderId}`);
 					return;
 				}
 
@@ -562,7 +743,7 @@ const CheckoutPage: React.FC = () => {
 					checkoutAction.placeOrderAsync({
 						orderId,
 						shippingMethod: data.shippingMethod,
-						paymentMethod: backendPaymentMethod as any,
+						paymentMethod: data.paymentMethod,
 						shippingAddress: {
 							...data.shippingAddress,
 							latitude: "0",
@@ -578,6 +759,7 @@ const CheckoutPage: React.FC = () => {
 				const paystackData = paymentResult?.data?.data ?? paymentResult?.data;
 				const authUrl = paystackData?.authorization_url;
 				if (authUrl) {
+					setOrderPlaced(true);
 					redirectToPaystack(authUrl);
 				} else {
 					failure({
@@ -616,34 +798,40 @@ const CheckoutPage: React.FC = () => {
 				const idempotencyKey = idempotencyStateRef.current.key as string;
 
 				// Call guest-checkout endpoint
+				const guestPayload = {
+					firstName: data.guestFirstName,
+					lastName: data.guestLastName || "",
+					email: data.guestEmail,
+					phoneNumber: data.guestPhone,
+					items: guestItems,
+					shippingMethod: data.shippingMethod,
+					paymentMethod: data.paymentMethod,
+					...(data.paymentMethod === "MANUAL_TRANSFER" && { phoneNumber: data.phoneNumber }),
+					couponCode: couponApplied ? couponCode : undefined,
+					shippingAddress: {
+						street: data.shippingAddress.street,
+						city: data.shippingAddress.city,
+						state: data.shippingAddress.state || "",
+						country: data.shippingAddress.country,
+						postalCode: data.shippingAddress.postalCode || "",
+					},
+				};
+
+				console.log("Guest checkout payload being sent:", guestPayload);
+
 				const guestRes = await axiosInstance.post(
 					"order/guest-checkout",
-					{
-						firstName: data.guestFirstName,
-						lastName: data.guestLastName || "",
-						email: data.guestEmail,
-						phoneNumber: data.guestPhone,
-						items: guestItems,
-						shippingMethod: data.shippingMethod,
-						paymentMethod: data.paymentMethod === "CARD" ? "Paystack" : "Cash On Delivery",
-						couponCode: couponApplied ? couponCode : undefined,
-						shippingAddress: {
-							houseAddress: data.shippingAddress.street,
-							city: data.shippingAddress.city,
-							region: data.shippingAddress.state || "",
-							state: data.shippingAddress.state || "",
-							country: data.shippingAddress.country,
-							postalCode: data.shippingAddress.postalCode || "",
-							latitude: "0",
-							longitude: "0",
-						},
-					},
+					guestPayload,
 					{ headers: { "Idempotency-Key": idempotencyKey } },
 				);
 
 				const orderId = guestRes.data?.data?.orderId;
 				const guestOrderReference = guestRes.data?.data?.orderReference;
+				console.log("Guest order result:", guestRes.data);
+				console.log("Guest Order ID:", orderId);
+				console.log("Guest Order reference:", guestOrderReference);
 				if (!orderId) {
+					console.error("Order ID is missing from guest response:", guestRes.data);
 					failure({
 							title: "We couldn't place your order",
 							message:
@@ -653,10 +841,20 @@ const CheckoutPage: React.FC = () => {
 					return;
 				}
 
-				if (data.paymentMethod === "CASH_ON_DELIVERY") {
+				if (data.paymentMethod === "CUSTOMER_PICKUP") {
+					setOrderPlaced(true);
 					dispatch(clearCart());
 					toast.success("Order placed successfully!");
 					router.push(`/order-confirmation/${guestOrderReference ?? orderId}`);
+					return;
+				}
+
+				if (data.paymentMethod === "MANUAL_TRANSFER") {
+					setOrderPlaced(true);
+					dispatch(clearCart());
+					toast.success("Order placed! Please proceed to upload your payment receipt.");
+					console.log("Redirecting to payment instructions for guest order:", orderId);
+					await router.push(`/payment-instructions/${orderId}`);
 					return;
 				}
 
@@ -684,6 +882,7 @@ const CheckoutPage: React.FC = () => {
 				const paystackData = paymentRes.data?.data?.data ?? paymentRes.data?.data;
 				const authUrl = paystackData?.authorization_url;
 				if (authUrl) {
+					setOrderPlaced(true);
 					redirectToPaystack(authUrl);
 				} else {
 					failure({
@@ -891,8 +1090,11 @@ const CheckoutPage: React.FC = () => {
 											type="tel"
 											placeholder="+2348012345678"
 											className="w-full px-3 py-2.5 rounded-md text-sm bg-transparent outline-none transition-colors"
-											style={{ border: "1px solid var(--border-light)", color: "var(--text-primary)" }}
+											style={{ border: `1px solid ${errors.guestPhone ? '#ef4444' : 'var(--border-light)'}`, color: "var(--text-primary)" }}
 										/>
+										{errors.guestPhone?.message && (
+											<p className="mt-1 text-xs text-red-600">{errors.guestPhone.message}</p>
+										)}
 									</div>
 								</div>
 								<p className="text-[0.65rem] mt-3" style={{ color: "var(--text-hint)" }}>
@@ -903,68 +1105,6 @@ const CheckoutPage: React.FC = () => {
 								</p>
 							</div>
 						)}
-
-						{/* ===== Shipping Address ===== */}
-						<motion.section
-							variants={sectionVariants}
-							className="rounded-2xl p-6 md:p-8"
-							style={{
-								background: "var(--surface-paper)",
-								border: "1px solid var(--border-light)",
-							}}
-						>
-							<h2
-								className="text-lg font-semibold mb-6 flex items-center gap-2"
-								style={{ color: "var(--text-primary)" }}
-							>
-								<MapPin size={18} style={{ color: "var(--color-primary)" }} />
-								Shipping Address
-							</h2>
-
-							<div className="space-y-4">
-								<FormInput
-									label="Street Address"
-									required
-									placeholder="123 Main Street"
-									{...register("shippingAddress.street")}
-									error={errors.shippingAddress?.street?.message}
-								/>
-
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									<FormInput
-										label="City"
-										required
-										placeholder="Lagos"
-										{...register("shippingAddress.city")}
-										error={errors.shippingAddress?.city?.message}
-									/>
-									<FormInput
-										label="State"
-										required
-										placeholder="Lagos"
-										{...register("shippingAddress.state")}
-										error={errors.shippingAddress?.state?.message}
-									/>
-								</div>
-
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									<FormInput
-										label="Postal Code"
-										required
-										placeholder="100001"
-										{...register("shippingAddress.postalCode")}
-										error={errors.shippingAddress?.postalCode?.message}
-									/>
-									<FormInput
-										label="Country"
-										required
-										defaultValue="Nigeria"
-										{...register("shippingAddress.country")}
-										error={errors.shippingAddress?.country?.message}
-									/>
-								</div>
-							</div>
-						</motion.section>
 
 						{/* ===== Payment Method ===== */}
 						<motion.section
@@ -985,22 +1125,30 @@ const CheckoutPage: React.FC = () => {
 
 							<div className="space-y-3">
 								{paymentOptions.map((opt) => (
-									<OptionCard
-										key={opt.value}
-										selected={selectedPayment === opt.value}
-										Icon={opt.Icon}
-										label={opt.label}
-										desc={opt.desc}
-										value={opt.value}
-										name="paymentMethod"
-										onChange={() => setValue("paymentMethod", opt.value)}
-									/>
+									<div key={opt.value} className={`relative ${opt.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+										<div className={opt.disabled ? 'pointer-events-none' : ''}>
+											<OptionCard
+												selected={selectedPayment === opt.value}
+												Icon={opt.Icon}
+												label={opt.label}
+												desc={opt.desc}
+												value={opt.value}
+												name="paymentMethod"
+												onChange={() => !opt.disabled && setValue("paymentMethod", opt.value)}
+											/>
+										</div>
+										{opt.badge && (
+											<span className="absolute top-3 right-3 bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">
+												{opt.badge}
+											</span>
+										)}
+									</div>
 								))}
 							</div>
 
 							{/* 3D Interactive Card Preview for Card Payment */}
 							<AnimatePresence>
-								{selectedPayment === "CARD" && (
+								{selectedPayment === "CARD" && !paymentOptions.find(o => o.value === "CARD")?.disabled && (
 									<motion.div
 										initial={{ opacity: 0, height: 0 }}
 										animate={{ opacity: 1, height: "auto" }}
@@ -1101,6 +1249,31 @@ const CheckoutPage: React.FC = () => {
 								)}
 							</AnimatePresence>
 
+							{/* Phone Number for all payment methods */}
+							<AnimatePresence>
+								{selectedPayment && (
+									<motion.div
+										initial={{ opacity: 0, height: 0 }}
+										animate={{ opacity: 1, height: "auto" }}
+										exit={{ opacity: 0, height: 0 }}
+										transition={{ duration: 0.35, ease: "easeInOut" }}
+										className="overflow-hidden pt-6 mt-4 border-t border-outline-variant dark:border-white/10"
+									>
+										<div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg mb-4" style={{ borderLeft: "4px solid var(--color-primary)" }}>
+											<p className="text-sm" style={{ color: "var(--text-primary)" }}>
+												📞 We'll contact you on this number to coordinate payment and delivery.
+											</p>
+										</div>
+										<FormInput
+											label="Phone Number *"
+											placeholder="08012345678"
+											{...register("phoneNumber")}
+											error={errors.phoneNumber?.message}
+										/>
+									</motion.div>
+								)}
+							</AnimatePresence>
+
 							{/* Security badges */}
 							<div
 								className="mt-5 flex items-center gap-4 text-xs pt-4"
@@ -1116,6 +1289,86 @@ const CheckoutPage: React.FC = () => {
 								</span>
 							</div>
 						</motion.section>
+
+						{/* ===== Shipping Address ===== */}
+						{selectedPayment !== "CUSTOMER_PICKUP" && (
+						<motion.section
+							variants={sectionVariants}
+							className="rounded-2xl p-6 md:p-8"
+							style={{
+								background: "var(--surface-paper)",
+								border: "1px solid var(--border-light)",
+							}}
+						>
+							<h2
+								className="text-lg font-semibold mb-6 flex items-center gap-2"
+								style={{ color: "var(--text-primary)" }}
+							>
+								<MapPin size={18} style={{ color: "var(--color-primary)" }} />
+								Shipping Address
+							</h2>
+
+							<div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "rgba(34,197,94,0.08)", borderLeft: "4px solid rgb(34,197,94)" }}>
+								<p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+								✓ <strong>Shipping & Dispatch</strong> — Dispatch is currently handled offline and is not calculated within this app. After your order is placed, our team will contact you to confirm the available logistics option and any applicable dispatch fee before delivery.
+								</p>
+							</div>
+
+							{isAuthenticated && addressAutoPopulated && (
+								<div className="mb-6 flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: "var(--surface-low)" }}>
+									<input
+										type="checkbox"
+										{...register("useDifferentAddress")}
+										className="w-4 h-4 mt-1 rounded"
+										style={{ accentColor: "var(--color-primary)" }}
+									/>
+									<div>
+										<label className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+											Use a different address
+										</label>
+										<p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>
+											Clear the auto-filled address to enter a new shipping address
+										</p>
+									</div>
+								</div>
+							)}
+
+							<div className="space-y-4">
+								<FormInput
+									label="Street Address"
+									required
+									placeholder="123 Main Street"
+									{...register("shippingAddress.street")}
+									error={errors.shippingAddress?.street?.message}
+								/>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<FormInput
+										label="City"
+										required
+										placeholder="Lagos"
+										{...register("shippingAddress.city")}
+										error={errors.shippingAddress?.city?.message}
+									/>
+									<FormInput
+										label="State"
+										required
+										placeholder="Lagos"
+										{...register("shippingAddress.state")}
+										error={errors.shippingAddress?.state?.message}
+									/>
+								</div>
+
+								<FormInput
+									label="Country"
+									required
+									defaultValue="Nigeria"
+									{...register("shippingAddress.country")}
+									error={errors.shippingAddress?.country?.message}
+								/>
+							</div>
+						</motion.section>
+						)}
 					</motion.div>
 
 					{/* ---- Right column: Order Summary ---- */}

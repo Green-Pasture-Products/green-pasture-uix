@@ -93,10 +93,42 @@ const setReviewFeaturedAsync = createAsyncThunk<any, { ids: string[]; featured: 
 	}
 );
 
+/** Update an existing testimonial. Only admin testimonials can be edited. */
+const updateTestimonialAsync = createAsyncThunk<
+	any,
+	{ reviewId: string; rating: number; comment: string; reviewerName: string; itemId: string; image?: File },
+	{ rejectValue: string }
+>(
+	"review/updateTestimonial",
+	async ({ reviewId, rating, comment, reviewerName, itemId, image }, { rejectWithValue }) => {
+		try {
+			const form = new FormData();
+			form.append("rating", String(rating));
+			form.append("comment", comment);
+			form.append("reviewerName", reviewerName);
+			form.append("itemId", itemId);
+			if (image) {
+				form.append("image", image);
+			}
+
+			const response = await axiosInstance.patch(`reviews/testimonials/${reviewId}`, form, {
+				headers: {
+					"Content-Type": "multipart/form-data",
+					"Idempotency-Key": uuidv7(),
+				},
+			});
+			return response.data;
+		} catch (error: any) {
+			return rejectWithValue(extractErrorMessage(error));
+		}
+	}
+);
+
 export const reviewAction = {
 	fetchItemReviewsAsync,
 	fetchModerationReviewsAsync,
 	submitReviewAsync,
 	fetchTestimonialsAsync,
 	setReviewFeaturedAsync,
+	updateTestimonialAsync,
 };

@@ -40,6 +40,7 @@ const AdminReviews: React.FC = () => {
 	const [togglingId, setTogglingId] = useState<string | null>(null);
 	const [filterType, setFilterType] = useState<FilterType>("all");
 	const [showAddTestimonial, setShowAddTestimonial] = useState(false);
+	const [editingReview, setEditingReview] = useState<BackendReview | null>(null);
 	const [testimonialForm, setTestimonialForm] = useState({
 		rating: 5,
 		comment: "",
@@ -98,6 +99,31 @@ const AdminReviews: React.FC = () => {
 		}
 	};
 
+	const startEditingTestimonial = (review: BackendReview) => {
+		setEditingReview(review);
+		setTestimonialForm({
+			rating: review.rating,
+			comment: review.comment || "",
+			reviewerName: review.reviewerName || "",
+			itemId: review.item?.id || "",
+			image: null,
+		});
+		setImagePreview(review.imageUrl || null);
+		setShowAddTestimonial(false);
+	};
+
+	const cancelEdit = () => {
+		setEditingReview(null);
+		setTestimonialForm({
+			rating: 5,
+			comment: "",
+			reviewerName: "",
+			itemId: "",
+			image: null,
+		});
+		setImagePreview(null);
+	};
+
 	const handleAddTestimonial = async (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -109,7 +135,7 @@ const AdminReviews: React.FC = () => {
 			toast.error("Please select a product");
 			return;
 		}
-		if (!testimonialForm.image) {
+		if (!editingReview && !testimonialForm.image) {
 			toast.error("Please upload an image file");
 			return;
 		}
@@ -121,16 +147,32 @@ const AdminReviews: React.FC = () => {
 			form.append("comment", testimonialForm.comment);
 			form.append("reviewerName", testimonialForm.reviewerName || "");
 			form.append("itemId", testimonialForm.itemId);
-			form.append("image", testimonialForm.image);
+			if (testimonialForm.image) {
+				form.append("image", testimonialForm.image);
+			}
 
-			await axiosInstance.post("reviews/testimonials", form, {
-				headers: {
-					"Content-Type": "multipart/form-data",
-					"Idempotency-Key": uuidv7(),
-				},
-			});
+			if (editingReview) {
+				// Edit mode
+				await dispatch(reviewAction.updateTestimonialAsync({
+					reviewId: editingReview.id,
+					rating: testimonialForm.rating,
+					comment: testimonialForm.comment,
+					reviewerName: testimonialForm.reviewerName || "",
+					itemId: testimonialForm.itemId,
+					image: testimonialForm.image || undefined,
+				})).unwrap();
+				toast.success("Testimonial updated successfully!");
+			} else {
+				// Add mode
+				await axiosInstance.post("reviews/testimonials", form, {
+					headers: {
+						"Content-Type": "multipart/form-data",
+						"Idempotency-Key": uuidv7(),
+					},
+				});
+				toast.success("Testimonial created successfully!");
+			}
 
-			toast.success("Testimonial created successfully!");
 			setTestimonialForm({
 				rating: 5,
 				comment: "",
@@ -140,9 +182,10 @@ const AdminReviews: React.FC = () => {
 			});
 			setImagePreview(null);
 			setShowAddTestimonial(false);
+			setEditingReview(null);
 			refresh();
 		} catch (error: any) {
-			toast.error(error?.response?.data?.message || "Failed to create testimonial");
+			toast.error(error?.response?.data?.message || (editingReview ? "Failed to update testimonial" : "Failed to create testimonial"));
 		} finally {
 			setIsSubmittingTestimonial(false);
 		}
@@ -261,6 +304,34 @@ const AdminReviews: React.FC = () => {
 				);
 			},
 		},
+		{
+			id: "actions",
+			header: "Actions",
+			enableSorting: false,
+			meta: { width: "100px", align: "center" },
+			cell: ({ row }) => {
+				const isAdmin = row.original.source === "admin";
+
+				// Only admin testimonials can be edited
+				if (!isAdmin) {
+					return <span style={{ color: "var(--text-secondary)" }}>—</span>;
+				}
+
+				return (
+					<button
+						onClick={() => startEditingTestimonial(row.original)}
+						className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+						style={{
+							background: "var(--color-primary)",
+							border: "1px solid transparent",
+							color: "white",
+						}}
+					>
+						Edit
+					</button>
+				);
+			},
+		},
 	];
 
 	return (
@@ -303,21 +374,23 @@ const AdminReviews: React.FC = () => {
 							Admin Testimonials
 						</button>
 					</div>
-					{filterType === "admin" && (
+					{filterType === "admin" && !editingReview && (
 						<Button variant="filled" onClick={() => setShowAddTestimonial(!showAddTestimonial)}>
 							{showAddTestimonial ? "Cancel" : "Add Testimonial"}
 						</Button>
 					)}
 				</div>
 
-				{/* Add Testimonial Form */}
-				{filterType === "admin" && showAddTestimonial && (
+				{/* Add/Edit Testimonial Form */}
+				{filterType === "admin" && (showAddTestimonial || editingReview) && (
 					<form
 						onSubmit={handleAddTestimonial}
 						className="rounded-lg border p-6"
 						style={{ borderColor: "var(--border-light)" }}
 					>
 						<div className="space-y-4 max-w-2xl">
+							<h3 className="text-lg font-semibold">{editingReview ? "Edit Testimonial" : "Add Testimonial"}</h3>
+
 							<div>
 								<label className="block text-sm font-medium mb-2">Product *</label>
 								<select
@@ -381,7 +454,7 @@ const AdminReviews: React.FC = () => {
 							</div>
 
 							<div>
-								<label className="block text-sm font-medium mb-2">Image *</label>
+								<label className="block text-sm font-medium mb-2">Image {editingReview ? "" : "*"}</label>
 								<input
 									type="file"
 									accept="image/*"
@@ -404,16 +477,30 @@ const AdminReviews: React.FC = () => {
 										</button>
 									</div>
 								)}
+								{editingReview && <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>Leave blank to keep current image</p>}
 							</div>
 
-							<button
-								type="submit"
-								disabled={isSubmittingTestimonial}
-								className="w-full px-6 py-2 rounded-lg font-medium text-white disabled:opacity-50"
-								style={{ backgroundColor: "var(--color-primary)" }}
-							>
-								{isSubmittingTestimonial ? "Creating..." : "Create Testimonial"}
-							</button>
+							<div className="flex gap-2">
+								<button
+									type="submit"
+									disabled={isSubmittingTestimonial}
+									className="flex-1 px-6 py-2 rounded-lg font-medium text-white disabled:opacity-50"
+									style={{ backgroundColor: "var(--color-primary)" }}
+								>
+									{isSubmittingTestimonial ? (editingReview ? "Updating..." : "Creating...") : (editingReview ? "Update Testimonial" : "Create Testimonial")}
+								</button>
+								{editingReview && (
+									<button
+										type="button"
+										onClick={cancelEdit}
+										disabled={isSubmittingTestimonial}
+										className="px-6 py-2 rounded-lg font-medium border"
+										style={{ borderColor: "var(--border-light)" }}
+									>
+										Cancel
+									</button>
+								)}
+							</div>
 						</div>
 					</form>
 				)}

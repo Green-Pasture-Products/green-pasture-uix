@@ -58,14 +58,16 @@ export const addToCartAsync = createAsyncThunk(
 			const state = getState() as RootState;
 
 			if (state.auth.isAuthenticated) {
-				// Resolve the cart rather than giving up when we have no id yet.
-				// Skipping the write on a null cartId meant a signed-in customer
-				// who added from a product card before ever opening /cart wrote
-				// nothing to the server -- the item lived in localStorage only,
-				// and the next cart sync replaced it with the empty server cart.
-				// POST /cart/create returns the existing cart when there is one,
-				// so it is get-or-create, not a duplicate.
-				let cartId = state.cart.cartId;
+				// The cart ID may have been persisted from an older database or
+				// deleted cart. Resolve the server's current cart before writing so
+				// a stale ID cannot make cart-item/create 404 and drop the add.
+				let cartRes;
+				try {
+					cartRes = await axiosInstance.get("cart/mine");
+				} catch {
+					cartRes = null;
+				}
+				let cartId = cartRes?.data?.data?.id ?? null;
 				if (!cartId) {
 					const created = await dispatch(createCartAsync()).unwrap();
 					cartId = created?.data?.id ?? null;

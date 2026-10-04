@@ -63,19 +63,6 @@ const BotanicalHero: React.FC = () => {
 
 			<motion.div style={{ opacity: fade }} className="page-wrapper relative z-10 py-8 sm:py-16 md:py-24 lg:py-32">
 				<motion.div style={{ y: copyY }} className="max-w-xl lg:max-w-[44%]">
-					<motion.div
-						{...rise(0.05)}
-						className="mb-6 sm:mb-7 inline-flex items-center gap-2 rounded-full py-1.5 pl-2 pr-4 bg-[rgba(122,171,45,0.10)] dark:bg-[rgba(154,202,60,0.16)] border border-[rgba(122,171,45,0.35)] dark:border-[rgba(154,202,60,0.35)]"
-					>
-						<span
-							className="flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(122,171,45,0.18)] dark:bg-[rgba(154,202,60,0.22)]"
-						>
-							<Sprout className="h-3.5 w-3.5 text-[#5c8a1e] dark:text-[#9aca3c]" />
-						</span>
-						<span className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[#5c8a1e] dark:text-[#9aca3c]">
-							Grown, never manufactured
-						</span>
-					</motion.div>
 
 					<h1 className="font-display text-[2.6rem] leading-[0.96] tracking-[-0.02em] sm:text-6xl lg:text-[4.4rem] text-[#10231f] dark:text-slate-100">
 						<motion.span {...rise(0.14)} className="block" style={{ fontWeight: 300 }}>
@@ -107,14 +94,8 @@ const BotanicalHero: React.FC = () => {
 							className="group inline-flex items-center justify-center gap-2.5 rounded-full px-7 py-3.5 text-sm font-semibold transition-all duration-300 hover:shadow-[0_10px_30px_-8px_rgba(122,171,45,0.65)] active:scale-[0.98]"
 							style={{ background: "#9aca3c", color: "#0c2b25" }}
 						>
-							Shop the range
+							View our catalogue
 							<ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-						</Link>
-						<Link
-							href="/about"
-							className="rounded-full px-7 py-3.5 text-center text-sm font-medium transition-colors duration-300 hover:bg-black/5 dark:hover:bg-white/10 active:scale-[0.98] border border-[#10231f]/20 dark:border-white/20 text-[#10231f] dark:text-slate-100"
-						>
-							How we source
 						</Link>
 					</motion.div>
 

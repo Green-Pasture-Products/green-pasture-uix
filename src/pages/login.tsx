@@ -22,7 +22,6 @@ import { logger } from "@/_utils";
 import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
 import Button from "@/_UI/Button";
-import WhatsAppIcon from "@/_UI/WhatsAppIcon";
 
 const LoginPage: React.FC = () => {
 	const router = useRouter();
@@ -186,15 +185,17 @@ const LoginPage: React.FC = () => {
 							</motion.div>
 						)}
 
-						<Input
-							label="Email Address"
-							{...register("email")}
-							type="email"
-							autoComplete="email"
-							placeholder="your@email.com"
-							leftIcon={Mail}
-							error={errors.email?.message}
-						/>
+						<div className="hidden md:block">
+							<Input
+								label="Email Address"
+								{...register("email")}
+								type="email"
+								autoComplete="email"
+								placeholder="your@email.com"
+								leftIcon={Mail}
+								error={errors.email?.message}
+							/>
+						</div>
 
 						<div>
 							<div className="flex items-center justify-between mb-1">
@@ -232,31 +233,6 @@ const LoginPage: React.FC = () => {
 
 				</Card>
 			</motion.div>
-
-			<div
-				className="fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-xl px-4 py-2.5 shadow-lg"
-				style={{ background: "var(--color-primary)" }}
-			>
-				<span className="text-xs font-semibold text-white">
-					Message us
-				</span>
-				<a
-					href={appConstants.WHATSAPP_URL}
-					target="_blank"
-					rel="noreferrer"
-					aria-label="Message us on WhatsApp"
-					className="p-1 rounded-full transition-colors text-white"
-				>
-					<WhatsAppIcon size={20} />
-				</a>
-				<a
-					href={appConstants.CONTACT.EMAIL_HREF}
-					aria-label="Email us"
-					className="p-1 rounded-full transition-colors text-white"
-				>
-					<Mail className="h-5 w-5" />
-				</a>
-			</div>
 		</div>
 	);
 };

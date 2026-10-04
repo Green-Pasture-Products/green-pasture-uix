@@ -1,4 +1,4 @@
-import { Leaf, Truck, Shield, Award, Mail, ArrowRight, Sprout, FlaskConical, PackageCheck, Home, AlertTriangle } from "lucide-react";
+import { Leaf, Truck, Shield,Heart, Award, Mail, ArrowRight, Sprout, FlaskConical, PackageCheck, Home, AlertTriangle } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -20,10 +20,26 @@ import { groupByCategory } from "@/_utils/groupByCategory";
 import { groupVariants } from "@/_utils/groupVariants";
 
 const features = [
-	{ icon: Leaf, title: "Certified organic", desc: "No synthetic pesticides, no growth agents, no fillers — verified at the farm gate." },
-	{ icon: Truck, title: "Picked to dispatch in 48h", desc: "Short chains keep potency high. Nothing sits in a warehouse losing its value." },
-	{ icon: Shield, title: "Batch-tested potency", desc: "Every batch is assayed before it ships, and the results travel with the jar." },
-	{ icon: Award, title: "Traceable to the row", desc: "Scan any label to see the farm, the harvest week, and the hands that grew it." },
+    {
+        icon: Leaf,
+        title: "Whole-food ingredients",
+        desc: "Made from carefully selected grains, fruits, vegetables, herbs, spices, and other natural ingredients."
+    },
+    {
+        icon: Shield,
+        title: "Clean & simple",
+        desc: "No unnecessary fillers, artificial sweeteners, or preservatives in our carefully crafted products."
+    },
+    {
+        icon: Award,
+        title: "Purely organic produce",
+        desc: "Our supplements are made with carefully sourced organic fruits, vegetables, herbs, and other plant-based produce."
+    },
+    {
+        icon: Heart,
+        title: "No added sugar. No artificial sweeteners.",
+        desc: "We don't use refined sugar or artificial sweeteners in our products. We let the natural ingredients speak for themselves."
+    },
 ];
 
 /** The supply chain, told as the journey a single root actually takes. */
@@ -135,7 +151,7 @@ const HomePage: React.FC = () => {
 				<div className="page-wrapper">
 					<AnimatedSection>
 						<div className="mb-7 flex flex-wrap items-end justify-between gap-6">
-							<SectionHeading eyebrow="The range" title="Shop the shelf." />
+							<SectionHeading title="View our catalogue." />
 							<Link
 								href={seeAllHref}
 								className="group inline-flex items-center gap-2 text-sm font-medium"
@@ -190,13 +206,11 @@ const HomePage: React.FC = () => {
 						/>
 					) : visible.length > 0 ? (
 						<AnimatedSection delay={0.16}>
-							<CardRail label="Products">
+							<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
 								{visible.slice(0, RAIL_LIMIT).map((product) => (
-									<div key={product.id} className="w-[40vw] min-w-[140px] max-w-[180px] shrink-0 snap-start sm:w-[236px] sm:max-w-none">
-										<ProductCard product={product} />
-									</div>
+									<ProductCard key={product.id} product={product} />
 								))}
-							</CardRail>
+							</div>
 						</AnimatedSection>
 					) : products?.length ? (
 						<div className="py-10 text-center text-sm" style={{ color: "var(--text-hint)" }}>
@@ -229,14 +243,19 @@ const HomePage: React.FC = () => {
 					<AnimatedSection>
 						<div className="grid gap-10 md:grid-cols-2 md:items-end">
 							<SectionHeading
-								eyebrow="Why Green Pasture"
-								title="Potency is a supply-chain problem."
-								accent="Most supplements lose it in transit."
+								eyebrow="What Makes Us Different"
+								title="Better ingredients. Better choices."
+								accent="Made with care from the inside out."
 							/>
-							<p className="text-base leading-relaxed md:pb-2" style={{ color: "var(--text-secondary)" }}>
-								A root harvested and left in a warehouse for six weeks is a different product to
-								one sealed in two days. We built the chain backwards from that fact — fewer hands,
-								shorter distances, and a test result attached to every batch.
+							<p
+								className="text-base leading-relaxed md:pb-2"
+								style={{ color: "var(--text-secondary)" }}
+							>
+								We believe healthy food should be made with real, thoughtfully
+								selected ingredients — without unnecessary additives or refined
+								sugar. From our organic produce to the way we formulate our
+								products, we focus on keeping things simple, nutritious, and
+								accessible.
 							</p>
 						</div>
 					</AnimatedSection>
@@ -274,7 +293,7 @@ const HomePage: React.FC = () => {
 			</section>
 
 			{/* ── Journey timeline ─────────────────────────────────── */}
-			<section className="py-20 md:py-28" style={{ background: "var(--surface-low)" }}>
+			{/* <section className="py-20 md:py-28" style={{ background: "var(--surface-low)" }}>
 				<div className="page-wrapper">
 					<AnimatedSection>
 						<SectionHeading
@@ -288,7 +307,7 @@ const HomePage: React.FC = () => {
 						<Timeline items={journey} />
 					</div>
 				</div>
-			</section>
+			</section> */}
 
 			{/* ── Testimonials (real reviews, paged in) ────────────── */}
 			<Testimonials featured />
@@ -375,11 +394,11 @@ const FilterChip: React.FC<{
 	</button>
 );
 
-/** Placeholder rail so the first paint isn't the "No products yet" empty state. */
+/** Placeholder grid so the first paint isn't the "No products yet" empty state. */
 const RailSkeleton: React.FC = () => (
-	<div className="hide-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 sm:mx-0 sm:gap-5 sm:px-0">
-		{[...Array(5)].map((_, i) => (
-			<div key={i} className="w-[44vw] min-w-[150px] max-w-[210px] shrink-0 animate-pulse sm:w-[236px]">
+	<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+		{[...Array(12)].map((_, i) => (
+			<div key={i} className="animate-pulse">
 				<div className="aspect-square rounded-xl" style={{ background: "var(--surface-tile)" }} />
 				<div className="space-y-2.5 pt-3.5">
 					<div className="h-4 w-3/4 rounded-full" style={{ background: "var(--surface-medium)" }} />

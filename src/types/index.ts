@@ -1,3 +1,17 @@
+// ─── Payment Types ─────────────────────────────────────────────────
+
+export type PaymentStatus =
+  | 'PENDING'
+  | 'AWAITING_VERIFICATION'
+  | 'VERIFIED'
+  | 'DECLINED'
+  | 'PAID'
+  | 'NOT_PAID';
+
+export type PaymentMethod = 'PAYSTACK' | 'MANUAL_TRANSFER' | 'CUSTOMER_PICKUP';
+
+// ─── Product & Category Types ──────────────────────────────────────
+
 export interface ProductCategory{
 id: string;
 name: string;
@@ -292,12 +306,32 @@ export interface BackendReview {
 	updatedBy?: string;
 }
 
+export interface BackendPayment {
+	id: string;
+	paymentMethod: string;
+	amount: number;
+	currency: string;
+	paymentStatus: string;
+	receiptUrl?: string;
+	receiptFileName?: string;
+	submittedAt?: string;
+	verifiedAt?: string;
+	verifiedBy?: string;
+	declinedAt?: string;
+	declinedBy?: string;
+	adminNote?: string;
+	status: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
 export interface BackendOrder {
 	id: string;
 	orderReference: string;
 	orderStatus: OrderStatusType;
 	customer?: BackendCustomer;
 	items?: BackendOrderItem[];
+	payments?: BackendPayment[];
 	totalAmount: number;
 	status: string;
 	createdAt: string;
@@ -367,7 +401,7 @@ export type OrderStatusType =
 // accepts any configured method id as a plain string — not a fixed set.
 export type ShippingMethodType = string;
 
-export type PaymentMethodType = "CARD" | "CASH_ON_DELIVERY" | "WALLET";
+export type PaymentMethodType = "CARD" | "CUSTOMER_PICKUP" | "MANUAL_TRANSFER";
 
 // ─── Extended State Types ───────────────────────────────────────────────
 

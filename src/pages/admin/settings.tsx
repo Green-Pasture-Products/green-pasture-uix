@@ -3,8 +3,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
+import Link from "next/link";
 import withAdminAuth from "@/_components/withAdminAuth";
-import { Store, User, Shield, Truck, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Store, User, Shield, Truck, Plus, Trash2, ToggleLeft, ToggleRight, Landmark } from "lucide-react";
 
 import { useAppSelector } from "@/_redux/store";
 import { useHasPrivilege } from "@/_hooks/usePrivilege";
@@ -388,6 +389,22 @@ const AdminSettings: React.FC = () => {
 										</button>
 									);
 								})}
+
+								{/* Manual Payment Settings Link */}
+								<Link href="/admin/settings/manual-payments">
+									<button
+										className="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer"
+										style={{
+											background: "transparent",
+											color: "var(--text-secondary)",
+										}}
+										onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-low)"; }}
+										onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+									>
+										<Landmark className="mr-3 h-4 w-4" />
+										Manual Payment Settings
+									</button>
+								</Link>
 							</nav>
 						</div>
 					</div>
