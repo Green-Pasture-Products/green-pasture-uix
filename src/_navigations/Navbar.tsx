@@ -484,6 +484,16 @@ const Navbar: React.FC = () => {
 									<User className="h-4 w-4" />
 									Profile
 								</Link>
+								{!isAdmin && (
+									<Link
+										href="/my-orders"
+										className="flex items-center gap-3 px-3 py-2.5 rounded-radius-md text-sm text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"
+										onClick={() => setIsMobileMenuOpen(false)}
+									>
+										<ShoppingBag className="h-4 w-4" />
+										My Orders
+									</Link>
+								)}
 								<button
 									onClick={() => {
 										handleLogout();
