@@ -17,6 +17,7 @@ import OrderTimeline from "@/_UI/OrderTimeline";
 import AuthPrompt from "@/_UI/AuthPrompt";
 import { BackendOrder, BackendOrderItem } from "@/types";
 import { appConstants } from "@/_redux/constants";
+import { getReceiptDeliveryUrl, isPdfReceipt } from "@/_utils/receiptUrl";
 import { Printer, Upload } from "lucide-react";
 import { ReceiptModal } from "@/_UI/ReceiptModal";
 
@@ -276,13 +277,15 @@ const MyOrderDetail: React.FC = () => {
 										)}
 										{payment.receiptUrl && (
 											<a
-												href={payment.receiptUrl}
+												href={getReceiptDeliveryUrl(payment.receiptUrl, payment.receiptFileName)}
 												target="_blank"
 												rel="noreferrer"
 												className="text-sm underline"
 												style={{ color: "var(--color-primary)" }}
 											>
-												View uploaded payment receipt
+												{isPdfReceipt(payment.receiptUrl, payment.receiptFileName)
+													? "Download / Open uploaded PDF receipt"
+													: "View uploaded payment receipt"}
 											</a>
 										)}
 										{canUploadReceipt && (

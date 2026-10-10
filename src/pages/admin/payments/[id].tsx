@@ -9,6 +9,7 @@ import AdminLayout from "@/_components/AdminLayout";
 import Button from "@/_UI/Button";
 import Badge from "@/_UI/Badge";
 import axiosInstance from "@/_utils/axiosInstance";
+import { getReceiptDeliveryUrl, isPdfReceipt } from "@/_utils/receiptUrl";
 import { PaymentStatus, PaymentMethod } from "@/types";
 
 interface OrderItem {
@@ -454,7 +455,7 @@ const AdminPaymentDetail: React.FC = () => {
                   View Receipt
                 </button>
                 <a
-                  href={payment.receiptUrl}
+                  href={getReceiptDeliveryUrl(payment.receiptUrl)}
                   download
                   target="_blank"
                   rel="noreferrer"
@@ -687,7 +688,7 @@ const AdminPaymentDetail: React.FC = () => {
             >
               <X size={32} />
             </button>
-            {viewingImage.match(/\.(jpg|jpeg|png)$/i) ? (
+            {!isPdfReceipt(viewingImage, payment.receiptUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={viewingImage}
@@ -696,15 +697,15 @@ const AdminPaymentDetail: React.FC = () => {
               />
             ) : (
               <div className="bg-white rounded-lg p-8 text-center">
-                <p className="mb-4">PDF Preview</p>
+                <p className="mb-4 font-medium">PDF receipt</p>
                 <a
-                  href={viewingImage}
+                  href={getReceiptDeliveryUrl(viewingImage, payment.receiptUrl)}
                   target="_blank"
                   rel="noreferrer"
                   className="px-6 py-2 rounded-lg font-medium text-white"
                   style={{ backgroundColor: "var(--color-primary)" }}
                 >
-                  Open in New Tab
+                  Download / Open PDF Receipt
                 </a>
               </div>
             )}

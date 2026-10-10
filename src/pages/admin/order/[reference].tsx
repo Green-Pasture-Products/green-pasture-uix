@@ -10,6 +10,7 @@ import { DataTable } from "@/_components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatCurrency } from "@/_UI/FormatValue";
 import { formatWeight } from "@/_utils/formatWeight";
+import { getReceiptDeliveryUrl, isPdfReceipt } from "@/_utils/receiptUrl";
 import PageLoader from "@/_UI/PageLoader";
 import { BackendOrder, BackendOrderItem } from "@/types";
 import { Download, Eye, RefreshCw, X } from "lucide-react";
@@ -415,7 +416,7 @@ const AdminOrderDetail: React.FC = () => {
 													<Eye size={16} /> View receipt
 												</button>
 												<a
-													href={payment.receiptUrl}
+													href={getReceiptDeliveryUrl(payment.receiptUrl, payment.receiptFileName)}
 													target="_blank"
 													rel="noopener noreferrer"
 													download={payment.receiptFileName || true}
@@ -485,7 +486,7 @@ const AdminOrderDetail: React.FC = () => {
 						<div className="flex items-center justify-between gap-4 border-b px-4 py-3">
 							<p className="truncate text-sm font-semibold text-gray-900">{receiptToView.fileName}</p>
 							<div className="flex shrink-0 items-center gap-2">
-								<a href={receiptToView.url} target="_blank" rel="noopener noreferrer" download={receiptToView.fileName} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm text-gray-700">
+								<a href={getReceiptDeliveryUrl(receiptToView.url, receiptToView.fileName)} target="_blank" rel="noopener noreferrer" download={receiptToView.fileName} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm text-gray-700">
 									<Download size={16} /> Download
 								</a>
 								<button type="button" onClick={() => setReceiptToView(null)} aria-label="Close receipt viewer" className="rounded-lg p-2 text-gray-600 hover:bg-gray-100">
@@ -494,8 +495,16 @@ const AdminOrderDetail: React.FC = () => {
 							</div>
 						</div>
 						<div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-gray-100 p-3">
-							{receiptToView.fileName.toLowerCase().endsWith(".pdf") || /\.pdf(?:$|[?#])/i.test(receiptToView.url) ? (
-								<iframe title={receiptToView.fileName} src={receiptToView.url} className="h-[78vh] w-full rounded bg-white" />
+							{isPdfReceipt(receiptToView.url, receiptToView.fileName) ? (
+								<a
+									href={getReceiptDeliveryUrl(receiptToView.url, receiptToView.fileName)}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="rounded-lg px-5 py-3 text-sm font-medium text-white"
+									style={{ backgroundColor: "var(--color-primary)" }}
+								>
+									Download / Open PDF Receipt
+								</a>
 							) : (
 								// eslint-disable-next-line @next/next/no-img-element
 								<img src={receiptToView.url} alt={receiptToView.fileName} className="max-h-[78vh] max-w-full object-contain" />

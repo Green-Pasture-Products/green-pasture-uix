@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { CheckCircle, Clock, XCircle, Eye, Upload, Download } from "lucide-react";
 import { PaymentStatus } from "@/types";
+import { getReceiptDeliveryUrl, isPdfReceipt } from "@/_utils/receiptUrl";
 
 interface Payment {
   id: string;
@@ -159,7 +160,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
                 View
               </button>
               <a
-                href={payment.receiptUrl}
+                href={getReceiptDeliveryUrl(payment.receiptUrl)}
                 download
                 target="_blank"
                 rel="noreferrer"
@@ -236,7 +237,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
             >
               ×
             </button>
-            {viewingReceipt.match(/\.(jpg|jpeg|png)$/i) ? (
+            {!isPdfReceipt(viewingReceipt, payment.receiptUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={viewingReceipt}
@@ -247,13 +248,13 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
               <div className="bg-white rounded-lg p-8 text-center">
                 <p className="mb-4 font-medium">PDF Preview</p>
                 <a
-                  href={viewingReceipt}
+                  href={getReceiptDeliveryUrl(viewingReceipt, payment.receiptUrl)}
                   target="_blank"
                   rel="noreferrer"
                   className="px-6 py-2 rounded font-medium text-white"
                   style={{ backgroundColor: "var(--color-primary)" }}
                 >
-                  Open in New Tab
+                  Download / Open PDF Receipt
                 </a>
               </div>
             )}

@@ -205,8 +205,9 @@ const MyOrders: React.FC = () => {
 			enableHiding: false,
 			meta: { align: "right" },
 			cell: ({ row }) => (
-				<ActionMenu
-					items={[
+					<div onClick={(event) => event.stopPropagation()}>
+						<ActionMenu
+							items={[
 						{
 							label: "View Details",
 							onClick: () => router.push(`/my-orders/${row.original.orderReference}`),
@@ -241,8 +242,9 @@ const MyOrders: React.FC = () => {
 								}
 							},
 						},
-					]}
-				/>
+							]}
+						/>
+					</div>
 			),
 		},
 	];
@@ -306,6 +308,7 @@ const MyOrders: React.FC = () => {
 						pageCount={meta?.totalPages ?? 1}
 						totalItems={meta?.totalItems}
 						onPageChange={(idx) => setPage(idx + 1)}
+						onRowClick={(order) => router.push(`/my-orders/${order.orderReference}`)}
 						emptyMessage="No orders found"
 						emptyDescription="Try adjusting your search"
 					/>
