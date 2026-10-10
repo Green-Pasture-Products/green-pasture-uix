@@ -159,6 +159,46 @@ const MyOrders: React.FC = () => {
 			),
 		},
 		{
+			id: "paymentStatus",
+			header: "Payment",
+			enableSorting: false,
+			cell: ({ row }) => {
+				const payment = row.original.payments?.[0];
+				if (!payment) {
+					return <span className="text-sm" style={{ color: "var(--text-hint)" }}>—</span>;
+				}
+
+				const isAwaitingUpload =
+					payment.paymentMethod === "MANUAL_TRANSFER" &&
+					payment.paymentStatus === "AWAITING_PAYMENT";
+				const isProcessing = row.original.orderStatus === "PROCESSING";
+				const orderPaymentVerified =
+					row.original.orderStatus === "IN_TRANSIT" || row.original.orderStatus === "DELIVERED";
+				const label = orderPaymentVerified
+					? "VERIFIED"
+					: isProcessing
+						? "Processing"
+					: payment.paymentStatus === "AWAITING_VERIFICATION"
+						? "Pending Verification"
+						: isAwaitingUpload
+							? "Awaiting Payment Upload"
+							: payment.paymentStatus.replace(/_/g, " ");
+				const variant = orderPaymentVerified
+					? "success"
+					: isProcessing
+						? "info"
+					: payment.paymentStatus === "VERIFIED" || payment.paymentStatus === "PAID"
+					? "success"
+					: payment.paymentStatus === "AWAITING_VERIFICATION" || isAwaitingUpload
+						? "warning"
+						: payment.paymentStatus === "DECLINED" || payment.paymentStatus === "NOT_PAID"
+							? "error"
+							: "neutral";
+
+				return <Badge variant={variant} dot size="sm">{label}</Badge>;
+			},
+		},
+		{
 			id: "actions",
 			header: "",
 			enableSorting: false,

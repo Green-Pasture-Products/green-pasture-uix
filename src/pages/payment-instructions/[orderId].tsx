@@ -347,7 +347,7 @@ const PaymentInstructionsPage: React.FC = () => {
               Upload Payment Receipt
             </button>
           </Link>
-          <Link href="/orders">
+          <Link href="/my-orders">
             <button
               className="w-full py-3 rounded-lg font-semibold transition"
               style={{

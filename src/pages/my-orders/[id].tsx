@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 import Layout from "@/_components/Layout";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
@@ -16,7 +17,7 @@ import OrderTimeline from "@/_UI/OrderTimeline";
 import AuthPrompt from "@/_UI/AuthPrompt";
 import { BackendOrder, BackendOrderItem } from "@/types";
 import { appConstants } from "@/_redux/constants";
-import { Printer } from "lucide-react";
+import { Printer, Upload } from "lucide-react";
 import { ReceiptModal } from "@/_UI/ReceiptModal";
 
 const getStatusVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
@@ -230,6 +231,76 @@ const MyOrderDetail: React.FC = () => {
 					status={order.orderStatus}
 					createdAt={order.createdAt}
 				/>
+
+				{order.payments?.length ? (
+					<DetailSection title="Payment Information">
+						<div className="divide-y" style={{ borderColor: "var(--border-light)" }}>
+							{order.payments.map((payment) => {
+								const canUploadReceipt =
+									payment.paymentMethod === "MANUAL_TRANSFER" &&
+									payment.paymentStatus === "AWAITING_PAYMENT";
+
+								return (
+									<div key={payment.id} className="px-5 py-4 space-y-3">
+										<div className="grid grid-cols-2 gap-4">
+											<div>
+												<span className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+													Payment Method
+												</span>
+												<p className="text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>
+													{payment.paymentMethod === "MANUAL_TRANSFER" ? "Bank Transfer" : payment.paymentMethod}
+												</p>
+											</div>
+											<div>
+												<span className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+													Payment Status
+												</span>
+												<p className="text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>
+													{order.orderStatus === "IN_TRANSIT" || order.orderStatus === "DELIVERED"
+														? "VERIFIED"
+														: order.orderStatus === "PROCESSING"
+															? "Processing"
+														: payment.paymentStatus === "AWAITING_VERIFICATION"
+														? "Pending Verification"
+														: payment.paymentMethod === "MANUAL_TRANSFER" &&
+															payment.paymentStatus === "AWAITING_PAYMENT"
+															? "Awaiting Payment Upload"
+														: payment.paymentStatus.replace(/_/g, " ")}
+												</p>
+											</div>
+										</div>
+										{payment.adminNote && payment.paymentStatus === "DECLINED" && (
+											<p className="text-sm" style={{ color: "#ef4444" }}>
+												Payment declined: {payment.adminNote}
+											</p>
+										)}
+										{payment.receiptUrl && (
+											<a
+												href={payment.receiptUrl}
+												target="_blank"
+												rel="noreferrer"
+												className="text-sm underline"
+												style={{ color: "var(--color-primary)" }}
+											>
+												View uploaded payment receipt
+											</a>
+										)}
+										{canUploadReceipt && (
+											<Link
+												href={`/payment-instructions/${order.id}/upload-receipt`}
+												className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+												style={{ backgroundColor: "var(--color-primary)" }}
+											>
+												<Upload size={16} />
+												Upload Payment Receipt
+											</Link>
+										)}
+									</div>
+								);
+							})}
+						</div>
+					</DetailSection>
+				) : null}
 
 				<DetailSection title="Order Items">
 					<DataTable

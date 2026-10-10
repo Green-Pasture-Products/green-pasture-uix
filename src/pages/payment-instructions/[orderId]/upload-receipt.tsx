@@ -21,8 +21,9 @@ const UploadReceiptPage: React.FC = () => {
     if (!file) return;
 
     // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
-    if (!allowedTypes.includes(file.type)) {
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    const allowedTypes = ["image/jpeg", "image/png"];
+    if (!allowedTypes.includes(file.type) && !isPdf) {
       toast.error("Only JPG, PNG, and PDF files are allowed");
       return;
     }
@@ -130,7 +131,7 @@ const UploadReceiptPage: React.FC = () => {
           <input
             type="file"
             id="file-upload"
-            accept="image/jpeg,image/png,application/pdf"
+            accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
             onChange={handleFileSelect}
             className="hidden"
           />

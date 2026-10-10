@@ -2,6 +2,7 @@
 
 export type PaymentStatus =
   | 'PENDING'
+	| 'AWAITING_PAYMENT'
   | 'AWAITING_VERIFICATION'
   | 'VERIFIED'
   | 'DECLINED'
@@ -312,6 +313,7 @@ export interface BackendPayment {
 	amount: number;
 	currency: string;
 	paymentStatus: string;
+	customerPhone?: string | null;
 	receiptUrl?: string;
 	receiptFileName?: string;
 	submittedAt?: string;

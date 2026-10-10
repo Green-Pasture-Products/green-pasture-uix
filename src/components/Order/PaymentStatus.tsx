@@ -4,6 +4,7 @@ import { PaymentStatus } from "@/types";
 
 interface Payment {
   id: string;
+  paymentMethod?: string;
   paymentStatus: PaymentStatus;
   amount: number;
   currency: string;
@@ -58,6 +59,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
       case "NOT_PAID":
         return "#ef4444";
       case "AWAITING_VERIFICATION":
+      case "AWAITING_PAYMENT":
         return "#f59e0b";
       case "PENDING":
         return "#6b7280";
@@ -81,8 +83,9 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
     }
   };
 
-  const canReupload =
-    payment.paymentStatus === "DECLINED" || payment.paymentStatus === "NOT_PAID";
+  const canUploadReceipt =
+    payment.paymentMethod === "MANUAL_TRANSFER" &&
+    payment.paymentStatus === "AWAITING_PAYMENT";
 
   return (
     <div
@@ -110,7 +113,9 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
               className="font-medium"
               style={{ color: getStatusColor(payment.paymentStatus) }}
             >
-              {payment.paymentStatus.replace(/_/g, " ")}
+              {payment.paymentStatus === "AWAITING_PAYMENT"
+                ? "Awaiting Payment Upload"
+                : payment.paymentStatus.replace(/_/g, " ")}
             </p>
           </div>
         </div>
@@ -194,26 +199,11 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
             <p style={{ color: "var(--text-secondary)" }} className="text-sm">
               {payment.adminNote}
             </p>
-            {canReupload && (
-              <button
-                onClick={onUploadReceipt}
-                disabled={isUploadingReceipt}
-                className="mt-2 flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium transition"
-                style={{
-                  backgroundColor: "var(--color-primary)",
-                  color: "white",
-                  opacity: isUploadingReceipt ? 0.5 : 1,
-                }}
-              >
-                <Upload className="h-4 w-4" />
-                {isUploadingReceipt ? "Uploading..." : "Upload New Receipt"}
-              </button>
-            )}
           </div>
         )}
 
-        {/* Pending Status */}
-        {payment.paymentStatus === "PENDING" && (
+        {/* Unpaid or declined payment */}
+        {canUploadReceipt && (
           <div
             className="pt-2 border-t"
             style={{ borderColor: "var(--border-light)" }}
