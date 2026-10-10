@@ -15,6 +15,8 @@ import {
 	X,
 	Sun,
 	Moon,
+	Bell,
+	ChevronRight,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useRouter } from "next/router";
@@ -24,6 +26,7 @@ import { logoutAsync } from "@/_redux/actions/auth.action";
 import { profileAction } from "@/_redux/actions/profile.action";
 import { useTheme } from "@/_hooks/useTheme";
 import { appConstants } from "@/_redux/constants";
+import axiosInstance from "@/_utils/axiosInstance";
 
 interface NavLink {
 	href: string;
@@ -52,7 +55,10 @@ const Navbar: React.FC = () => {
 
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+	const [awaitingPaymentOrders, setAwaitingPaymentOrders] = useState<any[]>([]);
 	const userMenuRef = useRef<HTMLDivElement>(null);
+	const notificationRef = useRef<HTMLDivElement>(null);
 
 
 	const itemCount = useAppSelector((state) => state.cart.itemCount);
@@ -107,11 +113,45 @@ const Navbar: React.FC = () => {
 			) {
 				setIsUserMenuOpen(false);
 			}
+			if (
+				notificationRef.current &&
+				!notificationRef.current.contains(e.target as Node)
+			) {
+				setIsNotificationOpen(false);
+			}
 		};
 		document.addEventListener("mousedown", handleClickOutside);
 		return () =>
 			document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
+
+	const fetchAwaitingPaymentOrders = React.useCallback(async () => {
+		try {
+			if (!isAuthenticated) {
+				setAwaitingPaymentOrders([]);
+				return;
+			}
+			const response = await axiosInstance.get('order/my-orders?page=1&limit=100&paymentStatus=AWAITING_PAYMENT,AWAITING_PAYMENT_UPLOAD');
+			const data = response?.data?.data ?? response?.data;
+			const items = data?.items ?? [];
+			setAwaitingPaymentOrders(Array.isArray(items) ? items : []);
+		} catch (error) {
+			if (error instanceof Error) {
+				console.error('Error fetching awaiting payment orders:', error.message);
+			}
+			setAwaitingPaymentOrders([]);
+		}
+	}, [isAuthenticated]);
+
+	// Fetch awaiting payment orders on login and when drawer opens
+	useEffect(() => {
+		if (isAuthenticated && !isAdmin && bio) {
+			const timer = setTimeout(() => {
+				fetchAwaitingPaymentOrders();
+			}, 500); // Delay to ensure auth is fully ready
+			return () => clearTimeout(timer);
+		}
+	}, [isAuthenticated, isAdmin, bio, fetchAwaitingPaymentOrders]);
 
 	const handleLogout = () => {
 		dispatch(logoutAsync())
@@ -220,6 +260,86 @@ const Navbar: React.FC = () => {
 						</Link>
 					)}
 
+					{/* Payment Notification — customers only */}
+					{!isAdmin && isAuthenticated && (
+						<div className="relative" ref={notificationRef}>
+							<button
+								onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+								className="relative hidden md:inline-flex p-2 rounded-radius-md transition-colors duration-200 press-effect text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
+								aria-label="Payment notifications"
+							>
+								<Bell className="h-5 w-5" />
+								{awaitingPaymentOrders.length > 0 && (
+									<span className="bg-error text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5">
+										{awaitingPaymentOrders.length}
+									</span>
+								)}
+							</button>
+
+							{/* Notification Drawer */}
+							{isNotificationOpen && (
+								<div className="fixed inset-0 z-40 md:absolute md:inset-auto md:right-0 md:top-full md:mt-2 md:w-96 md:max-h-[600px] bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 md:rounded-radius-lg">
+									<div className="p-4 border-b border-outline-variant dark:border-white/8 flex items-center justify-between">
+										<h3 className="font-semibold text-on-surface dark:text-white">Awaiting Payment</h3>
+										<button
+											onClick={() => setIsNotificationOpen(false)}
+											className="md:hidden p-1 hover:bg-surface-variant/50 dark:hover:bg-white/5 rounded"
+										>
+											<X className="h-5 w-5" />
+										</button>
+									</div>
+
+									<div className="overflow-y-auto max-h-[500px]">
+										{awaitingPaymentOrders.length === 0 ? (
+											<div className="p-4 text-center text-on-surface/50 dark:text-white/50">No pending payments</div>
+										) : (
+											awaitingPaymentOrders.map((order) => (
+												<div
+													key={order.id}
+													className="p-4 border-b border-outline-variant/50 dark:border-white/5 hover:bg-surface-variant/30 dark:hover:bg-white/5 transition-colors"
+												>
+													<div className="flex items-start justify-between mb-2">
+														<div>
+															<p className="font-semibold text-on-surface dark:text-white text-sm">
+																Order #{order.orderReference}
+															</p>
+															<p className="text-xs text-on-surface/60 dark:text-white/60 mt-1">
+																{new Date(order.createdAt).toLocaleDateString()}
+															</p>
+														</div>
+														<p className="font-bold text-primary-600 dark:text-primary-400">
+															₦{order.totalAmount?.toLocaleString()}
+														</p>
+													</div>
+												<div className="mt-3 flex gap-2">
+													<button
+														onClick={() => {
+															router.push(`/payment-instructions/${order.id}`);
+															setIsNotificationOpen(false);
+														}}
+														className="flex-1 py-2 px-3 bg-primary-600 hover:bg-primary-700 text-white rounded-radius-md text-sm font-medium transition-colors flex items-center justify-center gap-2"
+													>
+														Pay Now
+														<ChevronRight className="h-4 w-4" />
+													</button>
+													<button
+														onClick={() => {
+															router.push(`/my-orders/${order.orderReference}`);
+															setIsNotificationOpen(false);
+														}}
+														className="flex-1 py-2 px-3 border border-outline-variant dark:border-white/15 text-on-surface dark:text-white rounded-radius-md text-sm font-medium transition-colors hover:bg-surface-variant/50 dark:hover:bg-white/5"
+													>
+														View Details
+													</button>
+												</div>
+												</div>
+											))
+										)}
+									</div>
+								</div>
+							)}
+						</div>
+					)}
 
 					{/* User Menu — hidden on mobile top bar; the hamburger panel already
 					    carries login/profile/sign-out there. */}
