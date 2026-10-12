@@ -2,12 +2,12 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "@/_utils/axiosInstance";
 import { extractErrorMessage, buildPaginationParams } from "@/_utils/apiHelpers";
 
-const fetchOrdersAsync = createAsyncThunk<any, { page?: number; limit?: number; search?: string; filter?: string }, { rejectValue: string }>(
+const fetchOrdersAsync = createAsyncThunk<any, { page?: number; limit?: number; search?: string; filter?: string; paymentStatus?: string }, { rejectValue: string }>(
 	"admin/fetchOrders",
-	async ({ page = 1, limit = 50, search, filter } = {}, { rejectWithValue }) => {
+	async ({ page = 1, limit = 50, search, filter, paymentStatus } = {}, { rejectWithValue }) => {
 		try {
-			// test
-			const params = buildPaginationParams(page, limit, search, filter);
+			const params = new URLSearchParams(buildPaginationParams(page, limit, search, filter));
+			if (paymentStatus) params.set("paymentStatus", paymentStatus);
 			const response = await axiosInstance.get(`order?${params}`);
 			return response.data;
 		} catch (error: any) {

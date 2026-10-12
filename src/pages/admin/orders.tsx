@@ -37,6 +37,21 @@ const ORDER_STATUS_FILTERS: FilterDef[] = [
 			{ value: "CANCELLED", label: "Cancelled" },
 		],
 	},
+	{
+		key: "paymentStatus",
+		label: "Payment Status",
+		options: [
+			{ value: "PROCESSING", label: "Processing" },
+			{ value: "VERIFIED", label: "Verified" },
+			{ value: "AWAITING_VERIFICATION", label: "Pending Verification" },
+			{ value: "AWAITING_PAYMENT_UPLOAD", label: "Awaiting Payment Upload" },
+			{ value: "PENDING", label: "Pending" },
+			{ value: "AWAITING_PAYMENT", label: "Awaiting Payment" },
+			{ value: "DECLINED", label: "Declined" },
+			{ value: "PAID", label: "Paid" },
+			{ value: "NOT_PAID", label: "Not Paid" },
+		],
+	},
 ];
 
 const getStatusBadgeVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
@@ -56,6 +71,25 @@ const getStatusBadgeVariant = (status: string): "success" | "warning" | "error" 
 	}
 };
 
+const getPaymentFilterBadgeVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
+	switch (status) {
+		case "VERIFIED":
+	case "PAID":
+			return "success";
+		case "AWAITING_PAYMENT_UPLOAD":
+	case "AWAITING_PAYMENT":
+	case "AWAITING_VERIFICATION":
+			return "warning";
+		case "DECLINED":
+	case "NOT_PAID":
+			return "error";
+		case "PROCESSING":
+			return "info";
+		default:
+			return "neutral";
+	}
+};
+
 const AdminOrders: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
@@ -69,7 +103,12 @@ const AdminOrders: React.FC = () => {
 		setSearch,
 		setPageSize,
 		setFilter,
-	} = useListParams({ extraFilters: { status: parseAsString.withDefault("") } });
+	} = useListParams({
+		extraFilters: {
+			status: parseAsString.withDefault(""),
+			paymentStatus: parseAsString.withDefault("AWAITING_VERIFICATION"),
+		},
+	});
 	const [cancelTarget, setCancelTarget] = useState<BackendOrder | null>(null);
 	const [isCancelling, setIsCancelling] = useState(false);
 
@@ -80,8 +119,9 @@ const AdminOrders: React.FC = () => {
 			limit: pageSize,
 			search: searchTerm || undefined,
 			filter: filterValues.status || undefined,
+			paymentStatus: filterValues.paymentStatus || undefined,
 		}));
-	}, [currentPage, searchTerm, pageSize, filterValues.status]);
+	}, [currentPage, searchTerm, pageSize, filterValues.status, filterValues.paymentStatus]);
 
 	useEffect(() => {
 		refresh();
@@ -151,6 +191,56 @@ const AdminOrders: React.FC = () => {
 					{formatCurrency(getValue() as number)}
 				</span>
 			),
+		},
+		{
+			id: "paymentStatus",
+			header: "Payment",
+			enableSorting: false,
+			cell: ({ row }) => {
+				const payment = row.original.payments?.[0];
+				if (!payment) {
+					const selectedFilter = ORDER_STATUS_FILTERS
+						.find((filter) => filter.key === "paymentStatus")
+						?.options.find((option) => option.value === filterValues.paymentStatus);
+					if (selectedFilter) {
+						return (
+							<Badge variant={getPaymentFilterBadgeVariant(selectedFilter.value)} dot size="sm">
+								{selectedFilter.label}
+							</Badge>
+						);
+					}
+					return <span className="text-sm" style={{ color: "var(--text-hint)" }}>—</span>;
+				}
+
+				const isAwaitingUpload =
+					payment.paymentMethod === "MANUAL_TRANSFER" &&
+					payment.paymentStatus === "AWAITING_PAYMENT";
+				const isProcessing = row.original.orderStatus === "PROCESSING";
+				const orderPaymentVerified =
+					row.original.orderStatus === "IN_TRANSIT" || row.original.orderStatus === "DELIVERED";
+				const label = orderPaymentVerified
+					? "VERIFIED"
+					: isProcessing
+						? "Processing"
+						: payment.paymentStatus === "AWAITING_VERIFICATION"
+							? "Pending Verification"
+							: isAwaitingUpload
+								? "Awaiting Payment Upload"
+								: payment.paymentStatus.replace(/_/g, " ");
+				const variant = orderPaymentVerified
+					? "success"
+					: isProcessing
+						? "info"
+						: payment.paymentStatus === "VERIFIED" || payment.paymentStatus === "PAID"
+							? "success"
+							: payment.paymentStatus === "AWAITING_VERIFICATION" || isAwaitingUpload
+								? "warning"
+								: payment.paymentStatus === "DECLINED" || payment.paymentStatus === "NOT_PAID"
+									? "error"
+									: "neutral";
+
+				return <Badge variant={variant} dot size="sm">{label}</Badge>;
+			},
 		},
 		{
 			accessorKey: "orderStatus",
