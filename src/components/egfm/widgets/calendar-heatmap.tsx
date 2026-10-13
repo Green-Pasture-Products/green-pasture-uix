@@ -47,10 +47,18 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
       if (containerRef.current) setContainerWidth(containerRef.current.offsetWidth);
    }, []);
 
+   // Observe the container itself (not just the window): the card can settle wider after first paint
+   // (sidebar, scrollbar, layout), and a one-off measurement left the grid short of the card's edge.
    useEffect(() => {
       measureWidth();
-      window.addEventListener('resize', measureWidth);
-      return () => window.removeEventListener('resize', measureWidth);
+      const el = containerRef.current;
+      if (!el || typeof ResizeObserver === 'undefined') {
+         window.addEventListener('resize', measureWidth);
+         return () => window.removeEventListener('resize', measureWidth);
+      }
+      const ro = new ResizeObserver(measureWidth);
+      ro.observe(el);
+      return () => ro.disconnect();
    }, [measureWidth]);
 
    // Build a date->count lookup
@@ -113,10 +121,13 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
    const monthLabelHeight = 20;
 
    // Auto-size cells to stretch across the full container (like GitLab's activity graph).
-   const cellSize = containerWidth > 0 ? Math.min(MAX_CELL, Math.floor((containerWidth - dayLabelWidth - 4) / numWeeks - gapProp)) : cellSizeProp;
+   // Cells stretch horizontally to fill the card; height stays readable (square until the cap) so a wide card
+   // gets slightly wide tiles rather than a blank margin on the right.
    const gap = gapProp;
+   const cellW = containerWidth > 0 ? Math.max(MIN_CELL, (containerWidth - dayLabelWidth - 4 + gap) / numWeeks - gap) : cellSizeProp;
+   const cellSize = Math.min(MAX_CELL, Math.max(MIN_CELL, cellW));
 
-   const totalWidth = numWeeks * (cellSize + gap) - gap;
+   const totalWidth = numWeeks * (cellW + gap) - gap;
 
    return (
       <div
@@ -141,7 +152,7 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
                   key={label + weekIdx}
                   style={{
                      position: 'absolute',
-                     left: weekIdx * (cellSize + gap),
+                     left: weekIdx * (cellW + gap),
                      fontSize: 11,
                      color: 'var(--muted-foreground)',
                      whiteSpace: 'nowrap',
@@ -188,7 +199,7 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
                      {Array.from({length: 7}).map((_, di) => {
                         const day = week[di] ?? null;
                         if (!day) {
-                           return <div key={di} style={{width: cellSize, height: cellSize, opacity: 0}} />;
+                           return <div key={di} style={{width: cellW, height: cellSize, opacity: 0}} />;
                         }
                         const dateStr = format(day, 'yyyy-MM-dd');
                         const count = countMap[dateStr] ?? 0;
@@ -197,7 +208,8 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
                         return (
                            <div
                               key={di}
-                              title={`${dateStr}: ${count}`}
+                              data-date={dateStr}
+                              data-count={count}
                               onClick={() => onCellClick?.(dateStr, count)}
                               onMouseEnter={(e) => {
                                  const rect = (e.target as HTMLElement).getBoundingClientRect();
@@ -205,7 +217,7 @@ const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({
                               }}
                               onMouseLeave={() => setTooltip(null)}
                               style={{
-                                 width: cellSize,
+                                 width: cellW,
                                  height: cellSize,
                                  borderRadius: 3,
                                  background: bg,
