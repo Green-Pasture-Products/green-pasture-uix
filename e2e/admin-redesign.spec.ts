@@ -473,3 +473,58 @@ test.describe("table column order", () => {
 		expect(headers.slice(-5)).toEqual(["Status", "Created By", "Last Modified", "Modified By", "Action"]);
 	});
 });
+
+test.describe("audit log", () => {
+	const entries = [
+		{ id: "0192a3b4-c5d6-7e8f-9a0b-1c2d3e4f5b01", occurredAt: new Date().toISOString(), action: "REQUEST", actorId: "p1", actorName: "Ada Obi", actorType: "CLIENT", entityType: "Request", entityId: null, summary: "Ada Obi POST /api/v1/cart/create → 201", changes: null, metadata: { method: "POST", path: "/api/v1/cart/create", status: 201, durationMs: 12, outcome: "succeeded", ip: "10.0.0.7", userAgent: "Mozilla/5.0" } },
+		{ id: "0192a3b4-c5d6-7e8f-9a0b-1c2d3e4f5b02", occurredAt: new Date().toISOString(), action: "SECURITY", actorId: "0", actorName: "ada@example.com", actorType: "ANONYMOUS", entityType: "Profile", entityId: null, summary: "Failed sign-in for ada@example.com", changes: null, metadata: { event: "sign-in", email: "ada@example.com", outcome: "failed", ip: "10.0.0.7" } },
+		{ id: "0192a3b4-c5d6-7e8f-9a0b-1c2d3e4f5b03", occurredAt: new Date().toISOString(), action: "UPDATE", actorId: "p2", actorName: "E2e Admin", actorType: "STAFF", entityType: "Tag", entityId: "t1", summary: "E2e Admin updated tag Kids", changes: { description: ["old", "new"] }, metadata: null },
+	];
+
+	test.beforeEach(async ({ page }) => {
+		await mockApi(page); // first: later routes win, so the audit-log mock below overrides its catch-all
+		await page.route("**/api/v1/activity**", (route) => {
+			const url = new URL(route.request().url());
+			if (url.pathname.includes("/activity/entry/")) return route.fulfill(ok(entries.find((e) => url.pathname.endsWith(e.id)) ?? null));
+			if (url.pathname.endsWith("/activity")) {
+				const type = url.searchParams.get("actorType");
+				const items = type ? entries.filter((e) => e.actorType === type) : entries;
+				return route.fulfill(ok({ items, meta: { page: 1, limit: 25, total: items.length, totalPages: 1 } }));
+			}
+			return route.fulfill(ok([]));
+		});
+	});
+
+	test("lists what customers and staff did, filterable by who, and opens an entry on its own page", async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 });
+		await page.goto("/admin/inbox");
+		await page.getByRole("link", { name: "Audit Log" }).click();
+		await expect(page).toHaveURL(/\/admin\/audit-log$/);
+
+		await expect(page.getByText("Ada Obi POST /api/v1/cart/create → 201")).toBeVisible();
+		await expect(page.getByText("Failed sign-in for ada@example.com")).toBeVisible();
+		await expect(page.getByText("E2e Admin updated tag Kids")).toBeVisible();
+		await expect(page.getByText("Failed", { exact: true }).first()).toBeVisible();
+		await expect(page.getByText("Customer", { exact: true }).first()).toBeVisible();
+
+		const headers = (await page.getByTestId("data-table").locator("thead th").allInnerTexts()).map((h) => h.trim());
+		expect(headers.at(-1)).toBe("Action");
+		expect(headers).toEqual(expect.arrayContaining(["When", "Who", "What happened", "Kind", "Outcome"]));
+
+		await page.screenshot({ path: "test-results/audit-log.png" });
+
+		await page.getByText("Failed sign-in for ada@example.com").click();
+		await expect(page).toHaveURL(/\/admin\/audit-log\/0192a3b4-c5d6-7e8f-9a0b-1c2d3e4f5b02$/);
+		await expect(page.getByRole("dialog")).toHaveCount(0);
+		await expect(page.getByText("Email tried")).toBeVisible();
+		await expect(page.getByText("10.0.0.7")).toBeVisible();
+	});
+
+	test("an entry with changes shows before and after", async ({ page }) => {
+		await page.goto("/admin/audit-log/0192a3b4-c5d6-7e8f-9a0b-1c2d3e4f5b03");
+		await expect(page.getByText("E2e Admin updated tag Kids").first()).toBeVisible();
+		await expect(page.getByText("description")).toBeVisible();
+		await expect(page.getByText("old")).toBeVisible();
+		await expect(page.getByText("new", { exact: true })).toBeVisible();
+	});
+});
