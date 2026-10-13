@@ -753,6 +753,37 @@ input[type="password"]::-ms-clear {
 	animation: receiptTear 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+/* Print only the receipt: hide everything that neither contains nor is inside it,
+   and un-clip the ancestors (modal/fixed wrappers) that would otherwise crop it. */
+@media print {
+	body *:not(:has(#receipt-print)):not(#receipt-print):not(#receipt-print *) {
+		display: none !important;
+	}
+	*:has(#receipt-print) {
+		position: static !important;
+		overflow: visible !important;
+		transform: none !important;
+		height: auto !important;
+		max-height: none !important;
+		background: none !important;
+		box-shadow: none !important;
+		border: 0 !important;
+		padding: 0 !important;
+		margin: 0 auto !important;
+		backdrop-filter: none !important;
+	}
+	#receipt-print {
+		opacity: 1 !important;
+		animation: none !important;
+		transform: none !important;
+		filter: none !important;
+		max-width: 80mm;
+		margin: 0 auto;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+}
+
 /* ==========================================================================
    Fly-to-Cart & Cart Bounce Micro-Interactions
    ========================================================================== */
