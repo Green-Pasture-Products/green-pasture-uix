@@ -9,8 +9,8 @@ const config: Config = {
 	theme: {
 		extend: {
 			fontFamily: {
-				sans: ['"DM Sans"', "system-ui", "sans-serif"],
-				display: ['"Fraunces"', "Georgia", "serif"],
+				sans: ['"Sora"', '"Sora Ext"', "system-ui", "sans-serif"],
+				display: ['"Sora"', '"Sora Ext"', "system-ui", "sans-serif"],
 			},
 			colors: {
 				// Brand primary — re-anchored on Deep Teal #103630

@@ -1,3 +1,4 @@
+import { SelectField } from "@/_UI/SelectField";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -303,16 +304,17 @@ const AdminCreditCustomerDetail: React.FC = () => {
 									<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 										Credit Status
 									</label>
-									<select
-										name="status"
-										value={formData.status}
-										onChange={handleChange}
-										className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-									>
-										<option value="ACTIVE">Active</option>
-										<option value="SUSPENDED">Suspended</option>
-										<option value="DISABLED">Disabled</option>
-									</select>
+									<SelectField
+	value={formData.status}
+	onValueChange={(v) => handleChange({ target: { name: "status", value: v } } as any)}
+	aria-label="Status"
+	className="w-full"
+	options={[
+		{ value: "ACTIVE", label: "Active" },
+		{ value: "SUSPENDED", label: "Suspended" },
+		{ value: "DISABLED", label: "Disabled" },
+	]}
+/>
 								</div>
 							</div>
 

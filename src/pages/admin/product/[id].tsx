@@ -854,7 +854,7 @@ const ProductDetail: React.FC = () => {
 				)}
 
 				{item.reviews && item.reviews.length > 0 && (
-					<DetailSection title="Reviews">
+					<DetailSection title="Reviews" flush>
 						<DataTable
 							columns={reviewColumns}
 							data={item.reviews}

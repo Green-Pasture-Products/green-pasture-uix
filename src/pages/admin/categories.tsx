@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
 import AddCategory from "@/_components/Modals/AddCategory";
+import { useRouter } from "next/router";
 import { selectCategory } from "@/_redux/reducers/admin.reducer";
 import { DataTable } from "@/_components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -37,9 +38,8 @@ const AdminCategories: React.FC = () => {
 	const isDeletingCategory = useAppSelector((state) => state.category.isDeletingCategory);
 	const pagination = useAppSelector((state) => (state.category as any).pagination ?? null);
 	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
+	const router = useRouter();
 	const [deleteTarget, setDeleteTarget] = useState<ProductCategory | null>(null);
-	const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
-	const [viewingCategory, setViewingCategory] = useState<ProductCategory | null>(null);
 
 	// Extracted so the toolbar's refresh icon re-runs exactly the fetch the page loads with.
 	const refresh = useCallback(() => {
@@ -90,11 +90,13 @@ const AdminCategories: React.FC = () => {
 			enableHiding: false,
 			meta: { width: "50px", align: "center" },
 			cell: ({ row }) => (
+				<div onClick={(e) => e.stopPropagation()}>
 				<ActionMenu items={[
-					{ label: "View", icon: VIEW_ICON, onClick: () => setViewingCategory(row.original) },
-					{ label: "Edit", icon: EDIT_ICON, onClick: () => setEditingCategory(row.original) },
+					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/category/${row.original.id}`) },
+					{ label: "Edit", icon: EDIT_ICON, onClick: () => router.push(`/admin/category/${row.original.id}?edit=1`) },
 					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
 				]} />
+				</div>
 			),
 		},
 	];
@@ -109,6 +111,7 @@ const AdminCategories: React.FC = () => {
 					onRefresh={refresh}
 					refreshing={isFetchingCategories}
 					manualFiltering
+					onRowClick={(row: any) => router.push(`/admin/category/${row.id}`)}
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
 					searchPlaceholder="Search by name..."
@@ -130,40 +133,6 @@ const AdminCategories: React.FC = () => {
 					}
 					emptyMessage="No categories found"
 				/>
-
-				{/* View Category Modal */}
-				<Modal
-					isOpen={!!viewingCategory}
-					onClose={() => setViewingCategory(null)}
-					title="View Category"
-					size="md"
-				>
-					{viewingCategory && (
-						<div className="space-y-4 max-h-[80vh]">
-							<div>
-								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name: {viewingCategory.name}</label>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description:</label>
-								<SanitizedHtml
-									html={viewingCategory.description}
-									className="mt-1 text-sm"
-									fallback={<p className="mt-1 text-sm text-gray-900 dark:text-white">No description</p>}
-								/>
-							</div>
-							<div className="flex justify-end">
-								<Button
-									variant="outlined"
-									color="secondary"
-									size="sm"
-									onClick={() => setViewingCategory(null)}
-								>
-									Close
-								</Button>
-							</div>
-						</div>
-					)}
-				</Modal>
 
 				{/* Delete Confirmation Modal */}
 				<Modal
@@ -200,16 +169,6 @@ const AdminCategories: React.FC = () => {
 					</div>
 				</Modal>
 
-				{/* Edit Category Modal */}
-				<AddCategory
-					category={editingCategory || undefined}
-					isOpen={!!editingCategory}
-					onClose={() => {
-						setEditingCategory(null);
-						dispatch(categoryAction.fetchAllCategories({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
-					}}
-					title="Edit Category" children={undefined}
-				/>
 			</div>
 		</AdminLayout>
 	);

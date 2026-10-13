@@ -1,3 +1,4 @@
+import { SelectField } from "@/_UI/SelectField";
 import RecordActivity from "@/_components/RecordActivity";
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/router";
@@ -254,24 +255,21 @@ const AdminOrderDetail: React.FC = () => {
 							<label className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
 								Update Status
 							</label>
-							<select
-								value={selectedStatus}
-								onChange={(e) => setSelectedStatus(e.target.value)}
-								disabled={isUpdatingStatus}
-								className="w-full mt-2 px-3 py-2 rounded-lg text-sm border"
-								style={{
-									borderColor: "var(--border-light)",
-									backgroundColor: "var(--surface-low)",
-									color: "var(--text-primary)",
-								}}
-							>
-								<option value="">Select new status...</option>
-								<option value="PENDING">Pending</option>
-								<option value="PROCESSING">Processing</option>
-								<option value="IN_TRANSIT">In Transit</option>
-								<option value="DELIVERED">Delivered</option>
-								<option value="CANCELLED">Cancelled</option>
-							</select>
+							<SelectField
+	value={selectedStatus}
+	onValueChange={setSelectedStatus}
+	disabled={isUpdatingStatus}
+	placeholder="Select new status..."
+	aria-label="New order status"
+	className="mt-2 w-full"
+	options={[
+		{ value: "PENDING", label: "Pending" },
+		{ value: "PROCESSING", label: "Processing" },
+		{ value: "IN_TRANSIT", label: "In Transit" },
+		{ value: "DELIVERED", label: "Delivered" },
+		{ value: "CANCELLED", label: "Cancelled" },
+	]}
+/>
 						</div>
 
 						<div>
@@ -307,7 +305,7 @@ const AdminOrderDetail: React.FC = () => {
 					</div>
 				</DetailSection>
 
-				<DetailSection title="Order Items">
+				<DetailSection title="Order Items" flush>
 					<DataTable
 						columns={itemColumns}
 						data={order.items ?? []}

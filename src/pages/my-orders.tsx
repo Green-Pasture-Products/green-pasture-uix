@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { orderAction } from "@/_redux/actions/order.action";
 import { addToCartAsync } from "@/_redux/actions/cart.action";
-import { DataTable } from "@/_components/DataTable";
+import { DataTable } from "@/_components/DataTableClassic";
 import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";

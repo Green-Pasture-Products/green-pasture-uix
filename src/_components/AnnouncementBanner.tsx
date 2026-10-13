@@ -5,6 +5,7 @@ import { Megaphone, X } from "lucide-react";
 import { useAppSelector } from "@/_redux/store";
 import axiosInstance from "@/_utils/axiosInstance";
 import { useLiveEvent } from "@/_hooks/useLiveEvent";
+import { SanitizedHtml } from "@/components/egfm/rich-text";
 import type { Announcement } from "@/types/live";
 
 const STORE_KEY = "gp-dismissed-announcements";
@@ -61,10 +62,10 @@ const AnnouncementBanner: React.FC = () => {
 				<div key={a.id} role="status" aria-live="polite" className="bg-[#0c2b25] text-white">
 					<div className="mx-auto flex max-w-6xl items-start gap-3 px-4 py-2.5 sm:items-center">
 						<Megaphone className="mt-0.5 size-4 shrink-0 text-[#9aca3c] sm:mt-0" aria-hidden="true" />
-						<p className="min-w-0 flex-1 text-xs sm:text-sm">
-							<span className="font-semibold">{a.title}</span>
-							<span className="text-white/80"> — {a.message}</span>
-						</p>
+						<div className="min-w-0 flex-1 text-xs sm:text-sm">
+							<p className="font-semibold">{a.title}</p>
+							<SanitizedHtml html={a.message} className="text-xs text-white/80 sm:text-sm [&_a]:text-[#9aca3c] [&_blockquote]:border-white/30 [&_blockquote]:text-white/70 [&_code]:bg-white/10 [&_strong]:text-white" />
+						</div>
 						<button type="button" onClick={() => dismiss(a.id)} aria-label={`Dismiss: ${a.title}`} className="shrink-0 rounded p-1 text-white/70 hover:bg-white/10 hover:text-white">
 							<X className="size-4" />
 						</button>
