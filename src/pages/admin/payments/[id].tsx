@@ -273,7 +273,7 @@ const AdminPaymentDetail: React.FC = () => {
 
   return (
     <AdminLayout>
-      <div className="animate-page-enter space-y-6 max-w-4xl">
+      <div className="animate-page-enter mx-auto w-full max-w-5xl space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
