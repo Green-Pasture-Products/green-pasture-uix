@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import React, { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
@@ -28,6 +29,7 @@ const POWER_ICON = (
 );
 
 const AdminTags: React.FC = () => {
+	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { tableTags, tableMeta, isFetchingTags } = useAppSelector((state) => state.tag);
 	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
@@ -126,9 +128,11 @@ const AdminTags: React.FC = () => {
 			enableHiding: false,
 			meta: { width: "50px", align: "center" },
 			cell: ({ row }) => (
+				<div onClick={(e) => e.stopPropagation()}>
 				<ActionMenu
 					items={[
-						{ label: "Edit", icon: EDIT_ICON, onClick: () => setEditingTag(row.original) },
+						{ label: "View", icon: EDIT_ICON, onClick: () => router.push(`/admin/tag/${row.original.id}`) },
+						{ label: "Edit", icon: EDIT_ICON, onClick: () => router.push(`/admin/tag/${row.original.id}?edit=1`) },
 						{
 							label: row.original.status === "A" ? "Deactivate" : "Activate",
 							icon: POWER_ICON,
@@ -137,6 +141,7 @@ const AdminTags: React.FC = () => {
 						{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
 					]}
 				/>
+				</div>
 			),
 		},
 	];
@@ -151,6 +156,7 @@ const AdminTags: React.FC = () => {
 					onRefresh={refresh}
 					refreshing={isFetchingTags}
 					manualFiltering
+					onRowClick={(row) => router.push(`/admin/tag/${row.id}`)}
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
 					searchPlaceholder="Search by name..."

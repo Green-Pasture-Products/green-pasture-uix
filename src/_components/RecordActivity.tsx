@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Activity, ChevronDown, Pencil, Plus, ShieldAlert, Trash2, X } from "lucide-react";
+import { Activity, ChevronDown, PanelRightClose, PanelRightOpen, Pencil, Plus, ShieldAlert, Trash2, X } from "lucide-react";
 import { useRecordActivity } from "@/_hooks/useRecordActivity";
 import type { ActivityEventRow } from "@/types/live";
 
@@ -100,9 +100,49 @@ interface Props {
  * records, e.g. an order's payments), live. An edge tab opens a right-hand
  * panel; it is hidden entirely for users who may not view the record's history.
  */
+const PANEL_KEY = "gp-record-panel";
+const PANEL_W = 400;
+const RAIL_W = 48;
+
+/** True at lg+ (where the panel docks beside the content instead of overlaying it). */
+function useDocked() {
+	const [docked, setDocked] = useState(false);
+	useEffect(() => {
+		const mq = window.matchMedia("(min-width: 1024px)");
+		const update = () => setDocked(mq.matches);
+		update();
+		mq.addEventListener("change", update);
+		return () => mq.removeEventListener("change", update);
+	}, []);
+	return docked;
+}
+
 const RecordActivity: React.FC<Props> = ({ type, id }) => {
+	const docked = useDocked();
 	const [open, setOpen] = useState(false);
+	const [expanded, setExpanded] = useState(true);
 	const { items, total, loading, error, hasMore, loadMore, live } = useRecordActivity(type, id);
+
+	// Docked: expanded/collapsed is remembered (expanded by default), and the page content makes room via --record-panel-w.
+	useEffect(() => {
+		try {
+			setExpanded(localStorage.getItem(PANEL_KEY) !== "closed");
+		} catch {}
+	}, []);
+	const toggleExpanded = () => {
+		const next = !expanded;
+		setExpanded(next);
+		try {
+			localStorage.setItem(PANEL_KEY, next ? "open" : "closed");
+		} catch {}
+	};
+	useEffect(() => {
+		const root = document.documentElement;
+		if (docked && id && !(error && items.length === 0)) root.style.setProperty("--record-panel-w", `${expanded ? PANEL_W : RAIL_W}px`);
+		return () => {
+			root.style.removeProperty("--record-panel-w");
+		};
+	}, [docked, expanded, id, error, items.length]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -126,6 +166,94 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 	// 403 (no access to this record's history) or any load failure with nothing to show: stay out of the way.
 	if (error && items.length === 0) return null;
 
+	const body = (
+		<div className="flex-1 overflow-y-auto px-4 py-3">
+			{loading && items.length === 0 ? (
+				<div className="space-y-3">
+					{[0, 1, 2, 3].map((i) => (
+						<div key={i} className="h-10 animate-pulse rounded-lg" style={{ background: "var(--surface-medium)" }} />
+					))}
+				</div>
+			) : items.length === 0 ? (
+				<p className="py-10 text-center text-xs" style={{ color: "var(--text-hint)" }}>
+					Nothing recorded for this record yet.
+				</p>
+			) : (
+				<div className="space-y-5">
+					{groups.map((g) => (
+						<section key={g.label}>
+							<h3 className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wider" style={{ color: "var(--text-hint)" }}>
+								{g.label}
+							</h3>
+							<ul className="space-y-3">
+								{g.rows.map((e) => (
+									<EventRow key={e.id} event={e} entityType={type} />
+								))}
+							</ul>
+						</section>
+					))}
+					{hasMore && (
+						<button type="button" onClick={loadMore} disabled={loading} className="flex w-full items-center justify-center gap-1 rounded-lg border py-2 text-xs font-medium" style={{ borderColor: "var(--border-light)", color: "var(--text-secondary)" }}>
+							<ChevronDown size={14} /> {loading ? "Loading…" : "Show older"}
+						</button>
+					)}
+				</div>
+			)}
+		</div>
+	);
+
+	const heading = (
+		<div>
+			<h2 className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+				Activity
+				<span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.6rem] font-semibold" style={{ background: "rgba(22,163,74,0.12)", color: "#16a34a" }}>
+					<span className="size-1.5 animate-pulse rounded-full bg-current" /> Live
+				</span>
+			</h2>
+			<p className="text-[0.68rem]" style={{ color: "var(--text-hint)" }}>
+				Everything that has happened to this record
+			</p>
+		</div>
+	);
+
+	// lg+: docked flush under the top bar, full height, collapsible to a rail; content makes room.
+	if (docked) {
+		return (
+			<aside
+				role="complementary"
+				aria-label="Record activity"
+				data-testid="record-activity-panel"
+				data-expanded={expanded}
+				className="bg-card fixed top-24 right-0 bottom-0 z-20 flex flex-col border-l transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+				style={{ width: expanded ? PANEL_W : RAIL_W, borderColor: "var(--border-light)" }}
+			>
+				{expanded ? (
+					<div className="flex h-full min-w-0 flex-col" style={{ width: PANEL_W }}>
+						<header className="flex items-center justify-between gap-2 border-b px-4 py-3" style={{ borderColor: "var(--border-light)" }}>
+							{heading}
+							<button type="button" onClick={toggleExpanded} aria-label="Collapse activity" data-testid="record-activity-collapse" className="rounded-md p-1.5 hover:bg-black/5" style={{ color: "var(--text-hint)" }}>
+								<PanelRightClose size={18} />
+							</button>
+						</header>
+						{body}
+					</div>
+				) : (
+					<button type="button" onClick={toggleExpanded} aria-label="Expand activity" data-testid="record-activity-expand" className="flex h-full w-full flex-col items-center gap-3 pt-4 hover:bg-black/[0.03]">
+						<PanelRightOpen size={16} style={{ color: "var(--text-secondary)" }} />
+						<span className="text-xs font-semibold tracking-wide" style={{ writingMode: "vertical-rl", color: "var(--text-secondary)" }}>
+							Activity
+						</span>
+						{total > 0 && (
+							<span key={total} className="bg-brand text-brand-foreground animate-in zoom-in-50 fade-in rounded-full px-1.5 text-[0.62rem] font-bold duration-500">
+								{total}
+							</span>
+						)}
+					</button>
+				)}
+			</aside>
+		);
+	}
+
 	return (
 		<>
 			<button
@@ -143,64 +271,22 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 				<span style={{ writingMode: "vertical-rl" }}>Activity{total > 0 ? ` · ${total}` : ""}</span>
 			</button>
 
-			{open && <div className="fixed inset-0 z-40 bg-black/30 sm:hidden" onClick={() => setOpen(false)} aria-hidden />}
+			{open && <div className="fixed inset-0 z-40 bg-black/30" onClick={() => setOpen(false)} aria-hidden />}
 			<aside
 				role="complementary"
 				aria-label="Record activity"
+				data-testid="record-activity-panel"
 				aria-hidden={!open}
 				className={`fixed right-0 top-0 z-50 flex h-dvh w-full max-w-sm flex-col border-l shadow-2xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
 				style={{ background: "var(--surface-paper)", borderColor: "var(--border-light)" }}
 			>
 				<header className="flex items-center justify-between gap-2 border-b px-4 py-3" style={{ borderColor: "var(--border-light)" }}>
-					<div>
-						<h2 className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-							Activity
-							<span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.6rem] font-semibold" style={{ background: "rgba(22,163,74,0.12)", color: "#16a34a" }}>
-								<span className="size-1.5 animate-pulse rounded-full bg-current" /> Live
-							</span>
-						</h2>
-						<p className="text-[0.68rem]" style={{ color: "var(--text-hint)" }}>
-							Everything that has happened to this record
-						</p>
-					</div>
+					{heading}
 					<button type="button" onClick={() => setOpen(false)} aria-label="Close activity" className="rounded-md p-1.5 hover:bg-black/5" style={{ color: "var(--text-hint)" }}>
 						<X size={18} />
 					</button>
 				</header>
-
-				<div className="flex-1 overflow-y-auto px-4 py-3">
-					{loading && items.length === 0 ? (
-						<div className="space-y-3">
-							{[0, 1, 2, 3].map((i) => (
-								<div key={i} className="h-10 animate-pulse rounded-lg" style={{ background: "var(--surface-medium)" }} />
-							))}
-						</div>
-					) : items.length === 0 ? (
-						<p className="py-10 text-center text-xs" style={{ color: "var(--text-hint)" }}>
-							Nothing recorded for this record yet.
-						</p>
-					) : (
-						<div className="space-y-5">
-							{groups.map((g) => (
-								<section key={g.label}>
-									<h3 className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wider" style={{ color: "var(--text-hint)" }}>
-										{g.label}
-									</h3>
-									<ul className="space-y-3">
-										{g.rows.map((e) => (
-											<EventRow key={e.id} event={e} entityType={type} />
-										))}
-									</ul>
-								</section>
-							))}
-							{hasMore && (
-								<button type="button" onClick={loadMore} disabled={loading} className="flex w-full items-center justify-center gap-1 rounded-lg border py-2 text-xs font-medium" style={{ borderColor: "var(--border-light)", color: "var(--text-secondary)" }}>
-									<ChevronDown size={14} /> {loading ? "Loading…" : "Show older"}
-								</button>
-							)}
-						</div>
-					)}
-				</div>
+				{body}
 			</aside>
 		</>
 	);

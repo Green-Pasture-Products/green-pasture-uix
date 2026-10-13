@@ -74,6 +74,10 @@ export async function signInAsAdmin(context: BrowserContext, baseURL: string) {
 	const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
 	const accessToken = `${b64({ alg: "none", typ: "JWT" })}.${b64({ sub: "e2e", exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`;
 
+	// Hermetic: whatever is (or isn't) listening on the real API port must not decide these tests. A real API
+	// would 401 the fake token and sign the session out. Specs mock specific endpoints with page.route, which wins over this.
+	await context.route("**/api/v1/**", (route) => route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ message: "Not mocked in this test" }) }));
+
 	await context.addCookies([
 		{ name: "gp_at", value: accessToken, url: origin },
 		{ name: "gp_role", value: "admin", url: origin },
@@ -88,6 +92,8 @@ export async function signInAsAdmin(context: BrowserContext, baseURL: string) {
 			lastName: "Admin",
 			email: "e2e.admin@greenpasture.test",
 			profileType: "ADMIN",
+			// Wildcard authority so privilege-gated pages and nav entries render.
+			roles: [{ name: "SUPER_ADMIN", permissions: [{ name: "SUPER_ADMIN" }] }],
 		},
 		token: accessToken,
 	});

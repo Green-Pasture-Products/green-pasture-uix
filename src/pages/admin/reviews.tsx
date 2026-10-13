@@ -1,3 +1,4 @@
+import { SelectField } from "@/_UI/SelectField";
 import React, { useCallback, useEffect, useState, useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Star, Upload, X } from "lucide-react";
@@ -393,19 +394,14 @@ const AdminReviews: React.FC = () => {
 
 							<div>
 								<label className="block text-sm font-medium mb-2">Product *</label>
-								<select
-									value={testimonialForm.itemId}
-									onChange={(e) => setTestimonialForm((prev) => ({ ...prev, itemId: e.target.value }))}
-									className="w-full px-4 py-2 rounded-lg border"
-									style={{ borderColor: "var(--border-light)" }}
-								>
-									<option value="">Select a product</option>
-									{adminItems?.map((item) => (
-										<option key={item.id} value={item.id}>
-											{item.name}
-										</option>
-									))}
-								</select>
+								<SelectField
+	value={testimonialForm.itemId}
+	onValueChange={(v) => setTestimonialForm((prev) => ({ ...prev, itemId: v }))}
+	placeholder="Select a product"
+	aria-label="Product"
+	className="w-full"
+	options={(adminItems ?? []).map((item) => ({ value: String(item.id), label: item.name }))}
+/>
 							</div>
 
 							<div>

@@ -1,3 +1,4 @@
+import { SelectField } from "@/_UI/SelectField";
 import RecordActivity from "@/_components/RecordActivity";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
@@ -649,21 +650,14 @@ const AdminPaymentDetail: React.FC = () => {
                 <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-primary)" }}>
                   Reason for Decline *
                 </label>
-                <select
-                  value={declineModal.reason}
-                  onChange={(e) =>
-                    setDeclineModal({ ...declineModal, reason: e.target.value })
-                  }
-                  className="w-full px-3 py-2 rounded-lg border"
-                  style={{ borderColor: "var(--border-light)" }}
-                >
-                  <option value="">Select a reason</option>
-                  {declineReasons.map((r) => (
-                    <option key={r.value} value={r.value}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
+                <SelectField
+  value={declineModal.reason}
+  onValueChange={(v) => setDeclineModal({ ...declineModal, reason: v })}
+  placeholder="Select a reason"
+  aria-label="Reason for decline"
+  className="w-full"
+  options={declineReasons}
+/>
               </div>
 
               <div>

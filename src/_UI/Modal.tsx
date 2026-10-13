@@ -56,10 +56,15 @@ const Modal: React.FC<ModalProps> = ({
 	useEffect(() => {
 		if (!isOpen) return;
 		const onKeyDown = (e: KeyboardEvent) => {
-			if (e.key === "Escape") onClose();
+			if (e.key !== "Escape") return;
+			// A calendar/select/menu opened from inside the modal takes this Escape (it closes itself);
+			// closing the whole form as well would throw away what the user typed.
+			if (document.querySelector("[data-radix-popper-content-wrapper]")) return;
+			onClose();
 		};
-		document.addEventListener("keydown", onKeyDown);
-		return () => document.removeEventListener("keydown", onKeyDown);
+		// Capture phase: a popover closing on this same key would unmount before a bubble-phase listener ran.
+		document.addEventListener("keydown", onKeyDown, true);
+		return () => document.removeEventListener("keydown", onKeyDown, true);
 	}, [isOpen, onClose]);
 
 	if (!isOpen || !isClient) return null;

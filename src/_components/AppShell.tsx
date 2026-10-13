@@ -13,6 +13,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "./AppSidebar";
 import { TopBar } from "./TopBar";
 import { TabBar } from "./TabBar";
+import { MobileBottomNav } from "./MobileBottomNav";
 import { useTabSync } from "@/_hooks/useTabSync";
 
 /**
@@ -43,9 +44,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 				<SidebarInset>
 					<TopBar />
 					<TabBar />
-					<div key={router.asPath.split("?")[0]} className="admin-page-in flex min-w-0 max-w-full flex-1 flex-col overflow-y-auto overflow-x-hidden p-3 pb-24 sm:p-5 md:p-6 md:pb-8 lg:p-8">
+					<div key={router.asPath.split("?")[0]} className="admin-page-in flex min-w-0 max-w-full flex-1 flex-col overflow-y-auto overflow-x-hidden p-3 pb-24 transition-[padding] duration-300 sm:p-5 md:p-6 md:pb-8 lg:p-8 lg:pr-[calc(2rem+var(--record-panel-w,0px))]">
 						{children}
 					</div>
+					<MobileBottomNav />
 				</SidebarInset>
 			</SidebarProvider>
 		</TooltipProvider>

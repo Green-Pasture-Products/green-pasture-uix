@@ -178,7 +178,7 @@ export default function App({ Component, pageProps }: AppProps) {
 								padding: "12px 16px",
 								fontSize: "14px",
 								fontWeight: "500",
-								fontFamily: '"DM Sans", sans-serif',
+								fontFamily: '"Sora", "Sora Ext", sans-serif',
 								boxShadow:
 									"0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.05)",
 							},

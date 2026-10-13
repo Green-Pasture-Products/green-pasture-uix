@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import React, { useCallback, useEffect, useState } from "react";
 import { Megaphone, Plus } from "lucide-react";
 import toast from "react-hot-toast";
@@ -11,6 +12,8 @@ import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
 import { DatePicker } from "@/components/egfm/date-picker";
+import RichTextEditor from "@/_UI/RichTextEditor";
+import { richTextToPlain } from "@/components/egfm/rich-text";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/egfm/select";
 import axiosInstance from "@/_utils/axiosInstance";
 import { useListParams } from "@/_hooks/useListParams";
@@ -31,6 +34,7 @@ interface FormState {
 const EMPTY: FormState = { title: "", message: "", audience: "ALL", expiresAt: "" };
 
 const AdminAnnouncements: React.FC = () => {
+	const router = useRouter();
 	const { page, pageSize, search, setPage, setSearch, setPageSize } = useListParams();
 	const [rows, setRows] = useState<Announcement[]>([]);
 	const [meta, setMeta] = useState<PageMeta | null>(null);
@@ -70,7 +74,7 @@ const AdminAnnouncements: React.FC = () => {
 		setConfirmPublish(false);
 	};
 
-	const valid = form.title.trim().length > 0 && form.message.trim().length > 0;
+	const valid = form.title.trim().length > 0 && richTextToPlain(form.message).length > 0;
 
 	const save = async () => {
 		setBusy(true);
@@ -133,7 +137,7 @@ const AdminAnnouncements: React.FC = () => {
 						{row.original.title}
 					</p>
 					<p className="line-clamp-1 text-xs" style={{ color: "var(--text-hint)" }}>
-						{row.original.message}
+						{richTextToPlain(row.original.message)}
 					</p>
 				</div>
 			),
@@ -173,13 +177,16 @@ const AdminAnnouncements: React.FC = () => {
 			enableHiding: false,
 			meta: { width: "50px", align: "center" },
 			cell: ({ row }) => (
+				<div onClick={(e) => e.stopPropagation()}>
 				<ActionMenu
 					items={[
-						{ label: "Edit", onClick: () => openForm(row.original) },
+						{ label: "View", onClick: () => router.push(`/admin/announcement/${row.original.id}`) },
+						{ label: "Edit", onClick: () => router.push(`/admin/announcement/${row.original.id}?edit=1`) },
 						{ label: row.original.isActive ? "Deactivate" : "Activate", onClick: () => setToggleTarget(row.original) },
 						{ label: "Delete", onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
 					]}
 				/>
+				</div>
 			),
 		},
 	];
@@ -197,6 +204,7 @@ const AdminAnnouncements: React.FC = () => {
 					onRefresh={load}
 					refreshing={loading}
 					manualFiltering
+					onRowClick={(row) => router.push(`/admin/announcement/${row.id}`)}
 					showAuditColumns={false}
 					globalFilter={search}
 					onGlobalFilterChange={setSearch}
@@ -250,7 +258,7 @@ const AdminAnnouncements: React.FC = () => {
 								<label htmlFor="ann-message" className="mb-1 block text-xs font-bold" style={{ color: "var(--text-secondary)" }}>
 									Message
 								</label>
-								<textarea id="ann-message" rows={5} maxLength={5000} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className={field} style={fieldStyle} required />
+								<RichTextEditor value={form.message} onChange={(html) => setForm({ ...form, message: html })} placeholder="What do you want people to know?" minHeight={140} />
 							</div>
 							<div className="grid gap-4 sm:grid-cols-2">
 								<div>

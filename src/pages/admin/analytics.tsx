@@ -1,3 +1,5 @@
+import axiosInstance from "@/_utils/axiosInstance";
+import CalendarHeatmap from "@/components/egfm/widgets/calendar-heatmap";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -23,6 +25,9 @@ import { comparePeriods, lastDays, type Point } from "@/_utils/periodCompare";
 import { DollarSign, ShoppingCart, Users, Star } from "lucide-react";
 
 /** Windows offered on the trend chart, and the one every delta is measured over. */
+/** Light to deep Green Pasture greens, one step per quintile of daily orders. */
+const ACTIVITY_RAMP = ["#eaf3d2", "#cfe59a", "#9aca3c", "#4f8f3a", "#1f6554"];
+
 const VOLUME_RANGES = [
 	{ value: "7", label: "7D" },
 	{ value: "30", label: "30D" },
@@ -294,6 +299,20 @@ const AdminAnalytics: React.FC = () => {
 
 	const volumeDays = Number(volumeRange);
 
+	const [activity, setActivity] = useState<{ date: string; count: number }[]>([]);
+	const [activityLoading, setActivityLoading] = useState(true);
+	useEffect(() => {
+		let live = true;
+		axiosInstance
+			.get("analytics/activity", { params: { days: 365 } })
+			.then((res) => live && setActivity(res.data?.data ?? []))
+			.catch(() => live && setActivity([]))
+			.finally(() => live && setActivityLoading(false));
+		return () => {
+			live = false;
+		};
+	}, []);
+
 	if (loading) {
 		return (
 			<AdminLayout>
@@ -326,6 +345,11 @@ const AdminAnalytics: React.FC = () => {
 						/>
 					))}
 				</div>
+
+				{/* Order activity across the year (calendar heatmap) */}
+				<ChartCard title="Order Activity" subtitle="Orders per day, this year" isLoading={activityLoading} isEmpty={!activityLoading && activity.length === 0} emptyMessage="No orders yet this year.">
+					<CalendarHeatmap data={activity} unit="orders" colorRamp={ACTIVITY_RAMP} />
+				</ChartCard>
 
 				{/* Sales */}
 				<div className="grid gap-4 lg:grid-cols-3">

@@ -38,13 +38,8 @@ export default function Document() {
 				<meta property="og:site_name" content="Green Pasture Organics" />
 				<meta property="og:image" content="/icons/android-chrome-512x512.png" />
 
-				{/* Fonts */}
-				<link rel="preconnect" href="https://fonts.googleapis.com" />
-				<link
-					rel="preconnect"
-					href="https://fonts.gstatic.com"
-					crossOrigin="anonymous"
-				/>
+				{/* Sora is self-hosted (see globals.css); preload the Latin half so text doesn't reflow. */}
+				<link rel="preload" href="/fonts/sora-latin-var.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
 			</Head>
 			<body className="antialiased font-sans">
 				<script dangerouslySetInnerHTML={{ __html: themeScript }} />
