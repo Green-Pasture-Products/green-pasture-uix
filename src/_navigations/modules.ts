@@ -25,20 +25,20 @@ export const MODULES: ModuleDef[] = [
 	{ path: "/admin/reviews", title: "Reviews", icon: MessageSquareQuote, group: "Catalog", privilege: "MODERATE_REVIEWS" },
 	{ path: "/admin/orders", title: "Orders", icon: ShoppingCart, group: "Sales", privilege: "MANAGE_ORDERS", owns: ["/admin/order"] },
 	{ path: "/admin/customers", title: "Customers", icon: UserRound, group: "Sales", privilege: "MANAGE_CUSTOMERS", owns: ["/admin/customer"] },
-	{ path: "/admin/announcements", title: "Announcements", icon: Megaphone, group: "Sales", privilege: "MANAGE_ANNOUNCEMENTS", owns: ["/admin/announcement"] },
-	{ path: "/admin/staff", title: "Staff", icon: UserCog, group: "People", privilege: "MANAGE_STAFF" },
-	{ path: "/admin/invitations", title: "Invitations", icon: MailPlus, group: "People", privilege: "MANAGE_STAFF" },
-	{ path: "/admin/roles", title: "Roles", icon: Shield, group: "People", privilege: "MANAGE_ROLES", owns: ["/admin/role"] },
+	{ path: "/admin/announcements", title: "Announcements", icon: Megaphone, group: "Platform", privilege: "MANAGE_ANNOUNCEMENTS", owns: ["/admin/announcement"] },
 	// Ungated: settings.tsx has tabs every signed-in staff member needs (My
 	// Profile, Security) alongside store-scoped ones. Gating the nav item would
 	// deny a STAFF user their own profile/password change. The store-scoped
 	// tabs (Store Settings, Order & Shipping) are hidden inside the page
 	// itself via useHasPrivilege('MANAGE_STORES').
-	{ path: "/admin/settings", title: "Settings", icon: Settings, group: "System" },
+	{ path: "/admin/settings", title: "Settings", icon: Settings, group: "Platform" },
 	// No privilege gate: no permission covering country/currency management
 	// exists yet in the backend's permission set (checked live against the
 	// seeded `permissions` table) — omitted per policy rather than inventing one.
-	{ path: "/admin/countries", title: "Countries", icon: Globe, group: "System" },
+	{ path: "/admin/countries", title: "Countries", icon: Globe, group: "Platform" },
+	{ path: "/admin/staff", title: "Team & Role Access", icon: UserCog, group: "Administration", privilege: "MANAGE_STAFF" },
+	{ path: "/admin/invitations", title: "Invitations", icon: MailPlus, group: "Administration", privilege: "MANAGE_STAFF" },
+	{ path: "/admin/roles", title: "Roles & Permissions", icon: Shield, group: "Administration", privilege: "MANAGE_ROLES", owns: ["/admin/role"] },
 ];
 
 /** Look up a module by its absolute path (exact match). */
