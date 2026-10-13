@@ -29,7 +29,7 @@ export function DataTableGrid<T extends { id: string | number }>({
     <div className="overflow-x-auto scrollbar-none">
       <Table>
         <TableHeader>
-          <TableRow className="bg-brand-soft hover:bg-brand-soft dark:bg-brand/[0.07] dark:hover:bg-brand/[0.07] border-b border-border/80 whitespace-nowrap">
+          <TableRow className="bg-brand-soft hover:bg-brand-soft dark:bg-white/[0.04] dark:hover:bg-white/[0.04] border-b border-border/80 whitespace-nowrap">
             {showSerialNumber && (
               <TableHead className="w-12 text-center text-xs font-semibold text-muted-foreground whitespace-nowrap select-none">SN</TableHead>
             )}

@@ -232,7 +232,7 @@ const AdminInbox: React.FC = () => {
 												<div className="hover:bg-muted/60 flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors">
 													<span className={cn("size-2 shrink-0 rounded-full", !n.isRead && view !== "cleared" ? "bg-brand" : "bg-transparent")} aria-label={!n.isRead ? "Unread" : undefined} />
 													<button type="button" onClick={() => open(n)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-														<span className="bg-brand/15 text-brand-ink flex size-6 shrink-0 items-center justify-center rounded-full">
+														<span className="bg-brand/15 dark:bg-white/10 text-brand-ink flex size-6 shrink-0 items-center justify-center rounded-full">
 															<Icon className="size-3.5" />
 														</span>
 														<span className={cn("w-1/3 min-w-0 shrink-0 truncate text-sm", !n.isRead && view !== "cleared" && "font-semibold")}>{n.title}</span>

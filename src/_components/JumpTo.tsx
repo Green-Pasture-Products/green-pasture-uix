@@ -64,7 +64,7 @@ export function JumpTo({ open, onClose }: { open: boolean; onClose: () => void }
 								type="button"
 								onMouseEnter={() => setActive(i)}
 								onClick={() => go(m.path)}
-								className={cn("flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm", i === active ? "bg-brand/15 font-semibold" : "hover:bg-muted/60")}
+								className={cn("flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm", i === active ? "bg-accent font-semibold" : "hover:bg-muted/60")}
 							>
 								<m.icon className="text-brand-ink size-4 shrink-0" />
 								<span className="flex-1">{m.title}</span>
