@@ -558,3 +558,27 @@ test.describe("tab strip", () => {
 		});
 	}
 });
+
+test.describe("payment details page", () => {
+	test("is centred in its content area, like the other record pages", async ({ page }) => {
+		await mockApi(page);
+		await page.route("**/api/v1/payment/admin/**", (route) =>
+			route.fulfill(ok({ id: "0192a3b4-c5d6-7e8f-9a0b-1c2d3e4f5c01", orderId: "o1", amount: 86000, currency: "NGN", paymentMethod: "MANUAL_TRANSFER", paymentStatus: "AWAITING_VERIFICATION", customerPhone: "0700", receiptUrl: "", adminNote: "", submittedAt: new Date().toISOString(), verifiedAt: "", declinedAt: "", createdAt: new Date().toISOString(), receipts: [], order: { id: "o1", orderReference: "O-NG-1", totalAmount: 86000, items: [], customer: { id: "c1", profile: { firstName: "Ada", lastName: "Obi", email: "ada@example.com" } } } })),
+		);
+		await page.setViewportSize({ width: 1800, height: 900 });
+		await page.goto("/admin/payments/0192a3b4-c5d6-7e8f-9a0b-1c2d3e4f5c01");
+		const heading = page.getByRole("heading", { name: "Payment Details" });
+		await expect(heading).toBeVisible();
+		const gaps = await heading.evaluate((h) => {
+			let el: HTMLElement | null = h as HTMLElement;
+			while (el && !el.className.toString().includes("max-w-5xl")) el = el.parentElement;
+			const box = el!.getBoundingClientRect();
+			const parent = el!.parentElement!;
+			const pr = parent.getBoundingClientRect();
+			const cs = getComputedStyle(parent);
+			return { left: box.left - (pr.left + parseFloat(cs.paddingLeft)), right: pr.right - parseFloat(cs.paddingRight) - box.right };
+		});
+		expect(Math.abs(gaps.left - gaps.right)).toBeLessThanOrEqual(2);
+		expect(gaps.left).toBeGreaterThan(20); // there is room to centre in, so it really did
+	});
+});
