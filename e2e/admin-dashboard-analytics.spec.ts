@@ -92,7 +92,14 @@ test.describe("analytics", () => {
 		await expect(page.getByText("Order Activity")).toBeVisible();
 		const calendar = page.getByRole("group", { name: /Calendar of orders per day/ });
 		await expect(calendar).toBeVisible();
-		await expect(calendar.locator('[title$=": 9"]').first()).toBeVisible(); // the busiest day is plotted
+		await expect(calendar.locator('[data-count="9"]').first()).toBeVisible(); // the busiest day is plotted
+		// The grid fills the card: its right edge reaches (almost) the card's content edge, no dead margin.
+		const gap = await calendar.evaluate((el) => {
+			const cells = [...el.querySelectorAll("[data-date]")] as HTMLElement[];
+			const right = Math.max(...cells.map((c) => c.getBoundingClientRect().right));
+			return Math.round(el.getBoundingClientRect().right - right);
+		});
+		expect(gap, "heatmap leaves a blank margin on the right").toBeLessThanOrEqual(24);
 		await expect(page.getByText("More orders")).toBeVisible();
 		expect(requests).toContain("analytics/activity");
 	});

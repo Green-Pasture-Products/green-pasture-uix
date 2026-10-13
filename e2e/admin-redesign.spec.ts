@@ -231,6 +231,23 @@ test.describe("data table", () => {
 	});
 });
 
+test.describe("data table columns", () => {
+	test("the Action column is always the last one, after the audit columns", async ({ page }) => {
+		await page.route("**/api/v1/**", (route) => {
+			const path = new URL(route.request().url()).pathname.replace(/^.*\/api\/v1\//, "");
+			if (path === "products") return route.fulfill(ok({ items: [{ id: "0192a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a01", name: "Flours", description: "x", status: "A", createdBy: "Ada", updatedAt: new Date().toISOString() }], meta: { totalItems: 1, itemCount: 1, itemsPerPage: 10, totalPages: 1, currentPage: 1 } }));
+			return route.fulfill(ok([]));
+		});
+		await page.setViewportSize({ width: 1440, height: 900 });
+		await page.goto("/admin/categories");
+		await expect(page.getByText("Flours", { exact: true })).toBeVisible();
+		const headers = await page.getByTestId("data-table").locator("thead th").allInnerTexts();
+		expect(headers.at(-1)?.trim()).toBe("Action");
+		expect(headers.some((h) => /Created By/.test(h))).toBe(true); // audit columns are present, and come before Action
+		expect(headers.findIndex((h) => /Created By/.test(h))).toBeLessThan(headers.length - 1);
+	});
+});
+
 test.describe("announcements form", () => {
 	test("the date picker and select open ABOVE the modal", async ({ page }) => {
 		await mockApi(page);
