@@ -202,6 +202,15 @@ test.describe("inbox", () => {
 		await expect(page.getByText("Old cleared alert", { exact: true })).toBeVisible();
 	});
 
+	test("shows a dash, not 0 unread, when the counts cannot be loaded", async ({ page }) => {
+		await mockApi(page);
+		await page.route("**/api/v1/notifications/summary", (route) => route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "boom" }) }));
+		await page.goto("/admin/inbox");
+		const primary = page.getByRole("tab", { name: /Primary/ });
+		await expect(primary).toContainText("— unread");
+		await expect(primary).not.toContainText("0 unread");
+	});
+
 	test("clearing an item and restoring it call the API", async ({ page }) => {
 		const calls = await mockApi(page);
 		await page.goto("/admin/inbox");

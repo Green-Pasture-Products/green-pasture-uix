@@ -64,11 +64,18 @@ const AdminInbox: React.FC = () => {
 	const [loading, setLoading] = useState(true);
 	const [page, setPage] = useState(1);
 
+	// null = the counts could not be loaded. Show a dash then, not a 0 that reads as "nothing unread".
+	const [summaryKnown, setSummaryKnown] = useState(true);
 	const loadSummary = useCallback(async () => {
 		try {
 			const res = await axiosInstance.get("notifications/summary");
-			setSummary(res.data?.data);
-		} catch {}
+			const data = res.data?.data;
+			if (!data || typeof data.primaryUnread !== "number") throw new Error("bad summary");
+			setSummary(data);
+			setSummaryKnown(true);
+		} catch {
+			setSummaryKnown(false);
+		}
 	}, []);
 
 	const load = useCallback(
@@ -163,7 +170,7 @@ const AdminInbox: React.FC = () => {
 	}, [items, view]);
 
 	const tab = TABS.find((t) => t.id === view)!;
-	const unreadFor = (id: View) => (id === "primary" ? summary.primaryUnread : id === "other" ? summary.otherUnread : 0);
+	const unreadFor = (id: View): number | null => (id === "cleared" ? 0 : !summaryKnown ? null : id === "primary" ? summary.primaryUnread : summary.otherUnread);
 	const hasMore = !!meta && meta.page < meta.totalPages;
 
 	return (
@@ -204,7 +211,7 @@ const AdminInbox: React.FC = () => {
 								<t.icon className="size-4 shrink-0" />
 								<span className="min-w-0">
 									<span className="block text-sm font-semibold">{t.label}</span>
-									{t.id !== "cleared" && <span className="text-muted-foreground block text-xs">{unread} unread</span>}
+									{t.id !== "cleared" && <span className="text-muted-foreground block text-xs">{unread ?? "—"} unread</span>}
 								</span>
 							</button>
 						);
