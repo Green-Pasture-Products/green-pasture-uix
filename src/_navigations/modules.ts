@@ -22,7 +22,7 @@ export const MODULES: ModuleDef[] = [
 	{ path: "/admin/categories", title: "Category", icon: ShoppingBasket, group: "Catalog", owns: ["/admin/category"] },
 	{ path: "/admin/products", title: "Products", icon: Package, group: "Catalog", privilege: "MANAGE_PRODUCTS", owns: ["/admin/product"] },
 	{ path: "/admin/tags", title: "Tags", icon: Tags, group: "Catalog", privilege: "MANAGE_PRODUCTS", owns: ["/admin/tag"] },
-	{ path: "/admin/reviews", title: "Reviews", icon: MessageSquareQuote, group: "Catalog", privilege: "MODERATE_REVIEWS" },
+	{ path: "/admin/reviews", title: "Reviews", icon: MessageSquareQuote, group: "Catalog", privilege: "MODERATE_REVIEWS", owns: ["/admin/review"] },
 	{ path: "/admin/orders", title: "Orders", icon: ShoppingCart, group: "Sales", privilege: "MANAGE_ORDERS", owns: ["/admin/order"] },
 	{ path: "/admin/payments/manual", title: "Manual Payments", icon: Landmark, group: "Sales", privilege: "MANAGE_MANUAL_PAYMENTS", owns: ["/admin/payments"] },
 	{ path: "/admin/customers", title: "Customers", icon: UserRound, group: "Sales", privilege: "MANAGE_CUSTOMERS", owns: ["/admin/customer"] },
@@ -36,7 +36,7 @@ export const MODULES: ModuleDef[] = [
 	// No privilege gate: no permission covering country/currency management
 	// exists yet in the backend's permission set (checked live against the
 	// seeded `permissions` table) — omitted per policy rather than inventing one.
-	{ path: "/admin/countries", title: "Countries", icon: Globe, group: "Platform" },
+	{ path: "/admin/countries", title: "Countries", icon: Globe, group: "Platform", owns: ["/admin/country"] },
 	{ path: "/admin/staff", title: "Team & Role Access", icon: UserCog, group: "Administration", privilege: "MANAGE_STAFF" },
 	{ path: "/admin/audit-log", title: "Audit Log", icon: ScrollText, group: "Administration", privilege: "READ_ACTIVITY" },
 	{ path: "/admin/invitations", title: "Invitations", icon: MailPlus, group: "Administration", privilege: "MANAGE_STAFF" },
