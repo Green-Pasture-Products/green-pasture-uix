@@ -129,6 +129,30 @@ test.describe("shell", () => {
 		await expect(page.locator("html")).toHaveClass(/admin-ui/);
 	});
 
+	test("dark mode surfaces are neutral, not green-tinted", async ({ page, context }) => {
+		await context.addInitScript(() => localStorage.setItem("gp-theme", "dark"));
+		await mockApi(page);
+		await page.goto("/admin/inbox");
+		await expect(page.locator("html")).toHaveClass(/dark/);
+		await expect(page.locator("html")).toHaveClass(/admin-ui/); // the admin tokens apply once the shell has mounted
+		const channels = await page.evaluate(() => {
+			const read = (el: Element) => (getComputedStyle(el).backgroundColor.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
+			const probe = (cls: string) => {
+				const el = document.createElement("div");
+				el.className = cls;
+				document.body.appendChild(el);
+				const c = read(el);
+				el.remove();
+				return c;
+			};
+			return { page: probe("bg-background"), card: probe("bg-card"), muted: probe("bg-muted"), sidebar: probe("bg-sidebar") };
+		});
+		for (const [name, [r, g, b]] of Object.entries(channels)) {
+			// A neutral grey has its channels within a few steps of each other; a green cast pushes g well above r and b.
+			expect(Math.max(r, g, b) - Math.min(r, g, b), `${name} surface has a colour cast`).toBeLessThanOrEqual(6);
+		}
+	});
+
 	test("Ctrl+K opens Jump to, filters by name and Enter opens the page", async ({ page }) => {
 		await mockApi(page);
 		await page.goto("/admin/inbox");

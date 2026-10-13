@@ -77,7 +77,7 @@ export function AdminUserMenu({ name, email, roleLabel, initials, onSignOut }: P
 										onClick={() => setPreference(value)}
 										className={cn(
 											"flex items-center justify-center gap-1.5 rounded-lg border py-1.5 text-xs font-semibold transition-colors",
-											active ? "bg-brand/20 border-brand/40 font-bold shadow-2xs" : "text-muted-foreground hover:bg-background/60 border-transparent",
+											active ? "bg-brand/20 dark:bg-accent border-brand/40 font-bold shadow-2xs" : "text-muted-foreground hover:bg-background/60 border-transparent",
 										)}
 									>
 										<Icon className="size-3.5" /> {label}

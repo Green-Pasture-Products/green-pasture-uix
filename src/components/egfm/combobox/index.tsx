@@ -160,7 +160,7 @@ export function Combobox({
               onMouseMove={() => setActive(i)}
               className={cn(
                 "flex min-h-9 pointer-coarse:min-h-12 cursor-pointer select-none items-center gap-2 rounded-lg px-2 text-sm",
-                i === active && "bg-brand/15",
+                i === active && "bg-accent",
                 o.value === value && "font-semibold",
               )}
             >

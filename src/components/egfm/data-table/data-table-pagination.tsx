@@ -79,7 +79,7 @@ export function DataTablePagination({
                     "h-7 min-w-[28px] px-1.5 text-xs font-medium transition-all",
                     // Outlined, not filled: the page's primary stays the only fill (Von Restorff).
                     pageNumber === currentPage
-                      ? "border-brand bg-brand/10 text-foreground font-bold ring-1 ring-brand hover:bg-brand/15"
+                      ? "border-brand bg-brand/10 dark:bg-white/10 text-foreground font-bold ring-1 ring-brand hover:bg-brand/15 dark:hover:bg-white/15"
                       : "border-border/70 bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
                   )}
                   aria-label={`Page ${pageNumber}`}

@@ -32,7 +32,7 @@ export function MobileBottomNav() {
 				const active = activePath === m.path;
 				return (
 					<Link key={m.path} href={m.path} aria-current={active ? "page" : undefined} className="flex flex-1 flex-col items-center gap-0.5">
-						<span className={cn("relative flex h-8 w-14 items-center justify-center rounded-full transition-colors", active ? "bg-brand/15 text-ink dark:bg-brand/20 dark:text-brand shadow-xs" : "text-muted-foreground")}>
+						<span className={cn("relative flex h-8 w-14 items-center justify-center rounded-full transition-colors", active ? "bg-brand/15 text-ink dark:bg-white/10 dark:text-foreground shadow-xs" : "text-muted-foreground")}>
 							<m.icon className={cn("size-[18px] transition-transform", active && "scale-110")} />
 							{m.path === "/admin/inbox" && unread > 0 && (
 								<span className="bg-brand text-brand-foreground absolute -top-0.5 right-1.5 flex size-4 items-center justify-center rounded-full text-[9px] font-bold">{unread > 9 ? "9+" : unread}</span>

@@ -268,34 +268,37 @@
 	--sidebar-ring: #9aca3c;
 }
 .admin-ui.dark {
-	--background: #0b100d;
-	--foreground: #f1f5ee;
-	--card: #121814;
-	--card-foreground: #f1f5ee;
-	--popover: #121814;
-	--popover-foreground: #f1f5ee;
-	--secondary: #1b231d;
-	--muted: #1b231d;
-	--muted-foreground: #9aa89f;
-	--accent: rgba(154, 202, 60, 0.16);
-	--border: #243026;
-	--input: #66736a;
+	/* Neutral near-black surfaces (no green cast); the lime stays an accent only. */
+	--background: #0b0b0c;
+	--foreground: #f4f4f5;
+	--card: #141415;
+	--card-foreground: #f4f4f5;
+	--popover: #141415;
+	--popover-foreground: #f4f4f5;
+	--secondary: #1f1f21;
+	--muted: #1f1f21;
+	--muted-foreground: #a1a1a6;
+	--accent: #262628;
+	--border: #27272a;
+	--input: #5f5f66;
 	--ring: #9aca3c;
+	--brand-soft: rgba(255, 255, 255, 0.04);
+	--brand-ink: #b7de6b;
 
-	--surface-paper: #121814;
-	--surface-low: #0e140f;
-	--surface-medium: #1b231d;
-	--surface-high: #263128;
-	--text-primary: #f1f5ee;
-	--text-secondary: rgba(241, 245, 238, 0.72);
-	--text-hint: #77857c;
-	--border-light: #243026;
+	--surface-paper: #141415;
+	--surface-low: #0f0f10;
+	--surface-medium: #1f1f21;
+	--surface-high: #2a2a2d;
+	--text-primary: #f4f4f5;
+	--text-secondary: rgba(244, 244, 245, 0.72);
+	--text-hint: #7d7d84;
+	--border-light: #27272a;
 
-	--sidebar: #0e130f;
-	--sidebar-foreground: #e8efe6;
-	--sidebar-accent: rgba(154, 202, 60, 0.14);
+	--sidebar: #0f0f10;
+	--sidebar-foreground: #e7e7ea;
+	--sidebar-accent: #1f1f21;
 	--sidebar-accent-foreground: #ffffff;
-	--sidebar-border: #243026;
+	--sidebar-border: #27272a;
 }
 .admin-ui input,
 .admin-ui button,

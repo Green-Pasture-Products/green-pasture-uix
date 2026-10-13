@@ -49,7 +49,7 @@ function NavMenuButton({ item }: { item: ModuleDef }) {
 			asChild
 			isActive={isActive}
 			tooltip={item.title}
-			className="gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-all duration-150 hover:bg-sidebar-accent/60 data-[active=true]:bg-brand/15 data-[active=true]:font-semibold data-[active=true]:text-ink data-[active=true]:shadow-xs dark:data-[active=true]:bg-brand/20 dark:data-[active=true]:text-brand"
+			className="gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-all duration-150 hover:bg-sidebar-accent/60 data-[active=true]:bg-brand/15 data-[active=true]:font-semibold data-[active=true]:text-ink data-[active=true]:shadow-xs dark:data-[active=true]:bg-white/10 dark:data-[active=true]:text-foreground dark:data-[active=true]:[&>svg]:text-brand"
 		>
 			{/* On mobile the sidebar is an overlay sheet, so picking a tab has to
 			    dismiss it — otherwise it sits on top of the page it just opened.
@@ -99,7 +99,7 @@ export function AppSidebar() {
 			<SidebarHeader className="border-sidebar-border/60 border-b p-3">
 				{/* Navigates too, so it dismisses the mobile sheet like any tab does. */}
 				<Link href="/admin/dashboard" onClick={() => setOpenMobile(false)} className="flex h-12 items-center gap-2.5 px-2">
-					<div className="bg-brand/10 dark:bg-brand/20 relative size-8 shrink-0 rounded-lg p-1">
+					<div className="bg-brand/10 dark:bg-white/10 relative size-8 shrink-0 rounded-lg p-1">
 						<Image src="/images/GP Organic Logo (Primary).png" alt="Green Pasture Organics Logo" fill sizes="32px" priority className="object-contain p-1" />
 					</div>
 					<div className="min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
