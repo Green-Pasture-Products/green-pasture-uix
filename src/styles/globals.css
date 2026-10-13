@@ -5,6 +5,7 @@
 /* Fraunces — an old-style serif with a SOFT axis and optical sizing. Its
    slightly irregular, botanical letterforms carry the "grown, not manufactured"
    idea that a neutral geometric sans cannot. Display only; DM Sans stays for UI. */
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap");
 
 /* ─── CSS Custom Properties ───────────────────────────────────────────── */
@@ -170,6 +171,138 @@
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ─── Brand accent tokens (ported admin components) ──────────────────────
+   The egfm-derived admin components style their accent with brand / brand-ink
+   / brand-soft / ink. They map onto the Green Pasture palette: the lime
+   (#9aca3c, as on the hero CTA) is the fill, with deep-green ink on it. */
+:root {
+	--brand: #9aca3c;
+	--brand-hover: #86b82e;
+	--brand-foreground: #0c2b25;
+	--brand-ink: #3f6d10; /* lime reads as TEXT in this darker shade (AA on white) */
+	--brand-soft: rgba(154, 202, 60, 0.16);
+	--ink: #10231f;
+	--ink-2: #1c332e;
+	--ink-3: #3b514b;
+}
+.dark {
+	--brand: #9aca3c;
+	--brand-hover: #aedb52;
+	--brand-foreground: #0c2b25;
+	--brand-ink: #b7de6b;
+	--brand-soft: rgba(154, 202, 60, 0.18);
+	--ink: #f1f5ee;
+	--ink-2: #d6e0d2;
+	--ink-3: #a9b8a4;
+}
+@theme inline {
+	--color-brand: var(--brand);
+	--color-brand-hover: var(--brand-hover);
+	--color-brand-foreground: var(--brand-foreground);
+	--color-brand-ink: var(--brand-ink);
+	--color-brand-soft: var(--brand-soft);
+	--color-brand-dark: var(--brand-ink);
+	--color-ink: var(--ink);
+	--color-ink-2: var(--ink-2);
+	--color-ink-3: var(--ink-3);
+}
+
+/* ─── Admin look & feel ───────────────────────────────────────────────────
+   Applied to <html> only while the admin shell is mounted (AppShell), so the
+   storefront is untouched and portalled UI (modals, menus) inherits it too.
+   Structure and density follow the egfm admin; colour stays Green Pasture:
+   the deep green drives primary actions, the lime is the accent (active nav,
+   tabs, chips, avatars). */
+.admin-ui {
+	font-family: "Sora", "DM Sans", system-ui, -apple-system, sans-serif;
+	--background: #f6f8f2;
+	--foreground: #10231f;
+	--card: #ffffff;
+	--card-foreground: #10231f;
+	--popover: #ffffff;
+	--popover-foreground: #10231f;
+	--secondary: #eef2e8;
+	--muted: #eef2e8;
+	--muted-foreground: #5b6b63;
+	--accent: rgba(154, 202, 60, 0.14);
+	--border: #e1e7dc;
+	--input: #8c978f;
+	--ring: #3f6d10;
+	--radius: 0.75rem;
+
+	--surface-paper: #ffffff;
+	--surface-low: #f6f8f2;
+	--surface-medium: #eef2e8;
+	--surface-high: #e1e7dc;
+	--text-primary: #10231f;
+	--text-secondary: rgba(16, 35, 31, 0.72);
+	--text-hint: #6b7a72;
+	--border-light: #e1e7dc;
+
+	--sidebar: #ffffff;
+	--sidebar-foreground: #10231f;
+	--sidebar-primary: #9aca3c;
+	--sidebar-primary-foreground: #0c2b25;
+	--sidebar-accent: rgba(154, 202, 60, 0.12);
+	--sidebar-accent-foreground: #10231f;
+	--sidebar-border: #e1e7dc;
+	--sidebar-ring: #9aca3c;
+}
+.admin-ui.dark {
+	--background: #0b100d;
+	--foreground: #f1f5ee;
+	--card: #121814;
+	--card-foreground: #f1f5ee;
+	--popover: #121814;
+	--popover-foreground: #f1f5ee;
+	--secondary: #1b231d;
+	--muted: #1b231d;
+	--muted-foreground: #9aa89f;
+	--accent: rgba(154, 202, 60, 0.16);
+	--border: #243026;
+	--input: #66736a;
+	--ring: #9aca3c;
+
+	--surface-paper: #121814;
+	--surface-low: #0e140f;
+	--surface-medium: #1b231d;
+	--surface-high: #263128;
+	--text-primary: #f1f5ee;
+	--text-secondary: rgba(241, 245, 238, 0.72);
+	--text-hint: #77857c;
+	--border-light: #243026;
+
+	--sidebar: #0e130f;
+	--sidebar-foreground: #e8efe6;
+	--sidebar-accent: rgba(154, 202, 60, 0.14);
+	--sidebar-accent-foreground: #ffffff;
+	--sidebar-border: #243026;
+}
+.admin-ui input,
+.admin-ui button,
+.admin-ui select,
+.admin-ui textarea {
+	font-family: inherit;
+}
+@keyframes admin-page-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+.admin-page-in {
+	animation: admin-page-in 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+	.admin-page-in {
+		animation: none;
+	}
 }
 
 /* ─── Default border colour (Tailwind v4 compat) ──────────────────────

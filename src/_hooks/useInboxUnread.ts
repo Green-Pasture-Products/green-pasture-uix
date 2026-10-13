@@ -12,7 +12,7 @@ export function useInboxUnread(enabled = true) {
 
 	const load = useCallback(async () => {
 		try {
-			const res = await axiosInstance.get("notifications/inbox", { params: { limit: 1 } });
+			const res = await axiosInstance.get("notifications/summary");
 			setCount(res.data?.data?.unreadCount ?? 0);
 		} catch {
 			// a badge is never worth an error

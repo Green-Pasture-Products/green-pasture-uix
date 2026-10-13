@@ -1,3 +1,4 @@
+import RecordActivity from "@/_components/RecordActivity";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
@@ -708,6 +709,7 @@ const AdminPaymentDetail: React.FC = () => {
         </div>
       )}
 
+    	<RecordActivity type="Payment" id={payment?.id} />
     </AdminLayout>
   );
 };

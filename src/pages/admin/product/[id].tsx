@@ -1,3 +1,4 @@
+import RecordActivity from "@/_components/RecordActivity";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
@@ -964,6 +965,7 @@ const ProductDetail: React.FC = () => {
 					</div>
 				</div>
 			</Modal>
+			<RecordActivity type="Item" id={item?.id} />
 		</AdminLayout>
 	);
 };

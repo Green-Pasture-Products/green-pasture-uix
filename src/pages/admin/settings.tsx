@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -109,6 +110,7 @@ const AdminSettings: React.FC = () => {
 	// MANAGE_STORES still needs My Profile and Security, so those two tabs hide
 	// instead of the whole nav item (see modules.ts for the ungated nav entry).
 	const canManageStores = hasPrivilege("MANAGE_STORES");
+	const router = useRouter();
 	const [activeTab, setActiveTab] = useState(() => (canManageStores ? "store" : "profile"));
 	const [loading, setLoading] = useState(true);
 	const [storeId, setStoreId] = useState<string | null>(null);
@@ -136,6 +138,13 @@ const AdminSettings: React.FC = () => {
 		{ id: "profile", name: "My Profile", icon: User },
 		{ id: "security", name: "Security", icon: Shield },
 	].filter((tab) => canManageStores || (tab.id !== "store" && tab.id !== "order"));
+
+	// Deep links from the account menu: /admin/settings?tab=profile | security
+	const requestedTab = router.isReady ? (router.query.tab as string | undefined) : undefined;
+	useEffect(() => {
+		if (requestedTab && tabs.some((t) => t.id === requestedTab)) setActiveTab(requestedTab);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [requestedTab]);
 
 	const storeForm = useForm<StoreFormData>({ resolver: zodResolver(storeSchema) });
 	const orderShippingForm = useForm<OrderShippingFormData>({ resolver: zodResolver(orderShippingSchema) });

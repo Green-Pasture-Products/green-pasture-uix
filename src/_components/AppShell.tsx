@@ -5,7 +5,8 @@
 // react-router. ogaryde's <OfflineBanner /> is skipped — green-pasture has no
 // equivalent component; this is a deliberate omission, not an oversight.
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+import { useRouter } from "next/router";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +28,13 @@ import { useTabSync } from "@/_hooks/useTabSync";
  */
 export function AppShell({ children }: { children: ReactNode }) {
 	useTabSync();
+	const router = useRouter();
+
+	// Scope the admin look to this shell: on <html> so portalled modals/menus get it too, and gone on leaving /admin.
+	useEffect(() => {
+		document.documentElement.classList.add("admin-ui");
+		return () => document.documentElement.classList.remove("admin-ui");
+	}, []);
 
 	return (
 		<TooltipProvider delayDuration={300}>
@@ -35,7 +43,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 				<SidebarInset>
 					<TopBar />
 					<TabBar />
-					<div className="flex-1 overflow-auto p-4 md:p-6 min-w-0 max-w-full">{children}</div>
+					<div key={router.asPath.split("?")[0]} className="admin-page-in flex min-w-0 max-w-full flex-1 flex-col overflow-y-auto overflow-x-hidden p-3 pb-24 sm:p-5 md:p-6 md:pb-8 lg:p-8">
+						{children}
+					</div>
 				</SidebarInset>
 			</SidebarProvider>
 		</TooltipProvider>

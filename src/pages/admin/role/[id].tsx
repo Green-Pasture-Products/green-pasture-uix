@@ -1,3 +1,4 @@
+import RecordActivity from "@/_components/RecordActivity";
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import withAdminAuth from '@/_components/withAdminAuth';
@@ -337,6 +338,7 @@ const RoleDetail: React.FC = () => {
 					</div>
 				</div>
 			</Modal>
+			<RecordActivity type="Role" id={role?.id} />
 		</AdminLayout>
 	);
 };
