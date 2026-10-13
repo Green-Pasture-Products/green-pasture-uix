@@ -94,9 +94,15 @@ export function stopAuthScheduler(): void {
  * scheduler, and — unless already on an auth page — sends the user to /login
  * while preserving the page they were on so they return after logging in.
  */
+let loggingOut = false;
+
 export async function forceLogout(
 	{ redirect }: { redirect: boolean } = { redirect: true }
 ): Promise<void> {
+	// Several requests fail together when a session dies; end it once, not once per request.
+	if (loggingOut) return;
+	loggingOut = true;
+	setTimeout(() => (loggingOut = false), 3000);
 	stopAuthScheduler();
 	try {
 		const { store } = await import("@/_redux/store");

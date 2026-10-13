@@ -20,6 +20,9 @@ import { useListParams } from "@/_hooks/useListParams";
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
 );
+const EDIT_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+);
 
 const DELETE_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
@@ -207,6 +210,7 @@ const AdminProducts: React.FC = () => {
 			cell: ({ row }) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/product/${row.original.id}`) },
+					{ label: "Edit", icon: EDIT_ICON, onClick: () => router.push(`/admin/product/${row.original.id}?edit=1`) },
 					{
 						label: row.original.published ? "Unpublish" : "Publish",
 						icon: STATUS_ICON,

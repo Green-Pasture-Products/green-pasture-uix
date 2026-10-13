@@ -35,7 +35,8 @@ function connect() {
 	socket.onAny((event, ...args) => listeners.get(event)?.forEach((fn) => fn(...args)));
 	// The server drops sockets whose token it rejects and won't auto-retry those; try again later with whatever token exists by then.
 	const scheduleRetry = () => {
-		if (retry || refs === 0) return;
+		// No token means the session ended; reconnecting would only be refused again, every 10s.
+		if (retry || refs === 0 || !authCookies.getTokens()?.accessToken) return;
 		retry = setTimeout(() => {
 			retry = null;
 			socket?.connect();

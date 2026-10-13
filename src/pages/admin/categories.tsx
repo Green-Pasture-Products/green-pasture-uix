@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import AdminLayout from "@/_components/AdminLayout";
-import AddCategory from "@/_components/Modals/AddCategory";
 import { useRouter } from "next/router";
 import { selectCategory } from "@/_redux/reducers/admin.reducer";
 import { DataTable } from "@/_components/DataTable";
@@ -122,14 +121,9 @@ const AdminCategories: React.FC = () => {
 					onPageChange={(idx) => setPage(idx + 1)}
 					onPageSizeChange={setPageSize}
 					toolbar={
-						<AddCategory
-							title="add category"
-							className="inline-flex"
-						>
-							<Button variant="filled" leftIcon={Plus}>
-								Add Category
-							</Button>
-						</AddCategory>
+						<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/categories/new")}>
+							Add Category
+						</Button>
 					}
 					emptyMessage="No categories found"
 				/>
