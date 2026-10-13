@@ -17,7 +17,7 @@ export default defineConfig({
 	},
 	projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 	webServer: {
-		command: `npx next dev -p ${PORT}`,
+		command: `NEXT_DIST_DIR=.next-e2e npx next dev -p ${PORT}`,
 		url: `http://127.0.0.1:${PORT}/checkout-card`,
 		reuseExistingServer: !process.env.CI,
 		timeout: 180_000,
