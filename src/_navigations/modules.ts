@@ -1,4 +1,4 @@
-import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, MailPlus, Shield, Settings, Globe, MessageSquareQuote, Tags, ImagePlus, Inbox, Megaphone, Landmark, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, MailPlus, Shield, Settings, Globe, MessageSquareQuote, Tags, ImagePlus, Inbox, Megaphone, Landmark, ScrollText, type LucideIcon } from "lucide-react";
 
 /** One admin module: drives the sidebar nav, tab metadata, and privilege gating. */
 export interface ModuleDef {
@@ -38,6 +38,7 @@ export const MODULES: ModuleDef[] = [
 	// seeded `permissions` table) — omitted per policy rather than inventing one.
 	{ path: "/admin/countries", title: "Countries", icon: Globe, group: "Platform" },
 	{ path: "/admin/staff", title: "Team & Role Access", icon: UserCog, group: "Administration", privilege: "MANAGE_STAFF" },
+	{ path: "/admin/audit-log", title: "Audit Log", icon: ScrollText, group: "Administration", privilege: "READ_ACTIVITY" },
 	{ path: "/admin/invitations", title: "Invitations", icon: MailPlus, group: "Administration", privilege: "MANAGE_STAFF" },
 	{ path: "/admin/roles", title: "Roles & Permissions", icon: Shield, group: "Administration", privilege: "MANAGE_ROLES", owns: ["/admin/role"] },
 ];
