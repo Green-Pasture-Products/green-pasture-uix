@@ -36,7 +36,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
       currency: currency || "NGN",
       minimumFractionDigits: 0,
     });
-    return formatter.format(amount / 100);
+    return formatter.format(amount);
   };
 
   const formatDate = (dateString?: string) => {

@@ -84,7 +84,7 @@ const PaymentInstructionsPage: React.FC = () => {
 
   const formatAmount = (amount: number, currency: string) => {
     // Display exact amount without currency formatting to avoid rounding issues
-    const nairaAmount = (amount / 100).toFixed(2);
+    const nairaAmount = Number(amount).toFixed(2);
     return `₦${nairaAmount}`;
   };
 

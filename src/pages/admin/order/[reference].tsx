@@ -378,7 +378,7 @@ const AdminOrderDetail: React.FC = () => {
 												Amount
 											</span>
 											<p className="text-sm mt-0.5 font-semibold" style={{ color: "var(--text-primary)" }}>
-													{new Intl.NumberFormat("en-NG", { style: "currency", currency: payment.currency || "NGN", maximumFractionDigits: 0 }).format(Number(payment.amount) / 100)}
+													{new Intl.NumberFormat("en-NG", { style: "currency", currency: payment.currency || "NGN", maximumFractionDigits: 0 }).format(Number(payment.amount))}
 											</p>
 										</div>
 									</div>

@@ -158,7 +158,7 @@ const AdminPaymentsManual: React.FC = () => {
       currency: currency || "NGN",
       minimumFractionDigits: 0,
     });
-    return formatter.format(amount / 100); // Convert from minor units
+    return formatter.format(amount);
   };
 
   const formatDate = (dateString: string) => {
