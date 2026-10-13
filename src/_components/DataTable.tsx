@@ -70,6 +70,7 @@ function toColumn<T>(def: ColumnDef<T, any>, index: number): Column<T> {
 		sort: def.enableSorting === false || isActions || !accessorKey ? undefined : true,
 		exportValue: isActions ? false : undefined,
 		pinEnd: isActions || undefined,
+		statusColumn: (id === "status" || header === "Status") && !isActions ? true : undefined,
 		cell: (item: T) => {
 			const value = accessorKey ? (item[accessorKey] as unknown) : undefined;
 			if (typeof def.cell === "function") {

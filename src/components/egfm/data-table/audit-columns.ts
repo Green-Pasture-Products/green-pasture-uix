@@ -3,11 +3,11 @@ import { AUDIT_COLUMNS, LAST_MODIFIED_FILTER } from "./constants";
 import type { Column } from "./types";
 
 export function withAuditColumns<T>(columns: Column<T>[], enabled: boolean): Column<T>[] {
-  if (!enabled) return columns;
-  // EGFM patch: the audit columns go before any column pinned to the end (Action stays the last column).
+  // EGFM patch: the table closes with Status, then the audit columns, then Action (pinned last).
   const pinned = columns.filter((c) => c.pinEnd);
-  const rest = columns.filter((c) => !c.pinEnd);
-  return [...rest, ...(AUDIT_COLUMNS as Column<T>[]), ...pinned];
+  const status = columns.filter((c) => !c.pinEnd && c.statusColumn);
+  const rest = columns.filter((c) => !c.pinEnd && !c.statusColumn);
+  return [...rest, ...status, ...(enabled ? (AUDIT_COLUMNS as Column<T>[]) : []), ...pinned];
 }
 
 /** The page's own filter fields, plus "Last modified" wherever the audit columns show. */

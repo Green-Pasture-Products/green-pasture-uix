@@ -458,3 +458,18 @@ test.describe("record activity comments", () => {
 		expect(posted[0]).toBe("first\nsecond");
 	});
 });
+
+test.describe("table column order", () => {
+	test("Status, then the audit columns, then Action close every table", async ({ page }) => {
+		await page.route("**/api/v1/**", (route) => {
+			const path = new URL(route.request().url()).pathname.replace(/^.*\/api\/v1\//, "");
+			if (path === "customers") return route.fulfill(ok({ items: [{ id: "0192a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a01", status: "A", createdBy: "Ada", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), profile: { firstName: "Ada", lastName: "Obi", email: "ada@example.com", phoneNumber: "+2348000000000" } }], meta: { totalItems: 1, itemCount: 1, itemsPerPage: 10, totalPages: 1, currentPage: 1 } }));
+			return route.fulfill(ok([]));
+		});
+		await page.setViewportSize({ width: 1440, height: 900 });
+		await page.goto("/admin/customers");
+		await expect(page.getByText("ada@example.com").first()).toBeVisible();
+		const headers = (await page.getByTestId("data-table").locator("thead th").allInnerTexts()).map((h) => h.trim());
+		expect(headers.slice(-5)).toEqual(["Status", "Created By", "Last Modified", "Modified By", "Action"]);
+	});
+});
