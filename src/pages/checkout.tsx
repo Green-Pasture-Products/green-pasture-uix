@@ -1,3 +1,4 @@
+import { FEATURES } from "@/_utils/features";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { uuidv7 } from "uuidv7";
 import {
@@ -1436,6 +1437,7 @@ const CheckoutPage: React.FC = () => {
 							<div className="h-px w-full mb-4" style={{ background: "var(--border-light)" }} />
 
 							{/* Coupon Code */}
+							{FEATURES.promoCode && (
 							<div className="mb-4">
 								<div className="flex gap-2">
 									<input
@@ -1467,6 +1469,7 @@ const CheckoutPage: React.FC = () => {
 								{couponError && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{couponError}</p>}
 								{couponApplied && <p className="text-xs mt-1" style={{ color: "var(--color-primary)" }}>Coupon applied successfully!</p>}
 							</div>
+							)}
 
 							{/* Pricing breakdown */}
 							{configLoading ? (
