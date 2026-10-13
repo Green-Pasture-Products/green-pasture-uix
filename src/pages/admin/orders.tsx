@@ -47,6 +47,7 @@ const ORDER_STATUS_FILTERS: FilterDef[] = [
 			{ value: "AWAITING_PAYMENT_UPLOAD", label: "Awaiting Payment Upload" },
 			{ value: "PENDING", label: "Pending" },
 			{ value: "AWAITING_PAYMENT", label: "Awaiting Payment" },
+			{ value: "INCOMPLETE_PAYMENT", label: "Incomplete Payment" },
 			{ value: "DECLINED", label: "Declined" },
 			{ value: "PAID", label: "Paid" },
 			{ value: "NOT_PAID", label: "Not Paid" },
@@ -79,6 +80,7 @@ const getPaymentFilterBadgeVariant = (status: string): "success" | "warning" | "
 		case "AWAITING_PAYMENT_UPLOAD":
 	case "AWAITING_PAYMENT":
 	case "AWAITING_VERIFICATION":
+	case "INCOMPLETE_PAYMENT":
 			return "warning";
 		case "DECLINED":
 	case "NOT_PAID":
@@ -233,7 +235,7 @@ const AdminOrders: React.FC = () => {
 						? "info"
 						: payment.paymentStatus === "VERIFIED" || payment.paymentStatus === "PAID"
 							? "success"
-							: payment.paymentStatus === "AWAITING_VERIFICATION" || isAwaitingUpload
+							: payment.paymentStatus === "AWAITING_VERIFICATION" || payment.paymentStatus === "INCOMPLETE_PAYMENT" || isAwaitingUpload
 								? "warning"
 								: payment.paymentStatus === "DECLINED" || payment.paymentStatus === "NOT_PAID"
 									? "error"

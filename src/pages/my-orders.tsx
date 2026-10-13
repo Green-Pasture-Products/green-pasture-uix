@@ -189,7 +189,7 @@ const MyOrders: React.FC = () => {
 						? "info"
 					: payment.paymentStatus === "VERIFIED" || payment.paymentStatus === "PAID"
 					? "success"
-					: payment.paymentStatus === "AWAITING_VERIFICATION" || isAwaitingUpload
+					: payment.paymentStatus === "AWAITING_VERIFICATION" || payment.paymentStatus === "INCOMPLETE_PAYMENT" || isAwaitingUpload
 						? "warning"
 						: payment.paymentStatus === "DECLINED" || payment.paymentStatus === "NOT_PAID"
 							? "error"

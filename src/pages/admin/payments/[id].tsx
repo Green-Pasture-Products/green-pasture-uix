@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { CheckCircle, XCircle, Clock, Eye, Download, X } from "lucide-react";
+import { CheckCircle, XCircle, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -9,7 +9,7 @@ import AdminLayout from "@/_components/AdminLayout";
 import Button from "@/_UI/Button";
 import Badge from "@/_UI/Badge";
 import axiosInstance from "@/_utils/axiosInstance";
-import { getReceiptDeliveryUrl, isPdfReceipt } from "@/_utils/receiptUrl";
+import { ReceiptList, type ReceiptItem } from "@/_components/ReceiptList";
 import { PaymentStatus, PaymentMethod } from "@/types";
 
 interface OrderItem {
@@ -30,6 +30,8 @@ interface Payment {
   paymentStatus: PaymentStatus;
   customerPhone: string;
   receiptUrl: string;
+  receiptFileName?: string;
+  receipts?: ReceiptItem[];
   adminNote: string;
   submittedAt: string;
   verifiedAt: string;
@@ -71,7 +73,7 @@ const AdminPaymentDetail: React.FC = () => {
   const [payment, setPayment] = useState<Payment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [incompleteNote, setIncompleteNote] = useState<string | null>(null);
   const [approvalModal, setApprovalModal] = useState<ApprovalModalState>({ isOpen: false });
   const [declineModal, setDeclineModal] = useState<DeclineModalState>({
     isOpen: false,
@@ -126,6 +128,23 @@ const AdminPaymentDetail: React.FC = () => {
       toast.success("Payment approved successfully");
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to approve payment");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmIncomplete = async () => {
+    if (!payment) return;
+    setIsSubmitting(true);
+    try {
+      await axiosInstance.post(`/payment/admin/${payment.id}/incomplete`, { note: incompleteNote?.trim() || undefined });
+      // Re-fetch so the receipts list and status stay in sync.
+      const response = await axiosInstance.get<{ data: Payment }>(`/payment/admin/${payment.id}`);
+      setPayment(response.data.data);
+      setIncompleteNote(null);
+      toast.success("Marked incomplete. The customer can now upload the balance receipt.");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to mark payment incomplete");
     } finally {
       setIsSubmitting(false);
     }
@@ -233,6 +252,7 @@ const AdminPaymentDetail: React.FC = () => {
   const profile = payment.order?.customer?.profile;
   const canApprove =
     payment.paymentStatus === "AWAITING_VERIFICATION" && payment.receiptUrl;
+  const canMarkIncomplete = payment.paymentStatus === "AWAITING_VERIFICATION";
   const canDecline =
     payment.paymentStatus === "AWAITING_VERIFICATION" || payment.paymentStatus === "PENDING";
 
@@ -430,7 +450,7 @@ const AdminPaymentDetail: React.FC = () => {
         )}
 
         {/* Receipt Section */}
-        {payment.receiptUrl && (
+        {(payment.receiptUrl || payment.receipts?.length) && (
           <div
             className="rounded-lg border p-6"
             style={{ borderColor: "var(--border-light)", background: "var(--surface-paper)" }}
@@ -442,33 +462,7 @@ const AdminPaymentDetail: React.FC = () => {
               <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
                 Submitted: {formatDate(payment.submittedAt)}
               </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setViewingImage(payment.receiptUrl)}
-                  className="px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition"
-                  style={{
-                    backgroundColor: "var(--color-primary)",
-                    color: "white",
-                  }}
-                >
-                  <Eye className="h-4 w-4" />
-                  View Receipt
-                </button>
-                <a
-                  href={getReceiptDeliveryUrl(payment.receiptUrl)}
-                  download
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition"
-                  style={{
-                    border: "1px solid var(--border-light)",
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  <Download className="h-4 w-4" />
-                  Download
-                </a>
-              </div>
+              <ReceiptList receipts={payment.receipts} legacyUrl={payment.receiptUrl} legacyFileName={payment.receiptFileName} />
             </div>
           </div>
         )}
@@ -537,6 +531,43 @@ const AdminPaymentDetail: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
+        {canMarkIncomplete && (
+          <div className="rounded-lg border p-4 space-y-3" style={{ borderColor: "var(--border-light)", background: "var(--surface-paper)" }}>
+            {incompleteNote === null ? (
+              <button
+                onClick={() => setIncompleteNote("")}
+                className="w-full px-6 py-3 rounded-lg font-semibold text-white transition"
+                style={{ backgroundColor: "#f59e0b" }}
+              >
+                Mark as Incomplete Payment
+              </button>
+            ) : (
+              <>
+                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                  Use this when the amount received is less than the order total. The customer will be notified and can upload the receipt for the balance.
+                </p>
+                <textarea
+                  value={incompleteNote}
+                  onChange={(e) => setIncompleteNote(e.target.value)}
+                  maxLength={500}
+                  rows={3}
+                  placeholder="Optional note, e.g. ₦10,000 received of ₦100,000. Please pay the balance of ₦90,000."
+                  className="w-full rounded-lg border p-3 text-sm"
+                  style={{ borderColor: "var(--border-light)", background: "var(--surface-low)", color: "var(--text-primary)" }}
+                />
+                <div className="flex gap-3">
+                  <button onClick={() => setIncompleteNote(null)} className="flex-1 px-4 py-2 rounded-lg font-medium" style={{ border: "1px solid var(--border-light)", color: "var(--text-primary)" }}>
+                    Cancel
+                  </button>
+                  <button onClick={handleConfirmIncomplete} disabled={isSubmitting} className="flex-1 px-4 py-2 rounded-lg font-medium text-white disabled:opacity-50" style={{ backgroundColor: "#f59e0b" }}>
+                    {isSubmitting ? "Saving..." : "Confirm"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {(canApprove || canDecline) && (
           <div className="flex gap-3">
             {canApprove && (
@@ -677,41 +708,6 @@ const AdminPaymentDetail: React.FC = () => {
         </div>
       )}
 
-      {/* Receipt Viewer Modal */}
-      {viewingImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="relative max-h-[90vh] max-w-2xl">
-            <button
-              onClick={() => setViewingImage(null)}
-              className="absolute -top-10 right-0 text-white hover:opacity-70"
-              title="Close"
-            >
-              <X size={32} />
-            </button>
-            {!isPdfReceipt(viewingImage, payment.receiptUrl) ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={viewingImage}
-                alt="Payment Receipt"
-                className="max-h-[80vh] max-w-full object-contain rounded-lg"
-              />
-            ) : (
-              <div className="bg-white rounded-lg p-8 text-center">
-                <p className="mb-4 font-medium">PDF receipt</p>
-                <a
-                  href={getReceiptDeliveryUrl(viewingImage, payment.receiptUrl)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-6 py-2 rounded-lg font-medium text-white"
-                  style={{ backgroundColor: "var(--color-primary)" }}
-                >
-                  Download / Open PDF Receipt
-                </a>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </AdminLayout>
   );
 };
