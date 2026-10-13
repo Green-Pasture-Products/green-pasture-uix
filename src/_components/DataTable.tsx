@@ -623,7 +623,7 @@ export function DataTable<T>({
 
       {!isError && rows.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span className="text-muted-foreground text-sm" data-testid={`${testId}-count`}>
               {rows.length} of {effTotalItems} row{effTotalItems === 1 ? "" : "s"}
             </span>
@@ -643,7 +643,7 @@ export function DataTable<T>({
               </Select>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="text-muted-foreground text-sm" data-testid={`${testId}-page-indicator`}>
               Page {effPageCount === 0 ? 0 : effPageIndex + 1} of {effPageCount}
             </span>
