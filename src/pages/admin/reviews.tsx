@@ -1,20 +1,18 @@
-import { SelectField } from "@/_UI/SelectField";
-import React, { useCallback, useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Star, Upload, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
-import { uuidv7 } from "uuidv7";
 
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
-import { DataTable } from "@/_components/DataTable";
+import { DataTable, type FilterDef } from "@/_components/DataTable";
+import ActionMenu from "@/_UI/ActionMenu";
 import Button from "@/_UI/Button";
 import Badge from "@/_UI/Badge";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { reviewAction } from "@/_redux/actions/review.action";
-import { adminAction } from "@/_redux/actions/admin.action";
 import { useListParams } from "@/_hooks/useListParams";
-import axiosInstance from "@/_utils/axiosInstance";
 import { BackendReview } from "@/types";
 
 /**
@@ -23,39 +21,40 @@ import { BackendReview } from "@/types";
  * - Testimonials: created by admins (with images and custom names)
  * Featured items appear in the home page testimonial carousel.
  */
-type FilterType = "all" | "customer" | "admin";
+const VIEW_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+);
+const EDIT_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+);
+const STAR_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+);
+
+const TYPE_FILTERS: FilterDef[] = [
+	{
+		key: "type",
+		label: "Type",
+		options: [
+			{ value: "customer", label: "Customer reviews" },
+			{ value: "admin", label: "Admin testimonials" },
+		],
+	},
+];
 
 const AdminReviews: React.FC = () => {
 	const dispatch = useAppDispatch();
+	const router = useRouter();
 	// Moderation state, not the storefront's: this table has to see deactivated
 	// reviews, and it pages server-side rather than accumulating like the
 	// product page's "Load More" list does.
-	const {
-		moderationReviews: reviews,
-		moderationPagination: pagination,
-		isLoadingModeration: isLoading,
-	} = useAppSelector((state) => state.review);
-	const { adminItems } = useAppSelector((state) => state.admin);
+	const { moderationReviews: reviews, moderationPagination: pagination, isLoadingModeration: isLoading } = useAppSelector((state) => state.review);
 
 	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
-	const [togglingId, setTogglingId] = useState<string | null>(null);
-	const [filterType, setFilterType] = useState<FilterType>("all");
-	const [showAddTestimonial, setShowAddTestimonial] = useState(false);
-	const [editingReview, setEditingReview] = useState<BackendReview | null>(null);
-	const [testimonialForm, setTestimonialForm] = useState({
-		rating: 5,
-		comment: "",
-		reviewerName: "",
-		itemId: "",
-		image: null as File | null,
-	});
-	const [imagePreview, setImagePreview] = useState<string | null>(null);
-	const [isSubmittingTestimonial, setIsSubmittingTestimonial] = useState(false);
-	const [viewingImage, setViewingImage] = useState<string | null>(null);
+	const [type, setType] = useState("");
 
 	const refresh = useCallback(() => {
 		dispatch(reviewAction.fetchModerationReviewsAsync({ page: currentPage, limit: pageSize, search: searchTerm || undefined }));
-		dispatch(adminAction.fetchAdminItemsAsync({ page: 1, limit: 1000 }));
 	}, [dispatch, currentPage, pageSize, searchTerm]);
 
 	useEffect(() => {
@@ -63,132 +62,21 @@ const AdminReviews: React.FC = () => {
 	}, [refresh]);
 
 	// Filter reviews based on source (customer vs admin/testimonial)
-	const filteredReviews = useMemo(() => {
+	const rows = useMemo(() => {
 		if (!reviews) return [];
-		if (filterType === "customer") {
-			// Treat undefined/null source as 'customer' (legacy data)
-			return reviews.filter((r) => r.source === "customer" || !r.source);
-		}
-		if (filterType === "admin") {
-			return reviews.filter((r) => r.source === "admin");
-		}
-		return reviews; // All
-	}, [reviews, filterType]);
+		// Treat undefined/null source as 'customer' (legacy data)
+		if (type === "customer") return reviews.filter((r) => r.source === "customer" || !r.source);
+		if (type === "admin") return reviews.filter((r) => r.source === "admin");
+		return reviews;
+	}, [reviews, type]);
 
 	const toggleFeatured = async (review: BackendReview) => {
-		setTogglingId(review.id);
 		try {
 			await dispatch(reviewAction.setReviewFeaturedAsync({ ids: [review.id], featured: !review.featured })).unwrap();
 			toast.success(review.featured ? "Removed from the home page" : "Featured on the home page");
 			refresh();
 		} catch (error) {
 			toast.error(error as string);
-		} finally {
-			setTogglingId(null);
-		}
-	};
-
-	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		if (file) {
-			setTestimonialForm((prev) => ({ ...prev, image: file }));
-			const reader = new FileReader();
-			reader.onload = (event) => {
-				setImagePreview(event.target?.result as string);
-			};
-			reader.readAsDataURL(file);
-		}
-	};
-
-	const startEditingTestimonial = (review: BackendReview) => {
-		setEditingReview(review);
-		setTestimonialForm({
-			rating: review.rating,
-			comment: review.comment || "",
-			reviewerName: review.reviewerName || "",
-			itemId: review.item?.id || "",
-			image: null,
-		});
-		setImagePreview(review.imageUrl || null);
-		setShowAddTestimonial(false);
-	};
-
-	const cancelEdit = () => {
-		setEditingReview(null);
-		setTestimonialForm({
-			rating: 5,
-			comment: "",
-			reviewerName: "",
-			itemId: "",
-			image: null,
-		});
-		setImagePreview(null);
-	};
-
-	const handleAddTestimonial = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		if (!testimonialForm.comment.trim()) {
-			toast.error("Review comment is required");
-			return;
-		}
-		if (!testimonialForm.itemId) {
-			toast.error("Please select a product");
-			return;
-		}
-		if (!editingReview && !testimonialForm.image) {
-			toast.error("Please upload an image file");
-			return;
-		}
-
-		setIsSubmittingTestimonial(true);
-		try {
-			const form = new FormData();
-			form.append("rating", String(testimonialForm.rating));
-			form.append("comment", testimonialForm.comment);
-			form.append("reviewerName", testimonialForm.reviewerName || "");
-			form.append("itemId", testimonialForm.itemId);
-			if (testimonialForm.image) {
-				form.append("image", testimonialForm.image);
-			}
-
-			if (editingReview) {
-				// Edit mode
-				await dispatch(reviewAction.updateTestimonialAsync({
-					reviewId: editingReview.id,
-					rating: testimonialForm.rating,
-					comment: testimonialForm.comment,
-					reviewerName: testimonialForm.reviewerName || "",
-					itemId: testimonialForm.itemId,
-					image: testimonialForm.image || undefined,
-				})).unwrap();
-				toast.success("Testimonial updated successfully!");
-			} else {
-				// Add mode
-				await axiosInstance.post("reviews/testimonials", form, {
-					headers: {
-						"Content-Type": "multipart/form-data",
-						"Idempotency-Key": uuidv7(),
-					},
-				});
-				toast.success("Testimonial created successfully!");
-			}
-
-			setTestimonialForm({
-				rating: 5,
-				comment: "",
-				reviewerName: "",
-				itemId: "",
-				image: null,
-			});
-			setImagePreview(null);
-			setShowAddTestimonial(false);
-			setEditingReview(null);
-			refresh();
-		} catch (error: any) {
-			toast.error(error?.response?.data?.message || (editingReview ? "Failed to update testimonial" : "Failed to create testimonial"));
-		} finally {
-			setIsSubmittingTestimonial(false);
 		}
 	};
 
@@ -250,86 +138,31 @@ const AdminReviews: React.FC = () => {
 			id: "featured",
 			header: "Home page",
 			enableSorting: false,
-			meta: { width: "130px", align: "center" },
+			meta: { width: "130px" },
+			cell: ({ row }) => (row.original.featured ? <Badge variant="success" dot>Featured</Badge> : <Badge variant="neutral">Not featured</Badge>),
+		},
+		{
+			id: "actions",
+			header: "Action",
+			enableSorting: false,
+			enableHiding: false,
+			meta: { width: "50px", align: "center" },
 			cell: ({ row }) => {
 				const review = row.original;
 				// Only reviews that carry text can be a testimonial — the carousel has
 				// nothing to show without a quote, so don't let one be featured.
 				const canFeature = !!review.comment?.trim();
 				return (
-					<button
-						onClick={() => toggleFeatured(review)}
-						disabled={!canFeature || togglingId === review.id}
-						title={canFeature ? (review.featured ? "Remove from home page" : "Feature on home page") : "Needs a written comment"}
-						className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-						style={{
-							background: review.featured ? "rgba(154,202,60,0.16)" : "transparent",
-							border: `1px solid ${review.featured ? "transparent" : "var(--border-light)"}`,
-							color: review.featured ? "var(--color-primary)" : "var(--text-secondary)",
-						}}
-					>
-						<Star className={`h-3.5 w-3.5 ${review.featured ? "fill-current" : ""}`} />
-						{review.featured ? "Featured" : "Feature"}
-					</button>
-				);
-			},
-		},
-		{
-			id: "image",
-			header: "Image",
-			enableSorting: false,
-			meta: { width: "100px", align: "center" },
-			cell: ({ row }) => {
-				const isAdmin = row.original.source === "admin";
-				const hasImage = !!row.original.imageUrl;
-
-				// Only admin testimonials can have images
-				if (!isAdmin) {
-					return <span style={{ color: "var(--text-secondary)" }}>—</span>;
-				}
-
-				return (
-					<button
-						onClick={() => hasImage && setViewingImage(row.original.imageUrl!)}
-						disabled={!hasImage}
-						title={hasImage ? "View image" : "No image"}
-						className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-						style={{
-							background: hasImage ? "var(--color-primary)" : "transparent",
-							border: `1px solid ${hasImage ? "transparent" : "var(--border-light)"}`,
-							color: hasImage ? "white" : "var(--text-secondary)",
-						}}
-					>
-						{hasImage ? "View" : "—"}
-					</button>
-				);
-			},
-		},
-		{
-			id: "actions",
-			header: "Actions",
-			enableSorting: false,
-			meta: { width: "100px", align: "center" },
-			cell: ({ row }) => {
-				const isAdmin = row.original.source === "admin";
-
-				// Only admin testimonials can be edited
-				if (!isAdmin) {
-					return <span style={{ color: "var(--text-secondary)" }}>—</span>;
-				}
-
-				return (
-					<button
-						onClick={() => startEditingTestimonial(row.original)}
-						className="inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-						style={{
-							background: "var(--color-primary)",
-							border: "1px solid transparent",
-							color: "white",
-						}}
-					>
-						Edit
-					</button>
+					<div onClick={(e) => e.stopPropagation()}>
+						<ActionMenu
+							items={[
+								{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/review/${review.id}`) },
+								// Customers' own words aren't ours to edit; only admin testimonials are.
+								{ label: "Edit", icon: EDIT_ICON, onClick: () => router.push(`/admin/review/${review.id}?edit=1`), hidden: review.source !== "admin" },
+								{ label: review.featured ? "Remove from home page" : "Feature on home page", icon: STAR_ICON, onClick: () => toggleFeatured(review), hidden: !canFeature },
+							]}
+						/>
+					</div>
 				);
 			},
 		},
@@ -338,180 +171,20 @@ const AdminReviews: React.FC = () => {
 	return (
 		<AdminLayout>
 			<div className="animate-page-enter space-y-6">
-				{/* Filter and Add Testimonial */}
-				<div className="flex items-center justify-between gap-4">
-					<div className="flex gap-2">
-						<button
-							onClick={() => setFilterType("all")}
-							className={`px-4 py-2 rounded-lg font-medium transition ${
-								filterType === "all"
-									? "text-white"
-									: "text-gray-600 hover:bg-gray-100"
-							}`}
-							style={filterType === "all" ? { backgroundColor: "var(--color-primary)" } : {}}
-						>
-							All
-						</button>
-						<button
-							onClick={() => setFilterType("customer")}
-							className={`px-4 py-2 rounded-lg font-medium transition ${
-								filterType === "customer"
-									? "text-white"
-									: "text-gray-600 hover:bg-gray-100"
-							}`}
-							style={filterType === "customer" ? { backgroundColor: "var(--color-primary)" } : {}}
-						>
-							Customer Reviews
-						</button>
-						<button
-							onClick={() => setFilterType("admin")}
-							className={`px-4 py-2 rounded-lg font-medium transition ${
-								filterType === "admin"
-									? "text-white"
-									: "text-gray-600 hover:bg-gray-100"
-							}`}
-							style={filterType === "admin" ? { backgroundColor: "var(--color-primary)" } : {}}
-						>
-							Admin Testimonials
-						</button>
-					</div>
-					{filterType === "admin" && !editingReview && (
-						<Button variant="filled" onClick={() => setShowAddTestimonial(!showAddTestimonial)}>
-							{showAddTestimonial ? "Cancel" : "Add Testimonial"}
-						</Button>
-					)}
-				</div>
-
-				{/* Add/Edit Testimonial Form */}
-				{filterType === "admin" && (showAddTestimonial || editingReview) && (
-					<form
-						onSubmit={handleAddTestimonial}
-						className="rounded-lg border p-6"
-						style={{ borderColor: "var(--border-light)" }}
-					>
-						<div className="space-y-4 max-w-2xl">
-							<h3 className="text-lg font-semibold">{editingReview ? "Edit Testimonial" : "Add Testimonial"}</h3>
-
-							<div>
-								<label className="block text-sm font-medium mb-2">Product *</label>
-								<SelectField
-	value={testimonialForm.itemId}
-	onValueChange={(v) => setTestimonialForm((prev) => ({ ...prev, itemId: v }))}
-	placeholder="Select a product"
-	aria-label="Product"
-	className="w-full"
-	options={(adminItems ?? []).map((item) => ({ value: String(item.id), label: item.name }))}
-/>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium mb-2">Reviewer Name</label>
-								<input
-									type="text"
-									value={testimonialForm.reviewerName}
-									onChange={(e) => setTestimonialForm((prev) => ({ ...prev, reviewerName: e.target.value }))}
-									placeholder="e.g., Sarah M."
-									className="w-full px-4 py-2 rounded-lg border"
-									style={{ borderColor: "var(--border-light)" }}
-								/>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium mb-2">Rating *</label>
-								<div className="flex gap-2">
-									{[1, 2, 3, 4, 5].map((num) => (
-										<button
-											key={num}
-											type="button"
-											onClick={() => setTestimonialForm((prev) => ({ ...prev, rating: num }))}
-											className={`p-2 rounded-lg ${
-												testimonialForm.rating >= num ? "text-yellow-400" : "text-gray-300"
-											}`}
-										>
-											<Star
-												size={24}
-												fill={testimonialForm.rating >= num ? "currentColor" : "none"}
-											/>
-										</button>
-									))}
-								</div>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium mb-2">Comment *</label>
-								<textarea
-									value={testimonialForm.comment}
-									onChange={(e) => setTestimonialForm((prev) => ({ ...prev, comment: e.target.value }))}
-									placeholder="What did the customer say?"
-									rows={3}
-									className="w-full px-4 py-2 rounded-lg border resize-none"
-									style={{ borderColor: "var(--border-light)" }}
-								/>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium mb-2">Image {editingReview ? "" : "*"}</label>
-								<input
-									type="file"
-									accept="image/*"
-									onChange={handleImageChange}
-									className="w-full px-4 py-2 rounded-lg border"
-									style={{ borderColor: "var(--border-light)" }}
-								/>
-								{imagePreview && (
-									<div className="mt-2 relative inline-block">
-										<img src={imagePreview} alt="Preview" className="h-20 w-20 rounded object-cover" />
-										<button
-											type="button"
-											onClick={() => {
-												setImagePreview(null);
-												setTestimonialForm((prev) => ({ ...prev, image: null }));
-											}}
-											className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
-										>
-											<X size={14} className="text-white" />
-										</button>
-									</div>
-								)}
-								{editingReview && <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>Leave blank to keep current image</p>}
-							</div>
-
-							<div className="flex gap-2">
-								<button
-									type="submit"
-									disabled={isSubmittingTestimonial}
-									className="flex-1 px-6 py-2 rounded-lg font-medium text-white disabled:opacity-50"
-									style={{ backgroundColor: "var(--color-primary)" }}
-								>
-									{isSubmittingTestimonial ? (editingReview ? "Updating..." : "Creating...") : (editingReview ? "Update Testimonial" : "Create Testimonial")}
-								</button>
-								{editingReview && (
-									<button
-										type="button"
-										onClick={cancelEdit}
-										disabled={isSubmittingTestimonial}
-										className="px-6 py-2 rounded-lg font-medium border"
-										style={{ borderColor: "var(--border-light)" }}
-									>
-										Cancel
-									</button>
-								)}
-							</div>
-						</div>
-					</form>
-				)}
-
-				{/* Reviews Table */}
 				<DataTable
 					columns={columns}
-					data={filteredReviews ?? []}
+					data={rows}
 					isLoading={isLoading}
 					onRefresh={refresh}
 					refreshing={isLoading}
 					manualFiltering
+					onRowClick={(row) => router.push(`/admin/review/${row.id}`)}
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
 					searchPlaceholder="Search by comment..."
+					filters={TYPE_FILTERS}
+					filterValues={{ type }}
+					onFilterChange={(_key, value) => setType(value)}
 					pageIndex={currentPage - 1}
 					pageSize={pageSize}
 					pageCount={pagination?.totalPages ?? 1}
@@ -520,28 +193,13 @@ const AdminReviews: React.FC = () => {
 					onPageSizeChange={setPageSize}
 					emptyMessage="No reviews yet"
 					showAuditColumns={false}
+					toolbar={
+						<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/reviews/new")}>
+							Add Testimonial
+						</Button>
+					}
 				/>
 			</div>
-
-			{/* Image Viewer Modal */}
-			{viewingImage && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-					<div className="relative max-h-screen max-w-2xl rounded-lg bg-white p-4">
-						<button
-							onClick={() => setViewingImage(null)}
-							className="absolute -top-10 right-0 text-white hover:opacity-70"
-							title="Close"
-						>
-							<X size={28} />
-						</button>
-						<img
-							src={viewingImage}
-							alt="Testimonial"
-							className="max-h-[80vh] max-w-full object-contain"
-						/>
-					</div>
-				</div>
-			)}
 		</AdminLayout>
 	);
 };

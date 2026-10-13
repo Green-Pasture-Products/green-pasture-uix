@@ -1,287 +1,280 @@
-import RecordActivity from "@/_components/RecordActivity";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { MapPin, Power, ShoppingBag, UserRound } from "lucide-react";
+import toast from "react-hot-toast";
+import * as changeCase from "change-case";
+
+import RecordActivity from "@/_components/RecordActivity";
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
-import { BackButton, DetailHeader, DetailSection, DetailRow } from "@/_UI/DetailField";
+import { BackButton, DetailHeader, DetailSection, EditableSection, FactGrid } from "@/_UI/DetailField";
 import Badge from "@/_UI/Badge";
-import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
 import { FormInput } from "@/_UI/FormField";
-import { formatPhoneDisplay } from "@/_UI/FormatValue";
+import { formatCurrency, formatPhoneDisplay } from "@/_UI/FormatValue";
 import PageLoader from "@/_UI/PageLoader";
-import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
 import axiosInstance from "@/_utils/axiosInstance";
-import { BackendCustomer } from "@/types";
-import { Pencil, X, Power } from "lucide-react";
-import * as changeCase from "change-case";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import type { BackendCustomer } from "@/types";
+
+const date = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "—");
+
+const schema = z.object({
+	firstName: z.string().trim().min(1, "First name is required"),
+	lastName: z.string().trim().min(1, "Last name is required"),
+	phoneNumber: z.string().trim().optional(),
+});
+type FormValues = z.infer<typeof schema>;
+
+function EditCard({ customer, onCancel, onSaved }: { customer: BackendCustomer; onCancel: () => void; onSaved: () => void }) {
+	const p = customer.profile;
+	const {
+		register,
+		handleSubmit,
+		formState: { errors, isDirty, isSubmitting },
+	} = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { firstName: p?.firstName ?? "", lastName: p?.lastName ?? "", phoneNumber: p?.phoneNumber ?? "" } });
+
+	const save = handleSubmit(async (v) => {
+		try {
+			await axiosInstance.patch(`customers/${customer.id}`, { firstName: v.firstName.trim(), lastName: v.lastName.trim(), phoneNumber: (v.phoneNumber ?? "").trim() });
+			toast.success("Customer saved");
+			onSaved();
+		} catch (e: any) {
+			toast.error(e?.response?.data?.message || "Failed to update customer");
+		}
+	});
+
+	return (
+		<form onSubmit={save} aria-label="Edit customer" className="border-border bg-card overflow-hidden rounded-xl border">
+			<div className="grid gap-4 p-5 sm:grid-cols-2">
+				<FormInput label="First name" required error={errors.firstName?.message} {...register("firstName")} />
+				<FormInput label="Last name" required error={errors.lastName?.message} {...register("lastName")} />
+				<FormInput label="Email" type="email" value={p?.email ?? ""} disabled readOnly />
+				<FormInput label="Phone number" {...register("phoneNumber")} />
+			</div>
+			<div className="border-border bg-secondary/15 flex justify-end gap-2 border-t px-5 py-3">
+				<Button type="button" variant="outline" size="sm" onClick={onCancel}>
+					Cancel
+				</Button>
+				<Button type="submit" size="sm" disabled={!isDirty || isSubmitting}>
+					{isSubmitting ? "Saving…" : "Save changes"}
+				</Button>
+			</div>
+		</form>
+	);
+}
+
+interface OrderRow {
+	id: string;
+	orderReference: string;
+	orderStatus: string;
+	paymentStatus?: string;
+	totalAmount: number;
+	createdAt: string;
+}
+const ORDER_VARIANT: Record<string, "success" | "warning" | "error" | "info" | "neutral"> = { DELIVERED: "success", CANCELLED: "error", PENDING: "warning", PROCESSING: "info", IN_TRANSIT: "info" };
 
 const CustomerDetail: React.FC = () => {
 	const router = useRouter();
-	const { id } = router.query;
+	const id = router.query.id as string | undefined;
+	const hasPrivilege = useHasPrivilege();
+	const canWrite = hasPrivilege("MANAGE_CUSTOMERS") || hasPrivilege("UPDATE_CUSTOMER");
+
 	const [customer, setCustomer] = useState<BackendCustomer | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [editing, setEditing] = useState(false);
-	const [saving, setSaving] = useState(false);
-	const [toggling, setToggling] = useState(false);
-	const [statusModalOpen, setStatusModalOpen] = useState(false);
-	const [editForm, setEditForm] = useState({
-		firstName: "",
-		lastName: "",
-		phoneNumber: "",
-	});
+	const [orders, setOrders] = useState<OrderRow[]>([]);
+	const [orderTotal, setOrderTotal] = useState<number | null>(null);
+	const [confirm, setConfirm] = useState(false);
+	const [busy, setBusy] = useState(false);
 
-	const fetchCustomer = () => {
+	const load = useCallback(async () => {
 		if (!id) return;
-		setLoading(true);
-		axiosInstance
-			.get(`customers/${id}`)
-			.then((res) => {
-				const data = res.data?.data ?? res.data;
-				setCustomer(data);
-				if (data?.profile) {
-					setEditForm({
-						firstName: data.profile.firstName || "",
-						lastName: data.profile.lastName || "",
-						phoneNumber: data.profile.phoneNumber || "",
-					});
-				}
-			})
-			.catch(() => {
-				setCustomer(null);
-				toast.error("Failed to load customer");
-			})
-			.finally(() => {
-				setLoading(false);
-			});
-	};
+		try {
+			const res = await axiosInstance.get(`customers/${id}`);
+			setCustomer(res.data?.data ?? res.data ?? null);
+		} catch {
+			setCustomer(null);
+			toast.error("Failed to load customer");
+		} finally {
+			setLoading(false);
+		}
+	}, [id]);
 
 	useEffect(() => {
-		if (!router.isReady || !id) return;
-		fetchCustomer();
-	}, [id, router.isReady]);
+		load();
+	}, [load]);
 
-	const handleSave = async () => {
+	// The orders list searches by customer email, so it doubles as "this customer's orders".
+	const email = customer?.profile?.email;
+	useEffect(() => {
+		if (!email) return;
+		axiosInstance
+			.get("order", { params: { page: 1, limit: 5, search: email } })
+			.then((res) => {
+				const d = res.data?.data ?? res.data;
+				setOrders(d?.items ?? []);
+				setOrderTotal(d?.meta?.totalItems ?? d?.meta?.total ?? (d?.items ?? []).length);
+			})
+			.catch(() => setOrders([]));
+	}, [email]);
+
+	const toggle = async () => {
 		if (!customer) return;
-		setSaving(true);
+		const active = customer.status === "A";
+		setBusy(true);
 		try {
-			await axiosInstance.patch(`customers/${(customer as any).id}`, {
-				firstName: editForm.firstName.trim(),
-				lastName: editForm.lastName.trim(),
-				phoneNumber: editForm.phoneNumber.trim(),
-			});
-			toast.success("Customer updated successfully");
-			setEditing(false);
-			fetchCustomer();
-		} catch (err: any) {
-			toast.error(err?.response?.data?.message || "Failed to update customer");
+			await axiosInstance.patch(active ? "customers/deactivate" : "customers/activate", { ids: [customer.id] });
+			toast.success(active ? "Customer deactivated" : "Customer activated");
+			setConfirm(false);
+			await load();
+		} catch (e: any) {
+			toast.error(e?.response?.data?.message || "Failed to update customer status");
 		} finally {
-			setSaving(false);
+			setBusy(false);
 		}
 	};
 
-	const handleCancelEdit = () => {
-		setEditing(false);
-		if (customer?.profile) {
-			setEditForm({
-				firstName: (customer.profile as any).firstName || "",
-				lastName: (customer.profile as any).lastName || "",
-				phoneNumber: customer.profile.phoneNumber || "",
-			});
-		}
-	};
+	const profile = customer?.profile;
+	const name = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim();
 
-	const handleToggleStatus = async () => {
-		if (!customer) return;
-		const isActive = (customer as any).status === "A";
-		setToggling(true);
-		try {
-			await axiosInstance.patch(isActive ? "customers/deactivate" : "customers/activate", {
-				ids: [(customer as any).id],
-			});
-			toast.success(isActive ? "Customer deactivated successfully" : "Customer activated successfully");
-			setStatusModalOpen(false);
-			fetchCustomer();
-		} catch (err: any) {
-			toast.error(err?.response?.data?.message || "Failed to update customer status");
-		} finally {
-			setToggling(false);
-		}
-	};
-
-	const customerTitle = customer
-		? `${customer.profile?.firstName ?? ''} ${customer.profile?.lastName ?? ''}`.trim() || 'Customer Details'
-		: 'Customer Details';
-
-	if (loading) {
+	if (loading)
 		return (
-			<AdminLayout pageTitle={customerTitle}>
+			<AdminLayout pageTitle="Customer">
 				<PageLoader fullScreen={false} message="Loading customer details..." />
 			</AdminLayout>
 		);
-	}
 
-	if (!customer) {
+	if (!customer)
 		return (
-			<AdminLayout pageTitle={customerTitle}>
-				<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
-					<BackButton />
-					<div
-						className="rounded-xl px-6 py-16 text-center"
-						style={{ background: "var(--surface-paper)", border: "1px solid var(--border-light)" }}
-					>
-						<p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-							Customer not found
-						</p>
-					</div>
+			<AdminLayout pageTitle="Customer">
+				<div className="border-border bg-card mx-auto max-w-3xl space-y-3 rounded-xl border p-8 text-center">
+					<p className="text-sm font-semibold">Customer not found.</p>
+					<Button variant="outline" size="sm" onClick={() => router.push("/admin/customers")}>
+						Back to Customers
+					</Button>
 				</div>
 			</AdminLayout>
 		);
-	}
 
-	const profile = customer.profile;
+	const active = customer.status === "A";
 	const address = profile?.address;
-	const status = (customer as any).status;
 
 	return (
-		<AdminLayout pageTitle={customerTitle}>
-			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
-				<div className="flex items-center justify-between">
-					<BackButton />
-					<div className="flex items-center gap-2">
-						<Button
-							variant="outlined"
-							size="sm"
-							color={status === "A" ? "error" : "primary"}
-							onClick={() => setStatusModalOpen(true)}
-							loading={toggling}
-							disabled={toggling}
-						>
-							<Power className="w-4 h-4 mr-1.5" />
-							{status === "A" ? "Deactivate" : "Activate"}
-						</Button>
-						{!editing ? (
-							<Button variant="outlined" size="sm" onClick={() => setEditing(true)}>
-								<Pencil className="w-4 h-4 mr-1.5" />
-								Edit
-							</Button>
-						) : (
-							<Button variant="outlined" size="sm" onClick={handleCancelEdit}>
-								<X className="w-4 h-4 mr-1.5" />
-								Cancel
-							</Button>
-						)}
-					</div>
-				</div>
+		<AdminLayout pageTitle={name || "Customer"}>
+			<div className="mx-auto w-full max-w-5xl space-y-6">
+				<BackButton onClick={() => router.push("/admin/customers")} label="Back to Customers" />
 
 				<DetailHeader
-					title={`${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`}
+					title={name || "Customer"}
 					subtitle={profile?.email}
-					status={
-						<Badge variant={status === "A" ? "success" : "neutral"} dot>
-							{status === "A" ? "Active" : "Inactive"}
-						</Badge>
+					status={<Badge variant={active ? "success" : "neutral"} dot>{active ? "Active" : "Inactive"}</Badge>}
+					metrics={[
+						{ label: "Orders", value: orderTotal ?? "—" },
+						{ label: "Last order", value: orders[0] ? date(orders[0].createdAt) : "—" },
+						{ label: "Joined", value: date(customer.createdAt) },
+						{ label: "Referral code", value: customer.referrerCode || "—" },
+					]}
+					actions={
+						canWrite && (
+							<Button variant={active ? "destructive-outline" : "outline"} size="sm" className="gap-1.5" onClick={() => setConfirm(true)}>
+								<Power className="size-3.5" />
+								{active ? "Deactivate" : "Activate"}
+							</Button>
+						)
 					}
 				/>
 
-				{editing ? (
-					<DetailSection title="Edit Customer">
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5">
-							<FormInput
-								label="First Name"
-								required
-								value={editForm.firstName}
-								onChange={(e) => setEditForm((f) => ({ ...f, firstName: e.target.value }))}
-							/>
-							<FormInput
-								label="Last Name"
-								required
-								value={editForm.lastName}
-								onChange={(e) => setEditForm((f) => ({ ...f, lastName: e.target.value }))}
-							/>
-							<FormInput
-								label="Email"
-								type="email"
-								value={profile?.email ?? ""}
-								disabled
-							/>
-							<FormInput
-								label="Phone Number"
-								value={editForm.phoneNumber}
-								onChange={(e) => setEditForm((f) => ({ ...f, phoneNumber: e.target.value }))}
-							/>
-							<div className="sm:col-span-2 flex justify-end">
-								<Button variant="filled" size="md" onClick={handleSave} loading={saving} disabled={saving}>
-									Save Changes
-								</Button>
-							</div>
-						</div>
-					</DetailSection>
-				) : (
-					<>
-						<DetailSection title="Profile Information">
-							<DetailRow label="Email" value={profile?.email} />
-							<DetailRow label="Phone" value={formatPhoneDisplay(profile?.phoneNumber)} />
-							<DetailRow label="Gender" value={profile?.gender ? changeCase.capitalCase(profile.gender) : "—"} />
-							<DetailRow
-								label="Joined Date"
-								value={new Date(customer.createdAt).toLocaleDateString("en-US", {
-									year: "numeric",
-									month: "long",
-									day: "numeric",
-								})}
-							/>
-						</DetailSection>
+				<EditableSection
+					key={customer.updatedAt}
+					title="Profile"
+					icon={UserRound}
+					canEdit={canWrite}
+					columns={2}
+					defaultEditing={router.query.edit === "1"}
+					facts={[
+						{ label: "First name", value: profile?.firstName },
+						{ label: "Last name", value: profile?.lastName },
+						{ label: "Email", value: profile?.email },
+						{ label: "Phone", value: profile?.phoneNumber ? formatPhoneDisplay(profile.phoneNumber) : "" },
+						{ label: "Gender", value: profile?.gender ? changeCase.capitalCase(profile.gender) : "" },
+					]}
+				>
+					{(close) => <EditCard customer={customer} onCancel={close} onSaved={load} />}
+				</EditableSection>
 
-						{address && (
-							<DetailSection title="Address">
-								<DetailRow label="Street" value={address.street} />
-								<DetailRow label="City" value={address.city} />
-								<DetailRow label="State" value={address.state} />
-								<DetailRow label="Country" value={address.country} />
-								<DetailRow label="Postal Code" value={address.postalCode} />
-							</DetailSection>
-						)}
-					</>
+				{address && (
+					<DetailSection title="Address" icon={MapPin}>
+						<FactGrid
+							columns={2}
+							facts={[
+								{ label: "Street", value: address.street },
+								{ label: "City", value: address.city },
+								{ label: "State", value: address.state },
+								{ label: "Country", value: address.country },
+								{ label: "Postal code", value: address.postalCode },
+							]}
+						/>
+					</DetailSection>
 				)}
+
+				<DetailSection
+					title="Recent orders"
+					icon={ShoppingBag}
+					flush
+					action={
+						orders.length > 0 && (
+							<Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-7 px-2" onClick={() => router.push(`/admin/orders?search=${encodeURIComponent(email ?? "")}`)}>
+								View all
+							</Button>
+						)
+					}
+				>
+					{orders.length === 0 ? (
+						<p className="text-muted-foreground px-5 py-6 text-center text-sm">No orders yet.</p>
+					) : (
+						<ul className="divide-border divide-y">
+							{orders.map((o) => (
+								<li key={o.id}>
+									<button type="button" onClick={() => router.push(`/admin/order/${o.orderReference}`)} className="hover:bg-muted/50 flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition-colors">
+										<div className="min-w-0">
+											<p className="truncate text-sm font-semibold">#{o.orderReference}</p>
+											<p className="text-muted-foreground text-xs">{date(o.createdAt)}</p>
+										</div>
+										<div className="flex shrink-0 items-center gap-3">
+											<Badge variant={ORDER_VARIANT[o.orderStatus] ?? "neutral"} dot>
+												{changeCase.capitalCase(o.orderStatus)}
+											</Badge>
+											<span className="text-sm font-semibold tabular-nums">{formatCurrency(o.totalAmount)}</span>
+										</div>
+									</button>
+								</li>
+							))}
+						</ul>
+					)}
+				</DetailSection>
 			</div>
 
-			{/* Status Confirmation Modal */}
-			<Modal
-				isOpen={statusModalOpen}
-				onClose={() => setStatusModalOpen(false)}
-				title={`${status === "A" ? "Deactivate" : "Activate"} Customer`}
-				size="sm"
-			>
+			<RecordActivity type="Customer" id={customer.id} />
+
+			<Modal isOpen={confirm} onClose={() => setConfirm(false)} title={`${active ? "Deactivate" : "Activate"} customer`} size="sm">
 				<div className="space-y-4">
-					<p className="text-sm text-gray-600 dark:text-gray-300">
-						Are you sure you want to {status === "A" ? "deactivate" : "activate"}{" "}
-						<span className="font-semibold text-on-surface dark:text-white">
-							{profile?.firstName} {profile?.lastName}
-						</span>?
+					<p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+						{active ? "They can no longer sign in or place orders." : "They can sign in and place orders again."} Continue with <span className="font-semibold">{name}</span>?
 					</p>
-					<div className="flex justify-end gap-3">
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="sm"
-							onClick={() => setStatusModalOpen(false)}
-						>
+					<div className="flex justify-end gap-2">
+						<Button variant="outline" size="sm" onClick={() => setConfirm(false)}>
 							Cancel
 						</Button>
-						<Button
-							variant="filled"
-							color={status === "A" ? "error" : "primary"}
-							size="sm"
-							loading={toggling}
-							onClick={handleToggleStatus}
-						>
-							{status === "A" ? "Deactivate" : "Activate"}
+						<Button variant={active ? "destructive" : "default"} size="sm" onClick={toggle} disabled={busy}>
+							{active ? "Deactivate" : "Activate"}
 						</Button>
 					</div>
 				</div>
 			</Modal>
-			<RecordActivity type="Customer" id={customer?.id} />
 		</AdminLayout>
 	);
 };
