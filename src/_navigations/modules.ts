@@ -1,4 +1,4 @@
-import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, MailPlus, Shield, Settings, Globe, MessageSquareQuote, Tags, ImagePlus, Inbox, Megaphone, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, MailPlus, Shield, Settings, Globe, MessageSquareQuote, Tags, ImagePlus, Inbox, Megaphone, Landmark, type LucideIcon } from "lucide-react";
 
 /** One admin module: drives the sidebar nav, tab metadata, and privilege gating. */
 export interface ModuleDef {
@@ -24,6 +24,7 @@ export const MODULES: ModuleDef[] = [
 	{ path: "/admin/tags", title: "Tags", icon: Tags, group: "Catalog", privilege: "MANAGE_PRODUCTS", owns: ["/admin/tag"] },
 	{ path: "/admin/reviews", title: "Reviews", icon: MessageSquareQuote, group: "Catalog", privilege: "MODERATE_REVIEWS" },
 	{ path: "/admin/orders", title: "Orders", icon: ShoppingCart, group: "Sales", privilege: "MANAGE_ORDERS", owns: ["/admin/order"] },
+	{ path: "/admin/payments/manual", title: "Manual Payments", icon: Landmark, group: "Sales", privilege: "MANAGE_MANUAL_PAYMENTS", owns: ["/admin/payments"] },
 	{ path: "/admin/customers", title: "Customers", icon: UserRound, group: "Sales", privilege: "MANAGE_CUSTOMERS", owns: ["/admin/customer"] },
 	{ path: "/admin/announcements", title: "Announcements", icon: Megaphone, group: "Platform", privilege: "MANAGE_ANNOUNCEMENTS", owns: ["/admin/announcement"] },
 	// Ungated: settings.tsx has tabs every signed-in staff member needs (My

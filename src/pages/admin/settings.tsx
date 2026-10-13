@@ -8,6 +8,7 @@ import Link from "next/link";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { Store, User, Shield, Truck, Plus, Trash2, ToggleLeft, ToggleRight, Landmark, Settings as SettingsIcon, Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "@/_hooks/useTheme";
+import { SettingsFrame, useSettingsTabs } from "@/_components/SettingsFrame";
 import { cn } from "@/lib/utils";
 
 import { useAppSelector } from "@/_redux/store";
@@ -173,12 +174,7 @@ const AdminSettings: React.FC = () => {
 		{ key: "standard", id: "standard", name: "Standard Shipping", baseCost: "0", estimatedDays: "5-7 business days", enabled: true, autoId: true },
 	]);
 
-	const tabs = [
-		{ id: "store", name: "Store Settings", icon: Store },
-		{ id: "order", name: "Order & Shipping", icon: Truck },
-		{ id: "profile", name: "My Profile", icon: User },
-		{ id: "security", name: "Security", icon: Shield },
-	].filter((tab) => canManageStores || (tab.id !== "store" && tab.id !== "order"));
+	const tabs = useSettingsTabs().filter((t) => !t.href);
 
 	// Deep links from the account menu: /admin/settings?tab=profile | security
 	const requestedTab = router.isReady ? (router.query.tab as string | undefined) : undefined;
@@ -413,47 +409,7 @@ const AdminSettings: React.FC = () => {
 
 	return (
 		<AdminLayout>
-			<div className="animate-page-enter mx-auto w-full max-w-6xl space-y-6 pb-12">
-				<div className="flex items-start gap-3">
-					<SettingsIcon className="mt-1 size-6 shrink-0" style={{ color: "var(--color-primary)" }} />
-					<div>
-						<h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--text-primary)" }}>Settings</h1>
-						<p className="text-sm" style={{ color: "var(--text-hint)" }}>Your account, store, and how the system runs.</p>
-					</div>
-				</div>
-				<div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
-					{/* Panel nav: vertical on desktop, pills on phones */}
-					<nav aria-label="Settings" className="no-scrollbar flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
-						{tabs.map((tab) => {
-							const Icon = tab.icon;
-							const isActive = activeTab === tab.id;
-							return (
-								<button
-									key={tab.id}
-									type="button"
-									onClick={() => setActiveTab(tab.id)}
-									aria-current={isActive ? "page" : undefined}
-									className={cn(
-										"flex shrink-0 cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs transition-colors",
-										isActive ? "bg-brand/10 font-semibold text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-									)}
-								>
-									<Icon className="size-4 shrink-0" />
-									<span className="whitespace-nowrap">{tab.name}</span>
-								</button>
-							);
-						})}
-						<Link
-							href="/admin/settings/manual-payments"
-							className="text-muted-foreground hover:bg-muted hover:text-foreground flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs transition-colors"
-						>
-							<Landmark className="size-4 shrink-0" />
-							<span className="whitespace-nowrap">Manual Payment Settings</span>
-						</Link>
-					</nav>
-
-					{/* Content */}
-					<section className="min-w-0 space-y-6">
+			<SettingsFrame active={activeTab} onSelect={setActiveTab}>
 						{/* ── Store Settings ── */}
 						{activeTab === "store" && (
 							<div className={CARD}>
@@ -740,9 +696,7 @@ const AdminSettings: React.FC = () => {
 								</form>
 							</div>
 						)}
-					</section>
-				</div>
-			</div>
+			</SettingsFrame>
 		</AdminLayout>
 	);
 };
