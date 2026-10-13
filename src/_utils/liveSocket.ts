@@ -14,6 +14,13 @@ let socket: Socket | null = null;
 let refs = 0;
 let retry: ReturnType<typeof setTimeout> | null = null;
 const listeners = new Map<string, Set<Handler>>();
+/** Records whose live history we follow ('Type:id' -> subscriber count); re-announced to the server on every (re)connect. */
+const watched = new Map<string, number>();
+
+const announce = (key: string) => {
+	const [type, id] = key.split(":");
+	socket?.emit("watch-record", { type, id });
+};
 
 const baseUrl = () => appConstants.API_BASE_URL.replace(/\/api\/v1\/?$/, "");
 
@@ -24,6 +31,7 @@ function connect() {
 		transports: ["websocket", "polling"],
 		reconnectionDelayMax: 15000,
 	});
+	socket.on("connect", () => watched.forEach((_, key) => announce(key)));
 	socket.onAny((event, ...args) => listeners.get(event)?.forEach((fn) => fn(...args)));
 	// The server drops sockets whose token it rejects and won't auto-retry those; try again later with whatever token exists by then.
 	const scheduleRetry = () => {
@@ -56,6 +64,23 @@ export function onLive(event: string, handler: Handler): () => void {
 	set.add(handler);
 	return () => {
 		set!.delete(handler);
+		release();
+	};
+}
+
+/** Follow one record's history live; events arrive as "record-activity". Returns a stop function. */
+export function watchRecord(type: string, id: string): () => void {
+	const key = `${type}:${id}`;
+	refs += 1;
+	connect();
+	watched.set(key, (watched.get(key) ?? 0) + 1);
+	if (socket?.connected && watched.get(key) === 1) announce(key);
+	return () => {
+		const n = (watched.get(key) ?? 1) - 1;
+		if (n <= 0) {
+			watched.delete(key);
+			socket?.emit("unwatch-record", { type, id });
+		} else watched.set(key, n);
 		release();
 	};
 }

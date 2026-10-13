@@ -1,3 +1,4 @@
+import RecordActivity from "@/_components/RecordActivity";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
@@ -280,6 +281,7 @@ const CustomerDetail: React.FC = () => {
 					</div>
 				</div>
 			</Modal>
+			<RecordActivity type="Customer" id={customer?.id} />
 		</AdminLayout>
 	);
 };

@@ -19,6 +19,9 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Filter as FilterIcon,
   Filter,
   RefreshCw,
   Rows2,
@@ -57,6 +60,7 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { displayTotal, firstSerialNumber } from "@/_utils/dataTablePagination";
+import { getPaginationRange } from "@/_utils/paginationRange";
 
 // Ported from ogaryde-admin-ui/src/components/shared/data-table.tsx (toolbar,
 // sortable headers, column-visibility dropdown, density toggle, refresh
@@ -143,6 +147,7 @@ function formatAuditDate(value: unknown): string {
 }
 
 const DEFAULT_PAGE_SIZES = [10, 15, 20, 50];
+const NAV_BUTTON = "h-7 w-7 border-border/70 bg-card text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40";
 
 function FilterChip({ label, value, onClear }: { label: string; value: string; onClear: () => void }) {
   return (
@@ -309,14 +314,14 @@ export function DataTable<T>({
     if (!showSN) return cols;
     const snColumn: ColumnDef<T, any> = {
       id: "__sn",
-      header: "S/N",
+      header: "SN",
       enableSorting: false,
       enableHiding: false,
-      meta: { align: "left", width: "56px" },
+      meta: { align: "center", width: "56px" },
       // Manual (server) pagination: `data` is only the current page, so row.index
       // is already page-relative. Client pagination: row.index is the row's index
       // in the full pre-pagination dataset, i.e. already absolute — don't add snStart.
-      cell: ({ row }) => (manualPagination ? snStart + row.index : row.index + 1),
+      cell: ({ row }) => <span className="text-muted-foreground/80 font-mono text-[11px] font-medium select-none">{manualPagination ? snStart + row.index : row.index + 1}</span>,
     };
     return [snColumn, ...cols];
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -369,6 +374,7 @@ export function DataTable<T>({
     manualPagination ? onPageChange?.(effPageIndex - 1) : table.previousPage();
   const handleNext = () =>
     manualPagination ? onPageChange?.(effPageIndex + 1) : table.nextPage();
+  const goToPage = (i: number) => (manualPagination ? onPageChange?.(i) : table.setPageIndex(i));
   const handleSize = (n: number) =>
     manualPagination ? onPageSizeChange?.(n) : table.setPageSize(n);
   const prevDisabled = manualPagination ? effPageIndex <= 0 : !table.getCanPreviousPage();
@@ -393,7 +399,7 @@ export function DataTable<T>({
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder={searchPlaceholder}
-            className="h-9 w-full pl-8 sm:w-96"
+            className="bg-card h-9 w-full rounded-lg pl-8 text-xs sm:max-w-xs md:max-w-sm"
             data-testid={`${testId}-search`}
           />
         </div>
@@ -404,6 +410,7 @@ export function DataTable<T>({
               type="button"
               variant="outline"
               size="sm"
+              className="gap-1.5 text-xs shadow-xs"
               onClick={onRefresh}
               disabled={refreshing}
               aria-label="Refresh"
@@ -459,6 +466,7 @@ export function DataTable<T>({
             type="button"
             variant="outline"
             size="sm"
+            className="gap-1.5 text-xs shadow-xs"
             onClick={() => setCompact((v) => !v)}
             aria-label="Toggle density"
             data-testid={`${testId}-density`}
@@ -467,7 +475,7 @@ export function DataTable<T>({
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline" size="sm" data-testid={`${testId}-columns`}>
+              <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs shadow-xs" data-testid={`${testId}-columns`}>
                 <SlidersHorizontal className="size-4" /> Columns
               </Button>
             </DropdownMenuTrigger>
@@ -512,9 +520,9 @@ export function DataTable<T>({
         </div>
       )}
 
-      <div className="rounded-lg border">
+      <div className="bg-card overflow-hidden rounded-xl border shadow-xs">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-brand-soft dark:bg-brand/[0.07]">
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => {
@@ -524,7 +532,7 @@ export function DataTable<T>({
                   return (
                     <TableHead
                       key={header.id}
-                      className={alignClass(meta?.align)}
+                      className={cn("text-muted-foreground h-10 px-4 text-xs font-semibold whitespace-nowrap", alignClass(meta?.align))}
                       style={{ width: meta?.width, maxWidth: meta?.maxWidth }}
                     >
                       {header.isPlaceholder ? null : canSort ? (
@@ -577,15 +585,22 @@ export function DataTable<T>({
               ))
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={visibleColCount} className="h-32 text-center">
-                  <StateFeedback
-                    variant="empty"
-                    size="sm"
-                    title={emptyMessage}
-                    message={emptyDescription}
-                    action={emptyAction}
-                    data-testid={`${testId}-empty`}
-                  />
+                <TableCell colSpan={visibleColCount} className="h-44 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2 py-6" data-testid={`${testId}-empty`}>
+                    <FilterIcon className="text-muted-foreground/40 size-8" />
+                    <p className="text-foreground text-sm font-semibold">{emptyMessage}</p>
+                    <p className="text-muted-foreground max-w-sm text-xs">{emptyDescription || "Try adjusting your search or filters, or add a new record."}</p>
+                    {emptyAction &&
+                      (emptyAction.href ? (
+                        <a href={emptyAction.href} className="text-brand-ink mt-1 text-xs font-semibold underline">
+                          {emptyAction.label}
+                        </a>
+                      ) : (
+                        <Button type="button" size="sm" variant="outline" className="mt-1 text-xs" onClick={emptyAction.onClick}>
+                          {emptyAction.label}
+                        </Button>
+                      ))}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -593,7 +608,7 @@ export function DataTable<T>({
                 <TableRow
                   key={row.id}
                   data-testid={`${testId}-row-${getRowId ? getRowId(row.original) : row.id}`}
-                  className={cn(onRowClick && "cursor-pointer")}
+                  className={cn("border-border/60 hover:bg-muted/50 transition-colors duration-150", onRowClick && "cursor-pointer")}
                   onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 >
                   {row.getVisibleCells().map((cell) => {
@@ -604,6 +619,7 @@ export function DataTable<T>({
                         key={cell.id}
                         className={cn(
                           cellPad,
+                          "px-4 text-xs",
                           alignClass(meta?.align),
                           truncate && "overflow-hidden text-ellipsis whitespace-nowrap",
                         )}
@@ -619,57 +635,76 @@ export function DataTable<T>({
             )}
           </TableBody>
         </Table>
-      </div>
-
-      {!isError && rows.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span className="text-muted-foreground text-sm" data-testid={`${testId}-count`}>
-              {rows.length} of {effTotalItems} row{effTotalItems === 1 ? "" : "s"}
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-sm">Rows per page</span>
-              <Select value={String(effPageSize)} onValueChange={(v) => handleSize(Number(v))}>
-                <SelectTrigger className="h-8 w-[72px]" data-testid={`${testId}-page-size`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {pageSizeOptions.map((s) => (
-                    <SelectItem key={s} value={String(s)}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {!isError && rows.length > 0 && (
+          <div className="border-border/70 bg-secondary/15 text-muted-foreground flex select-none flex-col gap-3 border-t px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between dark:bg-secondary/10">
+            <div className="text-[11px] sm:text-xs" data-testid={`${testId}-count`}>
+              Showing <span className="text-foreground font-semibold">{effPageIndex * effPageSize + 1}</span> to{" "}
+              <span className="text-foreground font-semibold">{effPageIndex * effPageSize + rows.length}</span> of{" "}
+              <span className="text-foreground font-semibold">{effTotalItems}</span> {effTotalItems === 1 ? "entry" : "entries"}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end sm:gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] sm:text-xs">Rows per page:</span>
+                <Select value={String(effPageSize)} onValueChange={(v) => handleSize(Number(v))}>
+                  <SelectTrigger className="bg-card text-foreground h-7 w-[68px] px-2 text-xs" data-testid={`${testId}-page-size`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="top" align="end">
+                    {pageSizeOptions.map((o) => (
+                      <SelectItem key={o} value={String(o)} className="text-xs">
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <span className="sr-only" data-testid={`${testId}-page-indicator`}>
+                Page {effPageCount === 0 ? 0 : effPageIndex + 1} of {effPageCount}
+              </span>
+              <div className="flex items-center gap-1">
+                <Button type="button" variant="outline" size="icon-sm" onClick={() => goToPage(0)} disabled={prevDisabled} className={NAV_BUTTON} aria-label="Go to first page" title="First page">
+                  <ChevronsLeft className="size-3.5" />
+                </Button>
+                <Button type="button" variant="outline" size="icon-sm" onClick={handlePrev} disabled={prevDisabled} className={NAV_BUTTON} aria-label="Go to previous page" title="Previous page" data-testid={`${testId}-prev`}>
+                  <ChevronLeft className="size-3.5" />
+                </Button>
+                <div className="flex items-center gap-1 px-0.5">
+                  {getPaginationRange(effPageIndex + 1, Math.max(effPageCount, 1)).map((n, i) =>
+                    typeof n === "string" ? (
+                      <span key={`gap-${i}`} className="text-muted-foreground px-1 text-xs font-medium">
+                        &#8230;
+                      </span>
+                    ) : (
+                      <Button
+                        key={n}
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => goToPage(n - 1)}
+                        aria-label={`Page ${n}`}
+                        aria-current={n === effPageIndex + 1 ? "page" : undefined}
+                        className={cn(
+                          "h-7 min-w-[28px] px-1.5 text-xs font-medium transition-all",
+                          n === effPageIndex + 1 ? "border-brand bg-brand/10 text-foreground ring-brand hover:bg-brand/15 font-bold ring-1" : "border-border/70 bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        {n}
+                      </Button>
+                    ),
+                  )}
+                </div>
+                <Button type="button" variant="outline" size="icon-sm" onClick={handleNext} disabled={nextDisabled} className={NAV_BUTTON} aria-label="Go to next page" title="Next page" data-testid={`${testId}-next`}>
+                  <ChevronRight className="size-3.5" />
+                </Button>
+                <Button type="button" variant="outline" size="icon-sm" onClick={() => goToPage(effPageCount - 1)} disabled={nextDisabled} className={NAV_BUTTON} aria-label="Go to last page" title="Last page">
+                  <ChevronsRight className="size-3.5" />
+                </Button>
+              </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="text-muted-foreground text-sm" data-testid={`${testId}-page-indicator`}>
-              Page {effPageCount === 0 ? 0 : effPageIndex + 1} of {effPageCount}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handlePrev}
-              disabled={prevDisabled}
-              data-testid={`${testId}-prev`}
-            >
-              <ChevronLeft className="size-4" /> Prev
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleNext}
-              disabled={nextDisabled}
-              data-testid={`${testId}-next`}
-            >
-              Next <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
+
     </div>
   );
 }

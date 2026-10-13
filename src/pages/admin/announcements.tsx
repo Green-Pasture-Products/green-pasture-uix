@@ -10,6 +10,8 @@ import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
+import { DatePicker } from "@/components/egfm/date-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/egfm/select";
 import axiosInstance from "@/_utils/axiosInstance";
 import { useListParams } from "@/_hooks/useListParams";
 import type { Announcement, AnnouncementAudience, PageMeta } from "@/types/live";
@@ -19,8 +21,6 @@ const AUDIENCE: Record<AnnouncementAudience, { label: string; hint: string }> = 
 	CUSTOMERS: { label: "Customers", hint: "Signed-in customers only" },
 	STAFF: { label: "Staff", hint: "Admin users only" },
 };
-
-const toLocalInput = (iso: string | null) => (iso ? new Date(new Date(iso).getTime() - new Date(iso).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "");
 
 interface FormState {
 	title: string;
@@ -63,7 +63,7 @@ const AdminAnnouncements: React.FC = () => {
 	const openForm = (a: Announcement | "new") => {
 		setEditing(a);
 		setConfirmPublish(false);
-		setForm(a === "new" ? EMPTY : { title: a.title, message: a.message, audience: a.audience, expiresAt: toLocalInput(a.expiresAt) });
+		setForm(a === "new" ? EMPTY : { title: a.title, message: a.message, audience: a.audience, expiresAt: a.expiresAt ?? "" });
 	};
 	const closeForm = () => {
 		setEditing(null);
@@ -75,7 +75,7 @@ const AdminAnnouncements: React.FC = () => {
 	const save = async () => {
 		setBusy(true);
 		try {
-			const body = { title: form.title.trim(), message: form.message.trim(), audience: form.audience, expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : null };
+			const body = { title: form.title.trim(), message: form.message.trim(), audience: form.audience, expiresAt: form.expiresAt || null };
 			if (editing === "new") {
 				await axiosInstance.post("announcements", body);
 				toast.success("Announcement published");
@@ -257,13 +257,18 @@ const AdminAnnouncements: React.FC = () => {
 									<label htmlFor="ann-audience" className="mb-1 block text-xs font-bold" style={{ color: "var(--text-secondary)" }}>
 										Send to
 									</label>
-									<select id="ann-audience" value={form.audience} onChange={(e) => setForm({ ...form, audience: e.target.value as AnnouncementAudience })} className={field} style={fieldStyle}>
-										{(Object.keys(AUDIENCE) as AnnouncementAudience[]).map((k) => (
-											<option key={k} value={k}>
-												{AUDIENCE[k].label}
-											</option>
-										))}
-									</select>
+									<Select value={form.audience} onValueChange={(v) => setForm({ ...form, audience: v as AnnouncementAudience })}>
+										<SelectTrigger id="ann-audience" aria-label="Send to">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											{(Object.keys(AUDIENCE) as AnnouncementAudience[]).map((k) => (
+												<SelectItem key={k} value={k}>
+													{AUDIENCE[k].label}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
 									<p className="mt-1 text-[0.7rem]" style={{ color: "var(--text-hint)" }}>
 										{AUDIENCE[form.audience].hint}
 									</p>
@@ -272,7 +277,7 @@ const AdminAnnouncements: React.FC = () => {
 									<label htmlFor="ann-expires" className="mb-1 block text-xs font-bold" style={{ color: "var(--text-secondary)" }}>
 										Auto-hide after <span style={{ color: "var(--text-hint)" }}>(optional)</span>
 									</label>
-									<input id="ann-expires" type="datetime-local" value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} className={field} style={fieldStyle} />
+									<DatePicker id="ann-expires" aria-label="Auto-hide after" includeTime minDate={new Date()} value={form.expiresAt || null} onChange={(d) => setForm({ ...form, expiresAt: d ? d.toISOString() : "" })} placeholder="Never" />
 								</div>
 							</div>
 							<div className="flex justify-end gap-2">

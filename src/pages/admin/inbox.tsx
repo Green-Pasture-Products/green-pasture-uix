@@ -1,16 +1,29 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import { Check, CheckCheck, Megaphone, Package, Trash2, Wallet, AlertTriangle, Bell } from "lucide-react";
+import { Activity, CheckCheck, Check, Inbox as InboxIcon, Megaphone, Package, Undo2, Wallet, AlertTriangle, Bell } from "lucide-react";
 import toast from "react-hot-toast";
 
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
-import Button from "@/_UI/Button";
-import EmptyState from "@/_UI/EmptyState";
+import { Button } from "@/components/ui/button";
 import axiosInstance from "@/_utils/axiosInstance";
 import { useLiveEvent } from "@/_hooks/useLiveEvent";
 import { notifyInboxChanged } from "@/_hooks/useInboxUnread";
+import { cn } from "@/lib/utils";
 import type { InboxNotification, PageMeta } from "@/types/live";
+
+type View = "primary" | "other" | "cleared";
+interface Summary {
+	primaryUnread: number;
+	otherUnread: number;
+	cleared: number;
+}
+
+const TABS: { id: View; label: string; icon: React.ElementType; hint: string; empty: string; emptyHint: string }[] = [
+	{ id: "primary", label: "Primary", icon: InboxIcon, hint: "Orders and payments that need you.", empty: "You're all caught up", emptyHint: "New orders and payments land here." },
+	{ id: "other", label: "Other", icon: Activity, hint: "Stock alerts, reviews and announcements.", empty: "Nothing else to see", emptyHint: "Stock alerts, reviews and announcements land here." },
+	{ id: "cleared", label: "Cleared", icon: CheckCheck, hint: "Items you've cleared. Restore any you still need.", empty: "Nothing cleared yet", emptyHint: "Anything you clear shows up here." },
+];
 
 const iconFor = (n: InboxNotification) => {
 	if (n.metadata?.kind === "announcement") return Megaphone;
@@ -20,223 +33,244 @@ const iconFor = (n: InboxNotification) => {
 	return Bell;
 };
 
-const targetFor = (n: InboxNotification): string | null => {
-	const m = n.metadata ?? {};
-	if (m.orderReference) return `/admin/order/${m.orderReference}`;
-	return null;
+const targetFor = (n: InboxNotification): string | null => (n.metadata?.orderReference ? `/admin/order/${n.metadata.orderReference}` : null);
+
+const groupLabel = (iso: string) => {
+	const d = new Date(iso);
+	const days = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(d).setHours(0, 0, 0, 0)) / 86400000);
+	if (days <= 0) return "Today";
+	if (days === 1) return "Yesterday";
+	if (days < 7) return "Last 7 days";
+	return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 };
 
-const timeAgo = (iso: string) => {
-	const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
-	if (s < 60) return "just now";
-	if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-	if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-	return new Date(iso).toLocaleDateString();
+const timeLabel = (iso: string) => {
+	const d = new Date(iso);
+	const s = (Date.now() - d.getTime()) / 1000;
+	if (s < 60) return "now";
+	if (s < 3600) return `${Math.floor(s / 60)}m`;
+	if (s < 86400) return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+	return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 };
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 30;
 
 const AdminInbox: React.FC = () => {
 	const router = useRouter();
+	const [view, setView] = useState<View>("primary");
 	const [items, setItems] = useState<InboxNotification[]>([]);
 	const [meta, setMeta] = useState<PageMeta | null>(null);
-	const [unreadCount, setUnreadCount] = useState(0);
-	const [unreadOnly, setUnreadOnly] = useState(false);
-	const [page, setPage] = useState(1);
+	const [summary, setSummary] = useState<Summary>({ primaryUnread: 0, otherUnread: 0, cleared: 0 });
 	const [loading, setLoading] = useState(true);
-	const [fresh, setFresh] = useState<Set<string>>(new Set());
+	const [page, setPage] = useState(1);
+
+	const loadSummary = useCallback(async () => {
+		try {
+			const res = await axiosInstance.get("notifications/summary");
+			setSummary(res.data?.data);
+		} catch {}
+	}, []);
 
 	const load = useCallback(
 		async (silent = false) => {
 			if (!silent) setLoading(true);
 			try {
-				const res = await axiosInstance.get("notifications/inbox", { params: { page, limit: PAGE_SIZE, unreadOnly } });
+				const res = await axiosInstance.get("notifications/inbox", { params: { view, page, limit: PAGE_SIZE } });
 				const data = res.data?.data;
-				setItems(data?.items ?? []);
+				setItems((prev) => (page === 1 ? (data?.items ?? []) : [...prev, ...(data?.items ?? [])]));
 				setMeta(data?.meta ?? null);
-				setUnreadCount(data?.unreadCount ?? 0);
 			} catch {
 				toast.error("Could not load your inbox");
 			} finally {
 				setLoading(false);
 			}
 		},
-		[page, unreadOnly],
+		[view, page],
 	);
 
 	useEffect(() => {
 		load();
 	}, [load]);
+	useEffect(() => {
+		loadSummary();
+	}, [loadSummary]);
 
-	// 100% live: a pushed notification lands at the top without a refresh.
-	useLiveEvent<InboxNotification>("new-notification", (n) => {
-		setUnreadCount((c) => c + 1);
-		if (page === 1) {
-			setItems((prev) => [n, ...prev.filter((p) => p.id !== n.id)].slice(0, PAGE_SIZE));
-			setFresh((f) => new Set(f).add(n.id));
-			setTimeout(() => setFresh((f) => (f.delete(n.id), new Set(f))), 4000);
-		}
+	const refreshAll = useCallback(() => {
+		setPage(1);
+		load(true);
+		loadSummary();
+		notifyInboxChanged();
+	}, [load, loadSummary]);
+
+	// Live: anything pushed to you lands without a refresh.
+	useLiveEvent("new-notification", () => {
+		if (page === 1) load(true);
+		loadSummary();
 	});
-	useLiveEvent("announcement-changed", () => void load(true));
+	useLiveEvent("announcement-changed", () => {
+		if (page === 1) load(true);
+		loadSummary();
+	});
 
-	const markRead = async (n: InboxNotification) => {
-		if (n.isRead) return;
-		setItems((prev) => prev.map((p) => (p.id === n.id ? { ...p, isRead: true } : p)));
-		setUnreadCount((c) => Math.max(0, c - 1));
-		try {
-			await axiosInstance.patch(`notifications/${n.id}/read`);
-			notifyInboxChanged();
-		} catch {
-			load(true);
-		}
+	const switchView = (v: View) => {
+		if (v === view) return;
+		setView(v);
+		setPage(1);
+		setItems([]);
 	};
 
 	const open = async (n: InboxNotification) => {
-		await markRead(n);
+		if (!n.isRead && view !== "cleared") {
+			setItems((prev) => prev.map((p) => (p.id === n.id ? { ...p, isRead: true } : p)));
+			axiosInstance.patch(`notifications/${n.id}/read`).then(() => (loadSummary(), notifyInboxChanged()));
+		}
 		const target = targetFor(n);
 		if (target) router.push(target);
 	};
 
-	const markAll = async () => {
-		await axiosInstance.patch("notifications/read-all");
-		notifyInboxChanged();
-		setItems((prev) => prev.map((p) => ({ ...p, isRead: true })));
-		setUnreadCount(0);
-	};
-
-	const clearOne = async (n: InboxNotification) => {
+	const act = async (n: InboxNotification, action: "clear" | "restore") => {
 		setItems((prev) => prev.filter((p) => p.id !== n.id));
-		if (!n.isRead) setUnreadCount((c) => Math.max(0, c - 1));
 		try {
-			await axiosInstance.patch(`notifications/${n.id}/clear`);
+			await axiosInstance.patch(`notifications/${n.id}/${action}`);
+			loadSummary();
 			notifyInboxChanged();
 		} catch {
-			load(true);
+			refreshAll();
 		}
 	};
 
-	const clearAll = async () => {
-		await axiosInstance.patch("notifications/clear-all");
+	const markAll = async () => {
+		await axiosInstance.patch("notifications/read-all");
+		setItems((prev) => prev.map((p) => ({ ...p, isRead: true })));
+		loadSummary();
 		notifyInboxChanged();
-		setItems([]);
-		setUnreadCount(0);
-		setMeta(null);
 	};
+
+	const clearAll = async () => {
+		await axiosInstance.patch("notifications/clear-all", null, { params: { view } });
+		refreshAll();
+	};
+
+	const groups = useMemo(() => {
+		const out: { label: string; rows: InboxNotification[] }[] = [];
+		for (const n of items) {
+			const label = groupLabel(view === "cleared" ? n.createdAt : n.createdAt);
+			const last = out[out.length - 1];
+			if (last?.label === label) last.rows.push(n);
+			else out.push({ label, rows: [n] });
+		}
+		return out;
+	}, [items, view]);
+
+	const tab = TABS.find((t) => t.id === view)!;
+	const unreadFor = (id: View) => (id === "primary" ? summary.primaryUnread : id === "other" ? summary.otherUnread : 0);
+	const hasMore = !!meta && meta.page < meta.totalPages;
 
 	return (
 		<AdminLayout>
-			<div className="animate-page-enter mx-auto max-w-3xl space-y-4">
-				<div className="flex flex-wrap items-center justify-between gap-3">
+			<div className="mx-auto w-full max-w-6xl space-y-5">
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 					<div>
-						<h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
-							Inbox
+						<h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+							<InboxIcon className="text-brand-ink size-6" /> Inbox
 						</h2>
-						<p className="text-xs" style={{ color: "var(--text-hint)" }}>
-							{unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"} · updates live
-						</p>
+						<p className="text-muted-foreground text-sm">Orders, payments and alerts, live as they happen.</p>
 					</div>
 					<div className="flex flex-wrap items-center gap-2">
-						<div className="inline-flex rounded-lg border p-0.5 text-xs" style={{ borderColor: "var(--border-light)" }}>
-							{[
-								{ label: "All", value: false },
-								{ label: "Unread", value: true },
-							].map((o) => (
-								<button
-									key={o.label}
-									type="button"
-									onClick={() => {
-										setUnreadOnly(o.value);
-										setPage(1);
-									}}
-									className="rounded-md px-3 py-1.5 font-medium"
-									style={{
-										background: unreadOnly === o.value ? "var(--color-primary)" : "transparent",
-										color: unreadOnly === o.value ? "white" : "var(--text-secondary)",
-									}}
-								>
-									{o.label}
-								</button>
-							))}
-						</div>
-						<Button variant="outlined" color="secondary" leftIcon={CheckCheck} onClick={markAll} disabled={unreadCount === 0}>
-							Mark all read
+						<Button variant="outline" size="sm" className="gap-1.5 text-xs shadow-xs" onClick={markAll} disabled={view === "cleared" || unreadFor(view) === 0}>
+							<CheckCheck className="size-4" /> Mark all read
 						</Button>
-						<Button variant="outlined" color="secondary" leftIcon={Trash2} onClick={clearAll} disabled={items.length === 0}>
-							Clear all
-						</Button>
+						{view !== "cleared" && items.length > 0 && (
+							<Button variant="outline" size="sm" className="gap-1.5 text-xs shadow-xs" onClick={clearAll}>
+								Clear all
+							</Button>
+						)}
 					</div>
 				</div>
 
-				{loading ? (
-					<div className="space-y-2">
-						{[0, 1, 2, 3].map((i) => (
-							<div key={i} className="h-16 animate-pulse rounded-xl" style={{ background: "var(--surface-medium)" }} />
-						))}
-					</div>
-				) : items.length === 0 ? (
-					<EmptyState icon={Bell} title={unreadOnly ? "No unread notifications" : "Nothing here yet"} description="New orders, payments and alerts show up here the moment they happen." />
-				) : (
-					<ul className="space-y-2">
-						{items.map((n) => {
-							const Icon = iconFor(n);
-							return (
-								<li
-									key={n.id}
-									className="group flex items-start gap-3 rounded-xl border p-3 transition-colors"
-									style={{
-										borderColor: fresh.has(n.id) ? "var(--color-primary)" : "var(--border-light)",
-										background: n.isRead ? "var(--surface-paper)" : "var(--surface-low)",
-									}}
-								>
-									<span
-										className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full"
-										style={{ background: "rgba(154,202,60,0.16)", color: "var(--color-primary)" }}
-									>
-										<Icon size={16} />
-									</span>
-									<button type="button" onClick={() => open(n)} className="min-w-0 flex-1 text-left">
-										<div className="flex items-center gap-2">
-											{!n.isRead && <span className="size-2 shrink-0 rounded-full" style={{ background: "var(--color-primary)" }} aria-label="Unread" />}
-											<p className="truncate text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-												{n.title}
-											</p>
-										</div>
-										<p className="mt-0.5 line-clamp-2 text-xs" style={{ color: "var(--text-secondary)" }}>
-											{n.message}
-										</p>
-										<p className="mt-1 text-[0.7rem]" style={{ color: "var(--text-hint)" }}>
-											{timeAgo(n.createdAt)}
-										</p>
-									</button>
-									<div className="flex shrink-0 items-center gap-1">
-										{!n.isRead && (
-											<button type="button" aria-label="Mark as read" onClick={() => markRead(n)} className="rounded-md p-1.5 hover:bg-black/5" style={{ color: "var(--text-hint)" }}>
-												<Check size={16} />
-											</button>
-										)}
-										<button type="button" aria-label="Clear" onClick={() => clearOne(n)} className="rounded-md p-1.5 hover:bg-black/5" style={{ color: "var(--text-hint)" }}>
-											<Trash2 size={16} />
-										</button>
-									</div>
-								</li>
-							);
-						})}
-					</ul>
-				)}
+				<div role="tablist" className="border-border grid grid-cols-3 border-b">
+					{TABS.map((t) => {
+						const selected = t.id === view;
+						const unread = unreadFor(t.id);
+						return (
+							<button
+								key={t.id}
+								type="button"
+								role="tab"
+								aria-selected={selected}
+								onClick={() => switchView(t.id)}
+								className={cn("-mb-px flex items-center gap-3 border-b-2 px-4 py-3 text-left transition-colors", selected ? "border-brand text-foreground" : "text-muted-foreground hover:text-foreground border-transparent")}
+							>
+								<t.icon className="size-4 shrink-0" />
+								<span className="min-w-0">
+									<span className="block text-sm font-semibold">{t.label}</span>
+									{t.id !== "cleared" && <span className="text-muted-foreground block text-xs">{unread} unread</span>}
+								</span>
+							</button>
+						);
+					})}
+				</div>
 
-				{meta && meta.totalPages > 1 && (
-					<div className="flex items-center justify-between text-xs" style={{ color: "var(--text-secondary)" }}>
-						<span>
-							Page {meta.page} of {meta.totalPages}
-						</span>
-						<div className="flex gap-2">
-							<Button variant="outlined" color="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-								Prev
-							</Button>
-							<Button variant="outlined" color="secondary" disabled={page >= meta.totalPages} onClick={() => setPage((p) => p + 1)}>
-								Next
-							</Button>
-						</div>
+				{loading && items.length === 0 ? (
+					<p className="text-muted-foreground py-16 text-center text-sm">Loading…</p>
+				) : items.length === 0 ? (
+					<div className="flex flex-col items-center gap-2 py-16 text-center">
+						<tab.icon className="text-muted-foreground/50 size-8" />
+						<p className="text-sm font-semibold">{tab.empty}</p>
+						<p className="text-muted-foreground text-sm">{tab.emptyHint}</p>
+					</div>
+				) : (
+					<div className="space-y-6">
+						{groups.map((g) => (
+							<section key={g.label} className="space-y-2">
+								<h3 className="px-3 text-sm font-semibold">{g.label}</h3>
+								<ul className="bg-card rounded-xl border p-1">
+									{g.rows.map((n) => {
+										const Icon = iconFor(n);
+										return (
+											<li key={n.id} className="group">
+												<div className="hover:bg-muted/60 flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors">
+													<span className={cn("size-2 shrink-0 rounded-full", !n.isRead && view !== "cleared" ? "bg-brand" : "bg-transparent")} aria-label={!n.isRead ? "Unread" : undefined} />
+													<button type="button" onClick={() => open(n)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+														<span className="bg-brand/15 text-brand-ink flex size-6 shrink-0 items-center justify-center rounded-full">
+															<Icon className="size-3.5" />
+														</span>
+														<span className={cn("w-1/3 min-w-0 shrink-0 truncate text-sm", !n.isRead && view !== "cleared" && "font-semibold")}>{n.title}</span>
+														<span className="text-muted-foreground min-w-0 flex-1 truncate text-sm">{n.message}</span>
+													</button>
+													<span className="relative flex w-20 shrink-0 items-center justify-end">
+														<time className="text-muted-foreground text-xs tabular-nums group-hover:invisible group-focus-within:invisible">{timeLabel(n.createdAt)}</time>
+														<Button
+															variant="outline"
+															size="xs"
+															className="absolute right-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
+															onClick={() => act(n, view === "cleared" ? "restore" : "clear")}
+														>
+															{view === "cleared" ? (
+																<>
+																	<Undo2 className="size-3" /> Restore
+																</>
+															) : (
+																<>
+																	<Check className="size-3" /> Clear
+																</>
+															)}
+														</Button>
+													</span>
+												</div>
+											</li>
+										);
+									})}
+								</ul>
+							</section>
+						))}
+						{hasMore && (
+							<div className="flex justify-center">
+								<Button variant="ghost" size="sm" onClick={() => setPage((p) => p + 1)} disabled={loading}>
+									Show older
+								</Button>
+							</div>
+						)}
 					</div>
 				)}
 			</div>

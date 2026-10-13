@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
 import Button from "@/_UI/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/egfm/select";
 import EmptyState from "@/_UI/EmptyState";
 import axiosInstance from "@/_utils/axiosInstance";
 import { useLiveEvent } from "@/_hooks/useLiveEvent";
@@ -117,22 +118,32 @@ const AdminActivity: React.FC = () => {
 								style={selectStyle}
 							/>
 						</div>
-						<select aria-label="Record type" value={entityType} onChange={(e) => resetTo(() => setEntityType(e.target.value))} className="h-9 rounded-lg border px-2 text-sm" style={selectStyle}>
-							<option value="">All records</option>
-							{ENTITY_TYPES.map((t) => (
-								<option key={t} value={t}>
-									{t}
-								</option>
-							))}
-						</select>
-						<select aria-label="Action" value={action} onChange={(e) => resetTo(() => setAction(e.target.value))} className="h-9 rounded-lg border px-2 text-sm" style={selectStyle}>
-							<option value="">All actions</option>
-							{ACTIONS.map((a) => (
-								<option key={a} value={a}>
-									{a.charAt(0) + a.slice(1).toLowerCase()}
-								</option>
-							))}
-						</select>
+						<Select value={entityType || "ALL"} onValueChange={(v) => resetTo(() => setEntityType(v === "ALL" ? "" : v))}>
+							<SelectTrigger aria-label="Record type" className="h-9 w-40">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="ALL">All records</SelectItem>
+								{ENTITY_TYPES.map((t) => (
+									<SelectItem key={t} value={t}>
+										{t}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						<Select value={action || "ALL"} onValueChange={(v) => resetTo(() => setAction(v === "ALL" ? "" : v))}>
+							<SelectTrigger aria-label="Action" className="h-9 w-36">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="ALL">All actions</SelectItem>
+								{ACTIONS.map((a) => (
+									<SelectItem key={a} value={a}>
+										{a.charAt(0) + a.slice(1).toLowerCase()}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 				</div>
 

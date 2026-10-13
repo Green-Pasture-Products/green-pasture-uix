@@ -1,3 +1,4 @@
+import RecordActivity from "@/_components/RecordActivity";
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
@@ -451,6 +452,7 @@ const AdminOrderDetail: React.FC = () => {
 				</DetailSection>
 			</div>
 
+			<RecordActivity type="Order" id={order?.id} />
 		</AdminLayout>
 	);
 };
