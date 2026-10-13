@@ -27,6 +27,7 @@ import { profileAction } from "@/_redux/actions/profile.action";
 import { useTheme } from "@/_hooks/useTheme";
 import { appConstants } from "@/_redux/constants";
 import axiosInstance from "@/_utils/axiosInstance";
+import toast from "react-hot-toast";
 
 interface NavLink {
 	href: string;
@@ -125,16 +126,34 @@ const Navbar: React.FC = () => {
 			document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
 
+	const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
+	const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+	const handleCancelOrder = async (orderId: string) => {
+		setCancellingId(orderId);
+		try {
+			await axiosInstance.patch(`order/my-orders/${orderId}/cancel`);
+			setAwaitingPaymentOrders((prev) => prev.filter((o) => o.id !== orderId));
+			toast.success("Order cancelled");
+		} catch (error: any) {
+			toast.error(error?.response?.data?.message || "Could not cancel this order");
+		} finally {
+			setCancellingId(null);
+			setCancelConfirmId(null);
+		}
+	};
+
 	const fetchAwaitingPaymentOrders = React.useCallback(async () => {
 		try {
 			if (!isAuthenticated) {
 				setAwaitingPaymentOrders([]);
 				return;
 			}
-			const response = await axiosInstance.get('order/my-orders?page=1&limit=100&paymentStatus=AWAITING_PAYMENT,AWAITING_PAYMENT_UPLOAD');
+			const response = await axiosInstance.get('order/my-orders?page=1&limit=100&paymentStatus=AWAITING_PAYMENT,AWAITING_PAYMENT_UPLOAD,INCOMPLETE_PAYMENT');
 			const data = response?.data?.data ?? response?.data;
 			const items = data?.items ?? [];
-			setAwaitingPaymentOrders(Array.isArray(items) ? items : []);
+			// Cancelled/advanced orders keep their old payment status; only PENDING orders still need action.
+			setAwaitingPaymentOrders(Array.isArray(items) ? items.filter((o: any) => o.orderStatus === 'PENDING') : []);
 		} catch (error) {
 			if (error instanceof Error) {
 				console.error('Error fetching awaiting payment orders:', error.message);
@@ -278,7 +297,7 @@ const Navbar: React.FC = () => {
 
 							{/* Notification Drawer */}
 							{isNotificationOpen && (
-								<div className="fixed inset-0 z-40 md:absolute md:inset-auto md:right-0 md:top-full md:mt-2 md:w-96 md:max-h-[600px] bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 md:rounded-radius-lg">
+								<div className="fixed inset-0 z-40 md:absolute md:inset-auto md:right-0 md:top-full md:mt-2 md:w-96 md:max-h-[calc(100dvh-5rem)] flex flex-col bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 md:rounded-radius-lg">
 									<div className="p-4 border-b border-outline-variant dark:border-white/8 flex items-center justify-between">
 										<h3 className="font-semibold text-on-surface dark:text-white">Awaiting Payment</h3>
 										<button
@@ -289,7 +308,7 @@ const Navbar: React.FC = () => {
 										</button>
 									</div>
 
-									<div className="overflow-y-auto max-h-[500px]">
+									<div className="overflow-y-auto min-h-0 flex-1">
 										{awaitingPaymentOrders.length === 0 ? (
 											<div className="p-4 text-center text-on-surface/50 dark:text-white/50">No pending payments</div>
 										) : (
@@ -332,6 +351,38 @@ const Navbar: React.FC = () => {
 														View Details
 													</button>
 												</div>
+												{order.payments?.[0]?.paymentStatus !== "INCOMPLETE_PAYMENT" && (
+													<div className="mt-2">
+														{cancelConfirmId === order.id ? (
+															<div className="flex items-center justify-between gap-2 text-sm">
+																<span className="text-on-surface/70 dark:text-white/70">Cancel this order?</span>
+																<div className="flex gap-2">
+																	<button
+																		onClick={() => setCancelConfirmId(null)}
+																		disabled={cancellingId === order.id}
+																		className="px-3 py-1.5 rounded-radius-md border border-outline-variant dark:border-white/15 text-on-surface dark:text-white"
+																	>
+																		Keep
+																	</button>
+																	<button
+																		onClick={() => handleCancelOrder(order.id)}
+																		disabled={cancellingId === order.id}
+																		className="px-3 py-1.5 rounded-radius-md bg-error text-white disabled:opacity-60"
+																	>
+																		{cancellingId === order.id ? "Cancelling..." : "Yes, cancel"}
+																	</button>
+																</div>
+															</div>
+														) : (
+															<button
+																onClick={() => setCancelConfirmId(order.id)}
+																className="w-full py-1.5 text-sm text-error hover:underline"
+															>
+																Cancel order
+															</button>
+														)}
+													</div>
+												)}
 												</div>
 											))
 										)}
