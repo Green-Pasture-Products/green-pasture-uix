@@ -69,9 +69,13 @@ export const offendingElements = (page: Page) =>
  */
 export async function signInAsAdmin(context: BrowserContext, baseURL: string) {
 	const origin = new URL(baseURL).origin;
+	// middleware.ts rejects tokens that aren't a decodable, unexpired JWT, so mint an
+	// unsigned one (the API does the real verification; the gate only reads `exp`).
+	const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
+	const accessToken = `${b64({ alg: "none", typ: "JWT" })}.${b64({ sub: "e2e", exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`;
 
 	await context.addCookies([
-		{ name: "gp_at", value: "e2e-fake-access-token", url: origin },
+		{ name: "gp_at", value: accessToken, url: origin },
 		{ name: "gp_role", value: "admin", url: origin },
 	]);
 
@@ -85,7 +89,7 @@ export async function signInAsAdmin(context: BrowserContext, baseURL: string) {
 			email: "e2e.admin@greenpasture.test",
 			profileType: "ADMIN",
 		},
-		token: "e2e-fake-access-token",
+		token: accessToken,
 	});
 
 	await context.addInitScript(
