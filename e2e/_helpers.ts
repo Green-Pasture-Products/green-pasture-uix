@@ -68,6 +68,15 @@ export const offendingElements = (page: Page) =>
  * redirect or stuck on "Verifying access…".
  */
 export async function signInAsAdmin(context: BrowserContext, baseURL: string) {
+	return signIn(context, baseURL, "admin");
+}
+
+/** A signed-in customer: the storefront shows its signed-in controls (cart, wishlist, payment notifications). */
+export async function signInAsCustomer(context: BrowserContext, baseURL: string) {
+	return signIn(context, baseURL, "customer");
+}
+
+async function signIn(context: BrowserContext, baseURL: string, kind: "admin" | "customer") {
 	const origin = new URL(baseURL).origin;
 	// middleware.ts rejects tokens that aren't a decodable, unexpired JWT, so mint an
 	// unsigned one (the API does the real verification; the gate only reads `exp`).
@@ -80,21 +89,24 @@ export async function signInAsAdmin(context: BrowserContext, baseURL: string) {
 
 	await context.addCookies([
 		{ name: "gp_at", value: accessToken, url: origin },
-		{ name: "gp_role", value: "admin", url: origin },
+		{ name: "gp_role", value: kind === "admin" ? "admin" : "client", url: origin },
 	]);
 
 	// redux-persist stores each slice as a JSON string inside a JSON object.
 	const auth = JSON.stringify({
 		isAuthenticated: true,
-		user: {
-			id: 1,
-			firstName: "E2e",
-			lastName: "Admin",
-			email: "e2e.admin@greenpasture.test",
-			profileType: "ADMIN",
-			// Wildcard authority so privilege-gated pages and nav entries render.
-			roles: [{ name: "SUPER_ADMIN", permissions: [{ name: "SUPER_ADMIN" }] }],
-		},
+		user:
+			kind === "admin"
+				? {
+						id: 1,
+						firstName: "E2e",
+						lastName: "Admin",
+						email: "e2e.admin@greenpasture.test",
+						profileType: "ADMIN",
+						// Wildcard authority so privilege-gated pages and nav entries render.
+						roles: [{ name: "SUPER_ADMIN", permissions: [{ name: "SUPER_ADMIN" }] }],
+					}
+				: { id: 2, firstName: "E2e", lastName: "Customer", email: "e2e.customer@greenpasture.test", profileType: "CLIENT", roles: [{ name: "CUSTOMER", permissions: [] }] },
 		token: accessToken,
 	});
 

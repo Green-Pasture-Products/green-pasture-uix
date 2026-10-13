@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -47,6 +48,22 @@ const adminNavLinks: NavLink[] = [
 	{ href: "/admin/orders", label: "Orders" },
 	{ href: "/admin/customers", label: "Customers" },
 ];
+
+/**
+ * On a phone the drawer is a full-screen overlay. Inside the header it is confined to the header's own box (the header's
+ * backdrop blur makes it the containing block for `fixed`), so below md it is rendered on <body> instead.
+ */
+function MobileOverlayHost({ children }: { children: React.ReactNode }) {
+	const [mobile, setMobile] = useState(false);
+	useEffect(() => {
+		const mq = window.matchMedia("(max-width: 767px)");
+		const update = () => setMobile(mq.matches);
+		update();
+		mq.addEventListener("change", update);
+		return () => mq.removeEventListener("change", update);
+	}, []);
+	return mobile ? createPortal(children, document.body) : <>{children}</>;
+}
 
 const Navbar: React.FC = () => {
 	const router = useRouter();
@@ -116,7 +133,8 @@ const Navbar: React.FC = () => {
 			}
 			if (
 				notificationRef.current &&
-				!notificationRef.current.contains(e.target as Node)
+				!notificationRef.current.contains(e.target as Node) &&
+				!(e.target as Element | null)?.closest?.("[data-notification-drawer]")
 			) {
 				setIsNotificationOpen(false);
 			}
@@ -284,7 +302,7 @@ const Navbar: React.FC = () => {
 						<div className="relative" ref={notificationRef}>
 							<button
 								onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-								className="relative hidden md:inline-flex p-2 rounded-radius-md transition-colors duration-200 press-effect text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
+								className="relative inline-flex p-2 rounded-radius-md transition-colors duration-200 press-effect text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
 								aria-label="Payment notifications"
 							>
 								<Bell className="h-5 w-5" />
@@ -297,7 +315,8 @@ const Navbar: React.FC = () => {
 
 							{/* Notification Drawer */}
 							{isNotificationOpen && (
-								<div className="fixed inset-0 z-40 md:absolute md:inset-auto md:right-0 md:top-full md:mt-2 md:w-96 md:max-h-[calc(100dvh-5rem)] flex flex-col bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 md:rounded-radius-lg">
+								<MobileOverlayHost>
+								<div data-notification-drawer className="fixed inset-0 z-[60] md:z-40 md:absolute md:inset-auto md:right-0 md:top-full md:mt-2 md:w-96 md:max-h-[calc(100dvh-5rem)] flex flex-col bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 md:rounded-radius-lg">
 									<div className="p-4 border-b border-outline-variant dark:border-white/8 flex items-center justify-between">
 										<h3 className="font-semibold text-on-surface dark:text-white">Awaiting Payment</h3>
 										<button
@@ -388,6 +407,7 @@ const Navbar: React.FC = () => {
 										)}
 									</div>
 								</div>
+								</MobileOverlayHost>
 							)}
 						</div>
 					)}
