@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Activity, ChevronDown, MessageSquare, Send, PanelRightClose, PanelRightOpen, Pencil, Plus, ShieldAlert, Trash2, X } from "lucide-react";
 import { useRecordActivity } from "@/_hooks/useRecordActivity";
 import axiosInstance from "@/_utils/axiosInstance";
@@ -199,9 +199,21 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 		return () => window.removeEventListener("keydown", onKey);
 	}, [open]);
 
+	// Chat-style: oldest at the top, newest at the bottom. Stick to the bottom as events arrive; keep position when older ones are prepended.
+	const scroller = useRef<HTMLDivElement>(null);
+	const prev = useRef({ h: 0, newest: "" });
+	useLayoutEffect(() => {
+		const el = scroller.current;
+		if (!el) return;
+		const newest = items[0]?.id ?? "";
+		if (newest !== prev.current.newest || prev.current.h === 0) el.scrollTop = el.scrollHeight;
+		else el.scrollTop += el.scrollHeight - prev.current.h;
+		prev.current = { h: el.scrollHeight, newest };
+	}, [items, expanded, open]);
+
 	const groups = useMemo(() => {
 		const out: { label: string; rows: ActivityEventRow[] }[] = [];
-		for (const e of items) {
+		for (const e of [...items].reverse()) {
 			const label = dayLabel(e.occurredAt);
 			const last = out[out.length - 1];
 			if (last?.label === label) last.rows.push(e);
@@ -215,7 +227,8 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 	if (error && items.length === 0) return null;
 
 	const body = (
-		<div className="flex-1 overflow-y-auto px-4 py-3">
+		<div ref={scroller} className="flex-1 overflow-y-auto px-4 py-3">
+			<div className="flex min-h-full flex-col justify-end">
 			{loading && items.length === 0 ? (
 				<div className="space-y-3">
 					{[0, 1, 2, 3].map((i) => (
@@ -228,6 +241,11 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 				</p>
 			) : (
 				<div className="space-y-5">
+					{hasMore && (
+						<button type="button" onClick={loadMore} disabled={loading} className="flex w-full items-center justify-center gap-1 rounded-lg border py-2 text-xs font-medium" style={{ borderColor: "var(--border-light)", color: "var(--text-secondary)" }}>
+							<ChevronDown size={14} /> {loading ? "Loading…" : "Show older"}
+						</button>
+					)}
 					{groups.map((g) => (
 						<section key={g.label}>
 							<h3 className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wider" style={{ color: "var(--text-hint)" }}>
@@ -240,13 +258,9 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 							</ul>
 						</section>
 					))}
-					{hasMore && (
-						<button type="button" onClick={loadMore} disabled={loading} className="flex w-full items-center justify-center gap-1 rounded-lg border py-2 text-xs font-medium" style={{ borderColor: "var(--border-light)", color: "var(--text-secondary)" }}>
-							<ChevronDown size={14} /> {loading ? "Loading…" : "Show older"}
-						</button>
-					)}
 				</div>
 			)}
+			</div>
 		</div>
 	);
 
