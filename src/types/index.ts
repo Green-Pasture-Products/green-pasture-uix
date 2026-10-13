@@ -4,6 +4,7 @@ export type PaymentStatus =
   | 'PENDING'
 	| 'AWAITING_PAYMENT'
   | 'AWAITING_VERIFICATION'
+  | 'INCOMPLETE_PAYMENT'
   | 'VERIFIED'
   | 'DECLINED'
   | 'PAID'
@@ -316,6 +317,7 @@ export interface BackendPayment {
 	customerPhone?: string | null;
 	receiptUrl?: string;
 	receiptFileName?: string;
+	receipts?: { id: string; url: string | null; fileName: string | null; purgedAt: string | null; createdAt: string }[];
 	submittedAt?: string;
 	verifiedAt?: string;
 	verifiedBy?: string;

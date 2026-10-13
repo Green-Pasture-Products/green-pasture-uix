@@ -10,7 +10,7 @@ import { DataTable } from "@/_components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatCurrency } from "@/_UI/FormatValue";
 import { formatWeight } from "@/_utils/formatWeight";
-import { getReceiptDeliveryUrl, isPdfReceipt } from "@/_utils/receiptUrl";
+import { ReceiptList } from "@/_components/ReceiptList";
 import PageLoader from "@/_UI/PageLoader";
 import { BackendOrder, BackendOrderItem } from "@/types";
 import { Download, Eye, RefreshCw, X } from "lucide-react";
@@ -41,7 +41,6 @@ const AdminOrderDetail: React.FC = () => {
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 	const [selectedStatus, setSelectedStatus] = useState<string>("");
 	const [statusNote, setStatusNote] = useState<string>("");
-	const [receiptToView, setReceiptToView] = useState<{ url: string; fileName: string } | null>(null);
 
 	const loadOrder = useCallback(
 		(silent = false) => {
@@ -401,34 +400,14 @@ const AdminOrderDetail: React.FC = () => {
 										</div>
 									</div>
 
-										{payment.receiptUrl ? (
+										{payment.receiptUrl || payment.receipts?.length ? (
 										<div>
 											<span className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
-												Payment Receipt/Proof
+												Payment Receipts/Proof
 											</span>
-											<div className="mt-2 flex flex-wrap items-center gap-2">
-												<button
-													type="button"
-													onClick={() => setReceiptToView({ url: payment.receiptUrl!, fileName: payment.receiptFileName || "Payment receipt" })}
-													className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white"
-													style={{ backgroundColor: "var(--color-primary)" }}
-												>
-													<Eye size={16} /> View receipt
-												</button>
-												<a
-													href={getReceiptDeliveryUrl(payment.receiptUrl, payment.receiptFileName)}
-													target="_blank"
-													rel="noopener noreferrer"
-													download={payment.receiptFileName || true}
-													className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium"
-													style={{ borderColor: "var(--border-light)", color: "var(--text-primary)" }}
-												>
-													<Download size={16} /> Download
-												</a>
+											<div className="mt-2">
+												<ReceiptList receipts={payment.receipts} legacyUrl={payment.receiptUrl} legacyFileName={payment.receiptFileName} />
 											</div>
-											<p className="mt-1 text-xs" style={{ color: "var(--text-secondary)" }}>
-												{payment.receiptFileName || "Uploaded receipt"}
-											</p>
 										</div>
 									) : payment.paymentMethod === "MANUAL_TRANSFER" ? (
 										<p className="text-sm" style={{ color: "var(--text-hint)" }}>
@@ -472,47 +451,6 @@ const AdminOrderDetail: React.FC = () => {
 				</DetailSection>
 			</div>
 
-			{receiptToView && (
-				<div
-					className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
-					role="dialog"
-					aria-modal="true"
-					aria-label={receiptToView.fileName}
-					onClick={(event) => {
-						if (event.target === event.currentTarget) setReceiptToView(null);
-					}}
-				>
-					<div className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
-						<div className="flex items-center justify-between gap-4 border-b px-4 py-3">
-							<p className="truncate text-sm font-semibold text-gray-900">{receiptToView.fileName}</p>
-							<div className="flex shrink-0 items-center gap-2">
-								<a href={getReceiptDeliveryUrl(receiptToView.url, receiptToView.fileName)} target="_blank" rel="noopener noreferrer" download={receiptToView.fileName} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm text-gray-700">
-									<Download size={16} /> Download
-								</a>
-								<button type="button" onClick={() => setReceiptToView(null)} aria-label="Close receipt viewer" className="rounded-lg p-2 text-gray-600 hover:bg-gray-100">
-									<X size={20} />
-								</button>
-							</div>
-						</div>
-						<div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-gray-100 p-3">
-							{isPdfReceipt(receiptToView.url, receiptToView.fileName) ? (
-								<a
-									href={getReceiptDeliveryUrl(receiptToView.url, receiptToView.fileName)}
-									target="_blank"
-									rel="noopener noreferrer"
-									className="rounded-lg px-5 py-3 text-sm font-medium text-white"
-									style={{ backgroundColor: "var(--color-primary)" }}
-								>
-									Download / Open PDF Receipt
-								</a>
-							) : (
-								// eslint-disable-next-line @next/next/no-img-element
-								<img src={receiptToView.url} alt={receiptToView.fileName} className="max-h-[78vh] max-w-full object-contain" />
-							)}
-						</div>
-					</div>
-				</div>
-			)}
 		</AdminLayout>
 	);
 };

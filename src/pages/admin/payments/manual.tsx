@@ -65,6 +65,7 @@ const AdminPaymentsManual: React.FC = () => {
   const statusFilters: Array<{ label: string; value: PaymentStatus | "ALL" }> = [
     { label: "All", value: "ALL" },
     { label: "Awaiting Verification", value: "AWAITING_VERIFICATION" },
+    { label: "Incomplete", value: "INCOMPLETE_PAYMENT" },
     { label: "Verified", value: "VERIFIED" },
     { label: "Declined", value: "DECLINED" },
     { label: "Pending", value: "PENDING" },
@@ -105,6 +106,7 @@ const AdminPaymentsManual: React.FC = () => {
       case "DECLINED":
         return "error";
       case "AWAITING_VERIFICATION":
+      case "INCOMPLETE_PAYMENT":
         return "warning";
       case "PENDING":
         return "neutral";

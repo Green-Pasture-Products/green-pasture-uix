@@ -9,3 +9,12 @@ export const getReceiptDeliveryUrl = (url: string, fileName?: string): string =>
 	if (!isPdfReceipt(url, fileName) || !url.includes("res.cloudinary.com")) return url;
 	return url.replace(/\/image\/upload\//i, "/image/upload/fl_attachment/");
 };
+
+/**
+ * Browsers can't inline a Cloudinary PDF (delivery is restricted), but Cloudinary
+ * can render page 1 as a JPG — use that for on-page previews.
+ */
+export const getReceiptPreviewUrl = (url: string, fileName?: string): string => {
+	if (!isPdfReceipt(url, fileName) || !url.includes("res.cloudinary.com")) return url;
+	return url.replace(/\/image\/upload\//i, "/image/upload/pg_1,f_jpg,w_1400/").replace(/\.pdf(?=$|[?#])/i, ".jpg");
+};

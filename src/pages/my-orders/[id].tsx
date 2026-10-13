@@ -17,7 +17,7 @@ import OrderTimeline from "@/_UI/OrderTimeline";
 import AuthPrompt from "@/_UI/AuthPrompt";
 import { BackendOrder, BackendOrderItem } from "@/types";
 import { appConstants } from "@/_redux/constants";
-import { getReceiptDeliveryUrl, isPdfReceipt } from "@/_utils/receiptUrl";
+import { ReceiptList } from "@/_components/ReceiptList";
 import { Printer, Upload } from "lucide-react";
 import { ReceiptModal } from "@/_UI/ReceiptModal";
 
@@ -237,9 +237,11 @@ const MyOrderDetail: React.FC = () => {
 					<DetailSection title="Payment Information">
 						<div className="divide-y" style={{ borderColor: "var(--border-light)" }}>
 							{order.payments.map((payment) => {
+								const isManual = payment.paymentMethod === "MANUAL_TRANSFER";
 								const canUploadReceipt =
-									payment.paymentMethod === "MANUAL_TRANSFER" &&
-									payment.paymentStatus === "AWAITING_PAYMENT";
+									isManual && (payment.paymentStatus === "AWAITING_PAYMENT" || payment.paymentStatus === "INCOMPLETE_PAYMENT");
+								// Instalments: another receipt can be added while earlier ones await review.
+								const canAddReceipt = isManual && payment.paymentStatus === "AWAITING_VERIFICATION" && order.orderStatus === "PENDING";
 
 								return (
 									<div key={payment.id} className="px-5 py-4 space-y-3">
@@ -275,27 +277,20 @@ const MyOrderDetail: React.FC = () => {
 												Payment declined: {payment.adminNote}
 											</p>
 										)}
-										{payment.receiptUrl && (
-											<a
-												href={getReceiptDeliveryUrl(payment.receiptUrl, payment.receiptFileName)}
-												target="_blank"
-												rel="noreferrer"
-												className="text-sm underline"
-												style={{ color: "var(--color-primary)" }}
-											>
-												{isPdfReceipt(payment.receiptUrl, payment.receiptFileName)
-													? "Download / Open uploaded PDF receipt"
-													: "View uploaded payment receipt"}
-											</a>
+										{payment.adminNote && payment.paymentStatus === "INCOMPLETE_PAYMENT" && (
+											<p className="text-sm" style={{ color: "#f59e0b" }}>
+												Payment incomplete: {payment.adminNote}
+											</p>
 										)}
-										{canUploadReceipt && (
+										<ReceiptList receipts={payment.receipts} legacyUrl={payment.receiptUrl} legacyFileName={payment.receiptFileName} />
+										{(canUploadReceipt || canAddReceipt) && (
 											<Link
 												href={`/payment-instructions/${order.id}`}
 												className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
 												style={{ backgroundColor: "var(--color-primary)" }}
 											>
 												<Upload size={16} />
-												Upload Payment Receipt
+												{canAddReceipt ? "Upload Another Receipt" : payment.paymentStatus === "INCOMPLETE_PAYMENT" ? "Upload Balance Receipt" : "Upload Payment Receipt"}
 											</Link>
 										)}
 									</div>
