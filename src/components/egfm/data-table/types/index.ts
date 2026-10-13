@@ -14,6 +14,8 @@ export interface Column<T> {
   className?: string;
   /** EGFM patch: keeps this column at the far right, after the audit columns (an Action column). */
   pinEnd?: boolean;
+  /** A record-status column: it closes the table, ahead of the audit columns and Action. */
+  statusColumn?: boolean;
   /** CSV value for this column (MuiTable's `customExport`); defaults to `accessorKey`, else the rendered cell's text. `false` leaves the column out of the export. */
   exportValue?: ((item: T) => string | number | null | undefined) | false;
   /** Makes the header a sort toggle. The value rows are ordered by (dates as ISO strings or Date); `true` sorts by `accessorKey`. */
