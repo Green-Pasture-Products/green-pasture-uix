@@ -5,7 +5,7 @@ import { useAppSelector } from "@/_redux/store";
 import { appConstants } from "@/_redux/constants";
 
 interface Notification {
-  id: number;
+  id: string;
   title: string;
   message: string;
   type: string;
@@ -19,7 +19,7 @@ interface NotificationDrawerProps {
   onClose: () => void;
   notifications: Notification[];
   unreadCount: number;
-  onMarkAsRead: (id: number) => void;
+  onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
   loading?: boolean;
 }

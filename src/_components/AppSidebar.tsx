@@ -12,6 +12,7 @@ import { LogOut } from "lucide-react";
 
 import { NAV_GROUPS, findOwningModule, type ModuleDef } from "@/_navigations/modules";
 import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { useInboxUnread } from "@/_hooks/useInboxUnread";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { logoutAsync } from "@/_redux/actions/auth.action";
 import { logout } from "@/_redux/reducers/auth.reducer";
@@ -25,6 +26,7 @@ import {
 	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
+	SidebarMenuBadge,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarRail,
@@ -33,6 +35,7 @@ import {
 
 function NavMenuButton({ item }: { item: ModuleDef }) {
 	const router = useRouter();
+	const unread = useInboxUnread(item.path === "/admin/inbox");
 	const { setOpenMobile } = useSidebar();
 	const pathname = router.asPath.split("?")[0];
 	// findOwningModule (not a plain prefix match) so a detail route like
@@ -41,6 +44,7 @@ function NavMenuButton({ item }: { item: ModuleDef }) {
 	const testid = `nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`;
 
 	return (
+		<>
 		<SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
 			{/* On mobile the sidebar is an overlay sheet, so picking a tab has to
 			    dismiss it — otherwise it sits on top of the page it just opened.
@@ -50,6 +54,9 @@ function NavMenuButton({ item }: { item: ModuleDef }) {
 				<span>{item.title}</span>
 			</Link>
 		</SidebarMenuButton>
+		{/* Sibling, not child: SidebarMenuButton asChild requires exactly one child. */}
+		{unread > 0 && <SidebarMenuBadge data-testid="inbox-unread">{unread > 99 ? "99+" : unread}</SidebarMenuBadge>}
+		</>
 	);
 }
 

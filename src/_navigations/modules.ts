@@ -1,4 +1,4 @@
-import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, MailPlus, Shield, Settings, Globe, MessageSquareQuote, Tags, ImagePlus, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, BarChart3, ShoppingBasket, Package, ShoppingCart, UserRound, UserCog, MailPlus, Shield, Settings, Globe, MessageSquareQuote, Tags, ImagePlus, Inbox, Activity, Megaphone, type LucideIcon } from "lucide-react";
 
 /** One admin module: drives the sidebar nav, tab metadata, and privilege gating. */
 export interface ModuleDef {
@@ -17,6 +17,8 @@ export interface ModuleDef {
 /** Source of truth for nav, tabs, and privilege gating. Authored in sidebar order. */
 export const MODULES: ModuleDef[] = [
 	{ path: "/admin/dashboard", title: "Dashboard", icon: LayoutDashboard, group: "Overview", closable: false },
+	{ path: "/admin/inbox", title: "Inbox", icon: Inbox, group: "Overview" },
+	{ path: "/admin/activity", title: "Activity", icon: Activity, group: "Overview", privilege: "READ_ACTIVITY" },
 	{ path: "/admin/analytics", title: "Analytics", icon: BarChart3, group: "Overview", privilege: "VIEW_ANALYTICS" },
 	{ path: "/admin/categories", title: "Category", icon: ShoppingBasket, group: "Catalog", owns: ["/admin/category"] },
 	{ path: "/admin/products", title: "Products", icon: Package, group: "Catalog", privilege: "MANAGE_PRODUCTS", owns: ["/admin/product"] },
@@ -24,6 +26,7 @@ export const MODULES: ModuleDef[] = [
 	{ path: "/admin/reviews", title: "Reviews", icon: MessageSquareQuote, group: "Catalog", privilege: "MODERATE_REVIEWS" },
 	{ path: "/admin/orders", title: "Orders", icon: ShoppingCart, group: "Sales", privilege: "MANAGE_ORDERS", owns: ["/admin/order"] },
 	{ path: "/admin/customers", title: "Customers", icon: UserRound, group: "Sales", privilege: "MANAGE_CUSTOMERS", owns: ["/admin/customer"] },
+	{ path: "/admin/announcements", title: "Announcements", icon: Megaphone, group: "Sales", privilege: "MANAGE_ANNOUNCEMENTS" },
 	{ path: "/admin/staff", title: "Staff", icon: UserCog, group: "People", privilege: "MANAGE_STAFF" },
 	{ path: "/admin/invitations", title: "Invitations", icon: MailPlus, group: "People", privilege: "MANAGE_STAFF" },
 	{ path: "/admin/roles", title: "Roles", icon: Shield, group: "People", privilege: "MANAGE_ROLES", owns: ["/admin/role"] },
