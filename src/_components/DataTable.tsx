@@ -199,7 +199,27 @@ export function DataTable<T>({
   // (often server-bound) onGlobalFilterChange only fires after a pause —
   // same debounce the old _UI/DataTable.tsx search box had.
   const [searchInput, setSearchInput] = React.useState(globalFilterProp ?? "");
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  // Column picks survive refresh: stored per page + table in localStorage (read after mount so SSR/export markup matches).
+  const [columnVisibility, setColumnVisibilityState] = React.useState<VisibilityState>({});
+  const visibilityKey = React.useRef("");
+  React.useEffect(() => {
+    visibilityKey.current = `gp:table-columns:${window.location.pathname}:${testId}`;
+    try {
+      const saved = localStorage.getItem(visibilityKey.current);
+      if (saved) setColumnVisibilityState(JSON.parse(saved));
+    } catch {}
+  }, [testId]);
+  const setColumnVisibility = React.useCallback(
+    (updater: VisibilityState | ((old: VisibilityState) => VisibilityState)) =>
+      setColumnVisibilityState((old) => {
+        const next = typeof updater === "function" ? updater(old) : updater;
+        try {
+          localStorage.setItem(visibilityKey.current, JSON.stringify(next));
+        } catch {}
+        return next;
+      }),
+    [],
+  );
   const [compact, setCompact] = React.useState(false);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
