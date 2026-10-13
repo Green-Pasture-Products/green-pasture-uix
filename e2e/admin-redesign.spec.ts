@@ -537,3 +537,24 @@ test.describe("audit log", () => {
 		await expect(page.getByText("new", { exact: true })).toBeVisible();
 	});
 });
+
+test.describe("tab strip", () => {
+	for (const scheme of ["light", "dark"] as const) {
+		test(`is opaque in ${scheme} mode, so scrolling content never shows through it`, async ({ page }) => {
+			await mockApi(page);
+			await page.emulateMedia({ colorScheme: scheme });
+			await page.addInitScript((s) => localStorage.setItem("theme", s), scheme);
+			await page.goto("/admin/inbox");
+			const bar = page.getByTestId("tab-bar");
+			await expect(bar).toBeVisible();
+			const alpha = await bar.evaluate((el) => {
+				const c = getComputedStyle(el).backgroundColor; // the last (solid) layer of the shorthand
+				const m = c.match(/rgba?\(([^)]+)\)/);
+				if (!m) return 0;
+				const parts = m[1].split(/[ ,/]+/).filter(Boolean);
+				return parts.length > 3 ? Number(parts[3]) : 1;
+			});
+			expect(alpha, "tab strip background must be fully opaque").toBe(1);
+		});
+	}
+});
