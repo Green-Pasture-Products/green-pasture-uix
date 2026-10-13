@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAppSelector } from "@/_redux/store";
-import { io, Socket } from "socket.io-client";
-import { appConstants } from "@/_redux/constants";
+import { useLiveEvent } from "@/_hooks/useLiveEvent";
 
 interface Notification {
-  id: number;
+  id: string;
   title: string;
   message: string;
   type: string;
@@ -18,7 +17,6 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -36,7 +34,7 @@ export function useNotifications() {
     }
   }, [isAuthenticated]);
 
-  const markAsRead = useCallback(async (id: number) => {
+  const markAsRead = useCallback(async (id: string) => {
     try {
       const axiosInstance = (await import("@/_utils/axiosInstance")).default;
       await axiosInstance.patch(`notifications/${id}/read`);
@@ -56,32 +54,16 @@ export function useNotifications() {
     } catch {}
   }, []);
 
-  // WebSocket connection for real-time notifications
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!isAuthenticated || !user?.id || !token) return;
-
-    const baseUrl = appConstants.API_BASE_URL.replace("/api/v1/", "").replace("/api/v1", "");
-
-    const socket = io(`${baseUrl}/notifications`, {
-      auth: { token },
-      query: { profileId: user.id },
-      transports: ["websocket", "polling"],
-      reconnectionAttempts: 3,
-    });
-
-    socket.on("new-notification", (notification: Notification) => {
+  // Live: a new notification arrives, or an announcement is published/changed.
+  useLiveEvent<Notification>(
+    "new-notification",
+    (notification) => {
       setNotifications((prev) => [notification, ...prev].slice(0, 20));
       setUnreadCount((prev) => prev + 1);
-    });
-
-    socketRef.current = socket;
-
-    return () => {
-      socket.disconnect();
-      socketRef.current = null;
-    };
-  }, [isAuthenticated, user?.id]);
+    },
+    isAuthenticated,
+  );
+  useLiveEvent("announcement-changed", () => void fetchNotifications(), isAuthenticated);
 
   // Initial fetch
   useEffect(() => {
