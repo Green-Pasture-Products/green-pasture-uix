@@ -28,6 +28,9 @@ const StaffDetail: React.FC = () => {
 	const [staff, setStaff] = useState<BackendStaff | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [editing, setEditing] = useState(false);
+	useEffect(() => {
+		if (router.isReady && router.query.edit === "1") setEditing(true);
+	}, [router.isReady, router.query.edit]);
 	const [saving, setSaving] = useState(false);
 	const [toggling, setToggling] = useState(false);
 	const [statusModalOpen, setStatusModalOpen] = useState(false);

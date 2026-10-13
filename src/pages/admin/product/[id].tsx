@@ -37,6 +37,9 @@ const ProductDetail: React.FC = () => {
 	const [loading, setLoading] = useState(true);
 	const [refreshing, setRefreshing] = useState(false);
 	const [editing, setEditing] = useState(false);
+	useEffect(() => {
+		if (router.isReady && router.query.edit === "1") setEditing(true);
+	}, [router.isReady, router.query.edit]);
 	const [saving, setSaving] = useState(false);
 	const [toggling, setToggling] = useState(false);
 	const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -46,10 +49,6 @@ const ProductDetail: React.FC = () => {
 	const [newImages, setNewImages] = useState<File[]>([]);
 	const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 	const [uploadingImages, setUploadingImages] = useState(false);
-	const [addSizeOpen, setAddSizeOpen] = useState(false);
-	const [addingSize, setAddingSize] = useState(false);
-	const [newSize, setNewSize] = useState(EMPTY_NEW_SIZE);
-	const [newSizeErrors, setNewSizeErrors] = useState<Record<string, string>>({});
 
 	const dispatch = useAppDispatch();
 	const { productCategories } = useAppSelector((state) => state.category);
@@ -291,46 +290,6 @@ const ProductDetail: React.FC = () => {
 			toast.error(err?.response?.data?.message || "Failed to set default size");
 		} finally {
 			setSettingDefaultId(null);
-		}
-	};
-
-	const openAddSize = () => {
-		setNewSize(EMPTY_NEW_SIZE);
-		setNewSizeErrors({});
-		setAddSizeOpen(true);
-	};
-
-	// Mirrors the create page's per-size rules, so a mistake shows up under the
-	// field instead of as a toast after the round trip.
-	const handleAddSize = async () => {
-		if (!id) return;
-		const errs: Record<string, string> = {};
-		const weightValue = Number(newSize.weightValue);
-		const price = Number(newSize.price);
-		const originalPrice = newSize.originalPrice === "" ? null : Number(newSize.originalPrice);
-		const unit = newSize.unit === "" ? NaN : Number(newSize.unit);
-		if (!(weightValue > 0)) errs.weightValue = "Pack size must be greater than 0";
-		if (!newSize.weightUnit) errs.weightUnit = "Pick a unit for the pack size";
-		if (!(price > 0)) errs.price = "Selling price must be greater than 0";
-		if (originalPrice !== null && !(originalPrice > price)) errs.originalPrice = "Original price must be greater than selling price";
-		if (!Number.isInteger(unit) || unit < 0) errs.unit = "Units must be 0 or more";
-		setNewSizeErrors(errs);
-		if (Object.keys(errs).length) return;
-
-		setAddingSize(true);
-		try {
-			await axiosInstance.post(`items/${id}/variants`, { weightValue, weightUnit: newSize.weightUnit, price, originalPrice, unit });
-			toast.success("Pack size added");
-			setAddSizeOpen(false);
-			// The source may have been renamed to carry its own size, so reload
-			// both it and the sibling list.
-			const res = await axiosInstance.get("items?page=1&limit=100");
-			setAnchorCandidates(res.data?.data?.items ?? []);
-			await fetchItem(true);
-		} catch (err: any) {
-			toast.error(err?.response?.data?.message || "Failed to add pack size");
-		} finally {
-			setAddingSize(false);
 		}
 	};
 
@@ -680,7 +639,7 @@ const ProductDetail: React.FC = () => {
 							<Button
 								variant="outlined"
 								size="sm"
-								onClick={openAddSize}
+								onClick={() => router.push(`/admin/product/${id}/sizes/new`)}
 								disabled={!(item as any).weightValue || !(item as any).weightUnit}
 							>
 								<Plus className="w-4 h-4 mr-1.5" />
@@ -901,70 +860,6 @@ const ProductDetail: React.FC = () => {
 				</div>
 			</Modal>
 
-			{/* Add Pack Size Modal */}
-			<Modal
-				isOpen={addSizeOpen}
-				onClose={() => !addingSize && setAddSizeOpen(false)}
-				title="Add pack size"
-				subtitle={`A new listing grouped with ${item?.name ?? "this product"}. It shares the category, description, tags and images, and starts as a draft.`}
-				size="xl"
-			>
-				<div className="space-y-4">
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<NumberInput
-							label="Pack Size"
-							placeholder="e.g. 250"
-							prefix="Size"
-							step="0.01"
-							min={0}
-							value={newSize.weightValue}
-							onChange={(val) => setNewSize((f) => ({ ...f, weightValue: val }))}
-							error={newSizeErrors.weightValue}
-						/>
-						<FormSelectDropdown
-							label="Unit"
-							value={newSize.weightUnit}
-							onChange={(val) => setNewSize((f) => ({ ...f, weightUnit: val }))}
-							options={WEIGHT_UNITS.map((u) => ({ value: u, label: u }))}
-							placeholder="Select a unit"
-							searchable={false}
-							error={newSizeErrors.weightUnit}
-						/>
-						<CurrencyInput
-							label="Selling Price"
-							required
-							placeholder="0.00"
-							value={newSize.price}
-							onChange={(val) => setNewSize((f) => ({ ...f, price: val }))}
-							error={newSizeErrors.price}
-						/>
-						<CurrencyInput
-							label="Original Price"
-							placeholder="0.00 (leave empty if not on sale)"
-							value={newSize.originalPrice}
-							onChange={(val) => setNewSize((f) => ({ ...f, originalPrice: val }))}
-							error={newSizeErrors.originalPrice}
-						/>
-						<NumberInput
-							label="Available Units"
-							placeholder="0"
-							required
-							prefix="Qty"
-							value={newSize.unit}
-							onChange={(val) => setNewSize((f) => ({ ...f, unit: val }))}
-							error={newSizeErrors.unit}
-						/>
-					</div>
-					<div className="flex justify-end gap-3">
-						<Button variant="outlined" color="secondary" size="sm" onClick={() => setAddSizeOpen(false)} disabled={addingSize}>
-							Cancel
-						</Button>
-						<Button variant="filled" size="sm" loading={addingSize} disabled={addingSize} onClick={handleAddSize}>
-							Add size
-						</Button>
-					</div>
-				</div>
-			</Modal>
 			<RecordActivity type="Item" id={item?.id} />
 		</AdminLayout>
 	);

@@ -249,21 +249,23 @@ test.describe("data table columns", () => {
 });
 
 test.describe("announcements form", () => {
-	test("the date picker and select open ABOVE the modal", async ({ page }) => {
+	test("is a page, with rich text, and its date picker and select open", async ({ page }) => {
 		await mockApi(page);
 		await page.goto("/admin/announcements");
 		await page.getByRole("button", { name: /new announcement/i }).click();
-		const dialog = page.getByRole("dialog");
-		await expect(dialog).toBeVisible();
+		// Forms are pages, not modals.
+		await expect(page).toHaveURL(/\/admin\/announcements\/new$/);
+		await expect(page.getByRole("dialog")).toHaveCount(0);
+		const form = page.getByRole("form", { name: "New announcement" });
 		// The message is rich text (toolbar + editable area), not a plain textarea.
-		await expect(dialog.locator("textarea")).toHaveCount(0);
-		await expect(dialog.locator('[contenteditable="true"]')).toBeVisible();
-		await expect(dialog.getByRole("button", { name: /bold/i }).or(dialog.locator('button[title*="Bold" i]')).first()).toBeVisible();
+		await expect(form.locator("textarea")).toHaveCount(0);
+		await expect(form.locator('[contenteditable="true"]')).toBeVisible();
+		await expect(form.getByRole("button", { name: /bold/i }).or(form.locator('button[title*="Bold" i]')).first()).toBeVisible();
 
 		await page.getByLabel("Auto-hide after").click();
 		const calendarTitle = page.getByText(/^(January|February|March|April|May|June|July|August|September|October|November|December)$/).first();
 		await expect(calendarTitle).toBeVisible();
-		// The calendar must be the topmost thing at its own position (not covered by the modal).
+		// The calendar must be the topmost thing at its own position.
 		const covered = await calendarTitle.evaluate((el) => {
 			const r = el.getBoundingClientRect();
 			const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
@@ -394,7 +396,7 @@ test.describe("settings layout", () => {
 	test("a header and flat panel nav sit beside the panel; My Profile has Appearance", async ({ page }) => {
 		await mockApi(page);
 		await page.goto("/admin/settings?tab=profile");
-		await expect(page.getByRole("heading", { level: 1, name: "Settings" })).toBeVisible();
+		await expect(page.locator("h1:not([data-testid=page-title])", { hasText: "Settings" })).toBeVisible();
 		const nav = page.getByRole("navigation", { name: "Settings" });
 		await expect(nav.getByRole("button", { name: "My Profile" })).toHaveAttribute("aria-current", "page");
 		await expect(page.getByRole("heading", { name: "Appearance" })).toBeVisible();
@@ -403,5 +405,35 @@ test.describe("settings layout", () => {
 		await page.evaluate(() => document.querySelectorAll("*").forEach((e) => ((e as HTMLElement).scrollTop = 0)));
 		await page.waitForTimeout(800);
 		await page.screenshot({ path: "test-results/settings-layout.png" });
+	});
+});
+
+test.describe("forms are pages, tables lead with View and Edit", () => {
+	for (const [list, newPath, button] of [
+		["/admin/categories", "/admin/categories/new", /add category/i],
+		["/admin/tags", "/admin/tags/new", /add tag/i],
+		["/admin/invitations", "/admin/invitations/new", /invite staff/i],
+		["/admin/reviews", "/admin/reviews/new", /add testimonial/i],
+	] as const) {
+		test(`${list}: the create button opens ${newPath}, not a dialog`, async ({ page }) => {
+			await mockApi(page);
+			await page.goto(list);
+			await page.getByRole("button", { name: button }).click();
+			await expect(page).toHaveURL(new RegExp(`${newPath}$`));
+			await expect(page.getByRole("dialog")).toHaveCount(0);
+		});
+	}
+
+	test("the manual payments page is in the sidebar", async ({ page }) => {
+		await mockApi(page);
+		await page.goto("/admin/inbox");
+		await expect(page.getByRole("link", { name: "Manual Payments" })).toBeVisible();
+	});
+
+	test("manual payment settings sits inside the Settings layout", async ({ page }) => {
+		await mockApi(page);
+		await page.goto("/admin/settings/manual-payments");
+		await expect(page.locator("h1:not([data-testid=page-title])", { hasText: "Settings" })).toBeVisible();
+		await expect(page.getByRole("navigation", { name: "Settings" }).getByRole("link", { name: "Manual Payment Settings" })).toHaveAttribute("aria-current", "page");
 	});
 });

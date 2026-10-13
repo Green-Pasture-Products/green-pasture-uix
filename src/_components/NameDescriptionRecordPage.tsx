@@ -40,6 +40,7 @@ export interface RecordConfig {
 	icon: LucideIcon;
 	api: {
 		get: (id: string) => Promise<NameDescriptionRecord | null>;
+		create: (v: { name: string; description: string }) => Promise<void>;
 		update: (id: string, v: { name: string; description: string }) => Promise<void>;
 		setActive: (id: string, active: boolean) => Promise<void>;
 		remove: (id: string) => Promise<void>;
@@ -52,18 +53,20 @@ const schema = z.object({ name: z.string().trim().min(1, "Name is required"), de
 type FormValues = z.infer<typeof schema>;
 
 /** In-place edit form, shown when the section's Edit is chosen. */
-function EditCard({ config, category, onCancel, onSaved }: { config: RecordConfig; category: NameDescriptionRecord; onCancel: () => void; onSaved: () => void }) {
+function EditCard({ config, category, onCancel, onSaved }: { config: RecordConfig; category?: NameDescriptionRecord; onCancel: () => void; onSaved: () => void }) {
 	const {
 		register,
 		control,
 		handleSubmit,
 		formState: { errors, isDirty, isSubmitting },
-	} = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { name: category.name, description: category.description ?? "" } });
+	} = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { name: category?.name ?? "", description: category?.description ?? "" } });
 
 	const save = handleSubmit(async (values) => {
 		try {
-			await config.api.update(category.id, { name: values.name.trim(), description: values.description ?? "" });
-			toast.success(`${config.label} saved`);
+			const body = { name: values.name.trim(), description: values.description ?? "" };
+			if (category) await config.api.update(category.id, body);
+			else await config.api.create(body);
+			toast.success(category ? `${config.label} saved` : `${config.label} created`);
 			onSaved();
 		} catch (e: any) {
 			toast.error(e?.response?.data?.message || `Failed to save ${config.label.toLowerCase()}`);
@@ -71,7 +74,7 @@ function EditCard({ config, category, onCancel, onSaved }: { config: RecordConfi
 	});
 
 	return (
-		<form onSubmit={save} className="border-border bg-card overflow-hidden rounded-xl border" aria-label={`Edit ${config.label.toLowerCase()}`}>
+		<form onSubmit={save} className="border-border bg-card overflow-hidden rounded-xl border" aria-label={`${category ? "Edit" : "New"} ${config.label.toLowerCase()}`}>
 			<div className="space-y-4 p-5">
 				<FormInput label="Name" required error={errors.name?.message} {...register("name")} />
 				<div>
@@ -85,8 +88,8 @@ function EditCard({ config, category, onCancel, onSaved }: { config: RecordConfi
 				<Button type="button" variant="outline" size="sm" onClick={onCancel}>
 					Cancel
 				</Button>
-				<Button type="submit" size="sm" disabled={!isDirty || isSubmitting}>
-					{isSubmitting ? "Saving…" : "Save changes"}
+				<Button type="submit" size="sm" disabled={(category ? !isDirty : false) || isSubmitting}>
+					{isSubmitting ? "Saving…" : category ? "Save changes" : `Create ${config.label.toLowerCase()}`}
 				</Button>
 			</div>
 		</form>
@@ -245,3 +248,19 @@ export const NameDescriptionRecordPage: React.FC<{ config: RecordConfig }> = ({ 
 	);
 };
 
+
+/** The "new" page for a name + description record: same form as the in-place edit, on its own page. */
+export const NameDescriptionCreatePage: React.FC<{ config: RecordConfig }> = ({ config }) => {
+	const router = useRouter();
+	return (
+		<AdminLayout pageTitle={`New ${config.label.toLowerCase()}`}>
+			<div className="mx-auto w-full max-w-3xl space-y-6">
+				<BackButton onClick={() => router.push(config.listPath)} label={config.listLabel} />
+				<h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+					New {config.label.toLowerCase()}
+				</h1>
+				<EditCard config={config} onCancel={() => router.push(config.listPath)} onSaved={() => router.push(config.listPath)} />
+			</div>
+		</AdminLayout>
+	);
+};
