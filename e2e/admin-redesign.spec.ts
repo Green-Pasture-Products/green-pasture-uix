@@ -389,3 +389,19 @@ test.describe("record pages instead of modals", () => {
 		await expect(page.getByRole("dialog")).toHaveCount(0);
 	});
 });
+
+test.describe("settings layout", () => {
+	test("a header and flat panel nav sit beside the panel; My Profile has Appearance", async ({ page }) => {
+		await mockApi(page);
+		await page.goto("/admin/settings?tab=profile");
+		await expect(page.getByRole("heading", { level: 1, name: "Settings" })).toBeVisible();
+		const nav = page.getByRole("navigation", { name: "Settings" });
+		await expect(nav.getByRole("button", { name: "My Profile" })).toHaveAttribute("aria-current", "page");
+		await expect(page.getByRole("heading", { name: "Appearance" })).toBeVisible();
+		await page.getByRole("radio", { name: "Dark" }).click();
+		await expect(page.locator("html")).toHaveClass(/dark/);
+		await page.evaluate(() => document.querySelectorAll("*").forEach((e) => ((e as HTMLElement).scrollTop = 0)));
+		await page.waitForTimeout(800);
+		await page.screenshot({ path: "test-results/settings-layout.png" });
+	});
+});

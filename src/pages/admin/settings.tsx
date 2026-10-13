@@ -6,7 +6,9 @@ import { z } from "zod";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import withAdminAuth from "@/_components/withAdminAuth";
-import { Store, User, Shield, Truck, Plus, Trash2, ToggleLeft, ToggleRight, Landmark } from "lucide-react";
+import { Store, User, Shield, Truck, Plus, Trash2, ToggleLeft, ToggleRight, Landmark, Settings as SettingsIcon, Sun, Moon, Monitor } from "lucide-react";
+import { useTheme } from "@/_hooks/useTheme";
+import { cn } from "@/lib/utils";
 
 import { useAppSelector } from "@/_redux/store";
 import { useHasPrivilege } from "@/_hooks/usePrivilege";
@@ -102,6 +104,45 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 
 const CARD =
 	"rounded-xl bg-white dark:bg-white/[0.04] border border-[rgba(22,163,74,0.06)] dark:border-white/8 shadow-sm dark:shadow-none transition-all duration-300";
+
+const THEME_OPTIONS = [
+	{ value: "light", label: "Light", icon: Sun },
+	{ value: "dark", label: "Dark", icon: Moon },
+	{ value: "system", label: "Auto", icon: Monitor },
+] as const;
+
+/** Theme choice, saved on this device (same control as the account menu). */
+const AppearanceCard: React.FC = () => {
+	const { preference, setPreference } = useTheme();
+	return (
+		<div className={CARD}>
+			<div className="px-6 py-4" style={{ borderBottom: "1px solid var(--border-light)" }}>
+				<h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Appearance</h3>
+				<p className="text-xs mt-0.5" style={{ color: "var(--text-hint)" }}>Saved on this device</p>
+			</div>
+			<div className="p-6">
+				<p className="mb-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-hint)" }}>Theme</p>
+				<div className="bg-secondary/50 grid grid-cols-3 gap-1 rounded-xl border p-1" role="radiogroup" aria-label="Theme">
+					{THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+						<button
+							key={value}
+							type="button"
+							role="radio"
+							aria-checked={preference === value}
+							onClick={() => setPreference(value)}
+							className={cn(
+								"flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-semibold transition-colors",
+								preference === value ? "bg-brand/20 dark:bg-accent border-brand/40 font-bold shadow-2xs" : "text-muted-foreground hover:bg-background/60 border-transparent",
+							)}
+						>
+							<Icon className="size-3.5" /> {label}
+						</button>
+					))}
+				</div>
+			</div>
+		</div>
+	);
+};
 
 const AdminSettings: React.FC = () => {
 	const { user } = useAppSelector((state) => state.auth);
@@ -372,54 +413,47 @@ const AdminSettings: React.FC = () => {
 
 	return (
 		<AdminLayout>
-			<div className="animate-page-enter space-y-6">
-				<div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-					{/* Sidebar Tabs */}
-					<div className="lg:col-span-1">
-						<div className={`${CARD} p-2`}>
-							<nav className="space-y-1">
-								{tabs.map((tab) => {
-									const Icon = tab.icon;
-									const isActive = activeTab === tab.id;
-									return (
-										<button
-											key={tab.id}
-											onClick={() => setActiveTab(tab.id)}
-											className="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer"
-											style={{
-												background: isActive ? "rgba(22,163,74,0.08)" : "transparent",
-												color: isActive ? "var(--color-primary)" : "var(--text-secondary)",
-											}}
-											onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "var(--surface-low)"; }}
-											onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
-										>
-											<Icon className="mr-3 h-4 w-4" />
-											{tab.name}
-										</button>
-									);
-								})}
-
-								{/* Manual Payment Settings Link */}
-								<Link href="/admin/settings/manual-payments">
-									<button
-										className="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer"
-										style={{
-											background: "transparent",
-											color: "var(--text-secondary)",
-										}}
-										onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-low)"; }}
-										onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-									>
-										<Landmark className="mr-3 h-4 w-4" />
-										Manual Payment Settings
-									</button>
-								</Link>
-							</nav>
-						</div>
+			<div className="animate-page-enter mx-auto w-full max-w-6xl space-y-6 pb-12">
+				<div className="flex items-start gap-3">
+					<SettingsIcon className="mt-1 size-6 shrink-0" style={{ color: "var(--color-primary)" }} />
+					<div>
+						<h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--text-primary)" }}>Settings</h1>
+						<p className="text-sm" style={{ color: "var(--text-hint)" }}>Your account, store, and how the system runs.</p>
 					</div>
+				</div>
+				<div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
+					{/* Panel nav: vertical on desktop, pills on phones */}
+					<nav aria-label="Settings" className="no-scrollbar flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
+						{tabs.map((tab) => {
+							const Icon = tab.icon;
+							const isActive = activeTab === tab.id;
+							return (
+								<button
+									key={tab.id}
+									type="button"
+									onClick={() => setActiveTab(tab.id)}
+									aria-current={isActive ? "page" : undefined}
+									className={cn(
+										"flex shrink-0 cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs transition-colors",
+										isActive ? "bg-brand/10 font-semibold text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+									)}
+								>
+									<Icon className="size-4 shrink-0" />
+									<span className="whitespace-nowrap">{tab.name}</span>
+								</button>
+							);
+						})}
+						<Link
+							href="/admin/settings/manual-payments"
+							className="text-muted-foreground hover:bg-muted hover:text-foreground flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs transition-colors"
+						>
+							<Landmark className="size-4 shrink-0" />
+							<span className="whitespace-nowrap">Manual Payment Settings</span>
+						</Link>
+					</nav>
 
 					{/* Content */}
-					<div className="lg:col-span-3">
+					<section className="min-w-0 space-y-6">
 						{/* ── Store Settings ── */}
 						{activeTab === "store" && (
 							<div className={CARD}>
@@ -666,6 +700,7 @@ const AdminSettings: React.FC = () => {
 
 						{/* ── Profile Settings ── */}
 						{activeTab === "profile" && (
+							<>
 							<div className={CARD}>
 								<div className="px-6 py-4" style={{ borderBottom: "1px solid var(--border-light)" }}>
 									<h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>My Profile</h3>
@@ -686,6 +721,8 @@ const AdminSettings: React.FC = () => {
 									<FormActions onCancel={() => profileForm.reset()} cancelLabel="Reset" submitLabel="Update Profile" isSubmitting={savingProfile} />
 								</form>
 							</div>
+								<AppearanceCard />
+							</>
 						)}
 
 						{/* ── Security ── */}
@@ -703,7 +740,7 @@ const AdminSettings: React.FC = () => {
 								</form>
 							</div>
 						)}
-					</div>
+					</section>
 				</div>
 			</div>
 		</AdminLayout>
