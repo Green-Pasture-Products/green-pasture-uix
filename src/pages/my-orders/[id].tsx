@@ -363,7 +363,7 @@ const MyOrderDetail: React.FC = () => {
 							}),
 							cacReg: "RC-1849204",
 							lineItems: (order.items || []).map((item: any) => ({
-								description: item.productName || item.product?.name || "Produce Item",
+								description: item.itemName || item.item?.name || "Produce Item",
 								quantity: item.quantity,
 								amount: Number(item.unitPrice || 0) * Number(item.quantity || 1),
 							})),

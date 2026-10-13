@@ -352,6 +352,7 @@ export function ReceiptPrinter({
 					{/* Paper Container */}
 					<div className="relative w-full max-w-[330px] sm:max-w-[360px] overflow-hidden -mt-1 pt-1 pb-4">
 						<div
+							id="receipt-print"
 							ref={receiptRef}
 							className={cn(
 								"relative bg-[#FCFAF6] text-neutral-900 px-6 pt-6 pb-4 rounded-b-none shadow-2xl transition-all duration-700 origin-top border-x border-b border-neutral-300 font-sans",
