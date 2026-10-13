@@ -71,7 +71,7 @@ test.describe("landing catalogue rail", () => {
 		);
 	});
 
-	test("renders a single row, and the chips narrow it", async ({ page }) => {
+	test("renders the catalogue grid, and the chips narrow it", async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 1000 });
 		await page.goto("/");
 
@@ -80,10 +80,6 @@ test.describe("landing catalogue rail", () => {
 
 		const cards = rail.locator("> div");
 		await expect(cards).toHaveCount(items.length);
-
-		// One row: every card shares a top edge.
-		const tops = await cards.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
-		expect(new Set(tops).size).toBe(1);
 
 		await page.getByRole("button", { name: "Flour", exact: true }).click();
 		await expect(cards).toHaveCount(items.filter((i) => i.product.name === "Flour").length);

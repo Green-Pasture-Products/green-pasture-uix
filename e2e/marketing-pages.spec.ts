@@ -22,7 +22,8 @@ test.describe("home", () => {
 		}
 	});
 
-	test("renders the full soil-to-shelf timeline", async ({ page }) => {
+	// The "Soil to shelf" timeline section is commented out in pages/index.tsx; restore this with it.
+	test.fixme("renders the full soil-to-shelf timeline", async ({ page }) => {
 		const stages = page.getByText(/^Stage 0\d$/);
 		await expect(stages).toHaveCount(5);
 
@@ -30,10 +31,11 @@ test.describe("home", () => {
 		await expect(page.getByText("At your door")).toBeVisible();
 	});
 
-	test("both hero calls to action navigate", async ({ page }) => {
-		await expect(page.getByRole("link", { name: /shop the range/i })).toHaveAttribute("href", "/products");
-		await page.getByRole("link", { name: /how we source/i }).click();
-		await expect(page).toHaveURL(/\/about$/);
+	test("the hero call to action opens the catalogue", async ({ page }) => {
+		const cta = page.getByRole("link", { name: /view our catalogue/i }).first();
+		await expect(cta).toHaveAttribute("href", "/products");
+		await cta.click();
+		await expect(page).toHaveURL(/\/products$/);
 	});
 });
 

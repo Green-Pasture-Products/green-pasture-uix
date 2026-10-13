@@ -206,7 +206,7 @@ const HomePage: React.FC = () => {
 						/>
 					) : visible.length > 0 ? (
 						<AnimatedSection delay={0.16}>
-							<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+							<div role="region" aria-label="Products" className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
 								{visible.slice(0, RAIL_LIMIT).map((product) => (
 									<ProductCard key={product.id} product={product} />
 								))}
