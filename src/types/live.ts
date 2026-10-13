@@ -11,13 +11,14 @@ export interface InboxNotification {
 export interface ActivityEventRow {
 	id: string;
 	occurredAt: string;
-	action: "CREATE" | "UPDATE" | "DELETE" | "SECURITY";
+	action: "CREATE" | "UPDATE" | "DELETE" | "SECURITY" | "COMMENT";
 	actorId: string | null;
 	actorName: string;
 	entityType: string;
 	entityId: string | null;
 	summary: string;
 	changes: Record<string, [unknown, unknown]> | null;
+	metadata?: { body?: string } | null;
 }
 
 export type AnnouncementAudience = "ALL" | "CUSTOMERS" | "STAFF";

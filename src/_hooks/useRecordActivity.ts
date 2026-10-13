@@ -53,6 +53,10 @@ export function useRecordActivity(type: string, id?: string | null) {
 		setLive((n) => n + 1);
 	}, !!id);
 
+	const add = (event: ActivityEventRow) => {
+		setItems((prev) => (prev.some((e) => e.id === event.id) ? prev : [event, ...prev]));
+	}; // total is bumped by the socket echo
+
 	const hasMore = !!meta && meta.page < meta.totalPages;
-	return { items, total: meta?.total ?? items.length, loading, error, hasMore, loadMore: () => meta && load(meta.page + 1), refresh: () => load(1), live };
+	return { items, total: meta?.total ?? items.length, loading, error, hasMore, loadMore: () => meta && load(meta.page + 1), refresh: () => load(1), live, add };
 }

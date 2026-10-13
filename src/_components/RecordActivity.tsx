@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Activity, ChevronDown, PanelRightClose, PanelRightOpen, Pencil, Plus, ShieldAlert, Trash2, X } from "lucide-react";
+import { Activity, ChevronDown, MessageSquare, Send, PanelRightClose, PanelRightOpen, Pencil, Plus, ShieldAlert, Trash2, X } from "lucide-react";
 import { useRecordActivity } from "@/_hooks/useRecordActivity";
+import axiosInstance from "@/_utils/axiosInstance";
 import type { ActivityEventRow } from "@/types/live";
 
 const STYLE: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
 	CREATE: { icon: Plus, color: "#16a34a", bg: "rgba(22,163,74,0.12)" },
 	UPDATE: { icon: Pencil, color: "#2563eb", bg: "rgba(37,99,235,0.12)" },
 	DELETE: { icon: Trash2, color: "#dc2626", bg: "rgba(220,38,38,0.12)" },
+	COMMENT: { icon: MessageSquare, color: "#7c3aed", bg: "rgba(124,58,237,0.12)" },
 	SECURITY: { icon: ShieldAlert, color: "#d97706", bg: "rgba(217,119,6,0.12)" },
 };
 
@@ -64,6 +66,11 @@ function EventRow({ event, entityType }: { event: ActivityEventRow; entityType: 
 						{clock(event.occurredAt)}
 					</time>
 				</div>
+				{event.metadata?.body && (
+					<p className="whitespace-pre-wrap rounded-lg px-2.5 py-1.5 text-xs [overflow-wrap:anywhere]" style={{ background: "var(--surface-medium)", color: "var(--text-primary)" }}>
+						{event.metadata.body}
+					</p>
+				)}
 				{shown.length > 0 && (
 					<ul className="space-y-0.5 border-l pl-2.5" style={{ borderColor: "var(--border-light)" }}>
 						{shown.map(([field, [before, after]]) => (
@@ -117,11 +124,52 @@ function useDocked() {
 	return docked;
 }
 
+function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: (e: ActivityEventRow) => void }) {
+	const [text, setText] = useState("");
+	const [busy, setBusy] = useState(false);
+	const [err, setErr] = useState("");
+	const send = async () => {
+		if (!text.trim() || busy) return;
+		setBusy(true);
+		setErr("");
+		try {
+			const res = await axiosInstance.post(`activity/record/${type}/${id}/comments`, { body: text.trim() });
+			onAdded(res.data?.data);
+			setText("");
+		} catch {
+			setErr("Could not post comment.");
+		} finally {
+			setBusy(false);
+		}
+	};
+	return (
+		<div className="border-t p-3" style={{ borderColor: "var(--border-light)" }}>
+			<div className="flex items-end gap-2">
+				<textarea
+					value={text}
+					onChange={(e) => setText(e.target.value)}
+					onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === "Enter" && send()}
+					rows={2}
+					maxLength={2000}
+					placeholder="Leave a comment…"
+					data-testid="record-comment-input"
+					className="min-w-0 flex-1 resize-none rounded-lg border bg-transparent px-2.5 py-2 text-xs outline-none focus:border-[var(--color-primary)]"
+					style={{ borderColor: "var(--border-light)", color: "var(--text-primary)" }}
+				/>
+				<button type="button" onClick={send} disabled={busy || !text.trim()} aria-label="Post comment" data-testid="record-comment-send" className="rounded-lg p-2 text-white disabled:opacity-40" style={{ background: "var(--color-primary)" }}>
+					<Send size={14} />
+				</button>
+			</div>
+			{err && <p className="mt-1 text-[0.68rem] text-red-600">{err}</p>}
+		</div>
+	);
+}
+
 const RecordActivity: React.FC<Props> = ({ type, id }) => {
 	const docked = useDocked();
 	const [open, setOpen] = useState(false);
 	const [expanded, setExpanded] = useState(true);
-	const { items, total, loading, error, hasMore, loadMore, live } = useRecordActivity(type, id);
+	const { items, total, loading, error, hasMore, loadMore, live, add } = useRecordActivity(type, id);
 
 	// Docked: expanded/collapsed is remembered (expanded by default), and the page content makes room via --record-panel-w.
 	useEffect(() => {
@@ -236,6 +284,7 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 							</button>
 						</header>
 						{body}
+						<CommentBox type={type} id={id} onAdded={add} />
 					</div>
 				) : (
 					<button type="button" onClick={toggleExpanded} aria-label="Expand activity" data-testid="record-activity-expand" className="flex h-full w-full flex-col items-center gap-3 pt-4 hover:bg-black/[0.03]">
@@ -287,6 +336,7 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 					</button>
 				</header>
 				{body}
+				<CommentBox type={type} id={id} onAdded={add} />
 			</aside>
 		</>
 	);

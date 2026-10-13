@@ -80,7 +80,7 @@ export function DataTableGrid<T extends { id: string | number }>({
                   </TableCell>
                 )}
                 {columns.map((col, idx) => (
-                  <TableCell key={idx} className={cn("text-xs py-3 text-foreground/90", col.className)}>
+                  <TableCell key={idx} className={cn("text-xs py-3 text-foreground/90 whitespace-nowrap", col.className)}>
                     {col.cell ? col.cell(item) : String(col.accessorKey ? item[col.accessorKey] ?? "" : "")}
                   </TableCell>
                 ))}
