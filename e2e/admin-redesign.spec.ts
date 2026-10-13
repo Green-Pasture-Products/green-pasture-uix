@@ -437,3 +437,24 @@ test.describe("forms are pages, tables lead with View and Edit", () => {
 		await expect(page.getByRole("navigation", { name: "Settings" }).getByRole("link", { name: "Manual Payment Settings" })).toHaveAttribute("aria-current", "page");
 	});
 });
+
+test.describe("record activity comments", () => {
+	test("Enter sends a comment, Shift+Enter adds a line", async ({ page }) => {
+		const posted: string[] = [];
+		await mockApi(page);
+		await page.route("**/api/v1/activity/record/**/comments", async (route) => {
+			posted.push(route.request().postDataJSON().body);
+			await route.fulfill(ok({ id: "c1", action: "COMMENT", actorName: "E2e Admin", entityType: "Role", entityId: "x", summary: "E2e Admin commented", occurredAt: new Date().toISOString(), changes: null, metadata: { body: "first" } }));
+		});
+		await page.setViewportSize({ width: 1440, height: 900 });
+		await page.goto("/admin/category/0192a3b4-c5d6-7e8f-9a0b-1c2d3e4f5a01");
+		const box = page.getByTestId("record-comment-input");
+		await box.fill("first");
+		await box.press("Shift+Enter");
+		await box.type("second");
+		expect(posted).toHaveLength(0);
+		await box.press("Enter");
+		await expect.poll(() => posted.length).toBe(1);
+		expect(posted[0]).toBe("first\nsecond");
+	});
+});

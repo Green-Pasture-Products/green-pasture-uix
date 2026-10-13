@@ -148,10 +148,15 @@ function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: 
 				<textarea
 					value={text}
 					onChange={(e) => setText(e.target.value)}
-					onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === "Enter" && send()}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" && !e.shiftKey) {
+							e.preventDefault();
+							send();
+						}
+					}}
 					rows={2}
 					maxLength={2000}
-					placeholder="Leave a comment…"
+					placeholder="Comment…"
 					data-testid="record-comment-input"
 					className="min-w-0 flex-1 resize-none rounded-lg border bg-transparent px-2.5 py-2 text-xs outline-none focus:border-[var(--color-primary)]"
 					style={{ borderColor: "var(--border-light)", color: "var(--text-primary)" }}
@@ -160,6 +165,9 @@ function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: 
 					<Send size={14} />
 				</button>
 			</div>
+			<p className="mt-1.5 text-[0.65rem]" style={{ color: "var(--text-hint)" }}>
+				Enter to send · Shift+Enter for a new line
+			</p>
 			{err && <p className="mt-1 text-[0.68rem] text-red-600">{err}</p>}
 		</div>
 	);
