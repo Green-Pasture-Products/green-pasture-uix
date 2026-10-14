@@ -108,7 +108,7 @@ export const ProductChangeCard: React.FC<{ change: ProductChange; meId: string; 
 	return (
 		<div className="border-border bg-card min-w-0 space-y-3 rounded-xl border p-4" data-testid="pending-change">
 			<div className="flex flex-wrap items-center gap-2">
-				<Badge variant={pending ? "warning" : "neutral"} className="whitespace-nowrap">{change.kind === "CREATE" ? "New product" : "Change"}</Badge>
+				<Badge variant={pending ? "warning" : "neutral"} className="whitespace-nowrap">{change.kind === "CREATE" ? "New product" : change.kind === "ADD_PACK_SIZE" ? "New pack size" : "Change"}</Badge>
 				{!pending && <ChangeStatusBadge status={change.changeStatus} />}
 				{link ? (
 					<Link href={link} className="text-brand-ink min-w-0 truncate text-sm font-semibold hover:underline" title={change.productName}>{change.productName}</Link>

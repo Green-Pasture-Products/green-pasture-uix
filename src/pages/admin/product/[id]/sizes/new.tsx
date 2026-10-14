@@ -52,7 +52,12 @@ const NewPackSize: React.FC = () => {
 
 		setSaving(true);
 		try {
-			await axiosInstance.post(`items/${id}/variants`, { weightValue, weightUnit: form.weightUnit, price, originalPrice, unit });
+			const res = await axiosInstance.post(`items/${id}/variants`, { weightValue, weightUnit: form.weightUnit, price, originalPrice, unit });
+			if (res.status === 202 || res.data?.data?.pending) {
+				toast.success("Sent for approval. Someone else needs to approve it before it is added.");
+				router.push("/admin/products/approvals");
+				return;
+			}
 			toast.success("Pack size added");
 			router.push(`/admin/product/${id}`);
 		} catch (err: any) {

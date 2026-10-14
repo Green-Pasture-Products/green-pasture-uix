@@ -22,3 +22,9 @@ test("a create has no 'before' and uses the category name; server diff wins when
 	assert.deepEqual(withDiff, [{ field: "unit", label: "Stock", before: "3", after: "8" }]);
 	assert.equal(changeSummary({ ...c, productName: "Moringa", diff: undefined }, "Approve"), 'Approve creating "Moringa" (2 pack sizes)');
 });
+
+test("a new pack size reads as an addition, with no 'before'", () => {
+	const c = { kind: "ADD_PACK_SIZE", productName: "Moringa 100g", payload: { newName: "Moringa 200g" }, previous: null, diff: [{ field: "name", label: "New pack size", before: null, after: "Moringa 200g" }] } as any;
+	assert.equal(changeSummary(c, "Approve"), 'Approve adding the pack size "Moringa 200g" to "Moringa 100g"');
+	assert.deepEqual(changeLines(c)[0], { field: "name", label: "New pack size", before: null, after: "Moringa 200g" });
+});
