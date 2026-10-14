@@ -31,7 +31,7 @@ async function mockApi(page: Page, opts: { pendingForItem?: boolean } = {}) {
 		const path = url.pathname.replace(/^.*\/api\/v1\//, "");
 		if (req.method() === "POST") {
 			posts.push({ path, body: null });
-			if (path === "items/bulk") return route.fulfill(body(202, { pending: true, change: NEW_PRODUCT }));
+			if (path === "items/bulk" || path === "items/item1/variants") return route.fulfill(body(202, { pending: true, change: NEW_PRODUCT }));
 			return route.fulfill(body(200, {}));
 		}
 		if (req.method() === "PATCH" && path === "items/item1") {
@@ -69,6 +69,21 @@ test("submitting a new product is sent for approval and lands on the approvals p
 	await page.getByRole("button", { name: "Submit for approval" }).click();
 	await expect(page).toHaveURL(/products\/approvals/);
 	expect(posts.map((p) => p.path)).toContain("items/bulk");
+	await expect(page.getByText("Sent for approval").first()).toBeVisible();
+});
+
+test("adding a pack size is sent for approval and lands on the approvals page", async ({ page }) => {
+	const posts = await mockApi(page);
+	await page.goto("/admin/product/item1/sizes/new");
+	await expect(page.getByText("Back to Brain Super Food")).toBeVisible(); // the page has loaded and stopped re-rendering
+	await page.getByRole("combobox").first().click();
+	await page.getByRole("option", { name: "g", exact: true }).click();
+	await page.getByPlaceholder("e.g. 250").fill("250");
+	await page.getByPlaceholder("0.00", { exact: true }).first().fill("4000");
+	await page.getByPlaceholder("0", { exact: true }).fill("5");
+	await page.getByRole("button", { name: "Add size" }).click();
+	await expect(page).toHaveURL(/products\/approvals/);
+	expect(posts.map((p) => p.path)).toContain("items/item1/variants");
 	await expect(page.getByText("Sent for approval").first()).toBeVisible();
 });
 

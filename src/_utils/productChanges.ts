@@ -50,7 +50,7 @@ export function changeLines(c: Pick<ProductChange, "kind" | "payload" | "previou
 	if (c.diff?.length) {
 		return c.diff
 			.filter((d) => !BLOCKS.has(d.field))
-			.map((d) => ({ field: d.field, label: d.label || LABELS[d.field] || d.field, before: c.kind === "CREATE" ? null : fmt(d.field, d.before), after: fmt(d.field, d.after) }));
+			.map((d) => ({ field: d.field, label: d.label || LABELS[d.field] || d.field, before: c.kind !== "UPDATE" ? null : fmt(d.field, d.before), after: fmt(d.field, d.after) }));
 	}
 	const p = c.payload ?? {};
 	const prev = c.previous ?? {};
@@ -69,6 +69,7 @@ export function changeLines(c: Pick<ProductChange, "kind" | "payload" | "previou
 
 /** One line for a confirmation dialog: "Approve creating "X"" / "Approve changing "X" (price, stock)". */
 export function changeSummary(c: Pick<ProductChange, "kind" | "productName" | "payload" | "previous" | "diff">, verb: "Approve" | "Reject"): string {
+	if (c.kind === "ADD_PACK_SIZE") return `${verb} adding the pack size "${c.payload?.newName ?? ""}" to "${c.productName}"`;
 	if (c.kind === "CREATE") {
 		const n = c.payload?.variants?.length ?? 1;
 		return `${verb} creating "${c.productName}" (${n} pack size${n === 1 ? "" : "s"})`;

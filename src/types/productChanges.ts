@@ -1,4 +1,4 @@
-export type ProductChangeKind = "CREATE" | "UPDATE";
+export type ProductChangeKind = "CREATE" | "UPDATE" | "ADD_PACK_SIZE";
 export type ProductChangeStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 
 export interface ProductChangeDiffRow {
