@@ -7,6 +7,7 @@ import { Star, ShoppingCart, ShoppingBag, Heart, XCircle, Trash2, Check } from "
 import { Product } from "../types";
 import { useAppDispatch } from "@/_redux/store";
 import { useCurrency } from "@/_hooks/useCurrency";
+import { useFeature } from "@/_hooks/useFeature";
 import { removeFromWishlist } from "@/_redux/reducers/wishlist.reducer";
 import { removeFromWishlistAsync } from "@/_redux/actions/wishlist.action";
 import Link from "next/link";
@@ -19,6 +20,7 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+	const wishlistOn = useFeature("storefront.wishlist");
 	const dispatch = useAppDispatch();
 	const { formatPrice } = useCurrency();
 	const {
@@ -106,7 +108,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 					{/* Wishlist button — hidden on the wishlist page itself, which already
 					    has a dedicated trash button for removal below. */}
-					{!isWishlistPage && (
+					{wishlistOn && !isWishlistPage && (
 						<motion.button
 							aria-label="Wishlist"
 							onClick={(e) => handleWishlistToggle(e)}

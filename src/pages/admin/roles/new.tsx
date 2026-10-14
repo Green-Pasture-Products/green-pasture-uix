@@ -4,6 +4,7 @@ import withAdminAuth from '@/_components/withAdminAuth';
 import AdminLayout from '@/_components/AdminLayout';
 import { BackButton } from '@/_UI/DetailField';
 import Button from '@/_UI/Button';
+import Can from '@/_components/Can';
 import { FormInput, FormTextarea } from '@/_UI/FormField';
 import PageLoader from '@/_UI/PageLoader';
 import toast from 'react-hot-toast';
@@ -203,9 +204,11 @@ const RoleForm: React.FC = () => {
 									<Button variant="outlined" onClick={() => router.push('/admin/roles')} className="flex-1">
 										Cancel
 									</Button>
-									<Button variant="filled" onClick={handleSubmit} loading={saving} className="flex-1">
-										{isEditMode ? 'Update Role' : 'Create Role'}
-									</Button>
+									<Can privilege="MANAGE_ROLES">
+										<Button variant="filled" onClick={handleSubmit} loading={saving} className="flex-1">
+											{isEditMode ? 'Update Role' : 'Create Role'}
+										</Button>
+									</Can>
 								</div>
 							</div>
 						</div>
@@ -327,4 +330,4 @@ const RoleForm: React.FC = () => {
 	);
 };
 
-export default withAdminAuth(RoleForm);
+export default withAdminAuth(RoleForm, "MANAGE_ROLES");

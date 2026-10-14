@@ -1,3 +1,4 @@
+import { OrderDetailSkeleton } from "@/_skeletonLoading/PageSkeletons";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Copy, Check, Upload, AlertCircle } from "lucide-react";
@@ -91,15 +92,7 @@ const PaymentInstructionsPage: React.FC = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div
-              className="h-12 w-12 rounded-full border-4 border-gray-200 border-t-blue-500 mx-auto mb-4 animate-spin"
-              style={{ borderTopColor: "var(--color-primary)" }}
-            ></div>
-            <p style={{ color: "var(--text-secondary)" }}>Loading payment instructions...</p>
-          </div>
-        </div>
+        <OrderDetailSkeleton width="max-w-2xl" />
       </Layout>
     );
   }

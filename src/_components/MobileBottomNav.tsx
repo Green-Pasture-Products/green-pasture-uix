@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import { Menu } from "lucide-react";
 
 import { MODULES, findOwningModule } from "@/_navigations/modules";
-import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { useCanOpenModule } from "@/_hooks/usePrivilege";
 import { useInboxUnread } from "@/_hooks/useInboxUnread";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -15,12 +15,12 @@ const QUICK = ["/admin/dashboard", "/admin/orders", "/admin/inbox", "/admin/prod
 
 export function MobileBottomNav() {
 	const router = useRouter();
-	const hasPrivilege = useHasPrivilege();
+	const canOpen = useCanOpenModule();
 	const { setOpenMobile } = useSidebar();
 	const unread = useInboxUnread(true);
 	const pathname = router.asPath.split("?")[0];
 	const activePath = findOwningModule(pathname)?.path;
-	const items = QUICK.map((p) => MODULES.find((m) => m.path === p)).filter((m): m is NonNullable<typeof m> => !!m && hasPrivilege(m.privilege));
+	const items = QUICK.map((p) => MODULES.find((m) => m.path === p)).filter((m): m is NonNullable<typeof m> => !!m && canOpen(m));
 
 	return (
 		<nav

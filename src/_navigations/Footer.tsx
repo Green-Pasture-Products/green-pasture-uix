@@ -2,6 +2,7 @@ import { Phone, Mail, MapPin } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
+import { useFeature } from "@/_hooks/useFeature";
 import { appConstants } from "@/_redux/constants";
 
 const WhatsAppIcon = ({ size = 18 }: { size?: number }) => (
@@ -72,6 +73,7 @@ const customerServiceLinks = [
 ];
 
 const Footer = () => {
+	const wishlistOn = useFeature("storefront.wishlist");
 	return (
 		<footer className="bg-primary-900 dark:bg-black text-gray-300">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 md:pt-16 pb-6 md:pb-8">
@@ -137,7 +139,7 @@ const Footer = () => {
 							Customer Service
 						</h3>
 						<ul className="space-y-2.5">
-							{customerServiceLinks.map(({ href, label }) => (
+							{customerServiceLinks.filter((l) => wishlistOn || l.href !== "/wishlist").map(({ href, label }) => (
 								<li key={href}>
 									<Link
 										href={href}

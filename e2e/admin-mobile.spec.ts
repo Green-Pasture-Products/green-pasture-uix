@@ -33,7 +33,12 @@ const ADMIN_ROUTES = [
 	"/admin/roles",
 	"/admin/users",
 	"/admin/settings",
+	"/admin/feature-flags",
+	"/admin/feature-flags/new",
+	"/admin/feature-flags/approvals",
+	"/admin/payments/confirmations",
 	"/admin/products/new",
+	"/admin/products/approvals",
 ];
 
 test.beforeEach(async ({ context, baseURL }) => {

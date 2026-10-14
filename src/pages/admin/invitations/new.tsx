@@ -127,4 +127,4 @@ const NewInvitation: React.FC = () => {
 	);
 };
 
-export default withAdminAuth(NewInvitation);
+export default withAdminAuth(NewInvitation, "MANAGE_STAFF");

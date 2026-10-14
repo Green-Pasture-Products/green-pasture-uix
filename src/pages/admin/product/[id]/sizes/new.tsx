@@ -96,4 +96,4 @@ const NewPackSize: React.FC = () => {
 	);
 };
 
-export default withAdminAuth(NewPackSize);
+export default withAdminAuth(NewPackSize, "CREATE_PRODUCT");

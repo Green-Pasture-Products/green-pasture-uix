@@ -1,3 +1,4 @@
+import { Feature } from "@/_components/FeatureFlagProvider";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -13,6 +14,7 @@ import {
 	setLoading,
 } from "@/_redux/reducers/auth.reducer";
 import { LoginFormData, loginSchema } from "@/_validations/auth";
+import { useFeature } from "@/_hooks/useFeature";
 import { useGoogleAuth } from "@/_hooks/useGoogleAuth";
 import Image from "next/image";
 import { loginAsync, resendOtpAsync } from "@/_redux/actions/auth.action";
@@ -30,6 +32,7 @@ const LoginPage: React.FC = () => {
 		(state) => state.auth
 	);
 	const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth();
+	const signupOn = useFeature("auth.signup");
 	const [showPassword, setShowPassword] = useState(false);
 
 	const {
@@ -135,15 +138,19 @@ const LoginPage: React.FC = () => {
 					<h2 className="text-center text-xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
 						Welcome back
 					</h2>
-					<p className="text-center text-xs mb-6" style={{ color: "var(--text-hint)" }}>
-						Don't have an account?{" "}
-						<Link href="/signup" className="font-medium" style={{ color: "var(--color-primary)" }}>
-							Sign up
-						</Link>
-					</p>
+					{signupOn ? (
+						<p className="text-center text-xs mb-6" style={{ color: "var(--text-hint)" }}>
+							Don't have an account?{" "}
+							<Link href="/signup" className="font-medium" style={{ color: "var(--color-primary)" }}>
+								Sign up
+							</Link>
+						</p>
+					) : (
+						<div className="mb-6" />
+					)}
 
 					{/* Google Sign-In */}
-					{/* Google Sign-In */}
+					<Feature name="auth.google_signin">
 <div className="mb-4">
     <div className="w-full flex justify-center overflow-hidden min-h-[44px]">
         <GoogleLogin
@@ -167,6 +174,7 @@ const LoginPage: React.FC = () => {
         <div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
     </div>
 </div>
+</Feature>
 
 					<form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
 						{error && (

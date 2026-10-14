@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { statusColumn } from "@/_components/statusColumn";
 import { useRouter } from "next/router";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
@@ -141,6 +142,7 @@ const AdminReviews: React.FC = () => {
 			meta: { width: "130px" },
 			cell: ({ row }) => (row.original.featured ? <Badge variant="success" dot>Featured</Badge> : <Badge variant="neutral">Not featured</Badge>),
 		},
+		statusColumn(),
 		{
 			id: "actions",
 			header: "Action",

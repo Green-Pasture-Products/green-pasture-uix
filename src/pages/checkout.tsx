@@ -1,3 +1,4 @@
+import { Feature } from "@/_components/FeatureFlagProvider";
 import { FEATURES } from "@/_utils/features";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { uuidv7 } from "uuidv7";
@@ -29,6 +30,9 @@ import { checkoutAction } from "@/_redux/actions/checkout.action";
 import { clearCart } from "@/_redux/reducers/cart.reducer";
 import { resetCheckout, clearCheckoutError } from "@/_redux/reducers/checkout.reducer";
 import Image from "next/image";
+import { useFeature } from "@/_hooks/useFeature";
+import { useCheckoutAvailability } from "@/_hooks/useCheckoutAvailability";
+import FeatureNotice from "@/_components/FeatureNotice";
 import Layout from "@/_components/Layout";
 import toast from "react-hot-toast";
 import { useOutcome } from "@/_UI/Outcome";
@@ -309,6 +313,9 @@ const CheckoutPage: React.FC = () => {
 	const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 	const isAdmin = appConstants.ADMIN_ROLES.includes(user?.profileType?.toUpperCase() as any || "");
 	const { isCheckingOut, isPlacingOrder, paymentUrl, error } = useAppSelector((state) => state.checkout);
+	const { available: checkoutAvailable, card: cardOn, transfer: transferOn } = useCheckoutAvailability();
+	const couponsOn = useFeature("checkout.coupons");
+	const guestOn = useFeature("checkout.guest");
 	const [orderPlaced, setOrderPlaced] = useState(false);
 	const [addressAutoPopulated, setAddressAutoPopulated] = useState(false);
 	const [couponCode, setCouponCode] = useState("");
@@ -366,6 +373,14 @@ const CheckoutPage: React.FC = () => {
 	const selectedPayment = useWatch({ control, name: "paymentMethod" });
 	const shippingState = useWatch({ control, name: "shippingAddress.state" });
 	const useDifferentAddress = useWatch({ control, name: "useDifferentAddress" });
+
+	// If the chosen payment method gets switched off, move to one that is still offered.
+	useEffect(() => {
+		const offered = (v: string) => (v === "CARD" ? cardOn : v === "MANUAL_TRANSFER" ? transferOn : true);
+		if (!offered(selectedPayment)) {
+			setValue("paymentMethod", transferOn ? "MANUAL_TRANSFER" : "CUSTOMER_PICKUP");
+		}
+	}, [selectedPayment, cardOn, transferOn, setValue]);
 
 	/* Derive visual step based on form completion (all sections visible) */
 	const hasShippingErrors =
@@ -653,7 +668,7 @@ const CheckoutPage: React.FC = () => {
 					shippingAddress: data.shippingAddress,
 					shippingMethod: data.shippingMethod,
 					paymentMethod: data.paymentMethod,
-					couponCode: couponApplied ? couponCode : undefined,
+					couponCode: couponsOn && couponApplied ? couponCode : undefined,
 				});
 				idempotencyStateRef.current = resolveIdempotencyKey(idempotencyStateRef.current, authenticatedAttemptSignature, uuidv7);
 				const idempotencyKey = idempotencyStateRef.current.key as string;
@@ -694,7 +709,7 @@ const CheckoutPage: React.FC = () => {
 				const orderResult = await dispatch(
 					checkoutAction.checkoutCartAsync({
 						cartId: activeCartId,
-						couponCode: couponApplied ? couponCode : undefined,
+						couponCode: couponsOn && couponApplied ? couponCode : undefined,
 						shippingMethod: data.shippingMethod,
 						shippingAddress: data.shippingAddress,
 						paymentMethod: data.paymentMethod,
@@ -789,7 +804,7 @@ const CheckoutPage: React.FC = () => {
 					shippingAddress: data.shippingAddress,
 					shippingMethod: data.shippingMethod,
 					paymentMethod: data.paymentMethod,
-					couponCode: couponApplied ? couponCode : undefined,
+					couponCode: couponsOn && couponApplied ? couponCode : undefined,
 					guestFirstName: data.guestFirstName,
 					guestLastName: data.guestLastName,
 					guestEmail: data.guestEmail,
@@ -808,7 +823,7 @@ const CheckoutPage: React.FC = () => {
 					shippingMethod: data.shippingMethod,
 					paymentMethod: data.paymentMethod,
 					...(data.paymentMethod === "MANUAL_TRANSFER" && { phoneNumber: data.phoneNumber }),
-					couponCode: couponApplied ? couponCode : undefined,
+					couponCode: couponsOn && couponApplied ? couponCode : undefined,
 					shippingAddress: {
 						street: data.shippingAddress.street,
 						city: data.shippingAddress.city,
@@ -987,6 +1002,22 @@ const CheckoutPage: React.FC = () => {
 		);
 	}
 
+	if (!checkoutAvailable) {
+		return (
+			<Layout pageTitle="Checkout">
+				<FeatureNotice message="Checkout is temporarily unavailable" href="/cart" linkLabel="Back to cart" />
+			</Layout>
+		);
+	}
+
+	if (!isAuthenticated && !guestOn) {
+		return (
+			<Layout pageTitle="Checkout">
+				<FeatureNotice message="Please sign in to check out." href="/login?redirect=/checkout" linkLabel="Sign in" />
+			</Layout>
+		);
+	}
+
 	/* ================================================================ */
 	/*  Main checkout form                                              */
 	/* ================================================================ */
@@ -1125,7 +1156,7 @@ const CheckoutPage: React.FC = () => {
 							</h2>
 
 							<div className="space-y-3">
-								{paymentOptions.map((opt) => (
+								{paymentOptions.filter((opt) => (opt.value === "CARD" ? cardOn : opt.value === "MANUAL_TRANSFER" ? transferOn : true)).map((opt) => (
 									<div key={opt.value} className={`relative ${opt.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
 										<div className={opt.disabled ? 'pointer-events-none' : ''}>
 											<OptionCard
@@ -1438,6 +1469,7 @@ const CheckoutPage: React.FC = () => {
 
 							{/* Coupon Code */}
 							{FEATURES.promoCode && (
+							<Feature name="checkout.coupons">
 							<div className="mb-4">
 								<div className="flex gap-2">
 									<input
@@ -1469,6 +1501,7 @@ const CheckoutPage: React.FC = () => {
 								{couponError && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{couponError}</p>}
 								{couponApplied && <p className="text-xs mt-1" style={{ color: "var(--color-primary)" }}>Coupon applied successfully!</p>}
 							</div>
+							</Feature>
 							)}
 
 							{/* Pricing breakdown */}

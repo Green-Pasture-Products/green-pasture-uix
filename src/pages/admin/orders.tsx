@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { statusColumn } from "@/_components/statusColumn";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { parseAsString } from "nuqs";
@@ -16,6 +17,7 @@ import Button from "@/_UI/Button";
 import { BackendOrder } from "@/types";
 import { formatCurrency } from "@/_UI/FormatValue";
 import { useListParams } from "@/_hooks/useListParams";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -95,6 +97,7 @@ const getPaymentFilterBadgeVariant = (status: string): "success" | "warning" | "
 const AdminOrders: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
+	const hasPrivilege = useHasPrivilege();
 	const { orders, ordersLoading, ordersPagination } = useAppSelector((state) => state.admin);
 	const {
 		page: currentPage,
@@ -246,7 +249,7 @@ const AdminOrders: React.FC = () => {
 		},
 		{
 			accessorKey: "orderStatus",
-			header: "Status",
+			header: "Order status",
 			cell: ({ getValue }) => (
 				<Badge variant={getStatusBadgeVariant(String(getValue()))} dot>
 					{String(getValue()).replace(/_/g, " ")}
@@ -262,6 +265,7 @@ const AdminOrders: React.FC = () => {
 				</span>
 			),
 		},
+		statusColumn(),
 		{
 			id: "actions",
 			header: "Action",
@@ -271,7 +275,7 @@ const AdminOrders: React.FC = () => {
 			cell: ({ row }) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/order/${row.original.orderReference}`) },
-					{ label: "Cancel", icon: DELETE_ICON, onClick: () => setCancelTarget(row.original), variant: "danger" as const, hidden: ["CANCELLED", "DELIVERED"].includes(row.original.orderStatus) },
+					{ label: "Cancel", icon: DELETE_ICON, onClick: () => setCancelTarget(row.original), variant: "danger" as const, hidden: !hasPrivilege("MANAGE_ORDERS") || ["CANCELLED", "DELIVERED"].includes(row.original.orderStatus) },
 				]} />
 			),
 		},
@@ -290,7 +294,7 @@ const AdminOrders: React.FC = () => {
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
-					searchPlaceholder="Search by order ref, customer name or email..."
+					searchPlaceholder="Search orders or customers"
 					filters={ORDER_STATUS_FILTERS}
 					filterValues={filterValues}
 					onFilterChange={handleFilterChange}

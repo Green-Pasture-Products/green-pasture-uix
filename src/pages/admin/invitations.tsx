@@ -9,6 +9,8 @@ import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
 import { DataTable } from "@/_components/DataTable";
 import ActionMenu from "@/_UI/ActionMenu";
+import Can from "@/_components/Can";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
@@ -50,6 +52,7 @@ const STATUS_VARIANT: Record<Invitation["status"], "success" | "warning" | "erro
 
 const Invitations: React.FC = () => {
 	const router = useRouter();
+	const hasPrivilege = useHasPrivilege();
 	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
 
 	const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -184,8 +187,9 @@ const Invitations: React.FC = () => {
 			meta: { width: "50px", align: "center" },
 			cell: ({ row }) => {
 				// Resend rescues an expired link; revoke only makes sense while the invite is live.
-				const canResend = row.original.status === "PENDING" || row.original.status === "EXPIRED";
-				const canRevoke = row.original.status === "PENDING" || row.original.status === "EXPIRED";
+				const canManage = hasPrivilege("MANAGE_STAFF");
+				const canResend = canManage && (row.original.status === "PENDING" || row.original.status === "EXPIRED");
+				const canRevoke = canManage && (row.original.status === "PENDING" || row.original.status === "EXPIRED");
 				if (!canResend && !canRevoke) return null;
 				return (
 					<ActionMenu
@@ -225,9 +229,11 @@ const Invitations: React.FC = () => {
 					onPageChange={(idx: number) => setPage(idx + 1)}
 					onPageSizeChange={setPageSize}
 					toolbar={
-						<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/invitations/new")}>
-							Invite Staff
-						</Button>
+						<Can privilege="MANAGE_STAFF">
+							<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/invitations/new")}>
+								Invite Staff
+							</Button>
+						</Can>
 					}
 					emptyMessage="No invitations yet"
 				/>

@@ -2,18 +2,20 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
-import { BackButton, DetailHeader, DetailSection, DetailRow } from "@/_UI/DetailField";
+import RecordActivity from "@/_components/RecordActivity";
+import { BackButton, DetailHeader, DetailSection } from "@/_UI/DetailField";
 import Badge from "@/_UI/Badge";
+import Can from "@/_components/Can";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
 import { FormInput } from "@/_UI/FormField";
-import { formatPhoneDisplay } from "@/_UI/FormatValue";
 import PhoneInput, { splitDialCode } from "@/_UI/PhoneInput";
 import PageLoader from "@/_UI/PageLoader";
 import toast from "react-hot-toast";
 import axiosInstance from "@/_utils/axiosInstance";
 import { BackendStaff } from "@/types";
-import { Pencil, X, Power } from "lucide-react";
+import { Pencil, Power } from "lucide-react";
 import * as changeCase from "change-case";
 import { resolveRoleIdsForPatch } from "@/_utils/staffForm";
 
@@ -24,12 +26,13 @@ interface RoleOption {
 
 const StaffDetail: React.FC = () => {
 	const router = useRouter();
+	const hasPrivilege = useHasPrivilege();
 	const { id } = router.query;
 	const [staff, setStaff] = useState<BackendStaff | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [editing, setEditing] = useState(false);
+	const [editingRoles, setEditingRoles] = useState(false);
 	useEffect(() => {
-		if (router.isReady && router.query.edit === "1") setEditing(true);
+		if (router.isReady && router.query.edit === "1" && hasPrivilege("MANAGE_STAFF")) setEditingRoles(true);
 	}, [router.isReady, router.query.edit]);
 	const [saving, setSaving] = useState(false);
 	const [toggling, setToggling] = useState(false);
@@ -51,9 +54,10 @@ const StaffDetail: React.FC = () => {
 	// send roleIds when the set actually changed (see resolveRoleIdsForPatch).
 	const [initialRoleIds, setInitialRoleIds] = useState<string[]>([]);
 
-	const fetchStaff = () => {
+	// `silent` refreshes in place after a save instead of swapping the page for the loader.
+	const fetchStaff = (silent = false) => {
 		if (!id) return;
-		setLoading(true);
+		if (!silent) setLoading(true);
 		axiosInstance
 			.get(`staff/${id}`)
 			.then((res) => {
@@ -115,8 +119,8 @@ const StaffDetail: React.FC = () => {
 				roleIds: resolveRoleIdsForPatch(editForm.roleIds, initialRoleIds),
 			});
 			toast.success("Staff updated successfully");
-			setEditing(false);
-			fetchStaff();
+			setEditingRoles(false);
+			fetchStaff(true);
 		} catch (err: any) {
 			toast.error(err?.response?.data?.message || "Failed to update staff");
 		} finally {
@@ -124,20 +128,10 @@ const StaffDetail: React.FC = () => {
 		}
 	};
 
-	const handleCancelEdit = () => {
-		setEditing(false);
-		if (staff?.profile) {
-			const phone = splitDialCode(staff.profile.phoneNumber);
-			setPhoneCountry(phone.countryCode);
-			setEditForm({
-				firstName: staff.profile.firstName || "",
-				lastName: staff.profile.lastName || "",
-				phoneNumber: phone.local,
-				roleIds: (staff.profile.roles ?? []).map((r) => String(r.id)),
-			});
-			// initialRoleIds is left as-is here — it already reflects the server's
-			// value from the last fetch, which is exactly what cancel reverts to.
-		}
+	const handleCancelRoles = () => {
+		setEditingRoles(false);
+		// initialRoleIds already reflects the server's value from the last fetch, which is what cancel reverts to.
+		setEditForm((f) => ({ ...f, roleIds: initialRoleIds }));
 	};
 
 	const toggleRole = (roleId: string) => {
@@ -150,10 +144,10 @@ const StaffDetail: React.FC = () => {
 	const handleToggleStatus = async () => {
 		if (!staff) return;
 		setToggling(true);
-		const endpoint = staff.status === "ACTIVE" ? "staff/deactivate" : "staff/activate";
+		const endpoint = staff.status === "A" ? "staff/deactivate" : "staff/activate";
 		try {
 			await axiosInstance.patch(endpoint, { ids: [staff.id] });
-			toast.success(staff.status === "ACTIVE" ? "Staff deactivated" : "Staff activated");
+			toast.success(staff.status === "A" ? "Staff deactivated" : "Staff activated");
 			setStatusModalOpen(false);
 			fetchStaff();
 		} catch (err: any) {
@@ -200,157 +194,176 @@ const StaffDetail: React.FC = () => {
 	}
 
 	const profile = staff.profile;
+	const active = staff.status === "A";
+	const heldRoles = profile?.roles ?? [];
+	// Privileges are the union of every assigned role's permissions.
+	const privileges = [...new Set(heldRoles.flatMap((r) => (r.permissions ?? []).map((p) => p.name)))].sort();
+	const day = (iso?: string) => (iso ? new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "\u2014");
+	const canManage = hasPrivilege("MANAGE_STAFF");
+	const profileUnchanged =
+		editForm.firstName === (profile?.firstName ?? "") &&
+		editForm.lastName === (profile?.lastName ?? "") &&
+		`${phoneDialRef.current}${editForm.phoneNumber}` === (profile?.phoneNumber ?? "");
 
 	return (
 		<AdminLayout pageTitle={staffTitle}>
-			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
-				<div className="flex items-center justify-between">
-					<BackButton />
-					<div className="flex items-center gap-2">
-						<Button
-							variant="outlined"
-							size="sm"
-							color={staff.status === "ACTIVE" ? "error" : "primary"}
-							onClick={() => setStatusModalOpen(true)}
-							loading={toggling}
-							disabled={toggling}
-						>
-							<Power className="w-4 h-4 mr-1.5" />
-							{staff.status === "ACTIVE" ? "Deactivate" : "Activate"}
-						</Button>
-						{!editing ? (
-							<Button variant="outlined" size="sm" onClick={() => setEditing(true)}>
-								<Pencil className="w-4 h-4 mr-1.5" />
-								Edit
-							</Button>
-						) : (
-							<Button variant="outlined" size="sm" onClick={handleCancelEdit}>
-								<X className="w-4 h-4 mr-1.5" />
-								Cancel
-							</Button>
-						)}
-					</div>
-				</div>
+			<div className="max-w-6xl mx-auto space-y-5 animate-page-enter">
+				<BackButton />
 
 				<DetailHeader
-					title={`${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`}
-					subtitle="Staff Member"
+					title={staffTitle}
+					subtitle={profile?.email}
 					status={
-						<Badge variant={staff.status === "ACTIVE" ? "success" : "neutral"} dot>
-							{staff.status}
+						<Badge variant={active ? "success" : "neutral"} dot>
+							{active ? "Active" : "Inactive"}
 						</Badge>
 					}
+					actions={
+						<Can privilege="MANAGE_STAFF">
+							<Button variant="outlined" size="sm" onClick={() => (editingRoles ? handleCancelRoles() : setEditingRoles(true))}>
+								<Pencil className="w-4 h-4 mr-1.5" />
+								{editingRoles ? "Cancel" : "Edit roles"}
+							</Button>
+							<Button
+								variant="outlined"
+								size="sm"
+								color={active ? "error" : "primary"}
+								onClick={() => setStatusModalOpen(true)}
+								loading={toggling}
+								disabled={toggling}
+							>
+								<Power className="w-4 h-4 mr-1.5" />
+								{active ? "Deactivate" : "Activate"}
+							</Button>
+						</Can>
+					}
+					metrics={[
+						{ label: "Roles", value: heldRoles.length },
+						{ label: "Privileges", value: privileges.length },
+						{ label: "Added", value: day(staff.createdAt) },
+						{ label: "Last updated", value: day(staff.updatedAt) },
+					]}
 				/>
 
-				{editing ? (
-					<DetailSection title="Edit Staff">
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5">
+				<div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start">
+					<DetailSection title="Profile" description="The email address is the sign-in identity and cannot be changed.">
+						<div className="grid grid-cols-1 gap-4 py-3">
 							<FormInput
-								label="First Name"
+								label="First name"
 								required
 								value={editForm.firstName}
+								disabled={!canManage}
 								onChange={(e) => setEditForm((f) => ({ ...f, firstName: e.target.value }))}
 							/>
 							<FormInput
-								label="Last Name"
+								label="Last name"
 								required
 								value={editForm.lastName}
+								disabled={!canManage}
 								onChange={(e) => setEditForm((f) => ({ ...f, lastName: e.target.value }))}
 							/>
-							<FormInput
-								label="Email"
-								type="email"
-								value={profile?.email ?? ""}
-								disabled
-							/>
-							<PhoneInput
-								label="Phone Number"
-								defaultCountry={phoneCountry}
-								value={editForm.phoneNumber}
-								onChange={(local) => setEditForm((f) => ({ ...f, phoneNumber: local }))}
-								onCountryChange={(dial) => (phoneDialRef.current = dial)}
-							/>
-							<div className="sm:col-span-2">
-								<label
-									className="block text-xs md:text-sm font-semibold mb-2"
-									style={{ color: "var(--text-secondary)" }}
-								>
-									Roles
-								</label>
-								<div className="flex flex-wrap gap-x-6 gap-y-2">
-									{roles.map((r) => {
-										const roleId = String(r.id);
-										return (
-											<label
-												key={roleId}
-												className="flex items-center gap-2 text-sm cursor-pointer select-none"
-												style={{ color: "var(--text-primary)" }}
-											>
-												<input
-													type="checkbox"
-													checked={editForm.roleIds.includes(roleId)}
-													onChange={() => toggleRole(roleId)}
-													className="w-4 h-4 rounded cursor-pointer"
-												/>
-												{r.name}
-											</label>
-										);
-									})}
+							<FormInput label="Email" type="email" value={profile?.email ?? ""} disabled />
+							<fieldset disabled={!canManage} className="contents">
+								<PhoneInput
+									label="Phone number"
+									defaultCountry={phoneCountry}
+									value={editForm.phoneNumber}
+									onChange={(local) => setEditForm((f) => ({ ...f, phoneNumber: local }))}
+									onCountryChange={(dial) => (phoneDialRef.current = dial)}
+								/>
+							</fieldset>
+							<Can privilege="MANAGE_STAFF">
+								<div className="flex justify-end">
+									<Button
+										variant="filled"
+										size="md"
+										onClick={handleSave}
+										loading={saving}
+										disabled={saving || profileUnchanged || !editForm.firstName.trim() || !editForm.lastName.trim()}
+									>
+										Save changes
+									</Button>
 								</div>
-								{editForm.roleIds.length === 0 && (
-									<p className="mt-1.5 text-xs text-red-500">At least one role is required.</p>
+							</Can>
+						</div>
+					</DetailSection>
+
+					<DetailSection title="Roles & privileges" description="Privileges come from the assigned roles.">
+						<div className="space-y-4 py-3">
+							<div>
+								<p className="text-muted-foreground mb-2 text-xs font-medium">Roles</p>
+								{editingRoles ? (
+									<div className="space-y-3">
+										<div className="flex flex-wrap gap-x-6 gap-y-2">
+											{roles.map((r) => {
+												const roleId = String(r.id);
+												return (
+													<label key={roleId} className="flex cursor-pointer select-none items-center gap-2 text-sm" style={{ color: "var(--text-primary)" }}>
+														<input
+															type="checkbox"
+															checked={editForm.roleIds.includes(roleId)}
+															onChange={() => toggleRole(roleId)}
+															className="h-4 w-4 cursor-pointer rounded"
+														/>
+														{r.name}
+													</label>
+												);
+											})}
+										</div>
+										{editForm.roleIds.length === 0 && <p className="text-xs text-red-500">At least one role is required.</p>}
+										<div className="flex justify-end gap-2">
+											<Button variant="outlined" color="secondary" size="sm" onClick={handleCancelRoles}>
+												Cancel
+											</Button>
+											<Button variant="filled" size="sm" onClick={handleSave} loading={saving} disabled={saving || editForm.roleIds.length === 0}>
+												Save roles
+											</Button>
+										</div>
+									</div>
+								) : (
+									<div className="flex flex-wrap gap-2">
+										{heldRoles.length ? (
+											heldRoles.map((r) => (
+												<Badge key={r.id} variant="neutral">
+													<span className="font-mono text-xs uppercase">{r.name}</span>
+												</Badge>
+											))
+										) : (
+											<span className="text-muted-foreground text-sm">No roles assigned</span>
+										)}
+									</div>
 								)}
 							</div>
-							<div className="sm:col-span-2 flex justify-end">
-								<Button
-									variant="filled"
-									size="md"
-									onClick={handleSave}
-									loading={saving}
-									disabled={saving || editForm.roleIds.length === 0}
-								>
-									Save Changes
-								</Button>
+
+							<div>
+								<p className="text-muted-foreground mb-2 text-xs font-medium">Effective privileges ({privileges.length})</p>
+								{privileges.length ? (
+									<div className="flex max-h-[28rem] flex-wrap gap-2 overflow-y-auto">
+										{privileges.map((p) => (
+											<span key={p} className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 font-mono text-[11px] font-semibold">
+												{p}
+											</span>
+										))}
+									</div>
+								) : (
+									<span className="text-muted-foreground text-sm">None</span>
+								)}
 							</div>
 						</div>
 					</DetailSection>
-				) : (
-					<DetailSection title="Profile Information">
-						<DetailRow label="Email" value={profile?.email} />
-						<DetailRow label="Phone" value={formatPhoneDisplay(profile?.phoneNumber)} />
-						<DetailRow label="Gender" value={profile?.gender ? changeCase.capitalCase(profile.gender) : "\u2014"} />
-						<DetailRow
-							label="Role"
-							value={
-								<Badge variant="info">
-									{profile?.roles?.length
-										? profile.roles.map((r) => changeCase.capitalCase(r.name)).join(", ")
-										: changeCase.capitalCase(profile?.profileType ?? "Staff")}
-								</Badge>
-							}
-						/>
-						<DetailRow
-							label="Joined"
-							value={new Date(staff.createdAt).toLocaleDateString("en-US", {
-								year: "numeric",
-								month: "long",
-								day: "numeric",
-							})}
-						/>
-					</DetailSection>
-				)}
+				</div>
 			</div>
 
 			{/* Status Confirmation Modal */}
 			<Modal
 				isOpen={statusModalOpen}
 				onClose={() => setStatusModalOpen(false)}
-				title={`${staff?.status === "ACTIVE" ? "Deactivate" : "Activate"} Staff`}
+				title={`${staff?.status === "A" ? "Deactivate" : "Activate"} Staff`}
 				size="sm"
 			>
 				<div className="space-y-4">
 					<p className="text-sm text-gray-600 dark:text-gray-300">
-						Are you sure you want to {staff?.status === "ACTIVE" ? "deactivate" : "activate"}{" "}
+						Are you sure you want to {staff?.status === "A" ? "deactivate" : "activate"}{" "}
 						<span className="font-semibold text-on-surface dark:text-white">
 							{profile?.firstName} {profile?.lastName}
 						</span>?
@@ -361,16 +374,17 @@ const StaffDetail: React.FC = () => {
 						</Button>
 						<Button
 							variant="filled"
-							color={staff?.status === "ACTIVE" ? "error" : "primary"}
+							color={staff?.status === "A" ? "error" : "primary"}
 							size="sm"
 							loading={toggling}
 							onClick={handleToggleStatus}
 						>
-							{staff?.status === "ACTIVE" ? "Deactivate" : "Activate"}
+							{staff?.status === "A" ? "Deactivate" : "Activate"}
 						</Button>
 					</div>
 				</div>
 			</Modal>
+			<RecordActivity type="Staff" id={staff?.id} />
 		</AdminLayout>
 	);
 };

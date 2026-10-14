@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
+import { statusColumn } from "@/_components/statusColumn";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CheckCircle, XCircle, Clock, Eye, Settings } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Eye, Settings, ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -14,6 +15,8 @@ import Badge from "@/_UI/Badge";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useListParams } from "@/_hooks/useListParams";
 import axiosInstance from "@/_utils/axiosInstance";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { useLiveEvent } from "@/_hooks/useLiveEvent";
 import { PaymentStatus, PaymentMethod } from "@/types";
 
 interface ManualPayment {
@@ -250,7 +253,7 @@ const AdminPaymentsManual: React.FC = () => {
     },
     {
       id: "paymentStatus",
-      header: "Status",
+      header: "Payment status",
       meta: { width: "160px" },
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
@@ -271,6 +274,7 @@ const AdminPaymentsManual: React.FC = () => {
         </span>
       ),
     },
+    statusColumn(),
     {
       id: "actions",
       header: "Action",
@@ -294,6 +298,16 @@ const AdminPaymentsManual: React.FC = () => {
     () => payments.filter((p) => p.paymentStatus === "VERIFIED").length,
     [payments],
   );
+
+  const hasPrivilege = useHasPrivilege();
+  const canSeeDecisions = hasPrivilege(["MANAGE_MANUAL_PAYMENTS", "APPROVE_PAYMENT_DECISIONS"]);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(0);
+  const loadSummary = useCallback(() => {
+    if (!canSeeDecisions) return;
+    axiosInstance.get("payment-decisions/summary").then((r) => setAwaitingConfirmation(r.data?.data?.pending ?? 0)).catch(() => {});
+  }, [canSeeDecisions]);
+  useEffect(loadSummary, [loadSummary]);
+  useLiveEvent("payment-decisions-changed", loadSummary);
 
   const declined = useMemo(
     () => payments.filter((p) => p.paymentStatus === "DECLINED").length,
@@ -373,11 +387,21 @@ const AdminPaymentsManual: React.FC = () => {
             setPage(1);
           }}
           toolbar={
-            <Link href="/admin/settings/manual-payments">
-              <Button variant="outlined" leftIcon={Settings}>
-                Bank Settings
-              </Button>
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              {canSeeDecisions && (
+                <Link href="/admin/payments/confirmations">
+                  <Button variant="outlined" leftIcon={ShieldCheck}>
+                    Awaiting confirmation
+                    <span className="bg-brand text-ink ml-2 rounded-full px-1.5 text-xs tabular-nums" data-testid="awaiting-count">{awaitingConfirmation}</span>
+                  </Button>
+                </Link>
+              )}
+              <Link href="/admin/settings/manual-payments">
+                <Button variant="outlined" leftIcon={Settings}>
+                  Bank Settings
+                </Button>
+              </Link>
+            </div>
           }
           pageIndex={currentPage - 1}
           pageSize={pageSize}

@@ -3,14 +3,14 @@
 // Ported from ogaryde-admin-ui's components/shared/app-sidebar.tsx. Framework
 // adaptations: react-router Link/useLocation/useNavigate -> next/link and
 // next/router; NavItem -> ModuleDef from @/_navigations/modules; privilege
-// filtering via useHasPrivilege() (backed by profileInfo.roles[].permissions[]).
+// filtering via useCanOpenModule() (backed by profileInfo.roles[].permissions[]).
 
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
 import { NAV_GROUPS, findOwningModule, type ModuleDef } from "@/_navigations/modules";
-import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { useCanOpenModule } from "@/_hooks/usePrivilege";
 import { AdminUserMenu } from "./AdminUserMenu";
 import { useInboxUnread } from "@/_hooks/useInboxUnread";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
@@ -75,7 +75,7 @@ function initialsOf(name: string): string {
 export function AppSidebar() {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
-	const hasPrivilege = useHasPrivilege();
+	const canOpen = useCanOpenModule();
 	const { setOpenMobile } = useSidebar();
 	const { user } = useAppSelector((state) => state.auth);
 
@@ -114,7 +114,7 @@ export function AppSidebar() {
 
 			<SidebarContent>
 				{NAV_GROUPS.map((group) => {
-					const items = group.items.filter((item) => hasPrivilege(item.privilege));
+					const items = group.items.filter((item) => canOpen(item));
 					if (items.length === 0) return null;
 					return (
 						<SidebarGroup key={group.label}>

@@ -10,6 +10,8 @@ export const categoryConfig: RecordConfig = {
 	listLabel: "Back to Categories",
 	privileges: { write: ["UPDATE_PRODUCT", "MANAGE_PRODUCTS"], delete: ["DELETE_PRODUCT", "MANAGE_PRODUCTS"] },
 	icon: Tags,
+	appearsAs: "tile",
+	createHint: "Categories group products in the shop and on the Products page.",
 	api: {
 		get: async (id) => (await axiosInstance.get(`products/${id}`)).data?.data ?? null,
 		create: async (v) => void (await axiosInstance.post("products/create", v)),
@@ -26,6 +28,9 @@ export const tagConfig: RecordConfig = {
 	listLabel: "Back to Tags",
 	privileges: { write: ["UPDATE_PRODUCT", "MANAGE_PRODUCTS"], delete: ["DELETE_PRODUCT", "MANAGE_PRODUCTS"] },
 	icon: Tag,
+	appearsAs: "chip",
+	slugged: true,
+	createHint: "Tags tell shoppers who a product suits, like Children or Seniors.",
 	api: {
 		get: async (id) => (await axiosInstance.get(`tags/${id}`)).data?.data ?? null,
 		create: async (v) => void (await axiosInstance.post("tags", v)),
@@ -33,6 +38,5 @@ export const tagConfig: RecordConfig = {
 		setActive: async (id, activate) => void (await axiosInstance.patch(`tags/${id}/status`, { activate })),
 		remove: async (id) => void (await axiosInstance.delete(`tags/${id}`)),
 	},
-	extraFacts: (r) => [{ label: "Slug", value: (r as any).slug ? <code className="text-xs">{(r as any).slug}</code> : "" }],
 };
 

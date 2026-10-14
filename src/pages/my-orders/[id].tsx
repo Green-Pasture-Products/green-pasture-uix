@@ -13,6 +13,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { formatCurrency } from "@/_UI/FormatValue";
 import { formatWeight } from "@/_utils/formatWeight";
 import PageLoader from "@/_UI/PageLoader";
+import { OrderDetailSkeleton } from "@/_skeletonLoading/PageSkeletons";
 import OrderTimeline from "@/_UI/OrderTimeline";
 import AuthPrompt from "@/_UI/AuthPrompt";
 import { BackendOrder, BackendOrderItem } from "@/types";
@@ -163,7 +164,7 @@ const MyOrderDetail: React.FC = () => {
 	if (loading) {
 		return (
 			<Layout>
-				<PageLoader fullScreen={false} message="Loading order details..." />
+				<OrderDetailSkeleton />
 			</Layout>
 		);
 	}

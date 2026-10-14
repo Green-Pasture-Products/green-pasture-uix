@@ -332,14 +332,19 @@ test.describe("record activity panel", () => {
 });
 
 test.describe("native selects are gone from admin forms", () => {
-	test("the order status control is the styled select", async ({ page }) => {
+	test("the order status control offers only the steps the API will accept", async ({ page }) => {
 		await mockApi(page);
 		await page.setViewportSize({ width: 1440, height: 900 });
 		await page.goto("/admin/order/O-NG-REF1");
 		await expect(page.locator("select")).toHaveCount(0);
-		await page.getByRole("combobox", { name: "New order status" }).click();
-		await page.getByRole("option", { name: "Processing" }).click();
-		await expect(page.getByRole("combobox", { name: "New order status" })).toContainText("Processing");
+		const group = page.getByRole("radiogroup", { name: "New order status" });
+		// A pending order can be processed or cancelled, nothing else.
+		await expect(group.getByRole("radio")).toHaveCount(2);
+		await expect(group.getByRole("radio", { name: "Processing" })).toBeVisible();
+		await expect(group.getByRole("radio", { name: "Cancelled" })).toBeVisible();
+		await expect(page.getByRole("button", { name: "Choose a status" })).toBeDisabled();
+		await group.getByRole("radio", { name: "Processing" }).click();
+		await expect(page.getByRole("button", { name: "Mark as Processing" })).toBeEnabled();
 	});
 });
 
@@ -364,12 +369,12 @@ test.describe("record pages instead of modals", () => {
 		await expect(page.getByRole("dialog")).toHaveCount(0);
 		await expect(page.getByText("Active", { exact: true })).toBeVisible();
 		await expect(page.getByRole("group", { name: "Overview" })).toBeVisible();
-		await expect(page.getByText("Stone-ground flours")).toBeVisible();
+		await expect(page.getByText("Stone-ground flours").first()).toBeVisible(); // also shown in the "How it appears" tile
 		await page.getByRole("button", { name: "Edit" }).click();
 		await expect(page.getByRole("form", { name: "Edit category" })).toBeVisible();
 		await expect(page.getByRole("button", { name: "Save changes" })).toBeDisabled(); // nothing changed yet
 		await page.getByRole("button", { name: "Cancel" }).click();
-		await expect(page.getByText("Stone-ground flours")).toBeVisible();
+		await expect(page.getByText("Stone-ground flours").first()).toBeVisible(); // also shown in the "How it appears" tile
 	});
 
 	test("the categories list opens the record page, not a modal", async ({ page }) => {
@@ -567,11 +572,11 @@ test.describe("payment details page", () => {
 		);
 		await page.setViewportSize({ width: 1800, height: 900 });
 		await page.goto("/admin/payments/0192a3b4-c5d6-7e8f-9a0b-1c2d3e4f5c01");
-		const heading = page.getByRole("heading", { name: "Payment Details" });
+		const heading = page.getByRole("heading", { name: /Payment · O-NG-1/ });
 		await expect(heading).toBeVisible();
 		const gaps = await heading.evaluate((h) => {
 			let el: HTMLElement | null = h as HTMLElement;
-			while (el && !el.className.toString().includes("max-w-5xl")) el = el.parentElement;
+			while (el && !el.className.toString().includes("max-w-6xl")) el = el.parentElement;
 			const box = el!.getBoundingClientRect();
 			const parent = el!.parentElement!;
 			const pr = parent.getBoundingClientRect();

@@ -8,6 +8,8 @@ import AdminLayout from '@/_components/AdminLayout';
 import { DataTable, FilterDef } from '@/_components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import ActionMenu from '@/_UI/ActionMenu';
+import Can from '@/_components/Can';
+import { useHasPrivilege } from '@/_hooks/usePrivilege';
 import Badge from '@/_UI/Badge';
 import Button from '@/_UI/Button';
 import Modal from '@/_UI/Modal';
@@ -44,6 +46,7 @@ const ROLE_STATUS_FILTERS: FilterDef[] = [
 
 const Roles: React.FC = () => {
 	const router = useRouter();
+	const hasPrivilege = useHasPrivilege();
 	const [roles, setRoles] = useState<BackendRole[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [pagination, setPagination] = useState<any>(null);
@@ -163,13 +166,14 @@ const Roles: React.FC = () => {
 			cell: ({ row }) => (
 				<ActionMenu items={[
 					{ label: 'View', icon: VIEW_ICON, onClick: () => router.push(`/admin/role/${row.original.id}`) },
-					{ label: 'Edit', icon: EDIT_ICON, onClick: () => router.push(`/admin/roles/new?id=${row.original.id}`) },
+					{ label: 'Edit', icon: EDIT_ICON, onClick: () => router.push(`/admin/roles/new?id=${row.original.id}`), hidden: !hasPrivilege('MANAGE_ROLES') },
 					{
 						label: row.original.status === 'A' ? 'Deactivate' : 'Activate',
 						icon: STATUS_ICON,
 						onClick: () => setStatusTarget(row.original),
+						hidden: !hasPrivilege('MANAGE_ROLES'),
 					},
-					{ label: 'Delete', icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: 'danger' as const },
+					{ label: 'Delete', icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: 'danger' as const, hidden: !hasPrivilege('MANAGE_ROLES') },
 				]} />
 			),
 		},
@@ -199,9 +203,11 @@ const Roles: React.FC = () => {
 					filterValues={filterValues}
 					onFilterChange={setFilter}
 					toolbar={
-						<Button variant="filled" leftIcon={Plus} onClick={() => router.push('/admin/roles/new')}>
-							Create Role
-						</Button>
+						<Can privilege="MANAGE_ROLES">
+							<Button variant="filled" leftIcon={Plus} onClick={() => router.push('/admin/roles/new')}>
+								Create Role
+							</Button>
+						</Can>
 					}
 					emptyMessage="No roles found"
 				/>

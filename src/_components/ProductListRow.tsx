@@ -7,6 +7,7 @@ import { Star, ShoppingCart, ShoppingBag, Heart, XCircle, Trash2, Check } from "
 import { Product } from "../types";
 import { useAppDispatch } from "@/_redux/store";
 import { useCurrency } from "@/_hooks/useCurrency";
+import { useFeature } from "@/_hooks/useFeature";
 import { removeFromWishlist } from "@/_redux/reducers/wishlist.reducer";
 import { removeFromWishlistAsync } from "@/_redux/actions/wishlist.action";
 import { htmlToText } from "@/_utils/htmlToText";
@@ -22,6 +23,7 @@ interface ProductListRowProps {
 // behavior with ProductCard (grid view) via useProductActions so the two
 // views can't drift out of sync with each other again.
 const ProductListRow: React.FC<ProductListRowProps> = ({ product, index }) => {
+	const wishlistOn = useFeature("storefront.wishlist");
 	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { formatPrice } = useCurrency();
@@ -138,7 +140,7 @@ const ProductListRow: React.FC<ProductListRowProps> = ({ product, index }) => {
 				className="relative flex items-center gap-2 shrink-0"
 				onClick={(e) => e.stopPropagation()}
 			>
-				{!isWishlistPage && (
+				{wishlistOn && !isWishlistPage && (
 					<motion.button
 						aria-label="Wishlist"
 						onClick={handleWishlistToggle}

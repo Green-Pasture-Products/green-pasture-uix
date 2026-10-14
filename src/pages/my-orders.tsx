@@ -14,6 +14,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import PageLoader from "@/_UI/PageLoader";
+import { OrdersListSkeleton } from "@/_skeletonLoading/PageSkeletons";
 import EmptyState from "@/_UI/EmptyState";
 import AuthPrompt from "@/_UI/AuthPrompt";
 import { formatCurrency } from "@/_UI/FormatValue";
@@ -267,7 +268,7 @@ const MyOrders: React.FC = () => {
 	if (loading && orders.length === 0) {
 		return (
 			<Layout>
-				<PageLoader fullScreen={false} message="Loading your orders..." />
+				<OrdersListSkeleton />
 			</Layout>
 		);
 	}

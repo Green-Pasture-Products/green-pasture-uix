@@ -4,21 +4,21 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { CornerDownLeft, Search } from "lucide-react";
 import { MODULES } from "@/_navigations/modules";
-import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { useCanOpenModule } from "@/_hooks/usePrivilege";
 import { cn } from "@/lib/utils";
 
 /** ⌘K / Ctrl+K palette: type to filter the admin pages you may open, Enter to go. */
 export function JumpTo({ open, onClose }: { open: boolean; onClose: () => void }) {
 	const router = useRouter();
-	const hasPrivilege = useHasPrivilege();
+	const canOpen = useCanOpenModule();
 	const [q, setQ] = useState("");
 	const [active, setActive] = useState(0);
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	const results = useMemo(() => {
 		const term = q.trim().toLowerCase();
-		return MODULES.filter((m) => hasPrivilege(m.privilege) && (!term || m.title.toLowerCase().includes(term) || m.group.toLowerCase().includes(term)));
-	}, [q, hasPrivilege]);
+		return MODULES.filter((m) => canOpen(m) && (!term || m.title.toLowerCase().includes(term) || m.group.toLowerCase().includes(term)));
+	}, [q, canOpen]);
 
 	useEffect(() => {
 		if (open) {

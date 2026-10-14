@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { statusColumn } from "@/_components/statusColumn";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
@@ -82,6 +83,7 @@ const AdminCategories: React.FC = () => {
 				</span>
 			),
 		},
+		statusColumn(),
 		{
 			id: "actions",
 			header: "Action",

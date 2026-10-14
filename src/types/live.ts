@@ -19,7 +19,7 @@ export interface ActivityEventRow {
 	entityId: string | null;
 	summary: string;
 	changes: Record<string, [unknown, unknown]> | null;
-	metadata?: { body?: string; method?: string; path?: string; status?: number; durationMs?: number; ip?: string | null; userAgent?: string | null; outcome?: "succeeded" | "failed"; event?: string; email?: string; reason?: string } | null;
+	metadata?: { body?: string; mentions?: { id: string; name: string }[]; method?: string; path?: string; status?: number; durationMs?: number; ip?: string | null; userAgent?: string | null; outcome?: "succeeded" | "failed"; event?: string; email?: string; reason?: string } | null;
 }
 
 export type AnnouncementAudience = "ALL" | "CUSTOMERS" | "STAFF";

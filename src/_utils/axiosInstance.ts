@@ -5,6 +5,7 @@ import axios, {
 	InternalAxiosRequestConfig,
 	AxiosError,
 } from "axios";
+import toast from "react-hot-toast";
 import Cookies from "js-cookie";
 import { authCookies, AUTH_COOKIES } from "./authCookies";
 import { refreshAccessToken, forceLogout } from "./tokenRefresh";
@@ -112,6 +113,16 @@ axiosInstance.interceptors.response.use(
 			originalRequest._coldStartRetry = true;
 			originalRequest.timeout = COLD_START_TIMEOUT_MS;
 			return axiosInstance(originalRequest);
+		}
+
+		// The server turned this feature off: say so kindly and re-read the flags so the UI catches up.
+		const body: any = error.response?.data;
+		if (error.response?.status === 403 && (body?.code === "FEATURE_DISABLED" || body?.message?.code === "FEATURE_DISABLED")) {
+			if (typeof window !== "undefined") {
+				toast.error("This feature is currently unavailable.", { id: "feature-disabled" });
+				window.dispatchEvent(new Event("gp:features-refresh"));
+			}
+			return Promise.reject(error);
 		}
 
 		console.error("API Error:", error.response || error.message);

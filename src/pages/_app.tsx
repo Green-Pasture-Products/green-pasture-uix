@@ -1,6 +1,7 @@
 import { ErrorBoundary } from "@/_errorBoundaries/ErrorBoundary";
 import { persistor, store, useAppDispatch, useAppSelector } from "@/_redux/store";
 import { ThemeProvider } from "@/_hooks/useTheme";
+import { FeatureFlagProvider } from "@/_components/FeatureFlagProvider";
 import { CurrencyProvider } from "@/_hooks/useCurrency";
 import PageTransition from "@/_UI/PageTransition";
 import { AppShell } from "@/_components/AppShell";
@@ -141,6 +142,7 @@ export default function App({ Component, pageProps }: AppProps) {
 					<PersistGate loading={null} persistor={persistor}>
 						<AuthBootstrap>
 							<ThemeProvider>
+								<FeatureFlagProvider>
 								<CurrencyProvider>
 									<OutcomeProvider>
 											<NuqsAdapter>
@@ -166,6 +168,7 @@ export default function App({ Component, pageProps }: AppProps) {
 											</NuqsAdapter>
 										</OutcomeProvider>
 								</CurrencyProvider>
+								</FeatureFlagProvider>
 							</ThemeProvider>
 						</AuthBootstrap>
 

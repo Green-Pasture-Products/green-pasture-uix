@@ -7,6 +7,7 @@ import { BackButton, DetailHeader, DetailSection, FactGrid } from '@/_UI/DetailF
 import Badge from '@/_UI/Badge';
 import Button from '@/_UI/Button';
 import Modal from '@/_UI/Modal';
+import Can from '@/_components/Can';
 import PageLoader from '@/_UI/PageLoader';
 import toast from 'react-hot-toast';
 import axiosInstance from '@/_utils/axiosInstance';
@@ -131,10 +132,12 @@ const RoleDetail: React.FC = () => {
 						{ label: 'Created', value: role.createdAt ? new Date(role.createdAt).toLocaleDateString() : '\u2014' },
 					]}
 					actions={
-						<Button variant="outlined" size="sm" color={active ? 'error' : 'primary'} onClick={() => setStatusModalOpen(true)} loading={toggling} disabled={toggling}>
-							<Power className="mr-1.5 h-4 w-4" />
-							{active ? 'Deactivate' : 'Activate'}
-						</Button>
+						<Can privilege="MANAGE_ROLES">
+							<Button variant="outlined" size="sm" color={active ? 'error' : 'primary'} onClick={() => setStatusModalOpen(true)} loading={toggling} disabled={toggling}>
+								<Power className="mr-1.5 h-4 w-4" />
+								{active ? 'Deactivate' : 'Activate'}
+							</Button>
+						</Can>
 					}
 				/>
 
@@ -142,9 +145,11 @@ const RoleDetail: React.FC = () => {
 					title="Role details"
 					icon={ShieldCheck}
 					action={
-						<Button variant="text" size="sm" leftIcon={Pencil} onClick={edit}>
-							Edit
-						</Button>
+						<Can privilege="MANAGE_ROLES">
+							<Button variant="text" size="sm" leftIcon={Pencil} onClick={edit}>
+								Edit
+							</Button>
+						</Can>
 					}
 				>
 					<FactGrid facts={[{ label: 'Role name', value: titleCase(role.name) }, { label: 'Description', value: role.description }]} />
@@ -155,9 +160,11 @@ const RoleDetail: React.FC = () => {
 					icon={KeyRound}
 					description="“Manage” covers read, write and delete on its module."
 					action={
-						<Button variant="outlined" size="sm" leftIcon={Pencil} onClick={edit}>
-							Edit permissions
-						</Button>
+						<Can privilege="MANAGE_ROLES">
+							<Button variant="outlined" size="sm" leftIcon={Pencil} onClick={edit}>
+								Edit permissions
+							</Button>
+						</Can>
 					}
 				>
 					{groups.length === 0 ? (

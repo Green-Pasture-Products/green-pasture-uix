@@ -5,19 +5,17 @@
 // Title now comes from findOwningModule (@/_navigations/modules) instead of
 // walking NAV_GROUPS by hand, so detail routes resolve to their parent's title
 // exactly like the tab bar does. The bell and its unread badge are wired to
-// the existing useNotifications hook + NotificationDrawer; the theme toggle to
-// the existing useTheme hook (green-pasture has no standalone ThemeToggle
-// component, so it's inlined here as ogaryde's <ThemeToggle /> would render).
+// the existing useNotifications hook + NotificationDrawer. Theme is changed from
+// the user menu and Settings, not from here.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Bell, ChevronRight, Home, Moon, Search, Sun } from "lucide-react";
+import { Bell, ChevronRight, Home, Search } from "lucide-react";
 import { JumpTo } from "@/_components/JumpTo";
 
 import { findOwningModule } from "@/_navigations/modules";
 import { useNotifications } from "@/_hooks/useNotifications";
-import { useTheme } from "@/_hooks/useTheme";
 import NotificationDrawer from "@/_UI/NotificationDrawer";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -31,7 +29,6 @@ function usePageTitle(): string {
 
 export function TopBar() {
 	const title = usePageTitle();
-	const { isDark, toggleTheme } = useTheme();
 	const [notifOpen, setNotifOpen] = useState(false);
 	const [jumpOpen, setJumpOpen] = useState(false);
 	useEffect(() => {
@@ -77,12 +74,6 @@ export function TopBar() {
 					</button>
 					<Button variant="ghost" size="icon" aria-label="Jump to a page" className="sm:hidden" onClick={() => setJumpOpen(true)}>
 						<Search className="size-4" />
-					</Button>
-					<Button variant="ghost" size="icon" aria-label="Toggle theme" onClick={toggleTheme}>
-						<span className="relative size-4">
-							<Sun className={`text-brand-ink absolute inset-0 size-4 transition-all duration-300 ${isDark ? "scale-0 -rotate-90" : "scale-100 rotate-0"}`} />
-							<Moon className={`text-brand-ink absolute inset-0 size-4 transition-all duration-300 ${isDark ? "scale-100 rotate-0" : "scale-0 rotate-90"}`} />
-						</span>
 					</Button>
 					<Button variant="outline" size="icon" aria-label="Notifications" className="border-border/60 bg-background/60 relative backdrop-blur-sm" onClick={() => setNotifOpen(true)}>
 						<Bell className="text-muted-foreground size-4" />

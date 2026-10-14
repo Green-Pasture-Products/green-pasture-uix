@@ -3,13 +3,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
-import { Save } from "lucide-react";
-import Link from "next/link";
+import { Landmark } from "lucide-react";
+import { useRouter } from "next/router";
 
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
 import { SettingsFrame } from "@/_components/SettingsFrame";
-import Button from "@/_UI/Button";
+import { DetailSection } from "@/_UI/DetailField";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { PanelHeading, SettingsSaveBar, ToggleRow } from "@/_components/SettingsParts";
 import axiosInstance from "@/_utils/axiosInstance";
 import { FormInput } from "@/_UI/FormField";
 
@@ -33,6 +35,8 @@ interface ManualPaymentSettings {
 }
 
 const AdminManualPaymentSettingsPage: React.FC = () => {
+  const router = useRouter();
+  const hasPrivilege = useHasPrivilege();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [settings, setSettings] = useState<ManualPaymentSettings | null>(null);
@@ -41,6 +45,7 @@ const AdminManualPaymentSettingsPage: React.FC = () => {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
     watch,
   } = useForm<ManualPaymentSettingsFormData>({
@@ -100,91 +105,114 @@ const AdminManualPaymentSettingsPage: React.FC = () => {
     }
   };
 
-  const CARD = "border-border bg-card overflow-hidden rounded-xl border";
-  const header = (
-    <div className="px-6 py-4" style={{ borderBottom: "1px solid var(--border-light)" }}>
-      <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-        Manual Payment Settings
-      </h3>
-      <p className="mt-0.5 text-xs" style={{ color: "var(--text-hint)" }}>
-        Bank transfer details shown to customers at checkout
-      </p>
-    </div>
-  );
+  const watched = watch();
+  const canSave = hasPrivilege("MANAGE_STORE_SETTINGS");
 
   return (
     <AdminLayout pageTitle="Manual Payment Settings">
       <SettingsFrame active="manual">
         {isLoading ? (
-          <div className={CARD}>
-            {header}
-            <div className="space-y-4 p-6">
+          <div className="space-y-5">
+            <PanelHeading title="Manual Payment Settings" description="Bank transfer details shown to customers at checkout" />
+            <div className="border-border bg-card space-y-4 rounded-xl border p-6">
               {[0, 1, 2].map((i) => (
                 <div key={i} className="h-10 animate-pulse rounded-lg" style={{ background: "var(--surface-medium)" }} />
               ))}
             </div>
           </div>
         ) : (
-          <>
-            <form onSubmit={handleSubmit(onSubmit)} className={CARD} aria-label="Manual payment settings">
-              {header}
-              <div className="space-y-6 p-6">
-                <div className="flex items-center justify-between gap-4 rounded-lg p-4" style={{ background: "var(--surface-low)" }}>
-                  <div className="min-w-0">
-                    <label htmlFor="isEnabled" className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                      Enable manual bank transfers
-                    </label>
-                    <p className="mt-0.5 text-xs" style={{ color: "var(--text-hint)" }}>
-                      {isEnabled ? "Customers can pay by bank transfer." : "Bank transfer is hidden at checkout."}
-                    </p>
-                  </div>
-                  <input id="isEnabled" type="checkbox" {...register("isEnabled")} className="size-5 shrink-0 rounded accent-[var(--color-primary)]" />
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-hint)" }}>
-                    Bank account
-                  </h4>
-                  <FormInput label="Bank Name" placeholder="e.g., First Bank of Nigeria" error={errors.bankName?.message} {...register("bankName")} />
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormInput label="Account Name" placeholder="e.g., Green Pasture Organics" error={errors.accountName?.message} {...register("accountName")} />
-                    <FormInput label="Account Number" placeholder="e.g., 1234567890" error={errors.accountNumber?.message} {...register("accountNumber")} />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-hint)" }}>
-                    Customer instructions
-                  </h4>
-                  <label htmlFor="instructions" className="block text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
-                    Payment instructions
-                  </label>
-                  <textarea
-                    id="instructions"
-                    {...register("instructions")}
-                    placeholder="e.g., Please include your order number in the transfer reference"
-                    rows={4}
-                    className="w-full resize-y rounded-lg border px-3 py-2 text-sm"
-                    style={{ borderColor: "var(--border-light)", background: "var(--surface-low)", color: "var(--text-primary)" }}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" aria-label="Manual payment settings">
+            <PanelHeading title="Manual Payment Settings" description="Bank transfer details shown to customers at checkout" />
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+              {/* Without the privilege the fields are read-only: look, but no typing into something that cannot be saved. */}
+              <fieldset disabled={!canSave} className="min-w-0 space-y-5 border-0 p-0">
+                <DetailSection title="Availability" description="Turn bank transfer on or off at checkout.">
+                  <ToggleRow
+                    id="isEnabled"
+                    title="Enable manual bank transfers"
+                    description={isEnabled ? "Customers can pay by bank transfer." : "Bank transfer is hidden at checkout."}
+                    checked={!!isEnabled}
+                    onChange={(next) => setValue("isEnabled", next, { shouldDirty: true })}
                   />
-                  <p className="text-xs" style={{ color: "var(--text-hint)" }}>
-                    Shown to customers on the payment instructions page.
-                  </p>
-                </div>
-              </div>
-              <div className="border-border bg-secondary/15 flex justify-end gap-2 border-t px-6 py-3">
-                <Link href="/admin/payments/manual">
-                  <Button type="button" variant="outlined" color="secondary" size="sm">
-                    Cancel
-                  </Button>
-                </Link>
-                <Button type="submit" variant="filled" size="sm" disabled={isSaving} leftIcon={Save}>
-                  {isSaving ? "Saving..." : "Save settings"}
-                </Button>
-              </div>
-            </form>
-            <p className="text-muted-foreground text-xs">These details are shown to every customer who chooses bank transfer at checkout.</p>
-          </>
+                </DetailSection>
+
+                <DetailSection title="Bank account" description="Where customers send the money.">
+                  <div className="space-y-4 py-3">
+                    <FormInput label="Bank Name" placeholder="e.g., First Bank of Nigeria" error={errors.bankName?.message} {...register("bankName")} />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormInput label="Account Name" placeholder="e.g., Green Pasture Organics" error={errors.accountName?.message} {...register("accountName")} />
+                      <FormInput label="Account Number" placeholder="e.g., 1234567890" error={errors.accountNumber?.message} {...register("accountNumber")} />
+                    </div>
+                  </div>
+                </DetailSection>
+
+                <DetailSection title="Customer instructions" description="Shown to customers on the payment instructions page.">
+                  <div className="py-3">
+                    <label htmlFor="instructions" className="mb-1.5 block text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
+                      Payment instructions
+                    </label>
+                    <textarea
+                      id="instructions"
+                      {...register("instructions")}
+                      placeholder="e.g., Please include your order number in the transfer reference"
+                      rows={4}
+                      className="w-full resize-y rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: "var(--border-light)", background: "var(--surface-low)", color: "var(--text-primary)" }}
+                    />
+                  </div>
+                </DetailSection>
+              </fieldset>
+
+              <aside className="space-y-3 lg:sticky lg:top-4">
+                <DetailSection title="What customers see" description="Updates as you type.">
+                  <div className="space-y-4 py-4">
+                    {!isEnabled && (
+                      <p className="rounded-lg px-3 py-2 text-xs font-medium" style={{ background: "var(--surface-medium)", color: "var(--text-secondary)" }}>
+                        Hidden at checkout while transfers are off.
+                      </p>
+                    )}
+                    <div className={isEnabled ? "" : "opacity-50"}>
+                      <div className="mb-3 flex items-center gap-2">
+                        <Landmark className="size-4" style={{ color: "var(--color-primary)" }} />
+                        <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                          Pay by bank transfer
+                        </span>
+                      </div>
+                      <dl className="space-y-3 text-sm">
+                        {[
+                          ["Bank", watched.bankName],
+                          ["Account name", watched.accountName],
+                          ["Account number", watched.accountNumber],
+                        ].map(([label, value]) => (
+                          <div key={label} className="min-w-0">
+                            <dt className="text-xs" style={{ color: "var(--text-hint)" }}>
+                              {label}
+                            </dt>
+                            <dd className={`truncate font-semibold ${label === "Account number" ? "font-mono tracking-wider" : ""}`} style={{ color: "var(--text-primary)" }} title={value || undefined}>
+                              {value || "—"}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                      {watched.instructions?.trim() && (
+                        <p className="mt-4 whitespace-pre-wrap rounded-lg px-3 py-2 text-xs" style={{ background: "var(--surface-medium)", color: "var(--text-secondary)" }}>
+                          {watched.instructions}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </DetailSection>
+              </aside>
+            </div>
+            <SettingsSaveBar
+              hint="These details are shown to every customer who chooses bank transfer at checkout."
+              resetLabel="Cancel"
+              onReset={() => router.push("/admin/payments/manual")}
+              submitLabel="Save settings"
+              saving={isSaving}
+              readOnlyNote={canSave ? undefined : "You can view these details, but changing them needs the MANAGE_STORE_SETTINGS privilege."}
+            />
+          </form>
         )}
       </SettingsFrame>
     </AdminLayout>

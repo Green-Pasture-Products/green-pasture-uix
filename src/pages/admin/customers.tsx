@@ -11,6 +11,7 @@ import AdminLayout from "@/_components/AdminLayout";
 import { DataTable, FilterDef } from "@/_components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
@@ -45,6 +46,7 @@ const CUSTOMER_STATUS_FILTERS: FilterDef[] = [
 const AdminCustomers: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
+	const hasPrivilege = useHasPrivilege();
 	const { customers, customersLoading, customersPagination } = useAppSelector((state) => state.admin);
 	const {
 		page: currentPage,
@@ -165,13 +167,14 @@ const AdminCustomers: React.FC = () => {
 			cell: ({ row }) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/customer/${row.original.id}`) },
-					{ label: "Edit", icon: EDIT_ICON, onClick: () => router.push(`/admin/customer/${row.original.id}?edit=1`) },
+					{ label: "Edit", icon: EDIT_ICON, onClick: () => router.push(`/admin/customer/${row.original.id}?edit=1`), hidden: !hasPrivilege("MANAGE_CUSTOMERS") },
 					{
 						label: row.original.status === "A" ? "Deactivate" : "Activate",
 						icon: STATUS_ICON,
 						onClick: () => setStatusTarget(row.original),
+						hidden: !hasPrivilege("MANAGE_CUSTOMERS"),
 					},
-					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const, hidden: !hasPrivilege("SUPER_ADMIN") },
 				]} />
 			),
 		},

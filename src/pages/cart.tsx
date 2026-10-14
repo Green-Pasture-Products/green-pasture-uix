@@ -28,8 +28,9 @@ import { appConstants } from "@/_redux/constants";
 import { formatRateAsPercent } from "@/_utils/rate";
 import { formatWeight } from "@/_utils/formatWeight";
 import Image from "next/image";
+import { useCheckoutAvailability } from "@/_hooks/useCheckoutAvailability";
 import Layout from "@/_components/Layout";
-import PageLoader from "@/_UI/PageLoader";
+import { CartSkeleton } from "@/_skeletonLoading/PageSkeletons";
 import { useCartOperations } from "@/_hooks/useCart";
 
 const itemVariants = {
@@ -69,6 +70,7 @@ const CartPage: React.FC = () => {
 	const { handleQuantityChange, handleRemoveItem, isUpdating, errors } =
 		useCartOperations();
 
+	const { available: checkoutAvailable } = useCheckoutAvailability();
 	const [isClearing, setIsClearing] = useState(false);
 	const [showClearConfirm, setShowClearConfirm] = useState(false);
 	const [syncing, setSyncing] = useState(true);
@@ -169,7 +171,7 @@ const CartPage: React.FC = () => {
 	if ((loading || (syncing && isAuthenticated)) && items.length === 0) {
 		return (
 			<Layout>
-				<PageLoader fullScreen={false} message="Loading your cart..." />
+				<CartSkeleton />
 			</Layout>
 		);
 	}
@@ -987,8 +989,9 @@ const CartPage: React.FC = () => {
 
 							{/* Checkout Button */}
 							<div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-								<Link href="/checkout" style={{ display: "block" }}>
+								<Link href="/checkout" style={{ display: "block", ...(checkoutAvailable ? {} : { pointerEvents: "none" }) }} aria-disabled={!checkoutAvailable} tabIndex={checkoutAvailable ? undefined : -1}>
 									<button
+										disabled={!checkoutAvailable}
 										className="press-effect"
 										style={{
 											width: "100%",
@@ -999,7 +1002,8 @@ const CartPage: React.FC = () => {
 											borderRadius: "12px",
 											fontWeight: 700,
 											fontSize: "1rem",
-											cursor: "pointer",
+											cursor: checkoutAvailable ? "pointer" : "not-allowed",
+											opacity: checkoutAvailable ? 1 : 0.5,
 											transition: "transform 0.2s ease, box-shadow 0.2s ease",
 											boxShadow: "0 4px 14px rgba(22, 163, 74, 0.3)",
 										}}
@@ -1015,6 +1019,11 @@ const CartPage: React.FC = () => {
 										Proceed to Checkout
 									</button>
 								</Link>
+								{!checkoutAvailable && (
+									<p className="text-center text-xs" style={{ color: "var(--text-hint)" }}>
+										Checkout is temporarily unavailable
+									</p>
+								)}
 
 								<Link href="/products" style={{ display: "block" }}>
 									<button
