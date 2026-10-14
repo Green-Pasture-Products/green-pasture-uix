@@ -31,7 +31,11 @@ function connect() {
 		transports: ["websocket", "polling"],
 		reconnectionDelayMax: 15000,
 	});
-	socket.on("connect", () => watched.forEach((_, key) => announce(key)));
+	socket.on("connect", () => {
+		watched.forEach((_, key) => announce(key));
+		// Anything pushed while the socket was down is gone: tell the pages, so they reload what they show.
+		listeners.get("socket-connected")?.forEach((fn) => fn());
+	});
 	socket.onAny((event, ...args) => listeners.get(event)?.forEach((fn) => fn(...args)));
 	// The server drops sockets whose token it rejects and won't auto-retry those; try again later with whatever token exists by then.
 	const scheduleRetry = () => {

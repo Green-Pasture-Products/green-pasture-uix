@@ -53,6 +53,9 @@ export function useRecordActivity(type: string, id?: string | null) {
 		setLive((n) => n + 1);
 	}, !!id);
 
+	// A panel that was open while the socket dropped has missed events: reload the history whenever the socket (re)connects.
+	useLiveEvent("socket-connected", () => load(1), !!id);
+
 	const add = (event: ActivityEventRow) => {
 		setItems((prev) => (prev.some((e) => e.id === event.id) ? prev : [event, ...prev]));
 	}; // total is bumped by the socket echo
