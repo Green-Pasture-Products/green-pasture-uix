@@ -11,6 +11,7 @@ import { appConstants } from "@/_redux/constants";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import PageLoader from "@/_UI/PageLoader";
+import { OrderDetailSkeleton } from "@/_skeletonLoading/PageSkeletons";
 import Card from "@/_UI/Card";
 import { formatCurrency } from "@/_UI/FormatValue";
 import { formatWeight } from "@/_utils/formatWeight";
@@ -99,7 +100,7 @@ const OrderConfirmationPage: React.FC = () => {
 	if (loading) {
 		return (
 			<Layout pageTitle="Order Confirmation">
-				<PageLoader fullScreen={false} message="Loading order details..." />
+				<OrderDetailSkeleton width="max-w-3xl" />
 			</Layout>
 		);
 	}

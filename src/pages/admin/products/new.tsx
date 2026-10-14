@@ -4,13 +4,17 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
-import { Package } from "lucide-react";
+import { Package, Plus, Trash2 } from "lucide-react";
 import { uuidv7 } from "uuidv7";
 
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
-import { BackButton } from "@/_UI/DetailField";
-import { FormInput, FormFileUpload, FormActions } from "@/_UI/FormField";
+import { BackButton, DetailSection } from "@/_UI/DetailField";
+import { FormInput, FormFileUpload } from "@/_UI/FormField";
+import Button from "@/_UI/Button";
+import CategoryLookup from "@/_UI/CategoryLookup";
+import { SettingsSaveBar } from "@/_components/SettingsParts";
+import { formatCurrency } from "@/_UI/FormatValue";
 import RichTextEditor from "@/_UI/RichTextEditor";
 import TagPicker from "@/_UI/TagPicker";
 import { WEIGHT_UNITS } from "@/_utils/formatWeight";
@@ -19,8 +23,8 @@ import CurrencyInput from "@/_UI/CurrencyInput";
 import NumberInput from "@/_UI/NumberInput";
 import axiosInstance from "@/_utils/axiosInstance";
 import { resolveIdempotencyKey, IdempotencyState } from "@/_utils/idempotencyKey";
-import { useAppDispatch, useAppSelector } from "@/_redux/store";
-import { categoryAction } from "@/_redux/actions/category.action";
+import { useAppSelector } from "@/_redux/store";
+import { useFeature } from "@/_hooks/useFeature";
 
 const variantSchema = z
 	.object({
@@ -74,7 +78,7 @@ type FormData = z.infer<typeof schema>;
 
 const AddProductPage: React.FC = () => {
 	const router = useRouter();
-	const dispatch = useAppDispatch();
+	const makerChecker = useFeature("products.maker_checker");
 	const { productCategories } = useAppSelector((state) => state.category);
 
 	const [images, setImages] = useState<File[]>([]);
@@ -86,6 +90,7 @@ const AddProductPage: React.FC = () => {
 		register,
 		handleSubmit,
 		control,
+		watch,
 		formState: { errors },
 	} = useForm<FormData>({
 		resolver: zodResolver(schema) as any,
@@ -100,12 +105,6 @@ const AddProductPage: React.FC = () => {
 	// creating a second product. A fresh key the moment anything in the form
 	// actually changes, or the retry would hit "same key, different body".
 	const idempotencyStateRef = useRef<IdempotencyState>({ key: undefined, signature: undefined });
-
-	useEffect(() => {
-		if (productCategories.length === 0) {
-			dispatch(categoryAction.fetchAllCategories());
-		}
-	}, [dispatch, productCategories.length]);
 
 	const handleImageSelect = (files: File[]) => {
 		const valid = files.filter((f) => f.type.startsWith("image/"));
@@ -164,11 +163,17 @@ const AddProductPage: React.FC = () => {
 			});
 			idempotencyStateRef.current = resolveIdempotencyKey(idempotencyStateRef.current, signature, uuidv7);
 
-			await axiosInstance.post("items/bulk", formData, {
+			const res = await axiosInstance.post("items/bulk", formData, {
 				headers: { "Content-Type": "multipart/form-data", "Idempotency-Key": idempotencyStateRef.current.key },
 			});
 			// This attempt succeeded — a future submit is a new one, not a retry.
 			idempotencyStateRef.current = { key: undefined, signature: undefined };
+			// 202 = recorded as a request, nothing created until someone else approves it.
+			if (res.status === 202 || res.data?.data?.pending) {
+				toast.success("Sent for approval. Someone else needs to approve it before it goes live.");
+				router.push("/admin/products/approvals");
+				return;
+			}
 			toast.success(data.variants.length > 1 ? `${data.variants.length} pack sizes created` : "Product created successfully");
 			router.push("/admin/products");
 		} catch (err: any) {
@@ -179,21 +184,25 @@ const AddProductPage: React.FC = () => {
 		}
 	};
 
+	// Live summary for the side card.
+	const watchedVariants = watch("variants") ?? [];
+	const watchedCategory = productCategories.find((c) => String(c.id) === String(watch("productId")));
+	const prices = watchedVariants.map((v) => Number(v?.price)).filter((n) => Number.isFinite(n) && n > 0);
+	const stock = watchedVariants.reduce((sum, v) => sum + (Number(v?.unit) || 0), 0);
+	const priceRange = prices.length ? (Math.min(...prices) === Math.max(...prices) ? formatCurrency(prices[0]) : `${formatCurrency(Math.min(...prices))} – ${formatCurrency(Math.max(...prices))}`) : "—";
+
 	return (
 		<AdminLayout>
-			<div className="animate-page-enter space-y-5">
-				<BackButton />
+			<form onSubmit={handleSubmit(onSubmit)} className="@container animate-page-enter mx-auto w-full max-w-6xl space-y-5" aria-label="New product">
+				<BackButton onClick={() => router.push("/admin/products")} />
 
 				<div className="flex items-center gap-3">
-					<div
-						className="w-10 h-10 rounded-lg flex items-center justify-center"
-						style={{ background: "rgba(22,163,74,0.08)" }}
-					>
-						<Package size={20} style={{ color: "var(--color-primary)" }} />
-					</div>
-					<div>
-						<h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
-							Add Product
+					<span className="bg-brand/15 text-brand-ink flex size-11 shrink-0 items-center justify-center rounded-xl">
+						<Package className="size-5" />
+					</span>
+					<div className="min-w-0">
+						<h1 className="truncate text-xl font-semibold" style={{ color: "var(--text-primary)" }}>
+							Add product
 						</h1>
 						<p className="text-sm" style={{ color: "var(--text-hint)" }}>
 							Fill in the details to create a new product listing
@@ -201,231 +210,145 @@ const AddProductPage: React.FC = () => {
 					</div>
 				</div>
 
-				<div
-					className="rounded-xl overflow-hidden"
-					style={{
-						background: "var(--surface-paper)",
-						border: "1px solid var(--border-light)",
-						boxShadow: "var(--shadow-sm)",
-					}}
-				>
-					<div className="px-5 py-4" style={{ borderBottom: "1px solid var(--border-light)" }}>
-						<h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-							Product Details
-						</h3>
+				<div className="grid grid-cols-1 gap-5 @4xl:grid-cols-[minmax(0,1fr)_360px] @4xl:items-start">
+					<div className="min-w-0 space-y-5">
+						<DetailSection title="Basics" description="What it is and where it belongs in the shop.">
+							<div className="space-y-4 py-4">
+								<FormInput label="Product Name" placeholder="e.g. Brain Super Food" required {...register("name")} error={errors.name?.message} />
+								<Controller
+									name="productId"
+									control={control}
+									render={({ field }) => <CategoryLookup required value={field.value} onChange={field.onChange} error={errors.productId?.message} hint="Search by name or what it covers." />}
+								/>
+								<div>
+									<label className="mb-1.5 block text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
+										Description
+									</label>
+									{/* Stored as HTML so pasted formatting survives; the storefront renders it through SanitizedHtml. */}
+									<Controller
+										name="description"
+										control={control}
+										render={({ field }) => <RichTextEditor value={field.value ?? ""} onChange={field.onChange} placeholder="Describe the product benefits, ingredients, etc." error={errors.description?.message} />}
+									/>
+								</div>
+							</div>
+						</DetailSection>
+
+						<DetailSection
+							title="Pack sizes"
+							description="One row per size. Each row becomes its own listing with its own price and stock, grouped as one product in the shop."
+							action={
+								<Button type="button" variant="tonal" size="sm" leftIcon={Plus} onClick={() => append({ price: 0, unit: 0 } as any)}>
+									Add size
+								</Button>
+							}
+						>
+							<div className="space-y-4 py-4">
+								{fields.map((field, index) => {
+									const v = watchedVariants[index];
+									const discount = v?.originalPrice && Number(v.originalPrice) > Number(v.price) && Number(v.price) > 0 ? Math.round((1 - Number(v.price) / Number(v.originalPrice)) * 100) : 0;
+									return (
+										<div key={field.id} className="space-y-4 rounded-xl border p-4" style={{ background: "var(--surface-low)", borderColor: "var(--border-light)" }}>
+											<div className="flex items-center justify-between gap-3">
+												<div className="flex min-w-0 items-center gap-2">
+													<span className="text-xs font-semibold tracking-[0.12em] uppercase" style={{ color: "var(--text-hint)" }}>
+														Size {index + 1}
+													</span>
+													{discount > 0 && (
+														<span className="rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap" style={{ background: "rgba(22,163,74,0.12)", color: "var(--color-primary)" }}>
+															{discount}% off
+														</span>
+													)}
+												</div>
+												{/* The first row is the product itself — removing it would leave nothing to create. */}
+												{index > 0 && (
+													<button type="button" onClick={() => remove(index)} className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium whitespace-nowrap text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20" aria-label={`Remove size ${index + 1}`}>
+														<Trash2 className="size-3.5" /> Remove
+													</button>
+												)}
+											</div>
+
+											<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+												<Controller
+													name={`variants.${index}.weightValue` as const}
+													control={control}
+													render={({ field: f }) => <NumberInput label="Pack Size" placeholder="e.g. 250" prefix="Size" step="0.01" min={0} value={(f.value as number | undefined) ?? ""} onChange={f.onChange} error={(errors as any).variants?.[index]?.weightValue?.message} />}
+												/>
+												<Controller
+													name={`variants.${index}.weightUnit` as const}
+													control={control}
+													render={({ field: f }) => <FormSelectDropdown label="Unit" value={f.value ?? ""} onChange={f.onChange} options={WEIGHT_UNITS.map((u) => ({ value: u, label: u }))} placeholder="Select a unit" error={(errors as any).variants?.[index]?.weightUnit?.message} searchable={false} />}
+												/>
+												<Controller
+													name={`variants.${index}.price` as const}
+													control={control}
+													render={({ field: f }) => <CurrencyInput label="Selling Price" required placeholder="0.00" value={f.value || ""} onChange={(val) => f.onChange(parseFloat(val) || 0)} error={(errors as any).variants?.[index]?.price?.message} showWords />}
+												/>
+												<Controller
+													name={`variants.${index}.originalPrice` as const}
+													control={control}
+													render={({ field: f }) => <CurrencyInput label="Original Price" placeholder="0.00 (leave empty if not on sale)" value={f.value ?? ""} onChange={(val) => f.onChange(val === "" ? undefined : parseFloat(val))} error={(errors as any).variants?.[index]?.originalPrice?.message} />}
+												/>
+												<Controller
+													name={`variants.${index}.unit` as const}
+													control={control}
+													render={({ field: f }) => <NumberInput label="Available Units" placeholder="0" required prefix="Qty" value={f.value ?? ""} onChange={(val) => f.onChange(parseInt(val) || 0)} error={(errors as any).variants?.[index]?.unit?.message} />}
+												/>
+											</div>
+										</div>
+									);
+								})}
+
+								{/* `.root`, not `.message`. Once the rows are mounted, zodResolver sees `variants.0.price` in the field
+								    registry and routes an array-level issue to errors.variants.root — reading .message directly renders
+								    nothing, so a duplicate-size submit would just silently do nothing. */}
+								{(errors as any).variants?.root?.message && (
+									<p role="alert" className="text-xs font-medium text-red-500">
+										{(errors as any).variants.root.message}
+									</p>
+								)}
+							</div>
+						</DetailSection>
 					</div>
 
-					<form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
-						<FormInput
-							label="Product Name"
-							placeholder="e.g. Brain Super Food"
-							required
-							{...register("name")}
-							error={errors.name?.message}
-						/>
-
-						<Controller
-							name="productId"
-							control={control}
-							render={({ field }) => (
-								<FormSelectDropdown
-									label="Category"
-									required
-									placeholder="Select a category"
-									searchable={productCategories.length > 5}
-									options={productCategories.map((c) => ({
-										value: c.id,
-										label: c.name,
-									}))}
-									value={field.value}
-									onChange={field.onChange}
-									error={errors.productId?.message}
-								/>
-							)}
-						/>
-
-						<div className="space-y-3">
-							<div className="flex items-center justify-between">
-								<label className="block text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-									Pack sizes <span style={{ color: "#ef4444" }}>*</span>
-								</label>
-								<button
-									type="button"
-									onClick={() => append({ price: 0, unit: 0 } as any)}
-									className="text-xs font-semibold"
-									style={{ color: "var(--color-primary)" }}
-								>
-									+ Add size
-								</button>
+					<div className="min-w-0 space-y-5 @4xl:sticky @4xl:top-4">
+						<DetailSection title="Images" description="Up to 5, shared by every pack size.">
+							<div className="py-4">
+								<FormFileUpload hint="max 5" previews={previews} onSelect={handleImageSelect} onRemove={removeImage} maxFiles={5} />
 							</div>
-							<p className="text-xs" style={{ color: "var(--text-hint)" }}>
-								One row per size. Each row becomes its own listing with its own price and stock, grouped as one product in the shop.
-							</p>
+						</DetailSection>
 
-							{fields.map((field, index) => (
-								<div
-									key={field.id}
-									className="rounded-lg p-4 space-y-4"
-									style={{ background: "var(--surface-low)", border: "1px solid var(--border-light)" }}
-								>
-									<div className="flex items-center justify-between">
-										<span className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--text-hint)" }}>
-											Size {index + 1}
-										</span>
-										{/* The first row is the product itself — removing it would
-										    leave nothing to create. */}
-										{index > 0 && (
-											<button
-												type="button"
-												onClick={() => remove(index)}
-												className="text-xs font-medium"
-												style={{ color: "#ef4444" }}
-												aria-label={`Remove size ${index + 1}`}
-											>
-												Remove
-											</button>
-										)}
+						<DetailSection title="Tags">
+							<div className="py-3">
+								<TagPicker value={selectedTagIds} onChange={setSelectedTagIds} label="" />
+							</div>
+						</DetailSection>
+
+						<DetailSection title="Summary" description="Updates as you fill the form.">
+							<dl className="space-y-3 py-4 text-sm">
+								{[
+									["Category", watchedCategory?.name ?? "Not chosen yet"],
+									["Pack sizes", String(watchedVariants.length)],
+									["Price", priceRange],
+									["Total stock", String(stock)],
+									["Images", String(images.length)],
+								].map(([label, value]) => (
+									<div key={label} className="flex items-baseline justify-between gap-4">
+										<dt style={{ color: "var(--text-hint)" }}>{label}</dt>
+										<dd className="min-w-0 truncate font-semibold tabular-nums" style={{ color: "var(--text-primary)" }} title={value}>
+											{value}
+										</dd>
 									</div>
-
-									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-										<Controller
-											name={`variants.${index}.weightValue` as const}
-											control={control}
-											render={({ field: f }) => (
-												<NumberInput
-													label="Pack Size"
-													placeholder="e.g. 250"
-													prefix="Size"
-													step="0.01"
-													min={0}
-													value={(f.value as number | undefined) ?? ""}
-													onChange={f.onChange}
-													error={(errors as any).variants?.[index]?.weightValue?.message}
-												/>
-											)}
-										/>
-										<Controller
-											name={`variants.${index}.weightUnit` as const}
-											control={control}
-											render={({ field: f }) => (
-												<FormSelectDropdown
-													label="Unit"
-													value={f.value ?? ""}
-													onChange={f.onChange}
-													options={WEIGHT_UNITS.map((u) => ({ value: u, label: u }))}
-													placeholder="Select a unit"
-													error={(errors as any).variants?.[index]?.weightUnit?.message}
-													searchable={false}
-												/>
-											)}
-										/>
-									</div>
-
-									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-										<Controller
-											name={`variants.${index}.price` as const}
-											control={control}
-											render={({ field: f }) => (
-												<CurrencyInput
-													label="Selling Price"
-													required
-													placeholder="0.00"
-													value={f.value || ""}
-													onChange={(val) => f.onChange(parseFloat(val) || 0)}
-													error={(errors as any).variants?.[index]?.price?.message}
-													showWords
-												/>
-											)}
-										/>
-										<Controller
-											name={`variants.${index}.originalPrice` as const}
-											control={control}
-											render={({ field: f }) => (
-												<CurrencyInput
-													label="Original Price"
-													placeholder="0.00 (leave empty if not on sale)"
-													value={f.value ?? ""}
-													onChange={(val) => f.onChange(val === "" ? undefined : parseFloat(val))}
-													error={(errors as any).variants?.[index]?.originalPrice?.message}
-												/>
-											)}
-										/>
-									</div>
-
-									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-										<Controller
-											name={`variants.${index}.unit` as const}
-											control={control}
-											render={({ field: f }) => (
-												<NumberInput
-													label="Available Units"
-													placeholder="0"
-													required
-													prefix="Qty"
-													value={f.value ?? ""}
-													onChange={(val) => f.onChange(parseInt(val) || 0)}
-													error={(errors as any).variants?.[index]?.unit?.message}
-												/>
-											)}
-										/>
-									</div>
-								</div>
-							))}
-
-							{/* `.root`, not `.message`. Once the rows are mounted,
-							    zodResolver sees `variants.0.price` in the field
-							    registry and routes an array-level issue to
-							    errors.variants.root — reading .message directly
-							    renders nothing, so a duplicate-size submit would
-							    just silently do nothing. */}
-							{(errors as any).variants?.root?.message && (
-								<p className="text-xs font-medium" style={{ color: "#ef4444" }}>
-									{(errors as any).variants.root.message}
-								</p>
-							)}
-						</div>
-
-						<TagPicker value={selectedTagIds} onChange={setSelectedTagIds} />
-
-						<div>
-							<label className="mb-1.5 block text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-								Description
-							</label>
-							{/* Stored as HTML so pasted formatting survives; the storefront
-							    renders it through SanitizedHtml. */}
-							<Controller
-								name="description"
-								control={control}
-								render={({ field }) => (
-									<RichTextEditor
-										value={field.value ?? ""}
-										onChange={field.onChange}
-										placeholder="Describe the product benefits, ingredients, etc."
-										error={errors.description?.message}
-									/>
-								)}
-							/>
-						</div>
-
-						<FormFileUpload
-							label="Product Images"
-							hint="max 5 — shared by every pack size"
-							previews={previews}
-							onSelect={handleImageSelect}
-							onRemove={removeImage}
-							maxFiles={5}
-						/>
-
-						<FormActions
-							onCancel={() => router.push("/admin/products")}
-							submitLabel="Create Product"
-							isSubmitting={isSubmitting}
-						/>
-					</form>
+								))}
+							</dl>
+						</DetailSection>
+					</div>
 				</div>
-			</div>
+
+				<SettingsSaveBar hint={makerChecker ? "Someone else has to approve this before the product is created." : "You can add more sizes and images after creating it."} resetLabel="Cancel" onReset={() => router.push("/admin/products")} submitLabel={makerChecker ? "Submit for approval" : "Create product"} saving={isSubmitting} />
+			</form>
 		</AdminLayout>
 	);
 };
 
-export default withAdminAuth(AddProductPage);
+export default withAdminAuth(AddProductPage, "CREATE_PRODUCT");

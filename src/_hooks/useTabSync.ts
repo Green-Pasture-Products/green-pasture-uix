@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 
 import { findOwningModule } from "@/_navigations/modules";
 import { useTabsStore } from "@/_store/tabs.store";
-import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { useCanOpenModule } from "@/_hooks/usePrivilege";
 
 /**
  * Opens the tab matching the current URL on navigation, when the user may view it.
@@ -15,10 +15,10 @@ import { useHasPrivilege } from "@/_hooks/usePrivilege";
 export function useTabSync(): void {
 	const router = useRouter();
 	const openTab = useTabsStore((s) => s.openTab);
-	const hasPrivilege = useHasPrivilege();
+	const canOpen = useCanOpenModule();
 
 	useEffect(() => {
 		const mod = findOwningModule(router.asPath.split("?")[0]);
-		if (mod && hasPrivilege(mod.privilege)) openTab(mod.path);
-	}, [router.asPath, openTab, hasPrivilege]);
+		if (mod && canOpen(mod)) openTab(mod.path);
+	}, [router.asPath, openTab, canOpen]);
 }

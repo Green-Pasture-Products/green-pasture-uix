@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 3210;
+// E2E_PORT lets several runs (parallel agents, a dev's own run) coexist: each gets its own server and build directory.
+const PORT = Number(process.env.E2E_PORT ?? 3210);
 
 export default defineConfig({
 	testDir: "./e2e",
@@ -17,7 +18,7 @@ export default defineConfig({
 	},
 	projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 	webServer: {
-		command: `NEXT_DIST_DIR=.next-e2e npx next dev -p ${PORT}`,
+		command: `NEXT_DIST_DIR=.next-e2e-${PORT} npx next dev -p ${PORT}`,
 		url: `http://127.0.0.1:${PORT}/checkout-card`,
 		reuseExistingServer: !process.env.CI,
 		timeout: 180_000,

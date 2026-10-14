@@ -26,6 +26,9 @@ import { TREND, statusColor } from "@/_components/charts/chart-colors";
 import { DataTable } from "@/_components/DataTable";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAppDispatch } from "@/_redux/store";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { useFeature } from "@/_hooks/useFeature";
+import DashboardWelcome from "@/_components/DashboardWelcome";
 import { analyticsAction } from "@/_redux/actions/analytics.action";
 import { formatCurrency, formatCurrencyFull, toDayBucket } from "@/_utils/format";
 import { comparePeriods, lastDays, type Point } from "@/_utils/periodCompare";
@@ -145,7 +148,7 @@ const customerColumns: ColumnDef<RecentCustomer, any>[] = [
 	},
 ];
 
-const AdminDashboard: React.FC = () => {
+const AnalyticsDashboard: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const [analytics, setAnalytics] = useState<any>(null);
 	const [loading, setLoading] = useState(true);
@@ -437,6 +440,13 @@ const AdminDashboard: React.FC = () => {
 			</div>
 		</AdminLayout>
 	);
+};
+
+/** The numbers all come from one VIEW_ANALYTICS endpoint, so without that privilege there is nothing to fetch or show. */
+const AdminDashboard: React.FC = () => {
+	const hasPrivilege = useHasPrivilege();
+	const analyticsOn = useFeature("admin.analytics");
+	return analyticsOn && hasPrivilege("VIEW_ANALYTICS") ? <AnalyticsDashboard /> : <DashboardWelcome />;
 };
 
 export default withAdminAuth(AdminDashboard);

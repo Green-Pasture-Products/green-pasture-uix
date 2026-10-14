@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { statusColumn } from "@/_components/statusColumn";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 import toast from "react-hot-toast";
@@ -85,6 +86,7 @@ const Countries: React.FC = () => {
 				</Badge>
 			),
 		},
+		statusColumn(),
 		{
 			id: "actions",
 			header: "Action",

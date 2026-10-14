@@ -39,6 +39,7 @@ test("every admin detail route resolves to the module its breadcrumb links back 
 	const detailRoutes: Array<[string, string]> = [
 		["/admin/product/019f-abc", "Products"],
 		["/admin/products/new", "Products"],
+		["/admin/products/approvals", "Products"],
 		["/admin/order/019f-abc", "Orders"],
 		["/admin/customer/019f-abc", "Customers"],
 		["/admin/staff/019f-abc", "Team & Role Access"],
@@ -56,10 +57,23 @@ test("every admin detail route resolves to the module its breadcrumb links back 
 		["/admin/invitations/new", "Invitations"],
 		["/admin/audit-log/019f-abc", "Audit Log"],
 		["/admin/payments/019f-abc", "Manual Payments"],
+		["/admin/payments/confirmations", "Manual Payments"],
 		["/admin/product/019f-abc/sizes/new", "Products"],
+		["/admin/feature-flag/019f-abc", "Feature Flags"],
+		["/admin/feature-flags/new", "Feature Flags"],
+		["/admin/feature-flags/approvals", "Feature Flags"],
 	];
 	for (const [route, expected] of detailRoutes) {
 		assert.equal(findOwningModule(route)?.title, expected, route);
 		assert.equal(findModule(route), undefined, `${route} must not be a module itself`);
+	}
+});
+
+test("every module privilege is a permission the backend seeds", async () => {
+	const { readFileSync } = await import("node:fs");
+	const seed = readFileSync(new URL("../../../green-pasture-api/src/database/seeders/entities-seeder/data.ts", import.meta.url), "utf8");
+	const seeded = new Set([...seed.matchAll(/name: '([A-Z_]+)'/g)].map((m) => m[1]));
+	for (const m of MODULES) {
+		for (const p of [m.privilege ?? []].flat()) assert.ok(seeded.has(p), `${m.title} needs ${p}, which is not seeded`);
 	}
 });

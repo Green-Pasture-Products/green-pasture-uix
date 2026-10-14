@@ -75,6 +75,17 @@ interface CategoryBarChartProps {
 	cellColors?: string[];
 }
 
+/** Axis label that never wraps: one line, cut with an ellipsis (full text on hover). */
+function OneLineTick({ x, y, payload }: { x?: number; y?: number; payload?: { value: string } }) {
+	const text = String(payload?.value ?? "");
+	return (
+		<text x={x} y={y} dy={4} textAnchor="end" fill="var(--muted-foreground)" fontSize={11}>
+			<title>{text}</title>
+			{text.length > 22 ? `${text.slice(0, 21)}…` : text}
+		</text>
+	);
+}
+
 /** Categorical/grouped bar chart for the shapes TrendAreaChart and BreakdownDonut don't cover. */
 function CategoryBarChart({
 	data,
@@ -95,7 +106,7 @@ function CategoryBarChart({
 				{isVertical ? (
 					<>
 						<XAxis type="number" tickFormatter={valueFormatter} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} />
-						<YAxis type="category" dataKey={xKey} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} width={90} />
+						<YAxis type="category" dataKey={xKey} tick={<OneLineTick />} axisLine={false} tickLine={false} width={150} />
 					</>
 				) : (
 					<>

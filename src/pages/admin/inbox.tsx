@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import { Activity, CheckCheck, Check, Inbox as InboxIcon, Megaphone, Package, Undo2, Wallet, AlertTriangle, Bell } from "lucide-react";
+import { Activity, CheckCheck, Check, Inbox as InboxIcon, Megaphone, Package, Undo2, Wallet, ShieldCheck, AlertTriangle, Bell, ClipboardCheck } from "lucide-react";
 import toast from "react-hot-toast";
 
 import withAdminAuth from "@/_components/withAdminAuth";
@@ -28,12 +28,14 @@ const TABS: { id: View; label: string; icon: React.ElementType; hint: string; em
 const iconFor = (n: InboxNotification) => {
 	if (n.metadata?.kind === "announcement") return Megaphone;
 	if (n.type.startsWith("ORDER")) return Package;
+	if (n.type.startsWith("PAYMENT_DECISION")) return ShieldCheck;
 	if (n.type.startsWith("PAYMENT")) return Wallet;
 	if (n.type === "LOW_STOCK") return AlertTriangle;
+	if (n.type.startsWith("PRODUCT_CHANGE")) return ClipboardCheck;
 	return Bell;
 };
 
-const targetFor = (n: InboxNotification): string | null => (n.metadata?.orderReference ? `/admin/order/${n.metadata.orderReference}` : null);
+const targetFor = (n: InboxNotification): string | null => (n.metadata?.link ?? (n.metadata?.orderReference ? `/admin/order/${n.metadata.orderReference}` : null));
 
 const groupLabel = (iso: string) => {
 	const d = new Date(iso);

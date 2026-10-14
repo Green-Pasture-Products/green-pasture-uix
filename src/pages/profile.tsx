@@ -13,7 +13,7 @@ import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
 import { FormSelect } from "@/_UI/FormField";
 import Button from "@/_UI/Button";
-import PageLoader from "@/_UI/PageLoader";
+import { ProfileSkeleton } from "@/_skeletonLoading/PageSkeletons";
 import AuthPrompt from "@/_UI/AuthPrompt";
 
 const Profile = () => {
@@ -112,7 +112,7 @@ const Profile = () => {
 	if (isLoading && !profile) {
 		return (
 			<Layout pageTitle="Profile">
-				<PageLoader fullScreen={false} message="Loading profile..." />
+				<ProfileSkeleton />
 			</Layout>
 		);
 	}

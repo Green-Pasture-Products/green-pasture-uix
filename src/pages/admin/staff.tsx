@@ -11,6 +11,8 @@ import AdminLayout from "@/_components/AdminLayout";
 import { DataTable } from "@/_components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
+import Can from "@/_components/Can";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
@@ -35,6 +37,7 @@ const DELETE_ICON = (
 const Staff: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
+	const hasPrivilege = useHasPrivilege();
 	const { staffList, staffLoading, staffPagination } = useAppSelector((state) => state.admin);
 	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
 
@@ -56,7 +59,7 @@ const Staff: React.FC = () => {
 
 	const handleStatusUpdate = async () => {
 		if (!statusTarget) return;
-		const isActive = statusTarget.status === "ACTIVE";
+		const isActive = statusTarget.status === "A";
 		setIsUpdatingStatus(true);
 		try {
 			await dispatch(adminAction.updateStaffStatusAsync({
@@ -134,8 +137,8 @@ const Staff: React.FC = () => {
 			accessorKey: "status",
 			header: "Status",
 			cell: ({ getValue }) => (
-				<Badge variant={String(getValue()) === "ACTIVE" ? "success" : "neutral"} dot>
-					{String(getValue())}
+				<Badge variant={getValue() === "A" ? "success" : "neutral"} dot>
+					{getValue() === "A" ? "Active" : "Inactive"}
 				</Badge>
 			),
 		},
@@ -157,13 +160,14 @@ const Staff: React.FC = () => {
 			cell: ({ row }) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/staff/${row.original.id}`) },
-					{ label: "Edit", icon: EDIT_ICON, onClick: () => router.push(`/admin/staff/${row.original.id}?edit=1`) },
+					{ label: "Edit", icon: EDIT_ICON, onClick: () => router.push(`/admin/staff/${row.original.id}?edit=1`), hidden: !hasPrivilege("MANAGE_STAFF") },
 					{
-						label: row.original.status === "ACTIVE" ? "Deactivate" : "Activate",
+						label: row.original.status === "A" ? "Deactivate" : "Activate",
 						icon: STATUS_ICON,
 						onClick: () => setStatusTarget(row.original),
+						hidden: !hasPrivilege("MANAGE_STAFF"),
 					},
-					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const, hidden: !hasPrivilege("SUPER_ADMIN") },
 				]} />
 			),
 		},
@@ -192,9 +196,11 @@ const Staff: React.FC = () => {
 					onRowClick={(row) => router.push(`/admin/staff/${row.id}`)}
 					// Staff accounts only come into existence by accepting an invite, so adding one starts there.
 					toolbar={
-						<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/invitations/new")}>
-							Invite Staff
-						</Button>
+						<Can privilege="MANAGE_STAFF">
+							<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/invitations/new")}>
+								Invite Staff
+							</Button>
+						</Can>
 					}
 					emptyMessage="No staff members found"
 				/>
@@ -203,12 +209,12 @@ const Staff: React.FC = () => {
 				<Modal
 					isOpen={!!statusTarget}
 					onClose={() => setStatusTarget(null)}
-					title={`${statusTarget?.status === "ACTIVE" ? "Deactivate" : "Activate"} Staff`}
+					title={`${statusTarget?.status === "A" ? "Deactivate" : "Activate"} Staff`}
 					size="sm"
 				>
 					<div className="space-y-4">
 						<p className="text-sm text-gray-600 dark:text-gray-300">
-							Are you sure you want to {statusTarget?.status === "ACTIVE" ? "deactivate" : "activate"}{" "}
+							Are you sure you want to {statusTarget?.status === "A" ? "deactivate" : "activate"}{" "}
 							<span className="font-semibold text-on-surface dark:text-white">
 								{statusTarget?.profile?.firstName} {statusTarget?.profile?.lastName}
 							</span>?
@@ -219,12 +225,12 @@ const Staff: React.FC = () => {
 							</Button>
 							<Button
 								variant="filled"
-								color={statusTarget?.status === "ACTIVE" ? "error" : "primary"}
+								color={statusTarget?.status === "A" ? "error" : "primary"}
 								size="sm"
 								loading={isUpdatingStatus}
 								onClick={handleStatusUpdate}
 							>
-								{statusTarget?.status === "ACTIVE" ? "Deactivate" : "Activate"}
+								{statusTarget?.status === "A" ? "Deactivate" : "Activate"}
 							</Button>
 						</div>
 					</div>

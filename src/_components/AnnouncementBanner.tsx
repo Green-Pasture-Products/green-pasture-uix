@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Megaphone, X } from "lucide-react";
 import { useAppSelector } from "@/_redux/store";
 import axiosInstance from "@/_utils/axiosInstance";
+import { useFeature } from "@/_hooks/useFeature";
 import { useLiveEvent } from "@/_hooks/useLiveEvent";
 import { SanitizedHtml } from "@/components/egfm/rich-text";
 import type { Announcement } from "@/types/live";
@@ -22,6 +23,7 @@ const readDismissed = (): string[] => {
 /** Active announcements for this visitor. Signed-in users also get them live; guests see the latest on load/focus. */
 const AnnouncementBanner: React.FC = () => {
 	const { isAuthenticated } = useAppSelector((s) => s.auth);
+	const enabled = useFeature("storefront.announcements");
 	const [items, setItems] = useState<Announcement[]>([]);
 	const [dismissed, setDismissed] = useState<string[]>([]);
 
@@ -54,7 +56,7 @@ const AnnouncementBanner: React.FC = () => {
 	};
 
 	const visible = items.filter((a) => !dismissed.includes(a.id)).slice(0, MAX_SHOWN);
-	if (visible.length === 0) return null;
+	if (!enabled || visible.length === 0) return null;
 
 	return (
 		<div className="space-y-px" role="region" aria-label="Announcements">

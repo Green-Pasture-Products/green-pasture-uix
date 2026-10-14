@@ -1,6 +1,7 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { LogIn, UserPlus, ShoppingBag, X } from "lucide-react";
+import { useFeature } from "@/_hooks/useFeature";
 import Button from "./Button";
 import { safeRedirectTarget } from "@/_utils/redirect";
 
@@ -22,6 +23,7 @@ const AuthPrompt: React.FC<AuthPromptProps> = ({
 	showContinueBrowsing = true,
 }) => {
 	const router = useRouter();
+	const signupOn = useFeature("auth.signup");
 
 	if (!isOpen) return null;
 
@@ -93,6 +95,7 @@ const AuthPrompt: React.FC<AuthPromptProps> = ({
 							Sign In
 						</Button>
 
+						{signupOn && (
 						<Button
 							variant="outlined"
 							size="lg"
@@ -102,6 +105,7 @@ const AuthPrompt: React.FC<AuthPromptProps> = ({
 						>
 							Create Account
 						</Button>
+						)}
 
 						{showContinueBrowsing && onClose && (
 							<button

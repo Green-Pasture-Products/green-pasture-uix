@@ -3,6 +3,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Activity, ChevronDown, MessageSquare, Send, PanelRightClose, PanelRightOpen, Pencil, Plus, ShieldAlert, Trash2, X } from "lucide-react";
 import { useRecordActivity } from "@/_hooks/useRecordActivity";
+import { Feature } from "@/_components/FeatureFlagProvider";
 import axiosInstance from "@/_utils/axiosInstance";
 import type { ActivityEventRow } from "@/types/live";
 
@@ -26,7 +27,14 @@ const dayLabel = (iso: string) => {
 const clock = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 /** orderStatus -> "Order status" */
 const fieldLabel = (f: string) => f.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
-const show = (v: unknown) => (v === null || v === undefined || v === "" ? "—" : String(v));
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+/** "18 Oct 2026", with the time ("21 Oct 2026, 3:30 PM") only when it isn't midnight. */
+const friendlyDate = (iso: string) => {
+	const d = new Date(iso);
+	const midnight = d.getHours() === 0 && d.getMinutes() === 0;
+	return d.toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", ...(midnight ? {} : { hour: "numeric", minute: "2-digit" }) });
+};
+const show = (v: unknown) => (v === null || v === undefined || v === "" ? "—" : typeof v === "string" && ISO_DATE.test(v) ? friendlyDate(v) : String(v));
 
 /** "Ada Obi updated order X": the actor in bold, the rest quiet. */
 function Headline({ event }: { event: ActivityEventRow }) {
@@ -68,7 +76,7 @@ function EventRow({ event, entityType }: { event: ActivityEventRow; entityType: 
 				</div>
 				{event.metadata?.body && (
 					<p className="whitespace-pre-wrap rounded-lg px-2.5 py-1.5 text-xs [overflow-wrap:anywhere]" style={{ background: "var(--surface-medium)", color: "var(--text-primary)" }}>
-						{event.metadata.body}
+						<CommentText body={event.metadata.body} names={(event.metadata.mentions ?? []).map((m) => m.name)} />
 					</p>
 				)}
 				{shown.length > 0 && (
@@ -124,50 +132,179 @@ function useDocked() {
 	return docked;
 }
 
+type Person = { id: string; name: string };
+
+/** "@Ada Obi" typed just before the caret, if any. */
+const mentionAt = (text: string, caret: number) => /(^|\s)@([^\s@]{0,30})$/.exec(text.slice(0, caret));
+
+/** Comment text with the people it names highlighted. */
+function CommentText({ body, names }: { body: string; names: string[] }) {
+	if (!names.length) return <>{body}</>;
+	const pattern = new RegExp(`(@(?:${names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}))`, "g");
+	return (
+		<>
+			{body.split(pattern).map((part, i) =>
+				i % 2 ? (
+					<span key={i} className="rounded px-1 font-medium" style={{ background: "var(--surface-medium)", color: "var(--color-primary)" }}>
+						{part}
+					</span>
+				) : (
+					part
+				),
+			)}
+		</>
+	);
+}
+
 function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: (e: ActivityEventRow) => void }) {
 	const [text, setText] = useState("");
+	const [caret, setCaret] = useState(0);
+	const [picked, setPicked] = useState<Map<string, string>>(new Map());
+	const [people, setPeople] = useState<Person[]>([]);
+	const [active, setActive] = useState(0);
+	const [dismissed, setDismissed] = useState(false);
 	const [busy, setBusy] = useState(false);
 	const [err, setErr] = useState("");
+	const box = useRef<HTMLTextAreaElement>(null);
+	const pendingCaret = useRef<number | null>(null);
+
+	useLayoutEffect(() => {
+		if (pendingCaret.current == null) return;
+		box.current?.setSelectionRange(pendingCaret.current, pendingCaret.current);
+		pendingCaret.current = null;
+	}, [text]);
+
+	const token = mentionAt(text, caret);
+	const query = token?.[2] ?? "";
+	const open = !!token && !dismissed;
+	useEffect(() => {
+		if (!open) return setPeople([]);
+		let stale = false;
+		const t = setTimeout(() => {
+			axiosInstance
+				.get(`activity/record/${type}/${id}/mentionable`, { params: { q: query } })
+				.then((res) => !stale && setPeople(res.data?.data ?? []))
+				.catch(() => !stale && setPeople([]));
+		}, 120);
+		return () => {
+			stale = true;
+			clearTimeout(t);
+		};
+	}, [open, query, type, id]);
+	const options = open ? people : [];
+
+	const update = (value: string, at: number) => {
+		setText(value);
+		setCaret(at);
+		setDismissed(false);
+		setActive(0);
+	};
+
+	const choose = (person: Person) => {
+		if (!token) return;
+		const start = caret - query.length - 1;
+		const at = start + person.name.length + 2;
+		setPicked((m) => new Map(m).set(person.name, person.id));
+		pendingCaret.current = at;
+		update(`${text.slice(0, start)}@${person.name} ${text.slice(caret)}`, at);
+	};
+
 	const send = async () => {
-		if (!text.trim() || busy) return;
+		const body = text.trim();
+		if (!body || busy) return;
 		setBusy(true);
 		setErr("");
 		try {
-			const res = await axiosInstance.post(`activity/record/${type}/${id}/comments`, { body: text.trim() });
+			// Only people still named in the text are told.
+			const mentions = [...picked].filter(([name]) => body.includes(`@${name}`)).map(([, pid]) => pid);
+			const res = await axiosInstance.post(`activity/record/${type}/${id}/comments`, { body, mentions });
 			onAdded(res.data?.data);
 			setText("");
+			setPicked(new Map());
 		} catch {
 			setErr("Could not post comment.");
 		} finally {
 			setBusy(false);
 		}
 	};
+
+	const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+		if (options.length) {
+			if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+				e.preventDefault();
+				setActive((i) => (i + (e.key === "ArrowDown" ? 1 : options.length - 1)) % options.length);
+				return;
+			}
+			if (e.key === "Enter" || e.key === "Tab") {
+				e.preventDefault();
+				choose(options[active] ?? options[0]);
+				return;
+			}
+			if (e.key === "Escape") return setDismissed(true);
+		}
+		if (e.key === "Enter" && !e.shiftKey) {
+			e.preventDefault();
+			send();
+		}
+	};
+
 	return (
-		<div className="border-t p-3" style={{ borderColor: "var(--border-light)" }}>
-			<div className="flex items-end gap-2">
+		<div className="relative border-t p-3" style={{ borderColor: "var(--border-light)" }}>
+			{options.length > 0 && (
+				<ul role="listbox" aria-label="People to mention" className="absolute inset-x-3 bottom-full mb-1 overflow-hidden rounded-xl border py-1 shadow-lg" style={{ background: "var(--surface-paper)", borderColor: "var(--border-light)" }}>
+					{options.map((p, i) => (
+						<li
+							key={p.id}
+							role="option"
+							aria-selected={i === active}
+							onMouseDown={(e) => {
+								e.preventDefault();
+								choose(p);
+							}}
+							onMouseEnter={() => setActive(i)}
+							className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-xs"
+							style={{ background: i === active ? "var(--surface-medium)" : undefined, color: "var(--text-primary)" }}
+						>
+							<span className="flex size-6 items-center justify-center rounded-full text-[0.6rem] font-semibold" style={{ background: "var(--surface-medium)", color: "var(--color-primary)" }}>
+								{p.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
+							</span>
+							<span className="truncate">{p.name}</span>
+						</li>
+					))}
+				</ul>
+			)}
+			<div className="rounded-xl border focus-within:border-[var(--color-primary)]" style={{ borderColor: "var(--border-light)" }}>
 				<textarea
+					ref={box}
 					value={text}
-					onChange={(e) => setText(e.target.value)}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" && !e.shiftKey) {
-							e.preventDefault();
-							send();
-						}
-					}}
+					onChange={(e) => update(e.target.value, e.target.selectionStart ?? e.target.value.length)}
+					onSelect={(e) => setCaret(e.currentTarget.selectionStart ?? 0)}
+					onKeyDown={onKeyDown}
 					rows={2}
 					maxLength={2000}
-					placeholder="Comment…"
+					placeholder="Comment, or type @ to mention someone"
+					aria-label="Write a comment"
 					data-testid="record-comment-input"
-					className="min-w-0 flex-1 resize-none rounded-lg border bg-transparent px-2.5 py-2 text-xs outline-none focus:border-[var(--color-primary)]"
-					style={{ borderColor: "var(--border-light)", color: "var(--text-primary)" }}
+					className="block max-h-40 w-full resize-none bg-transparent px-3 pt-2.5 text-xs outline-none"
+					style={{ color: "var(--text-primary)" }}
 				/>
-				<button type="button" onClick={send} disabled={busy || !text.trim()} aria-label="Post comment" data-testid="record-comment-send" className="rounded-lg p-2 text-white disabled:opacity-40" style={{ background: "var(--color-primary)" }}>
-					<Send size={14} />
-				</button>
+				<div className="flex items-center justify-between gap-2 px-3 pb-2">
+					<span className="text-[0.65rem]" style={{ color: "var(--text-hint)" }}>
+						Enter to send · Shift+Enter for a new line
+					</span>
+					<button
+						type="button"
+						onClick={send}
+						disabled={busy || !text.trim()}
+						aria-label="Post comment"
+						data-testid="record-comment-send"
+						className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white transition-opacity disabled:opacity-40"
+						style={{ background: "var(--color-primary)" }}
+					>
+						<Send size={14} />
+					</button>
+				</div>
 			</div>
-			<p className="mt-1.5 text-[0.65rem]" style={{ color: "var(--text-hint)" }}>
-				Enter to send · Shift+Enter for a new line
-			</p>
 			{err && <p className="mt-1 text-[0.68rem] text-red-600">{err}</p>}
 		</div>
 	);
@@ -306,7 +443,7 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 							</button>
 						</header>
 						{body}
-						<CommentBox type={type} id={id} onAdded={add} />
+						<Feature name="admin.comments"><CommentBox type={type} id={id} onAdded={add} /></Feature>
 					</div>
 				) : (
 					<button type="button" onClick={toggleExpanded} aria-label="Expand activity" data-testid="record-activity-expand" className="flex h-full w-full flex-col items-center gap-3 pt-4 hover:bg-black/[0.03]">
@@ -358,7 +495,7 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 					</button>
 				</header>
 				{body}
-				<CommentBox type={type} id={id} onAdded={add} />
+				<Feature name="admin.comments"><CommentBox type={type} id={id} onAdded={add} /></Feature>
 			</aside>
 		</>
 	);

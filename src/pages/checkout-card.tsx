@@ -1,6 +1,8 @@
 import React from "react";
 import Layout from "@/_components/Layout";
 import CheckoutCardFlow from "@/_components/CheckoutCardFlow";
+import { useCheckoutAvailability } from "@/_hooks/useCheckoutAvailability";
+import FeatureNotice from "@/_components/FeatureNotice";
 import { useAppSelector } from "@/_redux/store";
 
 /**
@@ -14,6 +16,15 @@ import { useAppSelector } from "@/_redux/store";
  */
 const CheckoutCardPage: React.FC = () => {
 	const { total } = useAppSelector((state) => state.cart);
+	const { available, card } = useCheckoutAvailability();
+
+	if (!available || !card) {
+		return (
+			<Layout pageTitle="Payment">
+				<FeatureNotice message="Checkout is temporarily unavailable" href="/cart" linkLabel="Back to cart" />
+			</Layout>
+		);
+	}
 
 	return (
 		<Layout pageTitle="Payment">

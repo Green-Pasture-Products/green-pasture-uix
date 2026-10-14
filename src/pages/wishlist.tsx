@@ -13,14 +13,17 @@ import {
 } from "@/_redux/actions/wishlist.action";
 import { addToCartAsync } from "@/_redux/actions/cart.action";
 import Products from "@/_components/Products";
+import { useFeature } from "@/_hooks/useFeature";
+import FeatureNotice from "@/_components/FeatureNotice";
 import Layout from "@/_components/Layout";
 import EmptyState from "@/_UI/EmptyState";
 import Button from "@/_UI/Button";
 import Badge from "@/_UI/Badge";
-import PageLoader from "@/_UI/PageLoader";
+import { WishlistSkeleton } from "@/_skeletonLoading/PageSkeletons";
 
 const WishlistPage: React.FC = () => {
 	const dispatch = useAppDispatch();
+	const wishlistOn = useFeature("storefront.wishlist");
 	const cartItems = useAppSelector((state) => state.cart.items);
 	const { items, wishlistItemCount, loading } = useAppSelector(
 		(state) => state.wishlist
@@ -31,10 +34,18 @@ const WishlistPage: React.FC = () => {
 	// sync-on-mount pattern, since a customer's wishlist can now diverge from
 	// whatever this browser's localStorage happens to hold.
 	useEffect(() => {
-		if (isAuthenticated) {
+		if (isAuthenticated && wishlistOn) {
 			dispatch(syncWishlistOnLoginAsync() as any);
 		}
-	}, [isAuthenticated, dispatch]);
+	}, [isAuthenticated, wishlistOn, dispatch]);
+
+	if (!wishlistOn) {
+		return (
+			<Layout pageTitle="Wishlist">
+				<FeatureNotice message="Wishlists are unavailable right now." href="/" linkLabel="Continue shopping" />
+			</Layout>
+		);
+	}
 
 	const handleClearWishlist = () => {
 		// Local clear is instant; clearWishlistAsync is one DELETE /wishlist/clear
@@ -79,7 +90,7 @@ const WishlistPage: React.FC = () => {
 	if (loading && items.length === 0) {
 		return (
 			<Layout pageTitle="Wishlist">
-				<PageLoader fullScreen={false} message="Loading your wishlist..." />
+				<WishlistSkeleton />
 			</Layout>
 		);
 	}

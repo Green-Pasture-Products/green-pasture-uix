@@ -337,6 +337,13 @@ export interface BackendOrder {
 	items?: BackendOrderItem[];
 	payments?: BackendPayment[];
 	totalAmount: number;
+	subtotal?: number;
+	shippingFee?: number;
+	taxAmount?: number;
+	discountAmount?: number;
+	couponCode?: string | null;
+	shippingMethod?: string | null;
+	shippingAddress?: { street?: string; city?: string; state?: string; country?: string; postalCode?: string } | string | null;
 	status: string;
 	createdAt: string;
 	updatedAt: string;
@@ -473,3 +480,5 @@ export interface BackendCountry {
 	shippingEnabled: boolean;
 	status: string;
 }
+
+export * from "./featureFlags";

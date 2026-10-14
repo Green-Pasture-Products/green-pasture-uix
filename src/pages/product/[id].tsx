@@ -1,3 +1,4 @@
+import { Feature } from "@/_components/FeatureFlagProvider";
 import React, { MouseEvent, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -24,6 +25,7 @@ import { addToCartAsync, removeFromCartAsync, updateQuantityAsync } from "@/_red
 import { productsAction } from "@/_redux/actions/products.action";
 import { Product } from "@/types";
 import Products from "@/_components/Products";
+import { useFeature } from "@/_hooks/useFeature";
 import {
 	addToWishlist,
 	removeFromWishlist,
@@ -44,6 +46,7 @@ import Button from "@/_UI/Button";
 import Badge from "@/_UI/Badge";
 import EmptyState from "@/_UI/EmptyState";
 import PageLoader from "@/_UI/PageLoader";
+import { ProductDetailSkeleton } from "@/_skeletonLoading/PageSkeletons";
 import SanitizedHtml from "@/_UI/SanitizedHtml";
 import { formatWeight } from "@/_utils/formatWeight";
 import { htmlToText } from "@/_utils/htmlToText";
@@ -55,6 +58,7 @@ const ProductDetailsPage: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const { products, isFetchingAllProducts } = useAppSelector((state) => state.product);
 	const cartItems = useAppSelector((state) => state.cart.items);
+	const wishlistOn = useFeature("storefront.wishlist");
 	const wishlistItems = useAppSelector((state) => state.wishlist.items);
 	const cartTotal = useAppSelector((state) => state.cart.total);
 	const freeShipping = useFreeShipping(cartTotal || 0);
@@ -102,7 +106,7 @@ const ProductDetailsPage: React.FC = () => {
 	if (!product && (isFetchingAllProducts || !products?.length)) {
 		return (
 			<Layout pageTitle="Loading Product...">
-				<PageLoader fullScreen={false} message="Loading product details..." />
+				<ProductDetailSkeleton />
 			</Layout>
 		);
 	}
@@ -454,6 +458,7 @@ const ProductDetailsPage: React.FC = () => {
 									</Button>
 								)}
 
+								{wishlistOn && (
 								<button
 									aria-label="Add to Wishlist"
 									onClick={(e) => handleWishlistToggle(e)}
@@ -472,6 +477,7 @@ const ProductDetailsPage: React.FC = () => {
 										}`}
 									/>
 								</button>
+								)}
 							</div>
 						</div>
 
@@ -573,12 +579,14 @@ const ProductDetailsPage: React.FC = () => {
 								<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
 									<ReviewList itemId={String(id)} averageRating={itemRating} totalReviews={itemReviewCount} />
 								</Card>
-								<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
-									<ReviewForm
-										itemId={String(id)}
-										onSubmitted={() => dispatch(productsAction.fetchAllProducts({ activeOnly: true }))}
-									/>
-								</Card>
+								<Feature name="storefront.reviews">
+									<Card elevation={0} padding="lg" className="dark:bg-white/[0.04]">
+										<ReviewForm
+											itemId={String(id)}
+											onSubmitted={() => dispatch(productsAction.fetchAllProducts({ activeOnly: true }))}
+										/>
+									</Card>
+								</Feature>
 							</div>
 						)}
 					</div>

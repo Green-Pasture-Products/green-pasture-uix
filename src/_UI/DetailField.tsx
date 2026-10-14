@@ -31,16 +31,21 @@ interface DetailRowProps {
 
 /** One fact of a record: label left, value right; empty values read "Empty". */
 export const DetailRow: React.FC<DetailRowProps> = ({ label, value, className = "", wide }) => (
-	<div className={cn("border-border/60 grid min-w-0 gap-1 border-b py-2.5 last:border-b-0 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4", wide && "sm:grid-cols-1 sm:gap-1", className)}>
-		<dt className="text-muted-foreground text-sm">{label}</dt>
-		<dd className="text-foreground min-w-0 break-words text-sm font-semibold">{isEmpty(value) ? <span className="text-muted-foreground/60 font-normal">Empty</span> : value}</dd>
+	// Label beside the value only when the section is wide enough (container query, not viewport): in a narrow column the
+	// label sits above, so the value gets the full width and never has to break. Values stay on one line (ellipsis + tooltip).
+	<div className={cn("border-border/60 grid min-w-0 gap-1 border-b py-2.5 last:border-b-0 @sm:grid-cols-[9rem_minmax(0,1fr)] @sm:gap-4", wide && "@sm:grid-cols-1 @sm:gap-1", className)}>
+		<dt className="text-muted-foreground whitespace-nowrap text-sm">{label}</dt>
+		{/* A "wide" row holds prose (a description): it gets the full width and wraps between words. Everything else is one line. */}
+		<dd className={cn("text-foreground min-w-0 text-sm font-semibold", wide ? "whitespace-normal" : "truncate")} title={!wide && typeof value === "string" ? value : undefined}>
+			{isEmpty(value) ? <span className="text-muted-foreground/60 font-normal">Empty</span> : value}
+		</dd>
 	</div>
 );
 
 /** Facts as a property list; two columns side by side on wide screens for long records. */
 export function FactGrid({ facts, columns = 1 }: { facts: Fact[]; columns?: 1 | 2 }) {
 	return (
-		<dl className={cn("grid", columns > 1 && "xl:grid-cols-2 xl:gap-x-10")}>
+		<dl className={cn("@container grid", columns > 1 && "xl:grid-cols-2 xl:gap-x-10")}>
 			{facts.map((f) => (
 				<DetailRow key={f.label} label={f.label} value={f.value} wide={f.wide} className={f.wide ? "xl:col-span-full" : undefined} />
 			))}
@@ -82,7 +87,7 @@ export const DetailSection: React.FC<DetailSectionProps> = ({ title, children, a
 		</legend>
 		{action && <div className="absolute -top-2.5 right-4 flex -translate-y-1/2 flex-wrap items-center gap-2 bg-[linear-gradient(to_bottom,var(--color-background)_50%,var(--color-card)_50%)] px-1.5">{action}</div>}
 		{description && <p className="text-muted-foreground px-5 pt-1 text-xs">{description}</p>}
-		<div className={cn(flush ? "border-border mt-3 overflow-hidden rounded-b-xl border-t" : "px-5 pt-1 pb-3")}>{children}</div>
+		<div className={cn("@container", flush ? "border-border mt-3 overflow-hidden rounded-b-xl border-t" : "px-5 pt-1 pb-3")}>{children}</div>
 	</fieldset>
 );
 
@@ -146,7 +151,7 @@ export const DetailHeader: React.FC<DetailHeaderProps> = ({ title, subtitle, sta
 		<div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
 			<div className="min-w-0 space-y-1.5">
 				<div className="flex flex-wrap items-center gap-2.5">
-					<h1 className="text-foreground break-words text-lg font-semibold tracking-tight sm:text-xl">{title}</h1>
+					<h1 className="text-foreground min-w-0 text-lg font-semibold tracking-tight sm:truncate sm:text-xl" title={title}>{title}</h1>
 					{status}
 				</div>
 				{subtitle && <p className="text-muted-foreground text-sm">{subtitle}</p>}

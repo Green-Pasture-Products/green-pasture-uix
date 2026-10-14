@@ -1,4 +1,5 @@
 "use client";
+import { useFeature } from "@/_hooks/useFeature";
 
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -97,6 +98,8 @@ const Navbar: React.FC = () => {
 	const { profile } = useAppSelector((state) => state.profile);
 	const bio = user;
 	const isAdmin = appConstants.ADMIN_ROLES.includes(user?.profileType?.toUpperCase() as any || "");
+	const selfCancelOn = useFeature("orders.self_cancel");
+	const wishlistOn = useFeature("storefront.wishlist");
 	const wishlistCount = useAppSelector(
 		(state) => state.wishlist.wishlistItemCount
 	);
@@ -279,7 +282,7 @@ const Navbar: React.FC = () => {
 
 					{/* Wishlist — customers only. Hidden on mobile top bar; lives in the
 					    hamburger panel there instead. */}
-					{!isAdmin && (
+					{!isAdmin && wishlistOn && (
 						<Link
 							href="/wishlist"
 							className={`relative hidden md:inline-flex p-2 rounded-radius-md transition-colors duration-200 press-effect ${
@@ -370,7 +373,7 @@ const Navbar: React.FC = () => {
 														View Details
 													</button>
 												</div>
-												{order.payments?.[0]?.paymentStatus !== "INCOMPLETE_PAYMENT" && (
+												{selfCancelOn && order.payments?.[0]?.paymentStatus !== "INCOMPLETE_PAYMENT" && (
 													<div className="mt-2">
 														{cancelConfirmId === order.id ? (
 															<div className="flex items-center justify-between gap-2 text-sm">
@@ -608,7 +611,7 @@ const Navbar: React.FC = () => {
 						</Link>
 
 						{/* Wishlist — customers only. Lives here on mobile instead of the top bar. */}
-						{!isAdmin && (
+						{!isAdmin && wishlistOn && (
 							<Link
 								href="/wishlist"
 								className="flex items-center gap-3 px-3 py-2.5 rounded-radius-md text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"

@@ -40,9 +40,11 @@ const TagPicker: React.FC<TagPickerProps> = ({
 
 	return (
 		<div>
-			<label className="mb-1.5 block text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-				{label}
-			</label>
+			{label && (
+				<label className="mb-1.5 block text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+					{label}
+				</label>
+			)}
 			{hint && (
 				<p className="mb-2.5 text-xs" style={{ color: "var(--text-hint)" }}>
 					{hint}
