@@ -63,6 +63,7 @@ const ProductDetail: React.FC = () => {
 	const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
 	const [settingThumbnailId, setSettingThumbnailId] = useState<string | null>(null);
 	const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
+	const [pendingBySize, setPendingBySize] = useState<Record<string, ProductChange>>({});
 	const [newImages, setNewImages] = useState<File[]>([]);
 	const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 	const [uploadingImages, setUploadingImages] = useState(false);
@@ -181,6 +182,16 @@ const ProductDetail: React.FC = () => {
 			.then((list) => setPendingChange(list[0] ?? null))
 			.catch(() => setPendingChange(null));
 	};
+	// The other sizes can have a request waiting too (a new default is filed on the size it names), so the list says so.
+	const siblingKey = (siblingSizes as any[]).map((x) => x.id).join(",");
+	const loadPendingSizes = () => {
+		if ((siblingSizes as any[]).length < 2) return setPendingBySize({});
+		const ids = new Set((siblingSizes as any[]).map((x) => String(x.id)));
+		fetchProductChanges({ status: "PENDING" })
+			.then((list) => setPendingBySize(Object.fromEntries(list.filter((c) => c.itemId && ids.has(String(c.itemId))).map((c) => [String(c.itemId), c]))))
+			.catch(() => setPendingBySize({}));
+	};
+	useEffect(loadPendingSizes, [siblingKey]);
 	useEffect(() => {
 		if (!router.isReady || !id) return;
 		fetchItem();
@@ -189,6 +200,7 @@ const ProductDetail: React.FC = () => {
 	// A decision may have applied the change: reload the product as well as the banner.
 	useLiveEvent("product-changes-changed", () => {
 		loadPending();
+		loadPendingSizes();
 		fetchItem(true);
 	}, !!id);
 
@@ -320,7 +332,13 @@ const ProductDetail: React.FC = () => {
 	const handleSetDefault = async (itemId: string) => {
 		setSettingDefaultId(itemId);
 		try {
-			await axiosInstance.patch(`items/${itemId}`, { isDefault: true });
+			const patched = await axiosInstance.patch(`items/${itemId}`, { isDefault: true });
+			if (patched.status === 202 || patched.data?.data?.pending) {
+				// With product approval on, nothing has changed yet: the request waits for a second person.
+				toast.success("Sent for approval. The default changes once someone else approves it.");
+				loadPendingSizes();
+				return;
+			}
 			toast.success("Default size updated");
 			const res = await axiosInstance.get("items?page=1&limit=100");
 			setAnchorCandidates(res.data?.data?.items ?? []);
@@ -724,6 +742,11 @@ const ProductDetail: React.FC = () => {
 												<Badge variant={size.published ? "success" : "warning"} dot>
 													{size.published ? "Published" : "Draft"}
 												</Badge>
+												{pendingBySize[String(size.id)] && (
+													<Badge variant="warning" dot>
+														Pending approval
+													</Badge>
+												)}
 												{size.isDefault ? (
 													<span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold tracking-[0.12em] whitespace-nowrap uppercase" style={{ color: "var(--color-primary)" }}>
 														<Star className="h-3 w-3 fill-current" />
@@ -737,7 +760,8 @@ const ProductDetail: React.FC = () => {
 																e.stopPropagation();
 																handleSetDefault(size.id);
 															}}
-															disabled={settingDefaultId === size.id}
+															disabled={settingDefaultId === size.id || !!pendingBySize[String(size.id)]}
+															title={pendingBySize[String(size.id)] ? "A change is waiting for approval" : undefined}
 															className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.65rem] font-semibold whitespace-nowrap disabled:opacity-50"
 															style={{ background: "var(--surface-base)", color: "var(--text-secondary)", border: "1px solid var(--border-light)" }}
 														>
@@ -813,7 +837,7 @@ const ProductDetail: React.FC = () => {
 				</div>
 			</Modal>
 
-			<RecordActivity type="Item" id={item?.id} />
+			<RecordActivity type="Item" id={item?.id} created={{ at: (item as any)?.createdAt, by: (item as any)?.createdBy }} />
 		</AdminLayout>
 	);
 };

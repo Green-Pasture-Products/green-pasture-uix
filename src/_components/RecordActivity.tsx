@@ -108,6 +108,11 @@ interface Props {
 	type: string;
 	/** The record's id (UUID). Renders nothing until it is known. */
 	id?: string | null;
+	/**
+	 * When and by whom the record was made, from the record itself. Shown as the first entry when no creation event was recorded
+	 * (anything made before activity tracking began, or by the seed), so the panel is never blank for a record that exists.
+	 */
+	created?: { at?: string | null; by?: string | null };
 }
 
 /**
@@ -310,7 +315,7 @@ function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: 
 	);
 }
 
-const RecordActivity: React.FC<Props> = ({ type, id }) => {
+const RecordActivity: React.FC<Props> = ({ type, id, created }) => {
 	const docked = useDocked();
 	const [open, setOpen] = useState(false);
 	const [expanded, setExpanded] = useState(true);
@@ -356,16 +361,23 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 		prev.current = { h: el.scrollHeight, newest };
 	}, [items, expanded, open]);
 
+	// A "created" entry from the record's own fields, once the whole history is loaded and no recorded creation is in it.
+	const baseline = useMemo<ActivityEventRow | null>(() => {
+		if (!created?.at || !id || hasMore || loading) return null;
+		if (items.some((e) => e.action === "CREATE" && e.entityType === type)) return null;
+		return { id: `created-${id}`, occurredAt: created.at, action: "CREATE", actorId: null, actorName: created.by ?? "", entityType: type, entityId: id, summary: created.by ? `${created.by} created this record` : "Record created", changes: null };
+	}, [created?.at, created?.by, id, hasMore, loading, items, type]);
+
 	const groups = useMemo(() => {
 		const out: { label: string; rows: ActivityEventRow[] }[] = [];
-		for (const e of [...items].reverse()) {
+		for (const e of [...items, ...(baseline ? [baseline] : [])].reverse()) {
 			const label = dayLabel(e.occurredAt);
 			const last = out[out.length - 1];
 			if (last?.label === label) last.rows.push(e);
 			else out.push({ label, rows: [e] });
 		}
 		return out;
-	}, [items]);
+	}, [items, baseline]);
 
 	if (!id) return null;
 	// 403 (no access to this record's history) or any load failure with nothing to show: stay out of the way.
@@ -380,7 +392,7 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 						<div key={i} className="h-10 animate-pulse rounded-lg" style={{ background: "var(--surface-medium)" }} />
 					))}
 				</div>
-			) : items.length === 0 ? (
+			) : items.length === 0 && !baseline ? (
 				<p className="py-10 text-center text-xs" style={{ color: "var(--text-hint)" }}>
 					Nothing recorded for this record yet.
 				</p>
@@ -403,6 +415,11 @@ const RecordActivity: React.FC<Props> = ({ type, id }) => {
 							</ul>
 						</section>
 					))}
+					{items.length === 0 && (
+						<p className="rounded-lg border px-3 py-2 text-[0.7rem]" style={{ borderColor: "var(--border-light)", color: "var(--text-hint)" }}>
+							Nothing has changed since activity tracking began. Changes made from now on appear here.
+						</p>
+					)}
 				</div>
 			)}
 			</div>

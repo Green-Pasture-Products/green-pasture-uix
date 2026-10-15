@@ -216,7 +216,7 @@ const ReviewDetail: React.FC = () => {
 				</div>
 			</div>
 
-			<RecordActivity type="Review" id={review.id} />
+			<RecordActivity type="Review" id={review.id} created={{ at: (review as any).createdAt, by: (review as any).createdBy }} />
 
 			<Modal isOpen={confirm === "toggle"} onClose={() => setConfirm(null)} title={`${active ? "Deactivate" : "Activate"} review`} size="sm">
 				<div className="space-y-4">

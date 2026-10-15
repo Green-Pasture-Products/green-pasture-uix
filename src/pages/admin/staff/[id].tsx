@@ -385,7 +385,7 @@ const StaffDetail: React.FC = () => {
 					</div>
 				</div>
 			</Modal>
-			<RecordActivity type="Staff" id={staff?.id} />
+			<RecordActivity type="Staff" id={staff?.id} created={{ at: (staff as any)?.createdAt ?? (staff as any)?.profile?.createdAt, by: (staff as any)?.profile?.createdBy }} />
 		</AdminLayout>
 	);
 };

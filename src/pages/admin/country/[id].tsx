@@ -280,7 +280,7 @@ const CountryDetail: React.FC = () => {
 					</div>
 				</div>
 			</div>
-			<RecordActivity type="Country" id={country.id} />
+			<RecordActivity type="Country" id={country.id} created={{ at: (country as any).createdAt, by: (country as any).createdBy }} />
 		</AdminLayout>
 	);
 };

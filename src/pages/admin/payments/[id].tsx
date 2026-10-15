@@ -529,7 +529,7 @@ const AdminPaymentDetail: React.FC = () => {
         </div>
       </Modal>
 
-      <RecordActivity type="Payment" id={payment?.id} />
+      <RecordActivity type="Payment" id={payment?.id} created={{ at: (payment as any)?.createdAt, by: (payment as any)?.createdBy }} />
     </AdminLayout>
   );
 };

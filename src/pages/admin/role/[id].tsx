@@ -229,7 +229,7 @@ const RoleDetail: React.FC = () => {
 					</div>
 				</div>
 			</Modal>
-			<RecordActivity type="Role" id={role?.id} />
+			<RecordActivity type="Role" id={role?.id} created={{ at: (role as any)?.createdAt, by: (role as any)?.createdBy }} />
 		</AdminLayout>
 	);
 };

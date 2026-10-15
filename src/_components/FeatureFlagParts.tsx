@@ -244,7 +244,12 @@ export const DisableNowDialog: React.FC<{ flag: Pick<FeatureFlag, "id" | "name" 
 				<p className="text-sm" style={{ color: "var(--text-secondary)" }}>
 					This switches <span className="font-semibold">{flag?.name}</span> off immediately for everyone, without waiting for approval. It is recorded as an emergency change.
 				</p>
-				<FormTextarea label="Reason*" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="At least 10 characters" />
+				<div>
+					<FormTextarea label="Reason*" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="At least 10 characters" />
+					<p className="mt-1.5 text-xs tabular-nums" style={{ color: reason.trim().length >= 10 ? "var(--color-primary)" : "var(--text-hint)" }}>
+						{reason.trim().length >= 10 ? "Ready to disable." : `${reason.trim().length} of 10 characters. Say why, so the team can follow it up.`}
+					</p>
+				</div>
 				<div className="flex justify-end gap-2">
 					<Button variant="outlined" color="secondary" onClick={onClose}>Cancel</Button>
 					<Button variant="filled" color="error" loading={busy} disabled={busy || reason.trim().length < 10} onClick={submit}>

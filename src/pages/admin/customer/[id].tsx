@@ -320,7 +320,7 @@ const CustomerDetail: React.FC = () => {
 				</AnimatedTabs>
 			</div>
 
-			<RecordActivity type="Customer" id={customer.id} />
+			<RecordActivity type="Customer" id={customer.id} created={{ at: customer.createdAt, by: customer.createdBy }} />
 
 			<Modal isOpen={confirm} onClose={() => setConfirm(false)} title={`${active ? "Deactivate" : "Activate"} customer`} size="sm">
 				<div className="space-y-4">
