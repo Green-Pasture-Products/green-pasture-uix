@@ -295,7 +295,7 @@ const FeatureFlagDetailPage: React.FC = () => {
 			</div>
 
 			{/* Outside the animated wrapper: a transformed ancestor would make this fixed panel position against the wrapper, not the screen. */}
-			<RecordActivity type="FeatureFlag" id={flag.id} />
+			<RecordActivity type="FeatureFlag" id={flag.id} created={{ at: (flag as any).createdAt, by: (flag as any).createdBy }} />
 		</AdminLayout>
 	);
 };

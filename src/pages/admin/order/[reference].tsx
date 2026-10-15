@@ -391,7 +391,7 @@ const AdminOrderDetail: React.FC = () => {
 				</div>
 			</div>
 
-			<RecordActivity type="Order" id={order?.id} />
+			<RecordActivity type="Order" id={order?.id} created={{ at: (order as any)?.createdAt, by: (order as any)?.createdBy }} />
 		</AdminLayout>
 	);
 };

@@ -218,7 +218,7 @@ const AnnouncementDetail: React.FC = () => {
 				</EditableSection>
 			</div>
 
-			<RecordActivity type="Announcement" id={a.id} />
+			<RecordActivity type="Announcement" id={a.id} created={{ at: (a as any).createdAt, by: (a as any).createdByName ?? (a as any).createdBy }} />
 
 			<Modal isOpen={confirm === "toggle"} onClose={() => setConfirm(null)} title={`${a.isActive ? "Deactivate" : "Activate"} announcement`} size="sm">
 				<div className="space-y-4">

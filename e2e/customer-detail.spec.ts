@@ -38,6 +38,15 @@ test("the customer page opens on Overview with the profile, address and latest o
 	await expect(page.getByRole("tab", { name: /Orders/ })).toContainText("31");
 });
 
+test("a record with no recorded events still shows when and by whom it was created", async ({ page }) => {
+	await mockApi(page);
+	await page.goto(`/admin/customer/${ID}`);
+	const panel = page.getByTestId("record-activity-panel");
+	await expect(panel).toContainText("SYSTEM created this record");
+	await expect(panel).toContainText("Nothing has changed since activity tracking began");
+	await expect(panel).not.toContainText("Nothing recorded for this record yet");
+});
+
 test("switching tabs changes the panel and the URL, and a link opens the right tab", async ({ page }) => {
 	await mockApi(page);
 	await page.goto(`/admin/customer/${ID}`);

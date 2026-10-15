@@ -317,7 +317,7 @@ export const NameDescriptionRecordPage: React.FC<{ config: RecordConfig }> = ({ 
 				</div>
 			</div>
 
-			<RecordActivity type={config.entityType} id={category.id} />
+			<RecordActivity type={config.entityType} id={category.id} created={{ at: (category as any).createdAt, by: (category as any).createdBy }} />
 
 			<Modal isOpen={confirm === "toggle"} onClose={() => setConfirm(null)} title={`${active ? "Deactivate" : "Activate"} ${config.label.toLowerCase()}`} size="sm">
 				<div className="space-y-4">
