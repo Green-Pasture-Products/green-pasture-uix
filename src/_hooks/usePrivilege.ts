@@ -10,6 +10,15 @@ export function useAuthorities(): string[] {
 	return [...new Set(names)];
 }
 
+/**
+ * The roles this user may hand out. Admin and Super Admin are a super admin's to give (the server refuses anyone else), so they are
+ * not offered to anyone else, except a role the person being edited already holds, which stays visible.
+ */
+export function useGrantableRoles(): <T extends { id: string | number; name: string }>(roles: T[], held?: string[]) => T[] {
+	const isSuperAdmin = useAuthorities().includes("SUPER_ADMIN");
+	return (roles, held = []) => roles.filter((r) => isSuperAdmin || !["ADMIN", "SUPER_ADMIN"].includes(r.name) || held.includes(String(r.id)));
+}
+
 /** True when the user holds ANY of the given privileges (or SUPER_ADMIN). No privilege given = everyone. */
 export function useHasPrivilege(): (name?: string | readonly string[]) => boolean {
 	const authorities = useAuthorities();
