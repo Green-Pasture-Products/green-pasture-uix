@@ -10,6 +10,7 @@ import { FormInput } from "@/_UI/FormField";
 import PhoneInput from "@/_UI/PhoneInput";
 import { Button } from "@/components/ui/button";
 import axiosInstance from "@/_utils/axiosInstance";
+import { useGrantableRoles } from "@/_hooks/usePrivilege";
 
 interface RoleOption {
 	id: string;
@@ -21,6 +22,7 @@ const EMPTY_FORM = { firstName: "", lastName: "", email: "", phoneNumber: "", ro
 const NewInvitation: React.FC = () => {
 	const router = useRouter();
 	const [roles, setRoles] = useState<RoleOption[]>([]);
+	const grantable = useGrantableRoles();
 	const [form, setForm] = useState(EMPTY_FORM);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [inviting, setInviting] = useState(false);
@@ -103,7 +105,7 @@ const NewInvitation: React.FC = () => {
 								Roles <span className="text-red-500">*</span>
 							</legend>
 							<div className="flex flex-wrap gap-x-6 gap-y-2">
-								{roles.map((r) => (
+								{grantable(roles).map((r) => (
 									<label key={r.id} className="flex cursor-pointer select-none items-center gap-2 text-sm" style={{ color: "var(--text-primary)" }}>
 										<input type="checkbox" checked={form.roleIds.includes(r.id)} onChange={() => toggleRole(r.id)} className="size-4 cursor-pointer rounded" />
 										{r.name}

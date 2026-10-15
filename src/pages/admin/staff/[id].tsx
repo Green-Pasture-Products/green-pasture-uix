@@ -6,7 +6,7 @@ import RecordActivity from "@/_components/RecordActivity";
 import { BackButton, DetailHeader, DetailSection } from "@/_UI/DetailField";
 import Badge from "@/_UI/Badge";
 import Can from "@/_components/Can";
-import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { useHasPrivilege, useGrantableRoles } from "@/_hooks/usePrivilege";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
 import { FormInput } from "@/_UI/FormField";
@@ -27,6 +27,7 @@ interface RoleOption {
 const StaffDetail: React.FC = () => {
 	const router = useRouter();
 	const hasPrivilege = useHasPrivilege();
+	const grantable = useGrantableRoles();
 	const { id } = router.query;
 	const [staff, setStaff] = useState<BackendStaff | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -295,7 +296,7 @@ const StaffDetail: React.FC = () => {
 								{editingRoles ? (
 									<div className="space-y-3">
 										<div className="flex flex-wrap gap-x-6 gap-y-2">
-											{roles.map((r) => {
+											{grantable(roles, initialRoleIds).map((r) => {
 												const roleId = String(r.id);
 												return (
 													<label key={roleId} className="flex cursor-pointer select-none items-center gap-2 text-sm" style={{ color: "var(--text-primary)" }}>
