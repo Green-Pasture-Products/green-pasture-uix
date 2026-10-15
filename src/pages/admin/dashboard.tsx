@@ -17,6 +17,8 @@ import AdminLayout from "@/_components/AdminLayout";
 import PageLoader from "@/_UI/PageLoader";
 import Badge from "@/_UI/Badge";
 import { MetricCard, type MetricColor } from "@/_components/MetricCard";
+import { BARE, WidgetBoard, type BoardWidget } from "@/_components/WidgetBoard";
+import { NeedsAttention, type AttentionItem } from "@/_components/NeedsAttention";
 import { ChartCard } from "@/_components/charts/chart-card";
 import { TrendAreaChart } from "@/_components/charts/trend-area-chart";
 import { BreakdownDonut } from "@/_components/charts/breakdown-donut";
@@ -24,6 +26,9 @@ import { TREND, statusColor } from "@/_components/charts/chart-colors";
 import { DataTable } from "@/_components/DataTable";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAppDispatch } from "@/_redux/store";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { useFeature } from "@/_hooks/useFeature";
+import DashboardWelcome from "@/_components/DashboardWelcome";
 import { analyticsAction } from "@/_redux/actions/analytics.action";
 import { formatCurrency, formatCurrencyFull, toDayBucket } from "@/_utils/format";
 import { comparePeriods, lastDays, type Point } from "@/_utils/periodCompare";
@@ -143,7 +148,7 @@ const customerColumns: ColumnDef<RecentCustomer, any>[] = [
 	},
 ];
 
-const AdminDashboard: React.FC = () => {
+const AnalyticsDashboard: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const [analytics, setAnalytics] = useState<any>(null);
 	const [loading, setLoading] = useState(true);
@@ -264,6 +269,131 @@ const AdminDashboard: React.FC = () => {
 		[analytics],
 	);
 
+	const needsAttention: AttentionItem[] = [
+		{ id: "pending-orders", label: "Orders to process", hint: "Pending", count: Number((analytics?.orderStatusDistribution ?? []).find((s: any) => s.status === "PENDING")?.count ?? 0), href: "/admin/orders?status=PENDING" },
+		{ id: "verify-payments", label: "Payments to verify", hint: "Awaiting verification", count: Number((analytics?.paymentStatusDistribution ?? []).find((s: any) => s.status === "AWAITING_VERIFICATION")?.count ?? 0), href: "/admin/orders?paymentStatus=AWAITING_VERIFICATION" },
+		{ id: "incomplete-payments", label: "Incomplete payments", hint: "Customer owes a balance", count: Number((analytics?.paymentStatusDistribution ?? []).find((s: any) => s.status === "INCOMPLETE_PAYMENT")?.count ?? 0), href: "/admin/orders?paymentStatus=INCOMPLETE_PAYMENT" },
+		{ id: "low-stock", label: "Low stock products", hint: "Running out", count: (analytics?.lowStockItems ?? []).length, href: "/admin/products", tone: "danger" },
+	];
+
+	const widgets: BoardWidget[] = [
+		{ id: "needs-attention", size: "lg", label: "Needs attention", node: <NeedsAttention items={needsAttention} /> },
+		{
+			id: "order-status",
+			size: "lg",
+			label: "Order status",
+			node: (
+				<div className="h-full p-1">
+					<ChartCard className={BARE} title="Order Status" subtitle="Distribution breakdown" isEmpty={orderStatusData.length === 0} emptyMessage="No orders yet.">
+						<BreakdownDonut data={orderStatusData} colorFor={statusColor} />
+					</ChartCard>
+				</div>
+			),
+		},
+		{
+			id: "revenue-trend",
+			size: "full",
+			label: "Revenue trend",
+			node: (
+				<div className="h-full p-1">
+					<ChartCard
+							title="Revenue Trend"
+							subtitle={`Daily revenue, last ${rangeDays} days`}
+							className={BARE}
+							action={<RangeToggle options={RANGES as any} value={range} onChange={setRange} aria-label="Revenue range" />}
+							isEmpty={(analytics?.revenueTrend?.length ?? 0) === 0}
+							emptyMessage="No revenue in the last 30 days."
+						>
+							<TrendAreaChart data={revenueTrendData} color={TREND.revenue} name="Revenue" days={rangeDays} formatValue={formatCurrency} />
+						</ChartCard>
+				</div>
+			),
+		},
+		{ id: "recent-orders", size: "full", label: "Recent orders", scroll: true, node: (
+				<Card className={BARE}>
+					<CardHeader className="flex-row items-center justify-between space-y-0">
+						<CardTitle>Recent Orders</CardTitle>
+						<Link href="/admin/orders" className="text-muted-foreground hover:text-foreground text-xs font-medium">
+							View All
+						</Link>
+					</CardHeader>
+					<CardContent>
+						<DataTable
+							columns={orderColumns}
+							data={analytics?.recentOrders ?? []}
+							manualPagination={false}
+							onRefresh={refresh}
+							refreshing={refreshing}
+							showSN={false}
+							emptyMessage="No orders yet"
+							testId="recent-orders-table"
+						/>
+					</CardContent>
+				</Card>
+		) },
+		...(topProducts.length > 0
+			? [{ id: "top-products", size: "full" as const, label: "Top products", scroll: true, node: (
+				<Card className={BARE}>
+						<CardHeader className="flex-row items-center justify-between space-y-0">
+							<CardTitle>Top Products</CardTitle>
+							<Link href="/admin/products" className="text-muted-foreground hover:text-foreground text-xs font-medium">
+								View All
+							</Link>
+						</CardHeader>
+						<CardContent>
+							<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+								{topProducts.map((item: any) => (
+									<Link
+										key={item.id}
+										href={`/admin/product/${item.id}`}
+										className="border-border hover:border-primary/40 group rounded-xl border p-3 transition-colors"
+									>
+										{/* contain, not cover — these are packaging shots */}
+										<div className="bg-muted flex h-28 items-center justify-center overflow-hidden rounded-lg">
+											{item.photo ? (
+												// eslint-disable-next-line @next/next/no-img-element
+												<img src={item.photo} alt={item.name} className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" />
+											) : (
+												<span className="text-muted-foreground text-2xl font-semibold">{String(item.name ?? "?").charAt(0)}</span>
+											)}
+										</div>
+										<p className="mt-3 truncate text-sm font-medium">{item.name}</p>
+										<p className="text-muted-foreground truncate text-xs">{item.product ?? "Uncategorised"}</p>
+										<div className="mt-2 flex items-center justify-between text-xs">
+											<span className="font-semibold">{formatCurrencyFull(Number(item.price) || 0)}</span>
+											<span className="text-muted-foreground tabular-nums">{Number(item.soldQuantity) || 0} sold</span>
+										</div>
+									</Link>
+								))}
+							</div>
+						</CardContent>
+					</Card>
+			) }]
+			: []),
+		{ id: "recent-customers", size: "full", label: "Recent customers", scroll: true, node: (
+				<Card className={BARE}>
+					<CardHeader className="flex-row items-center justify-between space-y-0">
+						<CardTitle>Recent Customers</CardTitle>
+						<Link href="/admin/customers" className="text-muted-foreground hover:text-foreground text-xs font-medium">
+							View All
+						</Link>
+					</CardHeader>
+					<CardContent>
+						<DataTable
+							columns={customerColumns}
+							data={analytics?.recentCustomers ?? []}
+							manualPagination={false}
+							onRefresh={refresh}
+							refreshing={refreshing}
+							showSN={false}
+							emptyMessage="No customers yet"
+							testId="recent-customers-table"
+						/>
+					</CardContent>
+				</Card>
+		) },
+	];
+
 	if (loading) {
 		return (
 			<AdminLayout>
@@ -306,104 +436,17 @@ const AdminDashboard: React.FC = () => {
 					))}
 				</div>
 
-				<div className="grid gap-4 lg:grid-cols-3">
-					<ChartCard
-						title="Revenue Trend"
-						subtitle={`Daily revenue, last ${rangeDays} days`}
-						className="lg:col-span-2"
-						action={<RangeToggle options={RANGES as any} value={range} onChange={setRange} aria-label="Revenue range" />}
-						isEmpty={(analytics?.revenueTrend?.length ?? 0) === 0}
-						emptyMessage="No revenue in the last 30 days."
-					>
-						<TrendAreaChart data={revenueTrendData} color={TREND.revenue} name="Revenue" days={rangeDays} formatValue={formatCurrency} />
-					</ChartCard>
-					<ChartCard title="Order Status" subtitle="Distribution breakdown" isEmpty={orderStatusData.length === 0} emptyMessage="No orders yet.">
-						<BreakdownDonut data={orderStatusData} colorFor={statusColor} />
-					</ChartCard>
-				</div>
-
-				<Card>
-					<CardHeader className="flex-row items-center justify-between space-y-0">
-						<CardTitle>Recent Orders</CardTitle>
-						<Link href="/admin/orders" className="text-muted-foreground hover:text-foreground text-xs font-medium">
-							View All
-						</Link>
-					</CardHeader>
-					<CardContent>
-						<DataTable
-							columns={orderColumns}
-							data={analytics?.recentOrders ?? []}
-							manualPagination={false}
-							onRefresh={refresh}
-							refreshing={refreshing}
-							showSN={false}
-							emptyMessage="No orders yet"
-							testId="recent-orders-table"
-						/>
-					</CardContent>
-				</Card>
-
-				{topProducts.length > 0 && (
-					<Card>
-						<CardHeader className="flex-row items-center justify-between space-y-0">
-							<CardTitle>Top Products</CardTitle>
-							<Link href="/admin/products" className="text-muted-foreground hover:text-foreground text-xs font-medium">
-								View All
-							</Link>
-						</CardHeader>
-						<CardContent>
-							<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-								{topProducts.map((item: any) => (
-									<Link
-										key={item.id}
-										href={`/admin/product/${item.id}`}
-										className="border-border hover:border-primary/40 group rounded-xl border p-3 transition-colors"
-									>
-										{/* contain, not cover — these are packaging shots */}
-										<div className="bg-muted flex h-28 items-center justify-center overflow-hidden rounded-lg">
-											{item.photo ? (
-												// eslint-disable-next-line @next/next/no-img-element
-												<img src={item.photo} alt={item.name} className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" />
-											) : (
-												<span className="text-muted-foreground text-2xl font-semibold">{String(item.name ?? "?").charAt(0)}</span>
-											)}
-										</div>
-										<p className="mt-3 truncate text-sm font-medium">{item.name}</p>
-										<p className="text-muted-foreground truncate text-xs">{item.product ?? "Uncategorised"}</p>
-										<div className="mt-2 flex items-center justify-between text-xs">
-											<span className="font-semibold">{formatCurrencyFull(Number(item.price) || 0)}</span>
-											<span className="text-muted-foreground tabular-nums">{Number(item.soldQuantity) || 0} sold</span>
-										</div>
-									</Link>
-								))}
-							</div>
-						</CardContent>
-					</Card>
-				)}
-
-				<Card>
-					<CardHeader className="flex-row items-center justify-between space-y-0">
-						<CardTitle>Recent Customers</CardTitle>
-						<Link href="/admin/customers" className="text-muted-foreground hover:text-foreground text-xs font-medium">
-							View All
-						</Link>
-					</CardHeader>
-					<CardContent>
-						<DataTable
-							columns={customerColumns}
-							data={analytics?.recentCustomers ?? []}
-							manualPagination={false}
-							onRefresh={refresh}
-							refreshing={refreshing}
-							showSN={false}
-							emptyMessage="No customers yet"
-							testId="recent-customers-table"
-						/>
-					</CardContent>
-				</Card>
+				<WidgetBoard page="admin-dashboard" widgets={widgets} />
 			</div>
 		</AdminLayout>
 	);
+};
+
+/** The numbers all come from one VIEW_ANALYTICS endpoint, so without that privilege there is nothing to fetch or show. */
+const AdminDashboard: React.FC = () => {
+	const hasPrivilege = useHasPrivilege();
+	const analyticsOn = useFeature("admin.analytics");
+	return analyticsOn && hasPrivilege("VIEW_ANALYTICS") ? <AnalyticsDashboard /> : <DashboardWelcome />;
 };
 
 export default withAdminAuth(AdminDashboard);

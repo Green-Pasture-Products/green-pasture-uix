@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next-e2e/
 /out/
 /.open-next/
 
@@ -52,3 +53,4 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /blob-report/
+/.next-e2e-*/

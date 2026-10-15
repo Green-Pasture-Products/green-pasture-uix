@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
-import { Plus, Star } from "lucide-react";
+import { ClipboardCheck, Plus, Star } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
@@ -9,6 +9,8 @@ import AdminLayout from "@/_components/AdminLayout";
 import { DataTable } from "@/_components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
+import Can from "@/_components/Can";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
@@ -16,9 +18,13 @@ import { productsAction } from "@/_redux/actions";
 import { adminAction } from "@/_redux/actions/admin.action";
 import { formatCurrency } from "@/_UI/FormatValue";
 import { useListParams } from "@/_hooks/useListParams";
+import { PRODUCT_CHANGE_VIEWERS, usePendingProductChanges } from "@/_components/ProductChangeParts";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+);
+const EDIT_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
 );
 
 const DELETE_ICON = (
@@ -32,6 +38,8 @@ const STATUS_ICON = (
 const AdminProducts: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
+	const hasPrivilege = useHasPrivilege();
+	const pendingChanges = usePendingProductChanges();
 	const { adminItems, adminItemsLoading, adminItemsPagination } = useAppSelector((state) => state.admin);
 	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
 	const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
@@ -191,7 +199,7 @@ const AdminProducts: React.FC = () => {
 		},
 		{
 			accessorKey: "status",
-			header: "Record",
+			header: "Status",
 			cell: ({ getValue }) => (
 				<Badge variant={getValue() === "A" ? "success" : "error"} dot>
 					{getValue() === "A" ? "Active" : "Inactive"}
@@ -207,17 +215,20 @@ const AdminProducts: React.FC = () => {
 			cell: ({ row }) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/product/${row.original.id}`) },
+					{ label: "Edit", icon: EDIT_ICON, onClick: () => router.push(`/admin/product/${row.original.id}?edit=1`), hidden: !hasPrivilege("UPDATE_PRODUCT") },
 					{
 						label: row.original.published ? "Unpublish" : "Publish",
 						icon: STATUS_ICON,
 						onClick: () => setPublishTarget(row.original),
+						hidden: !hasPrivilege("MANAGE_PRODUCTS"),
 					},
 					{
 						label: row.original.status === "A" ? "Deactivate" : "Activate",
 						icon: STATUS_ICON,
 						onClick: () => setStatusTarget(row.original),
+						hidden: !hasPrivilege("MANAGE_PRODUCTS"),
 					},
-					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const, hidden: !hasPrivilege("DELETE_PRODUCT") },
 				]} />
 			),
 		},
@@ -244,9 +255,21 @@ const AdminProducts: React.FC = () => {
 					onPageSizeChange={setPageSize}
 					onRowClick={(row) => router.push(`/admin/product/${row.id}`)}
 					toolbar={
-						<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/products/new")}>
-							Add Product
-						</Button>
+						<div className="flex flex-wrap items-center gap-2">
+							<Can privilege={PRODUCT_CHANGE_VIEWERS}>
+								<Button variant="outlined" color="secondary" leftIcon={ClipboardCheck} onClick={() => router.push("/admin/products/approvals")}>
+									Pending approval
+									{!!pendingChanges && (
+										<span className="bg-brand text-brand-foreground ml-2 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold" data-testid="pending-count">{pendingChanges}</span>
+									)}
+								</Button>
+							</Can>
+							<Can privilege="CREATE_PRODUCT">
+								<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/products/new")}>
+									Add Product
+								</Button>
+							</Can>
+						</div>
 					}
 					emptyMessage="No products found"
 				/>

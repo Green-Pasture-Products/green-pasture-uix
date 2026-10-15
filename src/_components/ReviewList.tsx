@@ -36,6 +36,9 @@ const ReviewList: React.FC<ReviewListProps> = ({ itemId, averageRating, totalRev
 		dispatch(reviewAction.fetchItemReviewsAsync({ itemId, page: nextPage, limit: 10 }));
 	};
 
+	// Filter to show only customer reviews (exclude admin testimonials)
+	const customerReviews = reviews.filter((review: BackendReview) => review.source !== 'admin');
+
 	const hasMore = pagination && pagination.currentPage < pagination.totalPages;
 
 	const formatDate = (dateString: string) => {
@@ -47,7 +50,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ itemId, averageRating, totalRev
 		});
 	};
 
-	if (isLoading && reviews.length === 0) {
+	if (isLoading && customerReviews.length === 0) {
 		return (
 			<div className="flex items-center justify-center py-12">
 				<Loader2 className="h-8 w-8 animate-spin text-green-600" />
@@ -55,7 +58,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ itemId, averageRating, totalRev
 		);
 	}
 
-	if (!isLoading && reviews.length === 0) {
+	if (!isLoading && customerReviews.length === 0) {
 		return (
 			<div className="bg-white dark:bg-white/[0.04] border border-[rgba(22,163,74,0.06)] dark:border-white/8 rounded-xl transition-all duration-300 p-8 text-center">
 				<p className="text-gray-500 text-lg">No reviews yet. Be the first to review!</p>
@@ -91,7 +94,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ itemId, averageRating, totalRev
 
 			{/* Individual Reviews */}
 			<div className="space-y-4">
-				{reviews.map((review: BackendReview) => (
+				{customerReviews.map((review: BackendReview) => (
 					<div key={review.id} className="bg-white dark:bg-white/[0.04] border border-[rgba(22,163,74,0.06)] dark:border-white/8 rounded-xl transition-all duration-300 p-6">
 						<div className="flex items-start justify-between mb-3">
 							<div>

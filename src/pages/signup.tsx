@@ -11,6 +11,8 @@ import { clearError } from "@/_redux/reducers/auth.reducer";
 import { signupSchema, signupStep1Schema, SignupFormData } from "@/_validations/auth";
 import { signupAsync } from "@/_redux/actions/auth.action";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
+import { useFeature } from "@/_hooks/useFeature";
+import FeatureNotice from "@/_components/FeatureNotice";
 import { useGoogleAuth } from "@/_hooks/useGoogleAuth";
 import Image from "next/image";
 import { FormInput } from "@/_UI/FormField";
@@ -36,7 +38,8 @@ const SignupPage: React.FC = () => {
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [step, setStep] = useState(1);
 	const [direction, setDirection] = useState(1);
-	const showGoogleForm = true;
+	const showGoogleForm = useFeature("auth.google_signin");
+	const signupOn = useFeature("auth.signup");
 
 	const {
 		register,
@@ -108,6 +111,14 @@ const SignupPage: React.FC = () => {
 		setDirection(-1);
 		setStep(1);
 	};
+
+	if (!signupOn) {
+		return (
+			<div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
+				<FeatureNotice message="Registration is closed for now. Please check back soon." href="/login" linkLabel="Go to sign in" />
+			</div>
+		);
+	}
 
 	return (
 		<div

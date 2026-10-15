@@ -28,6 +28,12 @@ const PUBLIC_ROUTES = [
 	"/checkout-card",
 ];
 
+// Layout checks must not depend on whether a real API happens to be listening locally (a live one keeps the
+// storefront fetching, so "network idle" never arrives). Answer every API call with a plain error instead.
+test.beforeEach(async ({ page }) => {
+	await page.route("**/api/v1/**", (route) => route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ message: "Not mocked in this test" }) }));
+});
+
 for (const route of PUBLIC_ROUTES) {
 	test(`${route} does not scroll sideways on a phone`, async ({ page }) => {
 		await page.setViewportSize(PHONE);

@@ -1,4 +1,5 @@
 // LIBRARY COMPONENTS
+import AnnouncementBanner from "@/_components/AnnouncementBanner";
 import Head from "next/head";
 import React from "react";
 
@@ -57,7 +58,10 @@ const Layout = ({ children, pageTitle }: LayoutProps) => {
 			<div className="min-h-screen overflow-x-hidden bg-mint-50 dark:bg-[#0a0f1a] transition-colors duration-300">
 				{/* <PromoBanner /> */}
 				<Navbar />
-				<main className="flex-1 pt-16 md:pt-[72px]">{children}</main>
+				<main className="flex-1 pt-16 md:pt-[72px]">
+					<AnnouncementBanner />
+					{children}
+				</main>
 				<Footer />
 			</div>
 		</>

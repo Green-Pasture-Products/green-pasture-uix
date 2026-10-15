@@ -2,7 +2,9 @@
 
 export type PaymentStatus =
   | 'PENDING'
+	| 'AWAITING_PAYMENT'
   | 'AWAITING_VERIFICATION'
+  | 'INCOMPLETE_PAYMENT'
   | 'VERIFIED'
   | 'DECLINED'
   | 'PAID'
@@ -312,8 +314,10 @@ export interface BackendPayment {
 	amount: number;
 	currency: string;
 	paymentStatus: string;
+	customerPhone?: string | null;
 	receiptUrl?: string;
 	receiptFileName?: string;
+	receipts?: { id: string; url: string | null; fileName: string | null; purgedAt: string | null; createdAt: string }[];
 	submittedAt?: string;
 	verifiedAt?: string;
 	verifiedBy?: string;
@@ -333,6 +337,13 @@ export interface BackendOrder {
 	items?: BackendOrderItem[];
 	payments?: BackendPayment[];
 	totalAmount: number;
+	subtotal?: number;
+	shippingFee?: number;
+	taxAmount?: number;
+	discountAmount?: number;
+	couponCode?: string | null;
+	shippingMethod?: string | null;
+	shippingAddress?: { street?: string; city?: string; state?: string; country?: string; postalCode?: string } | string | null;
 	status: string;
 	createdAt: string;
 	updatedAt: string;
@@ -355,6 +366,9 @@ export interface BackendCustomer {
 	status: string;
 	createdAt: string;
 	updatedAt: string;
+	createdBy?: string;
+	updatedBy?: string;
+	wallet?: { balance?: number; currency?: string } | null;
 }
 
 export interface BackendStaff {
@@ -469,3 +483,5 @@ export interface BackendCountry {
 	shippingEnabled: boolean;
 	status: string;
 }
+
+export * from "./featureFlags";

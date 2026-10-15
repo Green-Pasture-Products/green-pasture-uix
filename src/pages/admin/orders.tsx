@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { statusColumn } from "@/_components/statusColumn";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 import { parseAsString } from "nuqs";
@@ -16,6 +17,7 @@ import Button from "@/_UI/Button";
 import { BackendOrder } from "@/types";
 import { formatCurrency } from "@/_UI/FormatValue";
 import { useListParams } from "@/_hooks/useListParams";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -37,6 +39,22 @@ const ORDER_STATUS_FILTERS: FilterDef[] = [
 			{ value: "CANCELLED", label: "Cancelled" },
 		],
 	},
+	{
+		key: "paymentStatus",
+		label: "Payment Status",
+		options: [
+			{ value: "PROCESSING", label: "Processing" },
+			{ value: "VERIFIED", label: "Verified" },
+			{ value: "AWAITING_VERIFICATION", label: "Pending Verification" },
+			{ value: "AWAITING_PAYMENT_UPLOAD", label: "Awaiting Payment Upload" },
+			{ value: "PENDING", label: "Pending" },
+			{ value: "AWAITING_PAYMENT", label: "Awaiting Payment" },
+			{ value: "INCOMPLETE_PAYMENT", label: "Incomplete Payment" },
+			{ value: "DECLINED", label: "Declined" },
+			{ value: "PAID", label: "Paid" },
+			{ value: "NOT_PAID", label: "Not Paid" },
+		],
+	},
 ];
 
 const getStatusBadgeVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
@@ -56,9 +74,30 @@ const getStatusBadgeVariant = (status: string): "success" | "warning" | "error" 
 	}
 };
 
+const getPaymentFilterBadgeVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
+	switch (status) {
+		case "VERIFIED":
+	case "PAID":
+			return "success";
+		case "AWAITING_PAYMENT_UPLOAD":
+	case "AWAITING_PAYMENT":
+	case "AWAITING_VERIFICATION":
+	case "INCOMPLETE_PAYMENT":
+			return "warning";
+		case "DECLINED":
+	case "NOT_PAID":
+			return "error";
+		case "PROCESSING":
+			return "info";
+		default:
+			return "neutral";
+	}
+};
+
 const AdminOrders: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
+	const hasPrivilege = useHasPrivilege();
 	const { orders, ordersLoading, ordersPagination } = useAppSelector((state) => state.admin);
 	const {
 		page: currentPage,
@@ -69,7 +108,12 @@ const AdminOrders: React.FC = () => {
 		setSearch,
 		setPageSize,
 		setFilter,
-	} = useListParams({ extraFilters: { status: parseAsString.withDefault("") } });
+	} = useListParams({
+		extraFilters: {
+			status: parseAsString.withDefault(""),
+			paymentStatus: parseAsString.withDefault("AWAITING_VERIFICATION"),
+		},
+	});
 	const [cancelTarget, setCancelTarget] = useState<BackendOrder | null>(null);
 	const [isCancelling, setIsCancelling] = useState(false);
 
@@ -80,8 +124,9 @@ const AdminOrders: React.FC = () => {
 			limit: pageSize,
 			search: searchTerm || undefined,
 			filter: filterValues.status || undefined,
+			paymentStatus: filterValues.paymentStatus || undefined,
 		}));
-	}, [currentPage, searchTerm, pageSize, filterValues.status]);
+	}, [currentPage, searchTerm, pageSize, filterValues.status, filterValues.paymentStatus]);
 
 	useEffect(() => {
 		refresh();
@@ -153,8 +198,58 @@ const AdminOrders: React.FC = () => {
 			),
 		},
 		{
+			id: "paymentStatus",
+			header: "Payment",
+			enableSorting: false,
+			cell: ({ row }) => {
+				const payment = row.original.payments?.[0];
+				if (!payment) {
+					const selectedFilter = ORDER_STATUS_FILTERS
+						.find((filter) => filter.key === "paymentStatus")
+						?.options.find((option) => option.value === filterValues.paymentStatus);
+					if (selectedFilter) {
+						return (
+							<Badge variant={getPaymentFilterBadgeVariant(selectedFilter.value)} dot size="sm">
+								{selectedFilter.label}
+							</Badge>
+						);
+					}
+					return <span className="text-sm" style={{ color: "var(--text-hint)" }}>—</span>;
+				}
+
+				const isAwaitingUpload =
+					payment.paymentMethod === "MANUAL_TRANSFER" &&
+					payment.paymentStatus === "AWAITING_PAYMENT";
+				const isProcessing = row.original.orderStatus === "PROCESSING";
+				const orderPaymentVerified =
+					row.original.orderStatus === "IN_TRANSIT" || row.original.orderStatus === "DELIVERED";
+				const label = orderPaymentVerified
+					? "VERIFIED"
+					: isProcessing
+						? "Processing"
+						: payment.paymentStatus === "AWAITING_VERIFICATION"
+							? "Pending Verification"
+							: isAwaitingUpload
+								? "Awaiting Payment Upload"
+								: payment.paymentStatus.replace(/_/g, " ");
+				const variant = orderPaymentVerified
+					? "success"
+					: isProcessing
+						? "info"
+						: payment.paymentStatus === "VERIFIED" || payment.paymentStatus === "PAID"
+							? "success"
+							: payment.paymentStatus === "AWAITING_VERIFICATION" || payment.paymentStatus === "INCOMPLETE_PAYMENT" || isAwaitingUpload
+								? "warning"
+								: payment.paymentStatus === "DECLINED" || payment.paymentStatus === "NOT_PAID"
+									? "error"
+									: "neutral";
+
+				return <Badge variant={variant} dot size="sm">{label}</Badge>;
+			},
+		},
+		{
 			accessorKey: "orderStatus",
-			header: "Status",
+			header: "Order status",
 			cell: ({ getValue }) => (
 				<Badge variant={getStatusBadgeVariant(String(getValue()))} dot>
 					{String(getValue()).replace(/_/g, " ")}
@@ -170,6 +265,7 @@ const AdminOrders: React.FC = () => {
 				</span>
 			),
 		},
+		statusColumn(),
 		{
 			id: "actions",
 			header: "Action",
@@ -179,7 +275,7 @@ const AdminOrders: React.FC = () => {
 			cell: ({ row }) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/order/${row.original.orderReference}`) },
-					{ label: "Cancel", icon: DELETE_ICON, onClick: () => setCancelTarget(row.original), variant: "danger" as const, hidden: ["CANCELLED", "DELIVERED"].includes(row.original.orderStatus) },
+					{ label: "Cancel", icon: DELETE_ICON, onClick: () => setCancelTarget(row.original), variant: "danger" as const, hidden: !hasPrivilege("MANAGE_ORDERS") || ["CANCELLED", "DELIVERED"].includes(row.original.orderStatus) },
 				]} />
 			),
 		},
@@ -198,7 +294,7 @@ const AdminOrders: React.FC = () => {
 					manualFiltering
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
-					searchPlaceholder="Search by order ref, customer name or email..."
+					searchPlaceholder="Search orders or customers"
 					filters={ORDER_STATUS_FILTERS}
 					filterValues={filterValues}
 					onFilterChange={handleFilterChange}

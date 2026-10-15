@@ -8,6 +8,8 @@ import AdminLayout from '@/_components/AdminLayout';
 import { DataTable, FilterDef } from '@/_components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import ActionMenu from '@/_UI/ActionMenu';
+import Can from '@/_components/Can';
+import { useHasPrivilege } from '@/_hooks/usePrivilege';
 import Badge from '@/_UI/Badge';
 import Button from '@/_UI/Button';
 import Modal from '@/_UI/Modal';
@@ -18,6 +20,9 @@ import { useListParams } from '@/_hooks/useListParams';
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+);
+const EDIT_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
 );
 
 const STATUS_ICON = (
@@ -41,6 +46,7 @@ const ROLE_STATUS_FILTERS: FilterDef[] = [
 
 const Roles: React.FC = () => {
 	const router = useRouter();
+	const hasPrivilege = useHasPrivilege();
 	const [roles, setRoles] = useState<BackendRole[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [pagination, setPagination] = useState<any>(null);
@@ -160,12 +166,14 @@ const Roles: React.FC = () => {
 			cell: ({ row }) => (
 				<ActionMenu items={[
 					{ label: 'View', icon: VIEW_ICON, onClick: () => router.push(`/admin/role/${row.original.id}`) },
+					{ label: 'Edit', icon: EDIT_ICON, onClick: () => router.push(`/admin/roles/new?id=${row.original.id}`), hidden: !hasPrivilege('MANAGE_ROLES') },
 					{
 						label: row.original.status === 'A' ? 'Deactivate' : 'Activate',
 						icon: STATUS_ICON,
 						onClick: () => setStatusTarget(row.original),
+						hidden: !hasPrivilege('MANAGE_ROLES'),
 					},
-					{ label: 'Delete', icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: 'danger' as const },
+					{ label: 'Delete', icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: 'danger' as const, hidden: !hasPrivilege('MANAGE_ROLES') },
 				]} />
 			),
 		},
@@ -195,9 +203,11 @@ const Roles: React.FC = () => {
 					filterValues={filterValues}
 					onFilterChange={setFilter}
 					toolbar={
-						<Button variant="filled" leftIcon={Plus} onClick={() => router.push('/admin/roles/new')}>
-							Create Role
-						</Button>
+						<Can privilege="MANAGE_ROLES">
+							<Button variant="filled" leftIcon={Plus} onClick={() => router.push('/admin/roles/new')}>
+								Create Role
+							</Button>
+						</Can>
 					}
 					emptyMessage="No roles found"
 				/>

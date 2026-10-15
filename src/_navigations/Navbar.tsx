@@ -1,6 +1,8 @@
 "use client";
+import { useFeature } from "@/_hooks/useFeature";
 
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -15,6 +17,8 @@ import {
 	X,
 	Sun,
 	Moon,
+	Bell,
+	ChevronRight,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useRouter } from "next/router";
@@ -24,6 +28,8 @@ import { logoutAsync } from "@/_redux/actions/auth.action";
 import { profileAction } from "@/_redux/actions/profile.action";
 import { useTheme } from "@/_hooks/useTheme";
 import { appConstants } from "@/_redux/constants";
+import axiosInstance from "@/_utils/axiosInstance";
+import toast from "react-hot-toast";
 
 interface NavLink {
 	href: string;
@@ -44,6 +50,22 @@ const adminNavLinks: NavLink[] = [
 	{ href: "/admin/customers", label: "Customers" },
 ];
 
+/**
+ * On a phone the drawer is a full-screen overlay. Inside the header it is confined to the header's own box (the header's
+ * backdrop blur makes it the containing block for `fixed`), so below md it is rendered on <body> instead.
+ */
+function MobileOverlayHost({ children }: { children: React.ReactNode }) {
+	const [mobile, setMobile] = useState(false);
+	useEffect(() => {
+		const mq = window.matchMedia("(max-width: 767px)");
+		const update = () => setMobile(mq.matches);
+		update();
+		mq.addEventListener("change", update);
+		return () => mq.removeEventListener("change", update);
+	}, []);
+	return mobile ? createPortal(children, document.body) : <>{children}</>;
+}
+
 const Navbar: React.FC = () => {
 	const router = useRouter();
 	const pathname = usePathname();
@@ -52,7 +74,10 @@ const Navbar: React.FC = () => {
 
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+	const [awaitingPaymentOrders, setAwaitingPaymentOrders] = useState<any[]>([]);
 	const userMenuRef = useRef<HTMLDivElement>(null);
+	const notificationRef = useRef<HTMLDivElement>(null);
 
 
 	const itemCount = useAppSelector((state) => state.cart.itemCount);
@@ -73,6 +98,8 @@ const Navbar: React.FC = () => {
 	const { profile } = useAppSelector((state) => state.profile);
 	const bio = user;
 	const isAdmin = appConstants.ADMIN_ROLES.includes(user?.profileType?.toUpperCase() as any || "");
+	const selfCancelOn = useFeature("orders.self_cancel");
+	const wishlistOn = useFeature("storefront.wishlist");
 	const wishlistCount = useAppSelector(
 		(state) => state.wishlist.wishlistItemCount
 	);
@@ -107,11 +134,64 @@ const Navbar: React.FC = () => {
 			) {
 				setIsUserMenuOpen(false);
 			}
+			if (
+				notificationRef.current &&
+				!notificationRef.current.contains(e.target as Node) &&
+				!(e.target as Element | null)?.closest?.("[data-notification-drawer]")
+			) {
+				setIsNotificationOpen(false);
+			}
 		};
 		document.addEventListener("mousedown", handleClickOutside);
 		return () =>
 			document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
+
+	const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
+	const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+	const handleCancelOrder = async (orderId: string) => {
+		setCancellingId(orderId);
+		try {
+			await axiosInstance.patch(`order/my-orders/${orderId}/cancel`);
+			setAwaitingPaymentOrders((prev) => prev.filter((o) => o.id !== orderId));
+			toast.success("Order cancelled");
+		} catch (error: any) {
+			toast.error(error?.response?.data?.message || "Could not cancel this order");
+		} finally {
+			setCancellingId(null);
+			setCancelConfirmId(null);
+		}
+	};
+
+	const fetchAwaitingPaymentOrders = React.useCallback(async () => {
+		try {
+			if (!isAuthenticated) {
+				setAwaitingPaymentOrders([]);
+				return;
+			}
+			const response = await axiosInstance.get('order/my-orders?page=1&limit=100&paymentStatus=AWAITING_PAYMENT,AWAITING_PAYMENT_UPLOAD,INCOMPLETE_PAYMENT');
+			const data = response?.data?.data ?? response?.data;
+			const items = data?.items ?? [];
+			// Cancelled/advanced orders keep their old payment status; only PENDING orders still need action.
+			setAwaitingPaymentOrders(Array.isArray(items) ? items.filter((o: any) => o.orderStatus === 'PENDING') : []);
+		} catch (error) {
+			if (error instanceof Error) {
+				console.error('Error fetching awaiting payment orders:', error.message);
+			}
+			setAwaitingPaymentOrders([]);
+		}
+	}, [isAuthenticated]);
+
+	// Fetch awaiting payment orders on login and when drawer opens
+	useEffect(() => {
+		if (isAuthenticated && !isAdmin && bio) {
+			const timer = setTimeout(() => {
+				fetchAwaitingPaymentOrders();
+			}, 500); // Delay to ensure auth is fully ready
+			return () => clearTimeout(timer);
+		}
+	}, [isAuthenticated, isAdmin, bio, fetchAwaitingPaymentOrders]);
 
 	const handleLogout = () => {
 		dispatch(logoutAsync())
@@ -202,7 +282,7 @@ const Navbar: React.FC = () => {
 
 					{/* Wishlist — customers only. Hidden on mobile top bar; lives in the
 					    hamburger panel there instead. */}
-					{!isAdmin && (
+					{!isAdmin && wishlistOn && (
 						<Link
 							href="/wishlist"
 							className={`relative hidden md:inline-flex p-2 rounded-radius-md transition-colors duration-200 press-effect ${
@@ -220,6 +300,120 @@ const Navbar: React.FC = () => {
 						</Link>
 					)}
 
+					{/* Payment Notification — customers only */}
+					{!isAdmin && isAuthenticated && (
+						<div className="relative" ref={notificationRef}>
+							<button
+								onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+								className="relative inline-flex p-2 rounded-radius-md transition-colors duration-200 press-effect text-on-surface/60 dark:text-white/50 hover:bg-surface-variant/50 dark:hover:bg-white/5 hover:text-on-surface dark:hover:text-white"
+								aria-label="Payment notifications"
+							>
+								<Bell className="h-5 w-5" />
+								{awaitingPaymentOrders.length > 0 && (
+									<span className="bg-error text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center absolute -top-1.5 -right-1.5">
+										{awaitingPaymentOrders.length}
+									</span>
+								)}
+							</button>
+
+							{/* Notification Drawer */}
+							{isNotificationOpen && (
+								<MobileOverlayHost>
+								<div data-notification-drawer className="fixed inset-0 z-[60] md:z-40 md:absolute md:inset-auto md:right-0 md:top-full md:mt-2 md:w-96 md:max-h-[calc(100dvh-5rem)] flex flex-col bg-white dark:bg-[#1a1a2e] rounded-radius-lg shadow-elevation-3 border border-outline-variant dark:border-white/8 md:rounded-radius-lg">
+									<div className="p-4 border-b border-outline-variant dark:border-white/8 flex items-center justify-between">
+										<h3 className="font-semibold text-on-surface dark:text-white">Awaiting Payment</h3>
+										<button
+											onClick={() => setIsNotificationOpen(false)}
+											className="md:hidden p-1 hover:bg-surface-variant/50 dark:hover:bg-white/5 rounded"
+										>
+											<X className="h-5 w-5" />
+										</button>
+									</div>
+
+									<div className="overflow-y-auto min-h-0 flex-1">
+										{awaitingPaymentOrders.length === 0 ? (
+											<div className="p-4 text-center text-on-surface/50 dark:text-white/50">No pending payments</div>
+										) : (
+											awaitingPaymentOrders.map((order) => (
+												<div
+													key={order.id}
+													className="p-4 border-b border-outline-variant/50 dark:border-white/5 hover:bg-surface-variant/30 dark:hover:bg-white/5 transition-colors"
+												>
+													<div className="flex items-start justify-between mb-2">
+														<div>
+															<p className="font-semibold text-on-surface dark:text-white text-sm">
+																Order #{order.orderReference}
+															</p>
+															<p className="text-xs text-on-surface/60 dark:text-white/60 mt-1">
+																{new Date(order.createdAt).toLocaleDateString()}
+															</p>
+														</div>
+														<p className="font-bold text-primary-600 dark:text-primary-400">
+															₦{order.totalAmount?.toLocaleString()}
+														</p>
+													</div>
+												<div className="mt-3 flex gap-2">
+													<button
+														onClick={() => {
+															router.push(`/payment-instructions/${order.id}`);
+															setIsNotificationOpen(false);
+														}}
+														className="flex-1 py-2 px-3 bg-primary-600 hover:bg-primary-700 text-white rounded-radius-md text-sm font-medium transition-colors flex items-center justify-center gap-2"
+													>
+														Pay Now
+														<ChevronRight className="h-4 w-4" />
+													</button>
+													<button
+														onClick={() => {
+															router.push(`/my-orders/${order.orderReference}`);
+															setIsNotificationOpen(false);
+														}}
+														className="flex-1 py-2 px-3 border border-outline-variant dark:border-white/15 text-on-surface dark:text-white rounded-radius-md text-sm font-medium transition-colors hover:bg-surface-variant/50 dark:hover:bg-white/5"
+													>
+														View Details
+													</button>
+												</div>
+												{selfCancelOn && order.payments?.[0]?.paymentStatus !== "INCOMPLETE_PAYMENT" && (
+													<div className="mt-2">
+														{cancelConfirmId === order.id ? (
+															<div className="flex items-center justify-between gap-2 text-sm">
+																<span className="text-on-surface/70 dark:text-white/70">Cancel this order?</span>
+																<div className="flex gap-2">
+																	<button
+																		onClick={() => setCancelConfirmId(null)}
+																		disabled={cancellingId === order.id}
+																		className="px-3 py-1.5 rounded-radius-md border border-outline-variant dark:border-white/15 text-on-surface dark:text-white"
+																	>
+																		Keep
+																	</button>
+																	<button
+																		onClick={() => handleCancelOrder(order.id)}
+																		disabled={cancellingId === order.id}
+																		className="px-3 py-1.5 rounded-radius-md bg-error text-white disabled:opacity-60"
+																	>
+																		{cancellingId === order.id ? "Cancelling..." : "Yes, cancel"}
+																	</button>
+																</div>
+															</div>
+														) : (
+															<button
+																onClick={() => setCancelConfirmId(order.id)}
+																className="w-full py-1.5 text-sm text-error hover:underline"
+															>
+																Cancel order
+															</button>
+														)}
+													</div>
+												)}
+												</div>
+											))
+										)}
+									</div>
+								</div>
+								</MobileOverlayHost>
+							)}
+						</div>
+					)}
 
 					{/* User Menu — hidden on mobile top bar; the hamburger panel already
 					    carries login/profile/sign-out there. */}
@@ -417,7 +611,7 @@ const Navbar: React.FC = () => {
 						</Link>
 
 						{/* Wishlist — customers only. Lives here on mobile instead of the top bar. */}
-						{!isAdmin && (
+						{!isAdmin && wishlistOn && (
 							<Link
 								href="/wishlist"
 								className="flex items-center gap-3 px-3 py-2.5 rounded-radius-md text-on-surface/70 dark:text-white/70 hover:bg-surface-variant/50 dark:hover:bg-white/5 transition-colors duration-150"

@@ -1,9 +1,12 @@
+import RecordActivity from "@/_components/RecordActivity";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
 import { BackButton, DetailHeader, DetailSection, DetailRow } from "@/_UI/DetailField";
 import Badge from "@/_UI/Badge";
+import Can from "@/_components/Can";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
 import Button from "@/_UI/Button";
 import { DataTable } from "@/_components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -16,6 +19,8 @@ import { Pencil, X, Trash2, Upload, Power, Star, Plus } from "lucide-react";
 import { FormInput, FormTextarea, FormFileUpload } from "@/_UI/FormField";
 import Modal from "@/_UI/Modal";
 import FormSelectDropdown from "@/_UI/FormSelect";
+import CategoryLookup from "@/_UI/CategoryLookup";
+import { SettingsSaveBar, ToggleRow } from "@/_components/SettingsParts";
 import CurrencyInput from "@/_UI/CurrencyInput";
 import NumberInput from "@/_UI/NumberInput";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
@@ -26,29 +31,42 @@ import { WEIGHT_UNITS, formatWeight } from "@/_utils/formatWeight";
 import SanitizedHtml from "@/_UI/SanitizedHtml";
 import { siblingAnchorId } from "@/_utils/siblingAnchorId";
 import { variantGroupKey } from "@/_utils/groupVariants";
+import { useFeature } from "@/_hooks/useFeature";
+import { useLiveEvent } from "@/_hooks/useLiveEvent";
+import { ProductChangeCard, fetchProductChanges } from "@/_components/ProductChangeParts";
+import type { ProductChange } from "@/types/productChanges";
 
 const EMPTY_NEW_SIZE = { weightValue: "", weightUnit: "", price: "", originalPrice: "", unit: "" };
 
 const ProductDetail: React.FC = () => {
 	const router = useRouter();
+	const hasPrivilege = useHasPrivilege();
+	const makerChecker = useFeature("products.maker_checker");
+	const meId = String(useAppSelector((s) => s.auth.user?.id ?? ""));
+	const [pendingChange, setPendingChange] = useState<ProductChange | null>(null);
+	const [approverNote, setApproverNote] = useState("");
 	const { id } = router.query;
 	const [item, setItem] = useState<BackendItem | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [refreshing, setRefreshing] = useState(false);
 	const [editing, setEditing] = useState(false);
+	useEffect(() => {
+		if (router.isReady && router.query.edit === "1" && hasPrivilege("UPDATE_PRODUCT")) setEditing(true);
+	}, [router.isReady, router.query.edit]);
+	// ?edit=1 can open the form before the pending change has loaded; once it has, a change in flight blocks editing.
+	useEffect(() => {
+		if (pendingChange) setEditing(false);
+	}, [pendingChange]);
 	const [saving, setSaving] = useState(false);
 	const [toggling, setToggling] = useState(false);
 	const [statusModalOpen, setStatusModalOpen] = useState(false);
 	const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
 	const [settingThumbnailId, setSettingThumbnailId] = useState<string | null>(null);
 	const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
+	const [pendingBySize, setPendingBySize] = useState<Record<string, ProductChange>>({});
 	const [newImages, setNewImages] = useState<File[]>([]);
 	const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 	const [uploadingImages, setUploadingImages] = useState(false);
-	const [addSizeOpen, setAddSizeOpen] = useState(false);
-	const [addingSize, setAddingSize] = useState(false);
-	const [newSize, setNewSize] = useState(EMPTY_NEW_SIZE);
-	const [newSizeErrors, setNewSizeErrors] = useState<Record<string, string>>({});
 
 	const dispatch = useAppDispatch();
 	const { productCategories } = useAppSelector((state) => state.category);
@@ -157,10 +175,34 @@ const ProductDetail: React.FC = () => {
 			});
 	};
 
+	// The API allows one pending update per product, so the first (only) PENDING change is the one to show.
+	const loadPending = () => {
+		if (!id) return;
+		fetchProductChanges({ itemId: String(id), status: "PENDING" })
+			.then((list) => setPendingChange(list[0] ?? null))
+			.catch(() => setPendingChange(null));
+	};
+	// The other sizes can have a request waiting too (a new default is filed on the size it names), so the list says so.
+	const siblingKey = (siblingSizes as any[]).map((x) => x.id).join(",");
+	const loadPendingSizes = () => {
+		if ((siblingSizes as any[]).length < 2) return setPendingBySize({});
+		const ids = new Set((siblingSizes as any[]).map((x) => String(x.id)));
+		fetchProductChanges({ status: "PENDING" })
+			.then((list) => setPendingBySize(Object.fromEntries(list.filter((c) => c.itemId && ids.has(String(c.itemId))).map((c) => [String(c.itemId), c]))))
+			.catch(() => setPendingBySize({}));
+	};
+	useEffect(loadPendingSizes, [siblingKey]);
 	useEffect(() => {
 		if (!router.isReady || !id) return;
 		fetchItem();
+		loadPending();
 	}, [id, router.isReady]);
+	// A decision may have applied the change: reload the product as well as the banner.
+	useLiveEvent("product-changes-changed", () => {
+		loadPending();
+		loadPendingSizes();
+		fetchItem(true);
+	}, !!id);
 
 	// The candidate list is fetched in parallel with the item, so the hydration
 	// above often runs before it lands and the picker shows nothing for a
@@ -223,14 +265,23 @@ const ProductDetail: React.FC = () => {
 				payload.unit = Number(editForm.unit);
 			}
 
-			await axiosInstance.patch(`items/${id}`, payload);
+			if (makerChecker && approverNote.trim()) payload.note = approverNote.trim();
+
+			const res = await axiosInstance.patch(`items/${id}`, payload);
+			const sentForApproval = res.status === 202 || !!res.data?.data?.pending;
 
 			if (editForm.status !== item?.status) {
 				const endpoint = editForm.status === "A" ? "items/activate" : "items/deactivate";
 				await axiosInstance.patch(endpoint, { ids: [id] });
 			}
 
-			toast.success("Product updated");
+			if (sentForApproval) {
+				toast.success("Sent for approval. Someone else needs to approve it before it goes live.");
+				setApproverNote("");
+				loadPending();
+			} else {
+				toast.success("Product updated");
+			}
 
 			// Upload new images if any
 			if (newImages.length > 0) {
@@ -281,7 +332,13 @@ const ProductDetail: React.FC = () => {
 	const handleSetDefault = async (itemId: string) => {
 		setSettingDefaultId(itemId);
 		try {
-			await axiosInstance.patch(`items/${itemId}`, { isDefault: true });
+			const patched = await axiosInstance.patch(`items/${itemId}`, { isDefault: true });
+			if (patched.status === 202 || patched.data?.data?.pending) {
+				// With product approval on, nothing has changed yet: the request waits for a second person.
+				toast.success("Sent for approval. The default changes once someone else approves it.");
+				loadPendingSizes();
+				return;
+			}
 			toast.success("Default size updated");
 			const res = await axiosInstance.get("items?page=1&limit=100");
 			setAnchorCandidates(res.data?.data?.items ?? []);
@@ -290,46 +347,6 @@ const ProductDetail: React.FC = () => {
 			toast.error(err?.response?.data?.message || "Failed to set default size");
 		} finally {
 			setSettingDefaultId(null);
-		}
-	};
-
-	const openAddSize = () => {
-		setNewSize(EMPTY_NEW_SIZE);
-		setNewSizeErrors({});
-		setAddSizeOpen(true);
-	};
-
-	// Mirrors the create page's per-size rules, so a mistake shows up under the
-	// field instead of as a toast after the round trip.
-	const handleAddSize = async () => {
-		if (!id) return;
-		const errs: Record<string, string> = {};
-		const weightValue = Number(newSize.weightValue);
-		const price = Number(newSize.price);
-		const originalPrice = newSize.originalPrice === "" ? null : Number(newSize.originalPrice);
-		const unit = newSize.unit === "" ? NaN : Number(newSize.unit);
-		if (!(weightValue > 0)) errs.weightValue = "Pack size must be greater than 0";
-		if (!newSize.weightUnit) errs.weightUnit = "Pick a unit for the pack size";
-		if (!(price > 0)) errs.price = "Selling price must be greater than 0";
-		if (originalPrice !== null && !(originalPrice > price)) errs.originalPrice = "Original price must be greater than selling price";
-		if (!Number.isInteger(unit) || unit < 0) errs.unit = "Units must be 0 or more";
-		setNewSizeErrors(errs);
-		if (Object.keys(errs).length) return;
-
-		setAddingSize(true);
-		try {
-			await axiosInstance.post(`items/${id}/variants`, { weightValue, weightUnit: newSize.weightUnit, price, originalPrice, unit });
-			toast.success("Pack size added");
-			setAddSizeOpen(false);
-			// The source may have been renamed to carry its own size, so reload
-			// both it and the sibling list.
-			const res = await axiosInstance.get("items?page=1&limit=100");
-			setAnchorCandidates(res.data?.data?.items ?? []);
-			await fetchItem(true);
-		} catch (err: any) {
-			toast.error(err?.response?.data?.message || "Failed to add pack size");
-		} finally {
-			setAddingSize(false);
 		}
 	};
 
@@ -462,41 +479,54 @@ const ProductDetail: React.FC = () => {
 	const available = item.unit ?? 0;
 	const avgRating = item.ratingStats?.average ?? 0;
 	const reviewCount = item.ratingStats?.count ?? 0;
+	const active = item.status === "A";
+	const packSize = formatWeight((item as any).weightValue, (item as any).weightUnit);
+	const categoryName = item.product?.name ?? item.category ?? "";
+	const photoSlots = 5 - (item.photos?.length || 0);
+	const hasSize = !!((item as any).weightValue && (item as any).weightUnit);
 
 	return (
 		<AdminLayout pageTitle={itemTitle}>
-			<div className="max-w-4xl mx-auto space-y-5 animate-page-enter">
-				<div className="flex items-center justify-between">
-					<BackButton />
-					<div className="flex items-center gap-2">
-						<Button
-							variant="outlined"
-							size="sm"
-							color={item.status === "A" ? "error" : "primary"}
-							onClick={() => setStatusModalOpen(true)}
-							loading={toggling}
-							disabled={toggling}
-						>
-							<Power className="w-4 h-4 mr-1.5" />
-							{item.status === "A" ? "Deactivate" : "Activate"}
-						</Button>
-						{!editing ? (
-							<Button variant="outlined" size="sm" onClick={() => setEditing(true)}>
-								<Pencil className="w-4 h-4 mr-1.5" />
-								Edit
-							</Button>
-						) : (
-							<Button variant="outlined" size="sm" onClick={handleCancelEdit}>
-								<X className="w-4 h-4 mr-1.5" />
-								Cancel
-							</Button>
-						)}
-					</div>
-				</div>
+			<form
+				onSubmit={(e) => {
+					e.preventDefault();
+					if (editing) handleSave();
+				}}
+				className="@container animate-page-enter mx-auto w-full max-w-6xl space-y-5"
+			>
+				<BackButton />
 
 				<DetailHeader
 					title={item.name}
-					// subtitle={item.product?.name ?? "\u2014"}
+					subtitle={[categoryName, packSize].filter(Boolean).join(" · ") || undefined}
+					status={
+						<Badge variant={active ? "success" : "error"} dot>
+							{active ? "Active" : "Inactive"}
+						</Badge>
+					}
+					actions={
+						<>
+							<Can privilege="MANAGE_PRODUCTS">
+								<Button type="button" variant="outlined" size="sm" color={active ? "error" : "primary"} onClick={() => setStatusModalOpen(true)} loading={toggling} disabled={toggling}>
+									<Power className="mr-1.5 h-4 w-4" />
+									{active ? "Deactivate" : "Activate"}
+								</Button>
+							</Can>
+							<Can privilege="UPDATE_PRODUCT">
+								<Button
+									type="button"
+									variant="outlined"
+									size="sm"
+									disabled={!editing && !!pendingChange}
+									title={!editing && pendingChange ? "A change is waiting for approval" : undefined}
+									onClick={() => (editing ? handleCancelEdit() : setEditing(true))}
+								>
+									{editing ? <X className="mr-1.5 h-4 w-4" /> : <Pencil className="mr-1.5 h-4 w-4" />}
+									{editing ? "Cancel" : "Edit"}
+								</Button>
+							</Can>
+						</>
+					}
 					metrics={[
 						{ label: "Selling Price (\u20A6)", value: formatCurrency(item.price) },
 						...(item.originalPrice ? [{ label: "Original Price (\u20A6)", value: formatCurrency(item.originalPrice) }] : []),
@@ -505,366 +535,273 @@ const ProductDetail: React.FC = () => {
 					]}
 				/>
 
-				{editing ? (
-					<DetailSection title="Edit Product">
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5">
-							<FormInput
-								label="Name"
-								required
-								value={editForm.name}
-								onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
-							/>
-							<CurrencyInput
-								label="Selling Price"
-								required
-								value={editForm.price}
-								onChange={(val) => setEditForm((f) => ({ ...f, price: val }))}
-								showWords
-							/>
-							<CurrencyInput
-								label="Original price"
-								placeholder="Leave empty if not on sale"
-								value={editForm.originalPrice}
-								onChange={(val) => setEditForm((f) => ({ ...f, originalPrice: val }))}
-							/>
-							<NumberInput
-								label="Available Units"
-								required
-								value={editForm.unit}
-								onChange={(val) => setEditForm((f) => ({ ...f, unit: val }))}
-								prefix="Qty"
-								min={0}
-							/>
-							<FormSelectDropdown
-								label="Category"
-								value={editForm.category}
-								onChange={(val) => setEditForm((f) => ({ ...f, category: val }))}
-								options={productCategories.map((cat) => ({ value: String(cat.id), label: cat.name }))}
-								placeholder="Select category"
-							/>
-							<FormSelectDropdown
-								label="Status"
-								value={editForm.status}
-								onChange={(val) => setEditForm((f) => ({ ...f, status: val }))}
-								options={[
-									{ value: "A", label: "Active" },
-									{ value: "I", label: "Inactive" },
-								]}
-								searchable={false}
-							/>
-							<NumberInput
-								label="Pack Size"
-								value={editForm.weightValue}
-								onChange={(val) => setEditForm((f) => ({ ...f, weightValue: val }))}
-								prefix="Size"
-								min={0}
-							/>
-							<FormSelectDropdown
-								label="Unit"
-								value={editForm.weightUnit}
-								onChange={(val) => setEditForm((f) => ({ ...f, weightUnit: val }))}
-								options={WEIGHT_UNITS.map((u) => ({ value: u, label: u }))}
-								placeholder="Select a unit"
-								searchable={false}
-							/>
+				<div className="grid grid-cols-1 gap-5 @2xl:grid-cols-[minmax(0,1fr)_340px] @2xl:items-start">
+					<div className="min-w-0 space-y-5">
+						{pendingChange && (
+							<DetailSection title="Pending approval" description="Not live yet. It applies once someone else approves it.">
+								<div className="py-3">
+									<ProductChangeCard change={pendingChange} meId={meId} onDone={() => { loadPending(); fetchItem(true); }} />
+								</div>
+							</DetailSection>
+						)}
+						{editing ? (
+							<>
+								<DetailSection title="Basics" description="What it is and where it belongs in the shop.">
+									<div className="space-y-4 py-4">
+										<FormInput label="Name" required value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} />
+										<CategoryLookup value={editForm.category} onChange={(val) => setEditForm((f) => ({ ...f, category: val }))} />
+										<div>
+											<label className="mb-1.5 block text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
+												Description
+											</label>
+											<RichTextEditor value={editForm.description} onChange={(html) => setEditForm((f) => ({ ...f, description: html }))} placeholder="Describe the product benefits, ingredients, etc." />
+										</div>
+									</div>
+								</DetailSection>
 
-							<div className="sm:col-span-2">
-								<FormSelectDropdown
-									label="Same product as"
-									placeholder="Not a size variant"
-									searchable
-									value={editForm.variantOfItemId}
-									onChange={(val) => setEditForm((f) => ({ ...f, variantOfItemId: val }))}
-									options={anchorOptions}
+								<DetailSection title="Pricing & stock">
+									<div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
+										<CurrencyInput label="Selling Price" required value={editForm.price} onChange={(val) => setEditForm((f) => ({ ...f, price: val }))} showWords />
+										<CurrencyInput label="Original price" placeholder="Leave empty if not on sale" value={editForm.originalPrice} onChange={(val) => setEditForm((f) => ({ ...f, originalPrice: val }))} />
+										<NumberInput label="Available Units" required value={editForm.unit} onChange={(val) => setEditForm((f) => ({ ...f, unit: val }))} prefix="Qty" min={0} />
+									</div>
+								</DetailSection>
+
+								<DetailSection title="Pack size & grouping">
+									<div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
+										<NumberInput label="Pack Size" value={editForm.weightValue} onChange={(val) => setEditForm((f) => ({ ...f, weightValue: val }))} prefix="Size" min={0} />
+										<FormSelectDropdown label="Unit" value={editForm.weightUnit} onChange={(val) => setEditForm((f) => ({ ...f, weightUnit: val }))} options={WEIGHT_UNITS.map((u) => ({ value: u, label: u }))} placeholder="Select a unit" searchable={false} />
+										<div className="sm:col-span-2">
+											<FormSelectDropdown label="Same product as" placeholder="Not a size variant" searchable value={editForm.variantOfItemId} onChange={(val) => setEditForm((f) => ({ ...f, variantOfItemId: val }))} options={anchorOptions} />
+											<p className="mt-1.5 text-xs" style={{ color: "var(--text-hint)" }}>
+												Pick another listing to group this one with it as a pack size of the same product. They will share one card in the shop.
+											</p>
+										</div>
+									</div>
+								</DetailSection>
+
+								<DetailSection title="Tags" description="Who is this product for? A product can carry several.">
+									<div className="py-3">
+										<TagPicker value={selectedTagIds} onChange={setSelectedTagIds} label="" hint="" />
+									</div>
+								</DetailSection>
+
+								<DetailSection title="Visibility">
+									<ToggleRow id="productActive" title="Active" description="Inactive products are hidden from the shop and cannot be ordered." checked={editForm.status === "A"} onChange={(next) => setEditForm((f) => ({ ...f, status: next ? "A" : "I" }))} />
+								</DetailSection>
+							</>
+						) : (
+							<DetailSection title="Details">
+								<DetailRow
+									label="Description"
+									wide
+									value={item.description ? <SanitizedHtml html={item.description} className="text-sm font-normal" /> : "\u2014"}
 								/>
-								<p className="mt-1.5 text-xs" style={{ color: "var(--text-hint)" }}>
-									Pick another listing to group this one with it as a pack size of the same product. They will share one card in the shop.
-								</p>
-							</div>
-
-							<div className="sm:col-span-2">
-								<TagPicker value={selectedTagIds} onChange={setSelectedTagIds} />
-							</div>
-
-							<div className="sm:col-span-2">
-								<label className="mb-1.5 block text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-									Description
-								</label>
-								<RichTextEditor
-									value={editForm.description}
-									onChange={(html) => setEditForm((f) => ({ ...f, description: html }))}
-									placeholder="Describe the product benefits, ingredients, etc."
+								<DetailRow label="Category" value={categoryName || "\u2014"} />
+								<DetailRow label="Pack Size" value={packSize || "\u2014"} />
+								<DetailRow
+									label="Tags"
+									value={
+										(item as any).tags?.length ? (
+											<div className="flex flex-wrap gap-1.5">
+												{(item as any).tags.map((tag: any) => (
+													<span key={tag.id} className="rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap" style={{ background: "rgba(154,202,60,0.16)", color: "var(--color-primary)" }}>
+														{tag.name}
+													</span>
+												))}
+											</div>
+										) : (
+											"\u2014"
+										)
+									}
 								/>
-							</div>
-
-							{/* Image Upload Section */}
-							<div className="sm:col-span-2">
-								<label className="block text-sm font-medium mb-2" style={{ color: "var(--text-secondary)" }}>
-									Add New Images
-								</label>
-								<FormFileUpload
-									hint={`max ${5 - (item?.photos?.length || 0)} additional images`}
-									previews={newImagePreviews}
-									onSelect={handleNewImageSelect}
-									onRemove={removeNewImage}
-									maxFiles={5 - (item?.photos?.length || 0)}
+								<DetailRow
+									label="Shop"
+									value={
+										<Badge variant={(item as any).published ? "success" : "warning"} dot>
+											{(item as any).published ? "Published" : "Draft"}
+										</Badge>
+									}
 								/>
-							</div>
+							</DetailSection>
+						)}
+					</div>
 
-							<div className="sm:col-span-2 flex justify-end">
-								<Button variant="filled" size="md" onClick={handleSave} loading={saving || uploadingImages} disabled={saving || uploadingImages}>
-									Save Changes
-								</Button>
-							</div>
-						</div>
-					</DetailSection>
-				) : (
-					<DetailSection title="Product Information">
-						<DetailRow label="Name" value={item.name} />
-						<DetailRow
-							label="Description"
-							value={
-								item.description ? (
-									<SanitizedHtml html={item.description} />
-								) : (
-									"\u2014"
-								)
-							}
-						/>
-						<DetailRow label="Category" value={item.product?.name ?? item.category ?? "\u2014"} />
-						<DetailRow label="Selling Price" value={formatCurrency(item.price)} />
-						<DetailRow label="Original Price" value={item.originalPrice ? formatCurrency(item.originalPrice) : "—"} />
-						<DetailRow label="Available" value={formatNumber(available)} />
-						<DetailRow
-							label="Pack Size"
-							value={formatWeight((item as any).weightValue, (item as any).weightUnit) || "\u2014"}
-						/>
-						<DetailRow
-							label="Tags"
-							value={
-								(item as any).tags?.length ? (
-									<div className="flex flex-wrap gap-1.5">
-										{(item as any).tags.map((tag: any) => (
-											<span
-												key={tag.id}
-												className="rounded-full px-2 py-0.5 text-[0.65rem] font-medium"
-												style={{ background: "rgba(154,202,60,0.16)", color: "var(--color-primary)" }}
-											>
-												{tag.name}
-											</span>
+					<div className="min-w-0 space-y-5 @2xl:sticky @2xl:top-4">
+						<DetailSection title="Images" description="The thumbnail is used wherever the product appears small: cards, listings, search, cart lines.">
+							<div className="space-y-4 py-4">
+								{item.photos && item.photos.length > 0 ? (
+									<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2">
+										{item.photos.map((photo) => (
+											<div key={photo.id} className="group relative aspect-square overflow-hidden rounded-xl" style={{ border: photo.isThumbnail ? "2px solid var(--color-primary)" : "1px solid var(--border-light)" }}>
+												<img src={photo.url} alt={item.name} className="h-full w-full object-cover" />
+												{photo.isThumbnail ? (
+													<span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.6rem] font-semibold" style={{ background: "var(--color-primary)", color: "#fff" }}>
+														<Star className="h-3 w-3 fill-current" />
+														Thumbnail
+													</span>
+												) : (
+													hasPrivilege("UPDATE_PRODUCT") && (
+														<button type="button" onClick={() => handleSetThumbnail(photo.id)} disabled={settingThumbnailId === photo.id} className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.6rem] font-semibold whitespace-nowrap disabled:opacity-50" style={{ background: "rgba(255,255,255,0.92)", color: "var(--color-primary)" }}>
+															<Star className="h-3 w-3" />
+															{settingThumbnailId === photo.id ? "Setting…" : "Make thumbnail"}
+														</button>
+													)
+												)}
+												{editing && hasPrivilege("DELETE_PRODUCT") && (
+													<button type="button" onClick={() => handleDeleteImage(photo.id)} disabled={deletingImageId === photo.id} aria-label="Delete image" className="absolute top-2 right-2 rounded-full bg-red-600 p-1.5 text-white hover:bg-red-700 disabled:opacity-50">
+														<Trash2 className="h-3.5 w-3.5" />
+													</button>
+												)}
+											</div>
 										))}
+										{editing &&
+											newImagePreviews.map((preview, index) => (
+												<div key={`new-${index}`} className="relative aspect-square overflow-hidden rounded-xl" style={{ border: "1px solid var(--border-light)" }}>
+													<img src={preview} alt={`New image ${index + 1}`} className="h-full w-full object-cover" />
+													<div className="absolute top-2 right-2 rounded-full bg-blue-600 p-1.5 text-white">
+														<Upload className="h-3.5 w-3.5" />
+													</div>
+													<button type="button" onClick={() => removeNewImage(index)} aria-label="Remove new image" className="absolute top-2 left-2 rounded-full bg-red-600 p-1.5 text-white hover:bg-red-700">
+														<Trash2 className="h-3.5 w-3.5" />
+													</button>
+												</div>
+											))}
 									</div>
 								) : (
-									"\u2014"
-								)
-							}
-						/>
-						<DetailRow
-							label="Status"
-							value={
-								<Badge variant={item.status === "A" ? "success" : "error"} dot>
-									{item.status === "A" ? "Active" : "Inactive"}
-								</Badge>
-							}
-						/>
-					</DetailSection>
-				)}
+									<p className="text-sm" style={{ color: "var(--text-hint)" }}>
+										No images yet.{editing ? "" : " Edit the product to add some."}
+									</p>
+								)}
+								{editing && photoSlots > 0 && (
+									<div>
+										<p className="mb-2 text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
+											Add new images
+										</p>
+										<FormFileUpload hint={`max ${photoSlots} additional images`} previews={[]} onSelect={handleNewImageSelect} onRemove={removeNewImage} maxFiles={photoSlots} />
+									</div>
+								)}
+							</div>
+						</DetailSection>
+					</div>
+				</div>
 
-				{/* The panel is always shown so a lone product can get its second
-				    size; the list itself only appears once there is more than one. */}
-				{(
-					<DetailSection
-						title="Pack sizes"
-						action={
-							<Button
-								variant="outlined"
-								size="sm"
-								onClick={openAddSize}
-								disabled={!(item as any).weightValue || !(item as any).weightUnit}
-							>
-								<Plus className="w-4 h-4 mr-1.5" />
+				{/* The panel is always shown so a lone product can get its second size; the list itself only appears once there is more than one. */}
+				<DetailSection
+					title="Pack sizes"
+					action={
+						<Can privilege="CREATE_PRODUCT">
+							<Button type="button" variant="tonal" size="sm" leftIcon={Plus} onClick={() => router.push(`/admin/product/${id}/sizes/new`)} disabled={!hasSize}>
 								Add size
 							</Button>
-						}
-					>
-						{(!(item as any).weightValue || !(item as any).weightUnit) && (
-							<p className="px-5 pt-4 text-xs" style={{ color: "var(--text-hint)" }}>
-								Set a pack size on this product (Edit → Pack Size) before adding another size.
-							</p>
-						)}
-						{siblingSizes.length <= 1 && (item as any).weightValue && (item as any).weightUnit && (
-							<p className="px-5 py-4 text-xs" style={{ color: "var(--text-hint)" }}>
-								Only one size so far. Add another and the sizes will share one card in the shop.
-							</p>
-						)}
-						{siblingSizes.length > 1 && (<>
-						<p className="px-5 pt-4 text-xs" style={{ color: "var(--text-hint)" }}>
-							These sell as one product on the storefront — one card, with the size chosen on the
-							product page. Each size keeps its own price and stock, and is edited on its own page.
+						</Can>
+					}
+				>
+					{!hasSize && (
+						<p className="pt-4 pb-1 text-xs" style={{ color: "var(--text-hint)" }}>
+							Set a pack size on this product (Edit → Pack Size) before adding another size.
 						</p>
-						<div className="space-y-2 p-5">
-							{siblingSizes.map((size: any) => {
-								const isCurrent = String(size.id) === String(id);
-								return (
-									<div
-										key={size.id}
-										role="button"
-										tabIndex={isCurrent ? -1 : 0}
-										onClick={() => !isCurrent && router.push(`/admin/product/${size.id}`)}
-										onKeyDown={(e) => {
-											if (e.target !== e.currentTarget) return;
-											if (e.key === " ") e.preventDefault();
-											if (!isCurrent && (e.key === "Enter" || e.key === " ")) router.push(`/admin/product/${size.id}`);
-										}}
-										className={`flex w-full flex-wrap items-center gap-x-4 gap-y-1 rounded-lg px-3.5 py-2.5 text-left transition-opacity ${
-											isCurrent ? "cursor-default" : "cursor-pointer hover:opacity-80"
-										}`}
-										style={{
-											background: isCurrent ? "rgba(154,202,60,0.12)" : "var(--surface-low)",
-											border: `1px solid ${isCurrent ? "var(--color-primary)" : "var(--border-light)"}`,
-										}}
-									>
-										<span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-											{formatWeight(size.weightValue, size.weightUnit) || "No size set"}
-										</span>
-										<span className="text-sm tabular-nums" style={{ color: "var(--text-secondary)" }}>
-											{formatCurrency(size.price)}
-										</span>
-										<span className="text-xs tabular-nums" style={{ color: "var(--text-hint)" }}>
-											{formatNumber(Number(size.availableQuantity ?? size.unit ?? 0))} in stock
-										</span>
-										<span className="ml-auto flex items-center gap-2">
-											<Badge variant={size.published ? "success" : "warning"} dot>
-												{size.published ? "Published" : "Draft"}
-											</Badge>
-											{size.isDefault ? (
-												<span
-													className="inline-flex items-center gap-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em]"
-													style={{ color: "var(--color-primary)" }}
-												>
-													<Star className="w-3 h-3 fill-current" />
-													Default
-												</span>
-											) : (
-												<button
-													type="button"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleSetDefault(size.id);
-													}}
-													disabled={settingDefaultId === size.id}
-													className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.65rem] font-semibold disabled:opacity-50"
-													style={{ background: "var(--surface-base)", color: "var(--text-secondary)", border: "1px solid var(--border-light)" }}
-												>
-													<Star className="w-3 h-3" />
-													{settingDefaultId === size.id ? "Setting…" : "Set default"}
-												</button>
-											)}
-											{isCurrent && (
-												<span
-													className="text-[0.65rem] font-semibold uppercase tracking-[0.12em]"
-													style={{ color: "var(--color-primary)" }}
-												>
-													Editing
-												</span>
-											)}
-										</span>
-									</div>
-								);
-							})}
-						</div>
-						</>)}
-					</DetailSection>
-				)}
-
-				{item.photos && item.photos.length > 0 && (
-					<DetailSection title="Images">
-						<p className="px-5 pt-4 text-xs" style={{ color: "var(--text-hint)" }}>
-							The thumbnail is the single image used wherever the product appears in a
-							smaller format — cards, listings, search results, cart lines.
+					)}
+					{siblingSizes.length <= 1 && hasSize && (
+						<p className="py-4 text-xs" style={{ color: "var(--text-hint)" }}>
+							Only one size so far. Add another and the sizes will share one card in the shop.
 						</p>
-						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-5">
-							{/* Existing images */}
-							{item.photos.map((photo) => (
-								<div
-									key={photo.id}
-									className="relative group aspect-square rounded-lg overflow-hidden"
-									style={{
-										border: photo.isThumbnail
-											? "2px solid var(--color-primary)"
-											: "1px solid var(--border-light)",
-									}}
-								>
-									<img src={photo.url} alt={item.name} className="w-full h-full object-cover" />
-
-									{photo.isThumbnail ? (
-										<span
-											className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.6rem] font-semibold"
-											style={{ background: "var(--color-primary)", color: "#fff" }}
+					)}
+					{siblingSizes.length > 1 && (
+						<>
+							<p className="pt-4 text-xs" style={{ color: "var(--text-hint)" }}>
+								These sell as one product on the storefront — one card, with the size chosen on the product page. Each size keeps its own price and stock, and is edited on its own page.
+							</p>
+							<div className="space-y-2 py-4">
+								{siblingSizes.map((size: any) => {
+									const isCurrent = String(size.id) === String(id);
+									return (
+										<div
+											key={size.id}
+											role="button"
+											tabIndex={isCurrent ? -1 : 0}
+											onClick={() => !isCurrent && router.push(`/admin/product/${size.id}`)}
+											onKeyDown={(e) => {
+												if (e.target !== e.currentTarget) return;
+												if (e.key === " ") e.preventDefault();
+												if (!isCurrent && (e.key === "Enter" || e.key === " ")) router.push(`/admin/product/${size.id}`);
+											}}
+											className={`flex w-full flex-wrap items-center gap-x-4 gap-y-2 rounded-xl px-3.5 py-3 text-left transition-colors ${isCurrent ? "cursor-default" : "cursor-pointer hover:bg-muted/60"}`}
+											style={{ background: isCurrent ? "rgba(154,202,60,0.12)" : "var(--surface-low)", border: `1px solid ${isCurrent ? "var(--color-primary)" : "var(--border-light)"}` }}
 										>
-											<Star className="w-3 h-3 fill-current" />
-											Thumbnail
-										</span>
-									) : (
-										<button
-											onClick={() => handleSetThumbnail(photo.id)}
-											disabled={settingThumbnailId === photo.id}
-											className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.6rem] font-semibold disabled:opacity-50"
-											style={{ background: "rgba(255,255,255,0.92)", color: "var(--color-primary)" }}
-										>
-											<Star className="w-3 h-3" />
-											{settingThumbnailId === photo.id ? "Setting…" : "Make thumbnail"}
-										</button>
-									)}
-
-									{editing && (
-										<button
-											onClick={() => handleDeleteImage(photo.id)}
-											disabled={deletingImageId === photo.id}
-											className="absolute top-2 right-2 p-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-										>
-											<Trash2 className="w-3.5 h-3.5" />
-										</button>
-									)}
-								</div>
-							))}
-
-							{/* New images preview (only in edit mode) */}
-							{editing && newImagePreviews.map((preview, index) => (
-								<div
-									key={`new-${index}`}
-									className="relative group aspect-square rounded-lg overflow-hidden"
-									style={{ border: "1px solid var(--border-light)" }}
-								>
-									<img src={preview} alt={`New image ${index + 1}`} className="w-full h-full object-cover" />
-									<div className="absolute top-2 right-2 p-1.5 rounded-full bg-blue-600 text-white">
-										<Upload className="w-3.5 h-3.5" />
-									</div>
-									<button
-										onClick={() => removeNewImage(index)}
-										className="absolute top-2 left-2 p-1.5 rounded-full bg-red-600 text-white hover:bg-red-700"
-									>
-										<Trash2 className="w-3.5 h-3.5" />
-									</button>
-								</div>
-							))}
-						</div>
-					</DetailSection>
-				)}
+											<span className="text-sm font-semibold whitespace-nowrap" style={{ color: "var(--text-primary)" }}>
+												{formatWeight(size.weightValue, size.weightUnit) || "No size set"}
+											</span>
+											<span className="text-sm whitespace-nowrap tabular-nums" style={{ color: "var(--text-secondary)" }}>
+												{formatCurrency(size.price)}
+											</span>
+											<span className="text-xs whitespace-nowrap tabular-nums" style={{ color: "var(--text-hint)" }}>
+												{formatNumber(Number(size.availableQuantity ?? size.unit ?? 0))} in stock
+											</span>
+											<span className="ml-auto flex flex-wrap items-center gap-2">
+												<Badge variant={size.published ? "success" : "warning"} dot>
+													{size.published ? "Published" : "Draft"}
+												</Badge>
+												{pendingBySize[String(size.id)] && (
+													<Badge variant="warning" dot>
+														Pending approval
+													</Badge>
+												)}
+												{size.isDefault ? (
+													<span className="inline-flex items-center gap-1 text-[0.65rem] font-semibold tracking-[0.12em] whitespace-nowrap uppercase" style={{ color: "var(--color-primary)" }}>
+														<Star className="h-3 w-3 fill-current" />
+														Default
+													</span>
+												) : (
+													hasPrivilege("UPDATE_PRODUCT") && (
+														<button
+															type="button"
+															onClick={(e) => {
+																e.stopPropagation();
+																handleSetDefault(size.id);
+															}}
+															disabled={settingDefaultId === size.id || !!pendingBySize[String(size.id)]}
+															title={pendingBySize[String(size.id)] ? "A change is waiting for approval" : undefined}
+															className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.65rem] font-semibold whitespace-nowrap disabled:opacity-50"
+															style={{ background: "var(--surface-base)", color: "var(--text-secondary)", border: "1px solid var(--border-light)" }}
+														>
+															<Star className="h-3 w-3" />
+															{settingDefaultId === size.id ? "Setting…" : "Set default"}
+														</button>
+													)
+												)}
+												{isCurrent && (
+													<span className="text-[0.65rem] font-semibold tracking-[0.12em] whitespace-nowrap uppercase" style={{ color: "var(--color-primary)" }}>
+														Editing
+													</span>
+												)}
+											</span>
+										</div>
+									);
+								})}
+							</div>
+						</>
+					)}
+				</DetailSection>
 
 				{item.reviews && item.reviews.length > 0 && (
-					<DetailSection title="Reviews">
-						<DataTable
-							columns={reviewColumns}
-							data={item.reviews}
-							manualPagination={false}
-							onRefresh={() => fetchItem(true)}
-							refreshing={refreshing}
-							emptyMessage="No reviews yet"
-						/>
+					<DetailSection title="Reviews" flush>
+						<DataTable columns={reviewColumns} data={item.reviews} manualPagination={false} onRefresh={() => fetchItem(true)} refreshing={refreshing} emptyMessage="No reviews yet" />
 					</DetailSection>
 				)}
-			</div>
+
+				{editing && makerChecker && (
+					<DetailSection title="Note for the approver" description="Optional. Shown with your request.">
+						<div className="py-3">
+							<FormTextarea label="Note" rows={2} value={approverNote} onChange={(e) => setApproverNote(e.target.value)} placeholder="Why are you changing this?" />
+						</div>
+					</DetailSection>
+				)}
+
+				{editing && (
+					<SettingsSaveBar hint={makerChecker ? "Changes are sent to an approver and only go live once someone else approves them." : "Stock is only changed if you edit it here."} resetLabel="Cancel" onReset={handleCancelEdit} submitLabel={makerChecker ? "Submit for approval" : "Save changes"} saving={saving || uploadingImages} />
+				)}
+			</form>
 
 			{/* Status Confirmation Modal */}
 			<Modal
@@ -900,70 +837,7 @@ const ProductDetail: React.FC = () => {
 				</div>
 			</Modal>
 
-			{/* Add Pack Size Modal */}
-			<Modal
-				isOpen={addSizeOpen}
-				onClose={() => !addingSize && setAddSizeOpen(false)}
-				title="Add pack size"
-				subtitle={`A new listing grouped with ${item?.name ?? "this product"}. It shares the category, description, tags and images, and starts as a draft.`}
-				size="xl"
-			>
-				<div className="space-y-4">
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<NumberInput
-							label="Pack Size"
-							placeholder="e.g. 250"
-							prefix="Size"
-							step="0.01"
-							min={0}
-							value={newSize.weightValue}
-							onChange={(val) => setNewSize((f) => ({ ...f, weightValue: val }))}
-							error={newSizeErrors.weightValue}
-						/>
-						<FormSelectDropdown
-							label="Unit"
-							value={newSize.weightUnit}
-							onChange={(val) => setNewSize((f) => ({ ...f, weightUnit: val }))}
-							options={WEIGHT_UNITS.map((u) => ({ value: u, label: u }))}
-							placeholder="Select a unit"
-							searchable={false}
-							error={newSizeErrors.weightUnit}
-						/>
-						<CurrencyInput
-							label="Selling Price"
-							required
-							placeholder="0.00"
-							value={newSize.price}
-							onChange={(val) => setNewSize((f) => ({ ...f, price: val }))}
-							error={newSizeErrors.price}
-						/>
-						<CurrencyInput
-							label="Original Price"
-							placeholder="0.00 (leave empty if not on sale)"
-							value={newSize.originalPrice}
-							onChange={(val) => setNewSize((f) => ({ ...f, originalPrice: val }))}
-							error={newSizeErrors.originalPrice}
-						/>
-						<NumberInput
-							label="Available Units"
-							placeholder="0"
-							required
-							prefix="Qty"
-							value={newSize.unit}
-							onChange={(val) => setNewSize((f) => ({ ...f, unit: val }))}
-							error={newSizeErrors.unit}
-						/>
-					</div>
-					<div className="flex justify-end gap-3">
-						<Button variant="outlined" color="secondary" size="sm" onClick={() => setAddSizeOpen(false)} disabled={addingSize}>
-							Cancel
-						</Button>
-						<Button variant="filled" size="sm" loading={addingSize} disabled={addingSize} onClick={handleAddSize}>
-							Add size
-						</Button>
-					</div>
-				</div>
-			</Modal>
+			<RecordActivity type="Item" id={item?.id} created={{ at: (item as any)?.createdAt, by: (item as any)?.createdBy }} />
 		</AdminLayout>
 	);
 };

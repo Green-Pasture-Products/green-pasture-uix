@@ -1,3 +1,4 @@
+import { OrderDetailSkeleton } from "@/_skeletonLoading/PageSkeletons";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Copy, Check, Upload, AlertCircle } from "lucide-react";
@@ -84,22 +85,14 @@ const PaymentInstructionsPage: React.FC = () => {
 
   const formatAmount = (amount: number, currency: string) => {
     // Display exact amount without currency formatting to avoid rounding issues
-    const nairaAmount = (amount / 100).toFixed(2);
+    const nairaAmount = Number(amount).toFixed(2);
     return `₦${nairaAmount}`;
   };
 
   if (isLoading) {
     return (
       <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div
-              className="h-12 w-12 rounded-full border-4 border-gray-200 border-t-blue-500 mx-auto mb-4 animate-spin"
-              style={{ borderTopColor: "var(--color-primary)" }}
-            ></div>
-            <p style={{ color: "var(--text-secondary)" }}>Loading payment instructions...</p>
-          </div>
-        </div>
+        <OrderDetailSkeleton width="max-w-2xl" />
       </Layout>
     );
   }
@@ -347,7 +340,7 @@ const PaymentInstructionsPage: React.FC = () => {
               Upload Payment Receipt
             </button>
           </Link>
-          <Link href="/orders">
+          <Link href="/my-orders">
             <button
               className="w-full py-3 rounded-lg font-semibold transition"
               style={{

@@ -1,15 +1,33 @@
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
 @custom-variant dark (&:where(.dark, .dark *));
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap");
-/* Fraunces — an old-style serif with a SOFT axis and optical sizing. Its
-   slightly irregular, botanical letterforms carry the "grown, not manufactured"
-   idea that a neutral geometric sans cannot. Display only; DM Sans stays for UI. */
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap");
+
+/* ─── Typeface: Sora (as connect-portal) ───────────────────────────────────
+   One self-hosted family for display and UI, so there is no third-party font
+   request. The Latin half loads always; the Latin-Extended half (ẹ ọ ṣ ń …, for
+   Yoruba / Igbo / Hausa) only downloads when such a glyph is rendered. */
+@font-face {
+	font-family: "Sora";
+	font-style: normal;
+	font-weight: 100 800;
+	font-display: swap;
+	src: url("/fonts/sora-latin-var.woff2") format("woff2");
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: "Sora Ext";
+	font-style: normal;
+	font-weight: 100 800;
+	font-display: swap;
+	src: url("/fonts/sora-latinext-var.woff2") format("woff2");
+	unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 
 /* ─── CSS Custom Properties ───────────────────────────────────────────── */
 
 :root {
+	--font-sans: "Sora", "Sora Ext", system-ui, -apple-system, sans-serif;
+	--font-display: var(--font-sans);
 	--color-primary: #1f6554;
 	--color-primary-light: #2a7e69;
 	--color-primary-dark: #103630;
@@ -172,6 +190,141 @@
 	--color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ─── Brand accent tokens (ported admin components) ──────────────────────
+   The egfm-derived admin components style their accent with brand / brand-ink
+   / brand-soft / ink. They map onto the Green Pasture palette: the lime
+   (#9aca3c, as on the hero CTA) is the fill, with deep-green ink on it. */
+:root {
+	--brand: #9aca3c;
+	--brand-hover: #86b82e;
+	--brand-foreground: #0c2b25;
+	--brand-ink: #3f6d10; /* lime reads as TEXT in this darker shade (AA on white) */
+	--brand-soft: rgba(154, 202, 60, 0.16);
+	--ink: #10231f;
+	--ink-2: #1c332e;
+	--ink-3: #3b514b;
+}
+.dark {
+	--brand: #9aca3c;
+	--brand-hover: #aedb52;
+	--brand-foreground: #0c2b25;
+	--brand-ink: #b7de6b;
+	--brand-soft: rgba(154, 202, 60, 0.18);
+	--ink: #f1f5ee;
+	--ink-2: #d6e0d2;
+	--ink-3: #a9b8a4;
+}
+@theme inline {
+	--color-brand: var(--brand);
+	--color-brand-hover: var(--brand-hover);
+	--color-brand-foreground: var(--brand-foreground);
+	--color-brand-ink: var(--brand-ink);
+	--color-brand-soft: var(--brand-soft);
+	--color-brand-dark: var(--brand-ink);
+	--color-ink: var(--ink);
+	--color-ink-2: var(--ink-2);
+	--color-ink-3: var(--ink-3);
+}
+
+/* ─── Admin look & feel ───────────────────────────────────────────────────
+   Applied to <html> only while the admin shell is mounted (AppShell), so the
+   storefront is untouched and portalled UI (modals, menus) inherits it too.
+   Structure and density follow the egfm admin; colour stays Green Pasture:
+   the deep green drives primary actions, the lime is the accent (active nav,
+   tabs, chips, avatars). */
+.admin-ui {
+	font-family: var(--font-sans);
+	--background: #f6f8f2;
+	--foreground: #10231f;
+	--card: #ffffff;
+	--card-foreground: #10231f;
+	--popover: #ffffff;
+	--popover-foreground: #10231f;
+	--secondary: #eef2e8;
+	--muted: #eef2e8;
+	--muted-foreground: #5b6b63;
+	--accent: rgba(154, 202, 60, 0.14);
+	--border: #e1e7dc;
+	--input: #8c978f;
+	--ring: #3f6d10;
+	--radius: 0.75rem;
+
+	--surface-paper: #ffffff;
+	--surface-low: #f6f8f2;
+	--surface-medium: #eef2e8;
+	--surface-high: #e1e7dc;
+	--text-primary: #10231f;
+	--text-secondary: rgba(16, 35, 31, 0.72);
+	--text-hint: #6b7a72;
+	--border-light: #e1e7dc;
+
+	--sidebar: #ffffff;
+	--sidebar-foreground: #10231f;
+	--sidebar-primary: #9aca3c;
+	--sidebar-primary-foreground: #0c2b25;
+	--sidebar-accent: rgba(154, 202, 60, 0.12);
+	--sidebar-accent-foreground: #10231f;
+	--sidebar-border: #e1e7dc;
+	--sidebar-ring: #9aca3c;
+}
+.admin-ui.dark {
+	/* Neutral near-black surfaces (no green cast); the lime stays an accent only. */
+	--background: #0b0b0c;
+	--foreground: #f4f4f5;
+	--card: #141415;
+	--card-foreground: #f4f4f5;
+	--popover: #141415;
+	--popover-foreground: #f4f4f5;
+	--secondary: #1f1f21;
+	--muted: #1f1f21;
+	--muted-foreground: #a1a1a6;
+	--accent: #262628;
+	--border: #27272a;
+	--input: #5f5f66;
+	--ring: #9aca3c;
+	--brand-soft: rgba(255, 255, 255, 0.04);
+	--brand-ink: #b7de6b;
+
+	--surface-paper: #141415;
+	--surface-low: #0f0f10;
+	--surface-medium: #1f1f21;
+	--surface-high: #2a2a2d;
+	--text-primary: #f4f4f5;
+	--text-secondary: rgba(244, 244, 245, 0.72);
+	--text-hint: #7d7d84;
+	--border-light: #27272a;
+
+	--sidebar: #0f0f10;
+	--sidebar-foreground: #e7e7ea;
+	--sidebar-accent: #1f1f21;
+	--sidebar-accent-foreground: #ffffff;
+	--sidebar-border: #27272a;
+}
+.admin-ui input,
+.admin-ui button,
+.admin-ui select,
+.admin-ui textarea {
+	font-family: inherit;
+}
+@keyframes admin-page-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+.admin-page-in {
+	animation: admin-page-in 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+	.admin-page-in {
+		animation: none;
+	}
+}
+
 /* ─── Default border colour (Tailwind v4 compat) ──────────────────────
    Tailwind v4 changed the bare `border` utility's default colour from
    gray-200 to currentColor, so shadcn primitives (card.tsx etc.) that use
@@ -198,7 +351,7 @@ html {
 }
 
 body {
-	font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+	font-family: var(--font-sans);
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	margin: 0;
@@ -753,6 +906,37 @@ input[type="password"]::-ms-clear {
 	animation: receiptTear 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+/* Print only the receipt: hide everything that neither contains nor is inside it,
+   and un-clip the ancestors (modal/fixed wrappers) that would otherwise crop it. */
+@media print {
+	body *:not(:has(#receipt-print)):not(#receipt-print):not(#receipt-print *) {
+		display: none !important;
+	}
+	*:has(#receipt-print) {
+		position: static !important;
+		overflow: visible !important;
+		transform: none !important;
+		height: auto !important;
+		max-height: none !important;
+		background: none !important;
+		box-shadow: none !important;
+		border: 0 !important;
+		padding: 0 !important;
+		margin: 0 auto !important;
+		backdrop-filter: none !important;
+	}
+	#receipt-print {
+		opacity: 1 !important;
+		animation: none !important;
+		transform: none !important;
+		filter: none !important;
+		max-width: 80mm;
+		margin: 0 auto;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+}
+
 /* ==========================================================================
    Fly-to-Cart & Cart Bounce Micro-Interactions
    ========================================================================== */
@@ -812,3 +996,86 @@ input[type="password"]::-ms-clear {
 	animation: badgePop 0.4s ease-out;
 }
 
+
+
+/* One family; big headings get weight and tight tracking rather than a second
+   display face (as connect-portal). Utilities and inline weights still win. */
+@layer base {
+	h1,
+	h2 {
+		font-family: var(--font-display);
+		font-weight: 800;
+		line-height: 1.05;
+		letter-spacing: -0.035em;
+	}
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: var(--font-sans);
+		font-weight: 600;
+		line-height: 1.25;
+		letter-spacing: -0.01em;
+	}
+}
+
+/* ─── Status timeline (payment details and other record timelines) ───────── */
+.tl-step {
+	animation: tl-in 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+	animation-delay: calc(var(--i, 0) * 90ms);
+}
+.tl-line {
+	transform-origin: top;
+	animation: tl-line 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+	animation-delay: calc(var(--i, 0) * 90ms + 120ms);
+}
+.tl-ripple {
+	animation: tl-ripple 1.6s ease-out 0.6s 2 both;
+}
+@keyframes tl-in {
+	from { opacity: 0; transform: translateY(8px); }
+	to { opacity: 1; transform: none; }
+}
+@keyframes tl-line {
+	from { transform: scaleY(0); }
+	to { transform: scaleY(1); }
+}
+@keyframes tl-ripple {
+	0% { transform: scale(1); opacity: 0.45; }
+	100% { transform: scale(2.1); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.tl-step, .tl-line, .tl-ripple {
+		animation: none !important;
+	}
+}
+
+/* Feature flag turned on / full-page notice appearing */
+.gp-feature-in {
+	animation: gp-feature-in 0.25s ease-out;
+}
+@keyframes gp-feature-in {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.gp-feature-in {
+		animation: none;
+	}
+}
+
+/* ─── Tab panels (AnimatedTabs) ───────────────────────────────────────── */
+.tab-panel.tab-from-right { animation: tab-slide-right 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.tab-panel.tab-from-left { animation: tab-slide-left 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes tab-slide-right { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+@keyframes tab-slide-left { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
+/* The panel's cards rise in one after another. */
+.tab-panel > .tab-stagger > * { animation: tab-card-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.tab-panel > .tab-stagger > *:nth-child(2) { animation-delay: 60ms; }
+.tab-panel > .tab-stagger > *:nth-child(3) { animation-delay: 120ms; }
+.tab-panel > .tab-stagger > *:nth-child(4) { animation-delay: 180ms; }
+.tab-panel > .tab-stagger > *:nth-child(n + 5) { animation-delay: 240ms; }
+@keyframes tab-card-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+	.tab-panel.tab-from-right, .tab-panel.tab-from-left, .tab-panel > .tab-stagger > * { animation: none; }
+}

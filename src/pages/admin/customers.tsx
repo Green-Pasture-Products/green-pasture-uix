@@ -11,6 +11,7 @@ import AdminLayout from "@/_components/AdminLayout";
 import { DataTable, FilterDef } from "@/_components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
@@ -18,6 +19,9 @@ import { useListParams } from "@/_hooks/useListParams";
 
 const VIEW_ICON = (
 	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+);
+const EDIT_ICON = (
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
 );
 
 const DELETE_ICON = (
@@ -42,6 +46,7 @@ const CUSTOMER_STATUS_FILTERS: FilterDef[] = [
 const AdminCustomers: React.FC = () => {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
+	const hasPrivilege = useHasPrivilege();
 	const { customers, customersLoading, customersPagination } = useAppSelector((state) => state.admin);
 	const {
 		page: currentPage,
@@ -162,12 +167,14 @@ const AdminCustomers: React.FC = () => {
 			cell: ({ row }) => (
 				<ActionMenu items={[
 					{ label: "View", icon: VIEW_ICON, onClick: () => router.push(`/admin/customer/${row.original.id}`) },
+					{ label: "Edit", icon: EDIT_ICON, onClick: () => router.push(`/admin/customer/${row.original.id}?edit=1`), hidden: !hasPrivilege("MANAGE_CUSTOMERS") },
 					{
 						label: row.original.status === "A" ? "Deactivate" : "Activate",
 						icon: STATUS_ICON,
 						onClick: () => setStatusTarget(row.original),
+						hidden: !hasPrivilege("MANAGE_CUSTOMERS"),
 					},
-					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
+					{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const, hidden: !hasPrivilege("SUPER_ADMIN") },
 				]} />
 			),
 		},

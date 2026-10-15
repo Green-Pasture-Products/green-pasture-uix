@@ -102,7 +102,7 @@ const BotanicalHero: React.FC = () => {
 					{/* Provenance strip — concrete claims, not vague trust badges */}
 					<motion.dl
 						{...rise(0.68)}
-						className="mt-10 sm:mt-12 grid max-w-md grid-cols-3 gap-6 border-t pt-6 sm:pt-7 border-[#10231f]/12 dark:border-white/12"
+						className="mx-auto mt-10 sm:mx-0 sm:mt-12 grid max-w-md grid-cols-3 gap-4 text-center sm:gap-6 sm:text-left border-t pt-6 sm:pt-7 border-[#10231f]/12 dark:border-white/12"
 					>
 						{[
 							{ n: "100%", l: "Certified organic" },

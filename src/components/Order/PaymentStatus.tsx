@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { CheckCircle, Clock, XCircle, Eye, Upload, Download } from "lucide-react";
 import { PaymentStatus } from "@/types";
+import { getReceiptDeliveryUrl, isPdfReceipt } from "@/_utils/receiptUrl";
 
 interface Payment {
   id: string;
+  paymentMethod?: string;
   paymentStatus: PaymentStatus;
   amount: number;
   currency: string;
@@ -34,7 +36,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
       currency: currency || "NGN",
       minimumFractionDigits: 0,
     });
-    return formatter.format(amount / 100);
+    return formatter.format(amount);
   };
 
   const formatDate = (dateString?: string) => {
@@ -58,6 +60,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
       case "NOT_PAID":
         return "#ef4444";
       case "AWAITING_VERIFICATION":
+      case "AWAITING_PAYMENT":
         return "#f59e0b";
       case "PENDING":
         return "#6b7280";
@@ -81,8 +84,9 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
     }
   };
 
-  const canReupload =
-    payment.paymentStatus === "DECLINED" || payment.paymentStatus === "NOT_PAID";
+  const canUploadReceipt =
+    payment.paymentMethod === "MANUAL_TRANSFER" &&
+    payment.paymentStatus === "AWAITING_PAYMENT";
 
   return (
     <div
@@ -110,7 +114,9 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
               className="font-medium"
               style={{ color: getStatusColor(payment.paymentStatus) }}
             >
-              {payment.paymentStatus.replace(/_/g, " ")}
+              {payment.paymentStatus === "AWAITING_PAYMENT"
+                ? "Awaiting Payment Upload"
+                : payment.paymentStatus.replace(/_/g, " ")}
             </p>
           </div>
         </div>
@@ -154,7 +160,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
                 View
               </button>
               <a
-                href={payment.receiptUrl}
+                href={getReceiptDeliveryUrl(payment.receiptUrl)}
                 download
                 target="_blank"
                 rel="noreferrer"
@@ -194,26 +200,11 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
             <p style={{ color: "var(--text-secondary)" }} className="text-sm">
               {payment.adminNote}
             </p>
-            {canReupload && (
-              <button
-                onClick={onUploadReceipt}
-                disabled={isUploadingReceipt}
-                className="mt-2 flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium transition"
-                style={{
-                  backgroundColor: "var(--color-primary)",
-                  color: "white",
-                  opacity: isUploadingReceipt ? 0.5 : 1,
-                }}
-              >
-                <Upload className="h-4 w-4" />
-                {isUploadingReceipt ? "Uploading..." : "Upload New Receipt"}
-              </button>
-            )}
           </div>
         )}
 
-        {/* Pending Status */}
-        {payment.paymentStatus === "PENDING" && (
+        {/* Unpaid or declined payment */}
+        {canUploadReceipt && (
           <div
             className="pt-2 border-t"
             style={{ borderColor: "var(--border-light)" }}
@@ -246,7 +237,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
             >
               ×
             </button>
-            {viewingReceipt.match(/\.(jpg|jpeg|png)$/i) ? (
+            {!isPdfReceipt(viewingReceipt, payment.receiptUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={viewingReceipt}
@@ -257,13 +248,13 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
               <div className="bg-white rounded-lg p-8 text-center">
                 <p className="mb-4 font-medium">PDF Preview</p>
                 <a
-                  href={viewingReceipt}
+                  href={getReceiptDeliveryUrl(viewingReceipt, payment.receiptUrl)}
                   target="_blank"
                   rel="noreferrer"
                   className="px-6 py-2 rounded font-medium text-white"
                   style={{ backgroundColor: "var(--color-primary)" }}
                 >
-                  Open in New Tab
+                  Download / Open PDF Receipt
                 </a>
               </div>
             )}

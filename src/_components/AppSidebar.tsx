@@ -3,15 +3,16 @@
 // Ported from ogaryde-admin-ui's components/shared/app-sidebar.tsx. Framework
 // adaptations: react-router Link/useLocation/useNavigate -> next/link and
 // next/router; NavItem -> ModuleDef from @/_navigations/modules; privilege
-// filtering via useHasPrivilege() (backed by profileInfo.roles[].permissions[]).
+// filtering via useCanOpenModule() (backed by profileInfo.roles[].permissions[]).
 
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { LogOut } from "lucide-react";
 
 import { NAV_GROUPS, findOwningModule, type ModuleDef } from "@/_navigations/modules";
-import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { useCanOpenModule } from "@/_hooks/usePrivilege";
+import { AdminUserMenu } from "./AdminUserMenu";
+import { useInboxUnread } from "@/_hooks/useInboxUnread";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { logoutAsync } from "@/_redux/actions/auth.action";
 import { logout } from "@/_redux/reducers/auth.reducer";
@@ -25,6 +26,7 @@ import {
 	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
+	SidebarMenuBadge,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarRail,
@@ -33,6 +35,7 @@ import {
 
 function NavMenuButton({ item }: { item: ModuleDef }) {
 	const router = useRouter();
+	const unread = useInboxUnread(item.path === "/admin/inbox");
 	const { setOpenMobile } = useSidebar();
 	const pathname = router.asPath.split("?")[0];
 	// findOwningModule (not a plain prefix match) so a detail route like
@@ -41,15 +44,24 @@ function NavMenuButton({ item }: { item: ModuleDef }) {
 	const testid = `nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`;
 
 	return (
-		<SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
+		<>
+		<SidebarMenuButton
+			asChild
+			isActive={isActive}
+			tooltip={item.title}
+			className="gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-all duration-150 hover:bg-sidebar-accent/60 data-[active=true]:bg-brand/15 data-[active=true]:font-semibold data-[active=true]:text-ink data-[active=true]:shadow-xs dark:data-[active=true]:bg-white/10 dark:data-[active=true]:text-foreground dark:data-[active=true]:[&>svg]:text-brand"
+		>
 			{/* On mobile the sidebar is an overlay sheet, so picking a tab has to
 			    dismiss it — otherwise it sits on top of the page it just opened.
 			    setOpenMobile is inert on desktop, where the rail is persistent. */}
 			<Link href={item.path} data-testid={testid} onClick={() => setOpenMobile(false)}>
-				<item.icon className="size-4" />
+				<item.icon className={`size-4 shrink-0 transition-transform duration-200 ${isActive ? "scale-105" : ""}`} />
 				<span>{item.title}</span>
 			</Link>
 		</SidebarMenuButton>
+		{/* Sibling, not child: SidebarMenuButton asChild requires exactly one child. */}
+		{unread > 0 && <SidebarMenuBadge data-testid="inbox-unread">{unread > 99 ? "99+" : unread}</SidebarMenuBadge>}
+		</>
 	);
 }
 
@@ -63,7 +75,7 @@ function initialsOf(name: string): string {
 export function AppSidebar() {
 	const router = useRouter();
 	const dispatch = useAppDispatch();
-	const hasPrivilege = useHasPrivilege();
+	const canOpen = useCanOpenModule();
 	const { setOpenMobile } = useSidebar();
 	const { user } = useAppSelector((state) => state.auth);
 
@@ -84,36 +96,29 @@ export function AppSidebar() {
 
 	return (
 		<Sidebar collapsible="icon" data-testid="app-sidebar">
-			<SidebarHeader>
+			<SidebarHeader className="border-sidebar-border/60 border-b p-3">
 				{/* Navigates too, so it dismisses the mobile sheet like any tab does. */}
-				<Link
-					href="/admin/dashboard"
-					onClick={() => setOpenMobile(false)}
-					className="flex h-12 items-center gap-2.5 px-2"
-				>
-					<div className="relative size-8 shrink-0">
-						<Image
-							src="/images/GP Organic Logo (Primary).png"
-							alt="Green Pasture Organics Logo"
-							fill
-							sizes="32px"
-							priority
-							className="object-contain"
-						/>
+				<Link href="/admin/dashboard" onClick={() => setOpenMobile(false)} className="flex h-12 items-center gap-2.5 px-2">
+					<div className="bg-brand/10 dark:bg-white/10 relative size-8 shrink-0 rounded-lg p-1">
+						<Image src="/images/GP Organic Logo (Primary).png" alt="Green Pasture Organics Logo" fill sizes="32px" priority className="object-contain p-1" />
 					</div>
-					<span className="text-base font-bold tracking-tight group-data-[collapsible=icon]:hidden">
-						Admin Panel
-					</span>
+					<div className="min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
+						<p className="flex items-center gap-1.5 text-sm font-bold tracking-tight">
+							Green Pasture
+							<span className="bg-brand text-brand-foreground rounded-xs px-1 text-[9px] font-black uppercase">Admin</span>
+						</p>
+						<p className="text-sidebar-foreground/60 text-[10px] font-medium">Organics Portal</p>
+					</div>
 				</Link>
 			</SidebarHeader>
 
 			<SidebarContent>
 				{NAV_GROUPS.map((group) => {
-					const items = group.items.filter((item) => hasPrivilege(item.privilege));
+					const items = group.items.filter((item) => canOpen(item));
 					if (items.length === 0) return null;
 					return (
 						<SidebarGroup key={group.label}>
-							<SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+							<SidebarGroupLabel className="text-sidebar-foreground/50 text-[11px] font-semibold uppercase tracking-wider">{group.label}</SidebarGroupLabel>
 							<SidebarGroupContent>
 								<SidebarMenu>
 									{items.map((item) => (
@@ -128,39 +133,14 @@ export function AppSidebar() {
 				})}
 			</SidebarContent>
 
-			{/*
-			  Static block, as the current Sidebar.tsx footer renders it — no
-			  dropdown. Sign-out (previously in Header.tsx's user menu, which
-			  TopBar does not carry over) lives here as a plain icon button: a
-			  DropdownMenu trigger wrapping SidebarMenuButton would need Radix to
-			  attach a ref to it, and this SidebarMenuButton primitive isn't
-			  forwardRef'd, which throws a console warning on React 18.
-			*/}
-			<SidebarFooter>
-				<SidebarMenu>
-					<SidebarMenuItem>
-						<div className="flex items-center gap-2 rounded-md px-2 py-1.5 group-data-[collapsible=icon]:justify-center">
-							<div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-600 dark:bg-primary-500 text-xs font-semibold text-white">
-								{initials}
-							</div>
-							<div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-								<span className="truncate font-medium">{displayName}</span>
-								<span className="truncate text-xs text-sidebar-foreground/60 capitalize">
-									{user?.profileType?.toLowerCase() ?? "Administrator"}
-								</span>
-							</div>
-							<button
-								type="button"
-								onClick={handleSignOut}
-								aria-label="Sign out"
-								data-testid="sign-out"
-								className="shrink-0 cursor-pointer rounded-md p-1.5 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
-							>
-								<LogOut className="size-4" />
-							</button>
-						</div>
-					</SidebarMenuItem>
-				</SidebarMenu>
+			<SidebarFooter className="border-sidebar-border/60 border-t p-2">
+				<AdminUserMenu
+					name={displayName}
+					email={user?.email}
+					roleLabel={user?.profileType?.toLowerCase() ?? "Administrator"}
+					initials={initials}
+					onSignOut={handleSignOut}
+				/>
 			</SidebarFooter>
 
 			<SidebarRail />

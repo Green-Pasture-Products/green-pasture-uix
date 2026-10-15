@@ -1,17 +1,22 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
+import { statusColumn } from "@/_components/statusColumn";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CheckCircle, XCircle, Clock, Eye, Settings } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Eye, Settings, ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
-import { DataTable } from "@/_components/DataTable";
+import { DataTable, type FilterDef } from "@/_components/DataTable";
+import ActionMenu from "@/_UI/ActionMenu";
+import { useRouter } from "next/router";
 import Button from "@/_UI/Button";
 import Badge from "@/_UI/Badge";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { useListParams } from "@/_hooks/useListParams";
 import axiosInstance from "@/_utils/axiosInstance";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { useLiveEvent } from "@/_hooks/useLiveEvent";
 import { PaymentStatus, PaymentMethod } from "@/types";
 
 interface ManualPayment {
@@ -55,20 +60,28 @@ interface PaginatedResponse {
   };
 }
 
+const STATUS_FILTERS: FilterDef[] = [
+  {
+    key: "status",
+    label: "Status",
+    options: [
+      { value: "AWAITING_VERIFICATION", label: "Awaiting Verification" },
+      { value: "INCOMPLETE_PAYMENT", label: "Incomplete" },
+      { value: "VERIFIED", label: "Verified" },
+      { value: "DECLINED", label: "Declined" },
+      { value: "PENDING", label: "Pending" },
+    ],
+  },
+];
+
 const AdminPaymentsManual: React.FC = () => {
   const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
+  const router = useRouter();
   const [payments, setPayments] = useState<ManualPayment[]>([]);
   const [pagination, setPagination] = useState<PaginatedResponse["meta"] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<PaymentStatus | "ALL">("ALL");
 
-  const statusFilters: Array<{ label: string; value: PaymentStatus | "ALL" }> = [
-    { label: "All", value: "ALL" },
-    { label: "Awaiting Verification", value: "AWAITING_VERIFICATION" },
-    { label: "Verified", value: "VERIFIED" },
-    { label: "Declined", value: "DECLINED" },
-    { label: "Pending", value: "PENDING" },
-  ];
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -105,6 +118,7 @@ const AdminPaymentsManual: React.FC = () => {
       case "DECLINED":
         return "error";
       case "AWAITING_VERIFICATION":
+      case "INCOMPLETE_PAYMENT":
         return "warning";
       case "PENDING":
         return "neutral";
@@ -158,7 +172,7 @@ const AdminPaymentsManual: React.FC = () => {
       currency: currency || "NGN",
       minimumFractionDigits: 0,
     });
-    return formatter.format(amount / 100); // Convert from minor units
+    return formatter.format(amount);
   };
 
   const formatDate = (dateString: string) => {
@@ -239,7 +253,7 @@ const AdminPaymentsManual: React.FC = () => {
     },
     {
       id: "paymentStatus",
-      header: "Status",
+      header: "Payment status",
       meta: { width: "160px" },
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
@@ -260,18 +274,17 @@ const AdminPaymentsManual: React.FC = () => {
         </span>
       ),
     },
+    statusColumn(),
     {
       id: "actions",
       header: "Action",
       enableSorting: false,
-      meta: { width: "100px", align: "center" },
+      enableHiding: false,
+      meta: { width: "50px", align: "center" },
       cell: ({ row }) => (
-        <Link href={`/admin/payments/${row.original.id}`}>
-          <Button variant="text" size="sm" className="gap-2">
-            <Eye className="h-4 w-4" />
-            Review
-          </Button>
-        </Link>
+        <div onClick={(e) => e.stopPropagation()}>
+          <ActionMenu items={[{ label: "Review", icon: <Eye className="h-3.5 w-3.5" />, onClick: () => router.push(`/admin/payments/${row.original.id}`) }]} />
+        </div>
       ),
     },
   ];
@@ -286,6 +299,16 @@ const AdminPaymentsManual: React.FC = () => {
     [payments],
   );
 
+  const hasPrivilege = useHasPrivilege();
+  const canSeeDecisions = hasPrivilege(["MANAGE_MANUAL_PAYMENTS", "APPROVE_PAYMENT_DECISIONS"]);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(0);
+  const loadSummary = useCallback(() => {
+    if (!canSeeDecisions) return;
+    axiosInstance.get("payment-decisions/summary").then((r) => setAwaitingConfirmation(r.data?.data?.pending ?? 0)).catch(() => {});
+  }, [canSeeDecisions]);
+  useEffect(loadSummary, [loadSummary]);
+  useLiveEvent("payment-decisions-changed", loadSummary);
+
   const declined = useMemo(
     () => payments.filter((p) => p.paymentStatus === "DECLINED").length,
     [payments],
@@ -294,24 +317,6 @@ const AdminPaymentsManual: React.FC = () => {
   return (
     <AdminLayout>
       <div className="animate-page-enter space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
-              Manual Payments
-            </h1>
-            <p className="text-sm mt-1" style={{ color: "var(--text-hint)" }}>
-              Review and verify bank transfer payments
-            </p>
-          </div>
-          <Link href="/admin/settings/manual-payments">
-            <Button variant="outlined" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Bank Settings
-            </Button>
-          </Link>
-        </div>
-
         {/* Summary Cards */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div
@@ -366,31 +371,6 @@ const AdminPaymentsManual: React.FC = () => {
           </div>
         </div>
 
-        {/* Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {statusFilters.map((filter) => (
-            <button
-              key={filter.value}
-              onClick={() => {
-                setFilterStatus(filter.value);
-                setPage(1);
-              }}
-              className={`whitespace-nowrap px-4 py-2 rounded-lg font-medium transition ${
-                filterStatus === filter.value
-                  ? "text-white"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-              style={
-                filterStatus === filter.value
-                  ? { backgroundColor: "var(--color-primary)" }
-                  : {}
-              }
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
-
         {/* Table */}
         <DataTable
           columns={columns}
@@ -399,6 +379,30 @@ const AdminPaymentsManual: React.FC = () => {
           onRefresh={refresh}
           refreshing={isLoading}
           manualFiltering
+          onRowClick={(row) => router.push(`/admin/payments/${row.id}`)}
+          filters={STATUS_FILTERS}
+          filterValues={{ status: filterStatus === "ALL" ? "" : filterStatus }}
+          onFilterChange={(_k, v) => {
+            setFilterStatus((v || "ALL") as PaymentStatus | "ALL");
+            setPage(1);
+          }}
+          toolbar={
+            <div className="flex flex-wrap items-center gap-2">
+              {canSeeDecisions && (
+                <Link href="/admin/payments/confirmations">
+                  <Button variant="outlined" leftIcon={ShieldCheck}>
+                    Awaiting confirmation
+                    <span className="bg-brand text-ink ml-2 rounded-full px-1.5 text-xs tabular-nums" data-testid="awaiting-count">{awaitingConfirmation}</span>
+                  </Button>
+                </Link>
+              )}
+              <Link href="/admin/settings/manual-payments">
+                <Button variant="outlined" leftIcon={Settings}>
+                  Bank Settings
+                </Button>
+              </Link>
+            </div>
+          }
           pageIndex={currentPage - 1}
           pageSize={pageSize}
           pageCount={pagination?.totalPages ?? 1}

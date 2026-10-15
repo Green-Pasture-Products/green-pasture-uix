@@ -1,3 +1,4 @@
+import { SelectField } from "@/_UI/SelectField";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -102,19 +103,21 @@ const AdminCreditPayments: React.FC = () => {
 				{/* Status Filter */}
 				<div className="mb-6 flex items-center gap-4">
 					<label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Status:</label>
-					<select
-						value={statusFilter}
-						onChange={(e) => {
-							setStatusFilter(e.target.value as any);
-							setPage(1);
-						}}
-						className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-					>
-						<option value="">All Payments</option>
-						<option value="PENDING">Pending</option>
-						<option value="VERIFIED">Verified</option>
-						<option value="REJECTED">Rejected</option>
-					</select>
+					<SelectField
+	value={statusFilter || "ALL"}
+	onValueChange={(v) => {
+		setStatusFilter((v === "ALL" ? "" : v) as any);
+		setPage(1);
+	}}
+	aria-label="Filter by status"
+	className="w-44"
+	options={[
+		{ value: "ALL", label: "All Payments" },
+		{ value: "PENDING", label: "Pending" },
+		{ value: "VERIFIED", label: "Verified" },
+		{ value: "REJECTED", label: "Rejected" },
+	]}
+/>
 				</div>
 
 				{/* Payments Table */}

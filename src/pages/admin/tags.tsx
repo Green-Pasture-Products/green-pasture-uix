@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import React, { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
@@ -6,7 +7,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
 import { DataTable } from "@/_components/DataTable";
-import AddTag from "@/_components/Modals/AddTag";
 import ActionMenu from "@/_UI/ActionMenu";
 import Button from "@/_UI/Button";
 import Modal from "@/_UI/Modal";
@@ -28,11 +28,11 @@ const POWER_ICON = (
 );
 
 const AdminTags: React.FC = () => {
+	const router = useRouter();
 	const dispatch = useAppDispatch();
 	const { tableTags, tableMeta, isFetchingTags } = useAppSelector((state) => state.tag);
 	const { page: currentPage, pageSize, search: searchTerm, setPage, setSearch, setPageSize } = useListParams();
 
-	const [editingTag, setEditingTag] = useState<Tag | null>(null);
 	const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null);
 	const [statusTarget, setStatusTarget] = useState<Tag | null>(null);
 	const [busy, setBusy] = useState(false);
@@ -126,9 +126,11 @@ const AdminTags: React.FC = () => {
 			enableHiding: false,
 			meta: { width: "50px", align: "center" },
 			cell: ({ row }) => (
+				<div onClick={(e) => e.stopPropagation()}>
 				<ActionMenu
 					items={[
-						{ label: "Edit", icon: EDIT_ICON, onClick: () => setEditingTag(row.original) },
+						{ label: "View", icon: EDIT_ICON, onClick: () => router.push(`/admin/tag/${row.original.id}`) },
+						{ label: "Edit", icon: EDIT_ICON, onClick: () => router.push(`/admin/tag/${row.original.id}?edit=1`) },
 						{
 							label: row.original.status === "A" ? "Deactivate" : "Activate",
 							icon: POWER_ICON,
@@ -137,6 +139,7 @@ const AdminTags: React.FC = () => {
 						{ label: "Delete", icon: DELETE_ICON, onClick: () => setDeleteTarget(row.original), variant: "danger" as const },
 					]}
 				/>
+				</div>
 			),
 		},
 	];
@@ -151,6 +154,7 @@ const AdminTags: React.FC = () => {
 					onRefresh={refresh}
 					refreshing={isFetchingTags}
 					manualFiltering
+					onRowClick={(row) => router.push(`/admin/tag/${row.id}`)}
 					globalFilter={searchTerm}
 					onGlobalFilterChange={setSearch}
 					searchPlaceholder="Search by name..."
@@ -161,25 +165,11 @@ const AdminTags: React.FC = () => {
 					onPageChange={(idx) => setPage(idx + 1)}
 					onPageSizeChange={setPageSize}
 					toolbar={
-						<AddTag onSaved={refresh} className="inline-flex">
-							<Button variant="filled" leftIcon={Plus}>
-								Add Tag
-							</Button>
-						</AddTag>
+						<Button variant="filled" leftIcon={Plus} onClick={() => router.push("/admin/tags/new")}>
+							Add Tag
+						</Button>
 					}
 				/>
-
-				{editingTag && (
-					<AddTag
-						tag={editingTag}
-						openInitially
-						onClose={() => setEditingTag(null)}
-						onSaved={() => {
-							setEditingTag(null);
-							refresh();
-						}}
-					/>
-				)}
 
 				<Modal
 					isOpen={!!deleteTarget}

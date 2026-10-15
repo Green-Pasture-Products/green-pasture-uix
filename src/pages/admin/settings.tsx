@@ -1,17 +1,26 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import withAdminAuth from "@/_components/withAdminAuth";
-import { Store, User, Shield, Truck, Plus, Trash2, ToggleLeft, ToggleRight, Landmark } from "lucide-react";
+import { Store, Plus, Trash2, MapPin, Check, Circle, Sun, Moon, Monitor } from "lucide-react";
+import { useTheme } from "@/_hooks/useTheme";
+import { SettingsFrame, useSettingsTabs } from "@/_components/SettingsFrame";
+import { cn } from "@/lib/utils";
 
 import { useAppSelector } from "@/_redux/store";
 import { useHasPrivilege } from "@/_hooks/usePrivilege";
 import AdminLayout from "@/_components/AdminLayout";
 import axiosInstance from "@/_utils/axiosInstance";
-import { FormInput, FormActions } from "@/_UI/FormField";
+import { FormInput } from "@/_UI/FormField";
+import Button from "@/_UI/Button";
+import Badge from "@/_UI/Badge";
+import { DetailSection } from "@/_UI/DetailField";
+import { Switch } from "@/components/egfm/switch";
+import { PanelHeading, SettingsSaveBar } from "@/_components/SettingsParts";
 import PageLoader from "@/_UI/PageLoader";
 import CurrencyInput from "@/_UI/CurrencyInput";
 import { rateToPercent, percentToRate } from "@/_utils/rate";
@@ -102,6 +111,111 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 const CARD =
 	"rounded-xl bg-white dark:bg-white/[0.04] border border-[rgba(22,163,74,0.06)] dark:border-white/8 shadow-sm dark:shadow-none transition-all duration-300";
 
+const THEME_OPTIONS = [
+	{ value: "light", label: "Light", icon: Sun },
+	{ value: "dark", label: "Dark", icon: Moon },
+	{ value: "system", label: "Auto", icon: Monitor },
+] as const;
+
+/** Theme choice, saved on this device (same control as the account menu). */
+const AppearanceCard: React.FC = () => {
+	const { preference, setPreference } = useTheme();
+	return (
+		<DetailSection title={<h3>Appearance</h3>} description="Saved on this device">
+			<div className="py-3">
+				<div className="bg-secondary/50 grid grid-cols-3 gap-1 rounded-xl border p-1" role="radiogroup" aria-label="Theme">
+					{THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+						<button
+							key={value}
+							type="button"
+							role="radio"
+							aria-checked={preference === value}
+							onClick={() => setPreference(value)}
+							className={cn(
+								"flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-semibold transition-colors",
+								preference === value ? "bg-brand/20 dark:bg-accent border-brand/40 font-bold shadow-2xs" : "text-muted-foreground hover:bg-background/60 border-transparent",
+							)}
+						>
+							<Icon className="size-3.5" /> {label}
+						</button>
+					))}
+				</div>
+			</div>
+		</DetailSection>
+	);
+};
+
+/** The user's roles and what they let them do, read-only. */
+const RoleAccessCard: React.FC<{ user: any }> = ({ user }) => {
+	const [showAll, setShowAll] = useState(false);
+	const roles: { name: string; permissions?: { name: string }[] }[] = user?.roles ?? [];
+	const privileges = [...new Set(roles.flatMap((r) => (r.permissions ?? []).map((p) => p.name)))].sort();
+	const fullAccess = privileges.includes("SUPER_ADMIN");
+	const shown = showAll ? privileges : privileges.slice(0, 12);
+	return (
+		<DetailSection title="Role & access" description="What your account can do. An administrator changes this.">
+			<div className="space-y-5 py-3">
+				<div>
+					<p className="mb-2 text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+						Roles
+					</p>
+					<div className="flex flex-wrap items-center gap-2">
+						{roles.length ? (
+							roles.map((r) => (
+								<Badge key={r.name} variant="info">
+									<span className="font-mono text-xs uppercase">{r.name}</span>
+								</Badge>
+							))
+						) : (
+							<span className="text-sm" style={{ color: "var(--text-hint)" }}>
+								No roles assigned
+							</span>
+						)}
+						<Badge variant="neutral">{String(user?.profileType ?? "STAFF").charAt(0) + String(user?.profileType ?? "STAFF").slice(1).toLowerCase()} account</Badge>
+					</div>
+				</div>
+				<div>
+					<p className="mb-2 text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+						{fullAccess ? "Access" : `Privileges (${privileges.length})`}
+					</p>
+					{fullAccess ? (
+						<p className="text-sm" style={{ color: "var(--text-primary)" }}>
+							Full access to everything in the console.
+						</p>
+					) : privileges.length ? (
+						<>
+							<div className="flex flex-wrap gap-2">
+								{shown.map((p) => (
+									<span key={p} className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 font-mono text-[11px] font-semibold tracking-wide">
+										{p}
+									</span>
+								))}
+							</div>
+							{privileges.length > 12 && (
+								<button type="button" onClick={() => setShowAll((v) => !v)} className="mt-3 text-xs font-semibold" style={{ color: "var(--color-primary)" }}>
+									{showAll ? "Show fewer" : `Show all ${privileges.length}`}
+								</button>
+							)}
+						</>
+					) : (
+						<span className="text-sm" style={{ color: "var(--text-hint)" }}>
+							None
+						</span>
+					)}
+				</div>
+			</div>
+		</DetailSection>
+	);
+};
+
+/** One line of the password checklist: ticks off as the new password meets it. */
+const PasswordRule: React.FC<{ ok: boolean; label: string }> = ({ ok, label }) => (
+	<li className="flex items-center gap-2 text-sm transition-colors" style={{ color: ok ? "var(--text-primary)" : "var(--text-hint)" }}>
+		{ok ? <Check className="size-4 shrink-0" style={{ color: "var(--color-primary)" }} /> : <Circle className="size-4 shrink-0 opacity-50" />}
+		{label}
+	</li>
+);
+
 const AdminSettings: React.FC = () => {
 	const { user } = useAppSelector((state) => state.auth);
 	const hasPrivilege = useHasPrivilege();
@@ -109,6 +223,7 @@ const AdminSettings: React.FC = () => {
 	// MANAGE_STORES still needs My Profile and Security, so those two tabs hide
 	// instead of the whole nav item (see modules.ts for the ungated nav entry).
 	const canManageStores = hasPrivilege("MANAGE_STORES");
+	const router = useRouter();
 	const [activeTab, setActiveTab] = useState(() => (canManageStores ? "store" : "profile"));
 	const [loading, setLoading] = useState(true);
 	const [storeId, setStoreId] = useState<string | null>(null);
@@ -118,24 +233,19 @@ const AdminSettings: React.FC = () => {
 	const [savingPassword, setSavingPassword] = useState(false);
 
 	const [savingOrderShipping, setSavingOrderShipping] = useState(false);
-	// Storefront sale-treatment kill-switch. Defaults on so an existing store
-	// with no saved flag keeps showing the discounts it already had live.
-	const [showDiscountBadges, setShowDiscountBadges] = useState(true);
 	const [freeShippingRegions, setFreeShippingRegions] = useState<string[]>([]);
-	// Multi-currency kill-switch. Defaults OFF so an existing store with no
-	// saved flag keeps showing everyone NGN — exactly today's behaviour —
-	// until an admin deliberately opts in.
-	const [multiCurrencyEnabled, setMultiCurrencyEnabled] = useState(false);
 	const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([
 		{ key: "standard", id: "standard", name: "Standard Shipping", baseCost: "0", estimatedDays: "5-7 business days", enabled: true, autoId: true },
 	]);
 
-	const tabs = [
-		{ id: "store", name: "Store Settings", icon: Store },
-		{ id: "order", name: "Order & Shipping", icon: Truck },
-		{ id: "profile", name: "My Profile", icon: User },
-		{ id: "security", name: "Security", icon: Shield },
-	].filter((tab) => canManageStores || (tab.id !== "store" && tab.id !== "order"));
+	const tabs = useSettingsTabs().filter((t) => !t.href);
+
+	// Deep links from the account menu: /admin/settings?tab=profile | security
+	const requestedTab = router.isReady ? (router.query.tab as string | undefined) : undefined;
+	useEffect(() => {
+		if (requestedTab && tabs.some((t) => t.id === requestedTab)) setActiveTab(requestedTab);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [requestedTab]);
 
 	const storeForm = useForm<StoreFormData>({ resolver: zodResolver(storeSchema) });
 	const orderShippingForm = useForm<OrderShippingFormData>({ resolver: zodResolver(orderShippingSchema) });
@@ -166,9 +276,7 @@ const AdminSettings: React.FC = () => {
 							taxRate: String(rateToPercent(Number(s.orderSettings?.taxRate ?? 0))),
 							freeShippingThreshold: String(s.orderSettings?.freeShippingThreshold ?? "0"),
 						});
-						setShowDiscountBadges(s.orderSettings?.showDiscountBadges !== false);
 						setFreeShippingRegions(s.orderSettings?.freeShippingRegions ?? []);
-						setMultiCurrencyEnabled(s.orderSettings?.multiCurrencyEnabled === true);
 						if (s.shippingConfig?.methods?.length > 0) {
 							setShippingMethods(
 								s.shippingConfig.methods.map((m: any, index: number) => {
@@ -269,8 +377,6 @@ const AdminSettings: React.FC = () => {
 					taxRate: percentToRate(Number(data.taxRate)),
 					freeShippingThreshold: Number(data.freeShippingThreshold),
 					freeShippingRegions,
-					showDiscountBadges,
-					multiCurrencyEnabled,
 				},
 				shippingConfig: {
 					...storeData?.shippingConfig,
@@ -290,14 +396,6 @@ const AdminSettings: React.FC = () => {
 			setSavingOrderShipping(false);
 		}
 	};
-
-	const toggleDiscountBadges = useCallback(() => {
-		setShowDiscountBadges((prev) => !prev);
-	}, []);
-
-	const toggleMultiCurrency = useCallback(() => {
-		setMultiCurrencyEnabled((prev) => !prev);
-	}, []);
 
 	const addShippingMethod = () => {
 		const key = `method-${Date.now()}`;
@@ -363,104 +461,77 @@ const AdminSettings: React.FC = () => {
 
 	return (
 		<AdminLayout>
-			<div className="animate-page-enter space-y-6">
-				<div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-					{/* Sidebar Tabs */}
-					<div className="lg:col-span-1">
-						<div className={`${CARD} p-2`}>
-							<nav className="space-y-1">
-								{tabs.map((tab) => {
-									const Icon = tab.icon;
-									const isActive = activeTab === tab.id;
-									return (
-										<button
-											key={tab.id}
-											onClick={() => setActiveTab(tab.id)}
-											className="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer"
-											style={{
-												background: isActive ? "rgba(22,163,74,0.08)" : "transparent",
-												color: isActive ? "var(--color-primary)" : "var(--text-secondary)",
-											}}
-											onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "var(--surface-low)"; }}
-											onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
-										>
-											<Icon className="mr-3 h-4 w-4" />
-											{tab.name}
-										</button>
-									);
-								})}
-
-								{/* Manual Payment Settings Link */}
-								<Link href="/admin/settings/manual-payments">
-									<button
-										className="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer"
-										style={{
-											background: "transparent",
-											color: "var(--text-secondary)",
-										}}
-										onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-low)"; }}
-										onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-									>
-										<Landmark className="mr-3 h-4 w-4" />
-										Manual Payment Settings
-									</button>
-								</Link>
-							</nav>
-						</div>
-					</div>
-
-					{/* Content */}
-					<div className="lg:col-span-3">
+			<SettingsFrame active={activeTab} onSelect={setActiveTab}>
 						{/* ── Store Settings ── */}
 						{activeTab === "store" && (
-							<div className={CARD}>
-								<div className="px-6 py-4" style={{ borderBottom: "1px solid var(--border-light)" }}>
-									<h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Store Settings</h3>
-									<p className="text-xs mt-0.5" style={{ color: "var(--text-hint)" }}>Manage your store information and address</p>
+							<form onSubmit={storeForm.handleSubmit(onSaveStore)} className="space-y-5">
+								<PanelHeading title="Store Settings" description="Manage your store information and address" />
+								<div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+									<div className="space-y-5">
+										<DetailSection title="Store" description="The name customers see on receipts and emails.">
+											<div className="py-3">
+												<FormInput label="Store Name" placeholder="Green Pasture Organics" required {...storeForm.register("name")} error={storeForm.formState.errors.name?.message} />
+											</div>
+										</DetailSection>
+										<DetailSection title="Address" description="Where the store is based.">
+											<div className="space-y-4 py-3">
+												<FormInput label="Street Address" placeholder="123 Main Street" {...storeForm.register("houseAddress")} />
+												<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+													<FormInput label="City" placeholder="Lagos" {...storeForm.register("city")} />
+													<FormInput label="State" placeholder="Lagos" {...storeForm.register("state")} />
+												</div>
+												<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+													<FormInput label="Country" placeholder="Nigeria" {...storeForm.register("country")} />
+													<FormInput label="Postal Code" placeholder="100001" {...storeForm.register("postalCode")} />
+												</div>
+											</div>
+										</DetailSection>
+									</div>
+									<DetailSection title="Preview" description="How the store reads at a glance.">
+										<div className="flex items-start gap-3 py-4">
+											<span className="bg-brand/15 text-brand-ink flex size-10 shrink-0 items-center justify-center rounded-xl">
+												<Store className="size-5" />
+											</span>
+											<div className="min-w-0">
+												<p className="truncate text-sm font-semibold" style={{ color: "var(--text-primary)" }} title={storeForm.watch("name")}>
+													{storeForm.watch("name") || "Store name"}
+												</p>
+												<p className="mt-1 flex items-start gap-1.5 text-xs" style={{ color: "var(--text-hint)" }}>
+													<MapPin className="mt-0.5 size-3.5 shrink-0" />
+													<span className="min-w-0">
+														{[storeForm.watch("houseAddress"), storeForm.watch("city"), storeForm.watch("state"), storeForm.watch("postalCode"), storeForm.watch("country")].filter(Boolean).join(", ") || "No address yet"}
+													</span>
+												</p>
+											</div>
+										</div>
+									</DetailSection>
 								</div>
-								<form onSubmit={storeForm.handleSubmit(onSaveStore)} className="p-6 space-y-4">
-									<FormInput label="Store Name" placeholder="Green Pasture Organics" required {...storeForm.register("name")} error={storeForm.formState.errors.name?.message} />
-									<FormInput label="Street Address" placeholder="123 Main Street" {...storeForm.register("houseAddress")} />
-									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-										<FormInput label="City" placeholder="Lagos" {...storeForm.register("city")} />
-										<FormInput label="State" placeholder="Lagos" {...storeForm.register("state")} />
-									</div>
-									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-										<FormInput label="Country" placeholder="Nigeria" {...storeForm.register("country")} />
-										<FormInput label="Postal Code" placeholder="100001" {...storeForm.register("postalCode")} />
-									</div>
-									<FormActions onCancel={() => storeForm.reset()} cancelLabel="Reset" submitLabel={storeId ? "Update Store" : "Create Store"} isSubmitting={savingStore} />
-								</form>
-							</div>
+								<SettingsSaveBar hint="Changes apply to receipts and emails once saved." onReset={() => storeForm.reset()} submitLabel={storeId ? "Update Store" : "Create Store"} saving={savingStore} />
+							</form>
 						)}
 
 						{/* ── Order & Shipping Settings ── */}
 						{activeTab === "order" && (
-							<div className={CARD}>
-								<div className="px-6 py-4" style={{ borderBottom: "1px solid var(--border-light)" }}>
-									<h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Order & Shipping</h3>
-									<p className="text-xs mt-0.5" style={{ color: "var(--text-hint)" }}>Configure tax, shipping fees, and free shipping threshold</p>
-								</div>
-								<form onSubmit={orderShippingForm.handleSubmit(onSaveOrderShipping)} className="p-6 space-y-5">
-									<div>
-										<h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-hint)" }}>Tax</h4>
-										<NumberInput
-											label="Tax Rate"
-											placeholder="7.5"
-											required
-											suffix="%"
-											value={orderShippingForm.watch("taxRate")}
-											onChange={(val) => orderShippingForm.setValue("taxRate", val)}
-											error={orderShippingForm.formState.errors.taxRate?.message}
-											hint="Enter the percentage itself — 7.5 means 7.5% VAT. Applied to the order subtotal."
-										/>
-									</div>
+							<form onSubmit={orderShippingForm.handleSubmit(onSaveOrderShipping)} className="space-y-5">
+								<PanelHeading title="Order & Shipping" description="Configure tax, shipping fees, and free shipping threshold" />
+								<div className="grid gap-5 xl:grid-cols-2 xl:items-start">
+									<DetailSection title="Tax" description="Added to every order.">
+										<div className="py-3">
+											<NumberInput
+												label="Tax Rate"
+												placeholder="7.5"
+												required
+												suffix="%"
+												value={orderShippingForm.watch("taxRate")}
+												onChange={(val) => orderShippingForm.setValue("taxRate", val)}
+												error={orderShippingForm.formState.errors.taxRate?.message}
+												hint="Enter the percentage itself — 7.5 means 7.5% VAT. Applied to the order subtotal."
+											/>
+										</div>
+									</DetailSection>
 
-									<div className="h-px w-full" style={{ background: "var(--border-light)" }} />
-
-									<div>
-										<h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-hint)" }}>Shipping</h4>
-										<div className="space-y-4">
+									<DetailSection title="Free shipping" description="When delivery costs the customer nothing.">
+										<div className="space-y-4 py-3">
 											<CurrencyInput
 												label="Free Shipping Threshold"
 												placeholder="50,000"
@@ -469,10 +540,9 @@ const AdminSettings: React.FC = () => {
 												onChange={(val) => orderShippingForm.setValue("freeShippingThreshold", val)}
 												error={orderShippingForm.formState.errors.freeShippingThreshold?.message}
 											/>
-											<p className="text-xs -mt-2" style={{ color: "var(--text-hint)" }}>
+											<p className="-mt-2 text-xs" style={{ color: "var(--text-hint)" }}>
 												Orders at or above this amount qualify for free shipping. Set to 0 to always charge shipping.
 											</p>
-
 											<ChipAutocomplete
 												label="Free Shipping Regions"
 												placeholder="Search states…"
@@ -483,220 +553,121 @@ const AdminSettings: React.FC = () => {
 												emptyMessage="No matching state"
 											/>
 										</div>
-									</div>
+									</DetailSection>
+								</div>
 
-									<div className="h-px w-full" style={{ background: "var(--border-light)" }} />
+								<DetailSection title="Storefront display" description="Managed in Feature Flags.">
+									<p className="py-3 text-sm" style={{ color: "var(--text-hint)" }}>
+										Discount badges and foreign-currency prices are now switched from{" "}
+										<Link href="/admin/feature-flags" className="font-medium underline" style={{ color: "var(--color-primary)" }}>
+											Feature Flags
+										</Link>
+										.
+									</p>
+								</DetailSection>
 
-									{/* Promotions — storefront sale-treatment kill-switch */}
-									<div>
-										<h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-hint)" }}>Promotions</h4>
-										<div
-											className="flex flex-col gap-3 rounded-lg p-4 sm:flex-row sm:items-center sm:justify-between"
-											style={{ border: "1px solid var(--border-light)", background: "var(--surface-low)" }}
-										>
-											<div className="min-w-0">
-												<label htmlFor="showDiscountBadges" className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-													Show discount badges &amp; slashed prices
-												</label>
-												<p className="text-xs mt-1" style={{ color: "var(--text-hint)" }}>
-													Displays the <b>-%</b> badge and the struck-through original price wherever
-													products appear. Turning this off hides the effect storefront-wide without
-													erasing any product&apos;s original price, so you can switch it back on unchanged.
-												</p>
-											</div>
-											<button
-												id="showDiscountBadges"
-												type="button"
-												role="switch"
-												aria-checked={showDiscountBadges}
-												onClick={toggleDiscountBadges}
-												data-testid="toggle-discount-badges"
-												className="flex shrink-0 cursor-pointer items-center gap-2 self-start rounded-full px-3 py-2 text-xs font-semibold transition-colors sm:self-auto"
-												style={{
-													background: showDiscountBadges ? "rgba(154,202,60,0.14)" : "var(--surface-medium)",
-													color: showDiscountBadges ? "var(--color-primary)" : "var(--text-hint)",
-												}}
-											>
-												{showDiscountBadges ? (
-													<ToggleRight className="h-5 w-5" aria-hidden="true" />
-												) : (
-													<ToggleLeft className="h-5 w-5" aria-hidden="true" />
-												)}
-												{showDiscountBadges ? "On" : "Off"}
-											</button>
-										</div>
-									</div>
-
-									<div className="h-px w-full" style={{ background: "var(--border-light)" }} />
-
-									{/* Multi-currency — server-resolved-country display kill-switch */}
-									<div>
-										<h4 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-hint)" }}>Currency</h4>
-										<div
-											className="flex flex-col gap-3 rounded-lg p-4 sm:flex-row sm:items-center sm:justify-between"
-											style={{ border: "1px solid var(--border-light)", background: "var(--surface-low)" }}
-										>
-											<div className="min-w-0">
-												<label htmlFor="multiCurrencyEnabled" className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-													Show foreign visitors prices in their own currency
-												</label>
-												<p className="text-xs mt-1" style={{ color: "var(--text-hint)" }}>
-													When on, visitors outside Nigeria see prices converted to their local currency
-													based on their detected country. Payment still happens in Naira — this only
-													changes what price is displayed. Leave off to show everyone NGN regardless of country.
-												</p>
-											</div>
-											<button
-												id="multiCurrencyEnabled"
-												type="button"
-												role="switch"
-												aria-checked={multiCurrencyEnabled}
-												onClick={toggleMultiCurrency}
-												data-testid="toggle-multi-currency"
-												className="flex shrink-0 cursor-pointer items-center gap-2 self-start rounded-full px-3 py-2 text-xs font-semibold transition-colors sm:self-auto"
-												style={{
-													background: multiCurrencyEnabled ? "rgba(154,202,60,0.14)" : "var(--surface-medium)",
-													color: multiCurrencyEnabled ? "var(--color-primary)" : "var(--text-hint)",
-												}}
-											>
-												{multiCurrencyEnabled ? (
-													<ToggleRight className="h-5 w-5" aria-hidden="true" />
-												) : (
-													<ToggleLeft className="h-5 w-5" aria-hidden="true" />
-												)}
-												{multiCurrencyEnabled ? "On" : "Off"}
-											</button>
-										</div>
-									</div>
-
-									<div className="h-px w-full" style={{ background: "var(--border-light)" }} />
-
-									<div>
-										<div className="flex items-center justify-between mb-3">
-											<h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-hint)" }}>Shipping Methods</h4>
-											<button
-												type="button"
-												onClick={addShippingMethod}
-												className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer"
-												style={{ color: "var(--color-primary)", background: "rgba(22,163,74,0.08)" }}
-											>
-												<Plus className="h-3.5 w-3.5" />
-												Add Method
-											</button>
-										</div>
-
-										<div className="space-y-3">
-											{shippingMethods.map((method, index) => (
-												<div
-													key={method.key}
-													className="rounded-lg p-4 space-y-3"
-													style={{
-														border: "1px solid var(--border-light)",
-														background: method.enabled ? "var(--surface-low)" : "var(--surface-medium)",
-														opacity: method.enabled ? 1 : 0.6,
-													}}
-												>
-													<div className="flex items-center justify-between">
-														<span className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
-															Method {index + 1}
+								<DetailSection
+									title="Shipping methods"
+									description="What customers can choose at checkout."
+									action={
+										<Button type="button" variant="tonal" size="sm" leftIcon={Plus} onClick={addShippingMethod}>
+											Add method
+										</Button>
+									}
+								>
+									<div className="space-y-3 py-3">
+										{shippingMethods.map((method, index) => (
+											<div key={method.key} className="rounded-xl border p-4 transition-opacity" style={{ borderColor: "var(--border-light)", background: method.enabled ? "var(--surface-low)" : "var(--surface-medium)", opacity: method.enabled ? 1 : 0.65 }}>
+												<div className="mb-3 flex items-center justify-between gap-3">
+													<span className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
+														Method {index + 1}
+													</span>
+													<div className="flex items-center gap-3">
+														<span className="text-xs" style={{ color: "var(--text-hint)" }}>
+															{method.enabled ? "Available" : "Hidden"}
 														</span>
-														<div className="flex items-center gap-2">
-															<button
-																type="button"
-																onClick={() => updateShippingMethod(method.key, "enabled", !method.enabled)}
-																className="cursor-pointer"
-																title={method.enabled ? "Disable" : "Enable"}
-															>
-																{method.enabled ? (
-																	<ToggleRight className="h-5 w-5" style={{ color: "var(--color-primary)" }} />
-																) : (
-																	<ToggleLeft className="h-5 w-5" style={{ color: "var(--text-hint)" }} />
-																)}
+														<Switch checked={method.enabled} onCheckedChange={(next) => updateShippingMethod(method.key, "enabled", next)} aria-label={`${method.enabled ? "Disable" : "Enable"} method ${index + 1}`} />
+														{shippingMethods.length > 1 && (
+															<button type="button" onClick={() => removeShippingMethod(method.key)} className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20" title="Remove method" aria-label={`Remove method ${index + 1}`}>
+																<Trash2 className="h-4 w-4 text-red-500" />
 															</button>
-															{shippingMethods.length > 1 && (
-																<button
-																	type="button"
-																	onClick={() => removeShippingMethod(method.key)}
-																	className="cursor-pointer p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-																	title="Remove method"
-																>
-																	<Trash2 className="h-3.5 w-3.5" style={{ color: "#ef4444" }} />
-																</button>
-															)}
-														</div>
-													</div>
-													<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-														<FormInput
-															label="Name"
-															placeholder="Standard Shipping"
-															value={method.name}
-															onChange={(e: any) => updateShippingMethod(method.key, "name", e.target.value)}
-														/>
-														<CurrencyInput
-															label="Cost"
-															placeholder="2,500"
-															value={method.baseCost}
-															onChange={(val) => updateShippingMethod(method.key, "baseCost", val)}
-														/>
-														<FormInput
-															label="Estimated Delivery"
-															placeholder="5-7 business days"
-															value={method.estimatedDays}
-															onChange={(e: any) => updateShippingMethod(method.key, "estimatedDays", e.target.value)}
-														/>
+														)}
 													</div>
 												</div>
-											))}
-										</div>
+												<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+													<FormInput label="Name" placeholder="Standard Shipping" value={method.name} onChange={(e: any) => updateShippingMethod(method.key, "name", e.target.value)} />
+													<CurrencyInput label="Cost" placeholder="2,500" value={method.baseCost} onChange={(val) => updateShippingMethod(method.key, "baseCost", val)} />
+													<FormInput label="Estimated Delivery" placeholder="5-7 business days" value={method.estimatedDays} onChange={(e: any) => updateShippingMethod(method.key, "estimatedDays", e.target.value)} />
+												</div>
+											</div>
+										))}
 									</div>
+								</DetailSection>
 
-									<FormActions onCancel={() => orderShippingForm.reset()} cancelLabel="Reset" submitLabel="Update Settings" isSubmitting={savingOrderShipping} />
-								</form>
-							</div>
+								<SettingsSaveBar hint="Tax and shipping apply to new orders only." onReset={() => orderShippingForm.reset()} submitLabel="Update Settings" saving={savingOrderShipping} />
+							</form>
 						)}
 
 						{/* ── Profile Settings ── */}
 						{activeTab === "profile" && (
-							<div className={CARD}>
-								<div className="px-6 py-4" style={{ borderBottom: "1px solid var(--border-light)" }}>
-									<h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>My Profile</h3>
-									<p className="text-xs mt-0.5" style={{ color: "var(--text-hint)" }}>Update your personal information</p>
-								</div>
-								<form onSubmit={profileForm.handleSubmit(onSaveProfile)} className="p-6 space-y-4">
-									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-										<FormInput label="First Name" required {...profileForm.register("firstName")} error={profileForm.formState.errors.firstName?.message} />
-										<FormInput label="Last Name" required {...profileForm.register("lastName")} error={profileForm.formState.errors.lastName?.message} />
+							<div className="space-y-5">
+								<PanelHeading title="My Profile" description="Your details, what your role allows, and how the console looks to you" />
+								<div className="grid gap-5 xl:grid-cols-2 xl:items-start">
+									<form onSubmit={profileForm.handleSubmit(onSaveProfile)} className="space-y-5">
+										<DetailSection title="Personal information" description="Update your personal information">
+											<div className="space-y-4 py-3">
+												<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+													<FormInput label="First Name" required {...profileForm.register("firstName")} error={profileForm.formState.errors.firstName?.message} />
+													<FormInput label="Last Name" required {...profileForm.register("lastName")} error={profileForm.formState.errors.lastName?.message} />
+												</div>
+												<PhoneInput label="Phone Number" value={profileForm.watch("phoneNumber") || ""} onChange={(val) => profileForm.setValue("phoneNumber", val)} />
+												<FormInput label="Email" value={user?.email || ""} disabled />
+											</div>
+										</DetailSection>
+										<SettingsSaveBar hint="Your email is your sign-in and cannot be changed here." onReset={() => profileForm.reset()} submitLabel="Update Profile" saving={savingProfile} />
+									</form>
+									<div className="space-y-5">
+										<RoleAccessCard user={user} />
+										<AppearanceCard />
 									</div>
-									<PhoneInput
-										label="Phone Number"
-										value={profileForm.watch("phoneNumber") || ""}
-										onChange={(val) => profileForm.setValue("phoneNumber", val)}
-									/>
-									<FormInput label="Email" value={user?.email || ""} disabled />
-									<FormInput label="Role" value={user?.profileType || "STAFF"} disabled />
-									<FormActions onCancel={() => profileForm.reset()} cancelLabel="Reset" submitLabel="Update Profile" isSubmitting={savingProfile} />
-								</form>
+								</div>
 							</div>
 						)}
 
 						{/* ── Security ── */}
 						{activeTab === "security" && (
-							<div className={CARD}>
-								<div className="px-6 py-4" style={{ borderBottom: "1px solid var(--border-light)" }}>
-									<h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Change Password</h3>
-									<p className="text-xs mt-0.5" style={{ color: "var(--text-hint)" }}>Update your account password</p>
+							<form onSubmit={passwordForm.handleSubmit(onChangePassword)} className="space-y-5">
+								<PanelHeading title="Security" description="Keep your account protected" />
+								<div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+									<div className="space-y-5">
+										<DetailSection title="Change password" description="Update your account password">
+											<div className="space-y-4 py-3">
+												<FormInput label="Current Password" type="password" placeholder="Enter current password" required showPasswordToggle {...passwordForm.register("currentPassword")} error={passwordForm.formState.errors.currentPassword?.message} />
+												<FormInput label="New Password" type="password" placeholder="Enter new password" required showPasswordToggle {...passwordForm.register("newPassword")} error={passwordForm.formState.errors.newPassword?.message} />
+												<FormInput label="Confirm New Password" type="password" placeholder="Confirm new password" required showPasswordToggle {...passwordForm.register("confirmPassword")} error={passwordForm.formState.errors.confirmPassword?.message} />
+											</div>
+										</DetailSection>
+										<SettingsSaveBar hint="You stay signed in on this device." resetLabel="Cancel" onReset={() => passwordForm.reset()} submitLabel="Update Password" saving={savingPassword} />
+									</div>
+									<DetailSection title="Password requirements" description="Ticks off as you type.">
+										<ul className="space-y-2.5 py-3">
+											{(() => {
+												const next = passwordForm.watch("newPassword") ?? "";
+												const confirm = passwordForm.watch("confirmPassword") ?? "";
+												return [
+													{ ok: next.length >= 8, label: "At least 8 characters" },
+													{ ok: /[a-z]/.test(next), label: "A lowercase letter" },
+													{ ok: /[A-Z]/.test(next), label: "An uppercase letter" },
+													{ ok: /\d/.test(next), label: "A number" },
+													{ ok: next.length > 0 && next === confirm, label: "Both entries match" },
+												].map((r) => <PasswordRule key={r.label} ok={r.ok} label={r.label} />);
+											})()}
+										</ul>
+									</DetailSection>
 								</div>
-								<form onSubmit={passwordForm.handleSubmit(onChangePassword)} className="p-6 space-y-4 max-w-md">
-									<FormInput label="Current Password" type="password" placeholder="Enter current password" required showPasswordToggle {...passwordForm.register("currentPassword")} error={passwordForm.formState.errors.currentPassword?.message} />
-									<FormInput label="New Password" type="password" placeholder="Enter new password" required showPasswordToggle {...passwordForm.register("newPassword")} error={passwordForm.formState.errors.newPassword?.message} />
-									<FormInput label="Confirm New Password" type="password" placeholder="Confirm new password" required showPasswordToggle {...passwordForm.register("confirmPassword")} error={passwordForm.formState.errors.confirmPassword?.message} />
-									<FormActions onCancel={() => passwordForm.reset()} cancelLabel="Cancel" submitLabel="Update Password" isSubmitting={savingPassword} />
-								</form>
-							</div>
+							</form>
 						)}
-					</div>
-				</div>
-			</div>
+			</SettingsFrame>
 		</AdminLayout>
 	);
 };

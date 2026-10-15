@@ -39,7 +39,8 @@ export function TabBar() {
 		<div
 			role="tablist"
 			data-testid="tab-bar"
-			className="bg-background sticky top-14 z-10 flex h-10 shrink-0 items-center gap-1 overflow-x-auto border-b px-2"
+			// Opaque: the brand tint is translucent, so it sits on a solid page-coloured layer or scrolling content shows through the strip.
+			className="[background:linear-gradient(var(--brand-soft),var(--brand-soft)),var(--color-background)] sticky top-14 z-20 flex h-10 shrink-0 items-center gap-1 overflow-x-auto border-b px-3"
 		>
 			{openPaths.map((path) => {
 				const mod = findModule(path);
@@ -59,13 +60,13 @@ export function TabBar() {
 						data-active={isActive ? "true" : undefined}
 						onClick={() => router.push(path)}
 						className={cn(
-							"group flex h-8 cursor-pointer items-center gap-2 rounded-md px-3 text-sm whitespace-nowrap",
+							"group flex h-7 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium whitespace-nowrap transition-colors",
 							isActive
-								? "bg-accent text-accent-foreground font-medium"
-								: "text-muted-foreground hover:bg-accent/50",
+								? "border-border bg-background font-semibold text-foreground shadow-xs"
+								: "border-transparent text-muted-foreground hover:bg-background/60",
 						)}
 					>
-						<Icon className="size-4" />
+						<Icon className={cn("size-3.5", isActive && "text-brand-ink")} />
 						<span>{mod.title}</span>
 						{closable && (
 							<button
@@ -76,9 +77,9 @@ export function TabBar() {
 									e.stopPropagation();
 									handleClose(path);
 								}}
-								className="hover:bg-muted-foreground/20 -mr-1 ml-1 rounded p-0.5"
+								className="hover:bg-muted-foreground/20 -mr-1 ml-0.5 rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
 							>
-								<X className="size-3.5" />
+								<X className="size-3" />
 							</button>
 						)}
 					</div>

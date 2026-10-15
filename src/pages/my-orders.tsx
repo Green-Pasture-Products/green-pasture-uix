@@ -9,11 +9,12 @@ import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { orderAction } from "@/_redux/actions/order.action";
 import { addToCartAsync } from "@/_redux/actions/cart.action";
-import { DataTable } from "@/_components/DataTable";
+import { DataTable } from "@/_components/DataTableClassic";
 import type { ColumnDef } from "@tanstack/react-table";
 import ActionMenu from "@/_UI/ActionMenu";
 import Badge from "@/_UI/Badge";
 import PageLoader from "@/_UI/PageLoader";
+import { OrdersListSkeleton } from "@/_skeletonLoading/PageSkeletons";
 import EmptyState from "@/_UI/EmptyState";
 import AuthPrompt from "@/_UI/AuthPrompt";
 import { formatCurrency } from "@/_UI/FormatValue";
@@ -159,14 +160,55 @@ const MyOrders: React.FC = () => {
 			),
 		},
 		{
+			id: "paymentStatus",
+			header: "Payment",
+			enableSorting: false,
+			cell: ({ row }) => {
+				const payment = row.original.payments?.[0];
+				if (!payment) {
+					return <span className="text-sm" style={{ color: "var(--text-hint)" }}>—</span>;
+				}
+
+				const isAwaitingUpload =
+					payment.paymentMethod === "MANUAL_TRANSFER" &&
+					payment.paymentStatus === "AWAITING_PAYMENT";
+				const isProcessing = row.original.orderStatus === "PROCESSING";
+				const orderPaymentVerified =
+					row.original.orderStatus === "IN_TRANSIT" || row.original.orderStatus === "DELIVERED";
+				const label = orderPaymentVerified
+					? "VERIFIED"
+					: isProcessing
+						? "Processing"
+					: payment.paymentStatus === "AWAITING_VERIFICATION"
+						? "Pending Verification"
+						: isAwaitingUpload
+							? "Awaiting Payment Upload"
+							: payment.paymentStatus.replace(/_/g, " ");
+				const variant = orderPaymentVerified
+					? "success"
+					: isProcessing
+						? "info"
+					: payment.paymentStatus === "VERIFIED" || payment.paymentStatus === "PAID"
+					? "success"
+					: payment.paymentStatus === "AWAITING_VERIFICATION" || payment.paymentStatus === "INCOMPLETE_PAYMENT" || isAwaitingUpload
+						? "warning"
+						: payment.paymentStatus === "DECLINED" || payment.paymentStatus === "NOT_PAID"
+							? "error"
+							: "neutral";
+
+				return <Badge variant={variant} dot size="sm">{label}</Badge>;
+			},
+		},
+		{
 			id: "actions",
 			header: "",
 			enableSorting: false,
 			enableHiding: false,
 			meta: { align: "right" },
 			cell: ({ row }) => (
-				<ActionMenu
-					items={[
+					<div onClick={(event) => event.stopPropagation()}>
+						<ActionMenu
+							items={[
 						{
 							label: "View Details",
 							onClick: () => router.push(`/my-orders/${row.original.orderReference}`),
@@ -201,8 +243,9 @@ const MyOrders: React.FC = () => {
 								}
 							},
 						},
-					]}
-				/>
+							]}
+						/>
+					</div>
 			),
 		},
 	];
@@ -225,7 +268,7 @@ const MyOrders: React.FC = () => {
 	if (loading && orders.length === 0) {
 		return (
 			<Layout>
-				<PageLoader fullScreen={false} message="Loading your orders..." />
+				<OrdersListSkeleton />
 			</Layout>
 		);
 	}
@@ -266,6 +309,7 @@ const MyOrders: React.FC = () => {
 						pageCount={meta?.totalPages ?? 1}
 						totalItems={meta?.totalItems}
 						onPageChange={(idx) => setPage(idx + 1)}
+						onRowClick={(order) => router.push(`/my-orders/${order.orderReference}`)}
 						emptyMessage="No orders found"
 						emptyDescription="Try adjusting your search"
 					/>

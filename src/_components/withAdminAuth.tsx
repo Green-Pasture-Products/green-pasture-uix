@@ -4,6 +4,11 @@ import { useAppSelector } from "@/_redux/store";
 import PageLoader from "@/_UI/PageLoader";
 import { appConstants } from "@/_redux/constants";
 import { loginUrlFor } from "@/_utils/redirect";
+import { useHasPrivilege } from "@/_hooks/usePrivilege";
+import { findOwningModule } from "@/_navigations/modules";
+import { useFeatures } from "@/_hooks/useFeature";
+import { resolveFeature } from "@/_utils/featureFlags";
+import NoAccess from "@/_components/NoAccess";
 
 const ADMIN_ROLES: readonly string[] = appConstants.ADMIN_ROLES;
 
@@ -15,11 +20,15 @@ const ADMIN_ROLES: readonly string[] = appConstants.ADMIN_ROLES;
  * blocks render until the persisted state is available.
  */
 export default function withAdminAuth<P extends object>(
-	WrappedComponent: React.ComponentType<P>
+	WrappedComponent: React.ComponentType<P>,
+	/** Extra privilege(s) this particular page needs beyond its module's (e.g. a create form inside a read-open module). */
+	requires?: string | readonly string[],
 ) {
 	const WithAdminAuthComponent = (props: P) => {
 		const router = useRouter();
 		const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+		const hasPrivilege = useHasPrivilege();
+		const { flags } = useFeatures();
 
 		const userRole = user?.profileType?.toUpperCase();
 		const authorized =
@@ -46,6 +55,19 @@ export default function withAdminAuth<P extends object>(
 
 		if (!authorized) {
 			return <PageLoader message="Verifying access..." />;
+		}
+
+		// Staff, but their roles may not open this section: same privileges the sidebar filters by, applied to the
+		// address bar too. Pages outside any module (or modules with no privilege) stay open to every staff member.
+		const owner = findOwningModule(router.asPath.split(/[?#]/)[0]);
+		if (user && requires !== undefined && !hasPrivilege(requires)) {
+			return <NoAccess module={owner?.title} />;
+		}
+		if (user && owner?.feature && !resolveFeature(flags, owner.feature)) {
+			return <NoAccess module={owner.title} reason="This feature is turned off." />;
+		}
+		if (user && owner && !hasPrivilege(owner.privilege)) {
+			return <NoAccess module={owner.title} />;
 		}
 
 		return <WrappedComponent {...props} />;

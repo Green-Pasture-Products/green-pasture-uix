@@ -1,22 +1,25 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 import Layout from "@/_components/Layout";
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
 import { orderAction } from "@/_redux/actions/order.action";
-import { BackButton, DetailHeader, DetailSection } from "@/_UI/DetailField";
+import { BackButton, DetailHeader, DetailSection } from "@/_UI/DetailFieldClassic";
 import Badge from "@/_UI/Badge";
 import Button from "@/_UI/Button";
-import { DataTable } from "@/_components/DataTable";
+import { DataTable } from "@/_components/DataTableClassic";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatCurrency } from "@/_UI/FormatValue";
 import { formatWeight } from "@/_utils/formatWeight";
 import PageLoader from "@/_UI/PageLoader";
+import { OrderDetailSkeleton } from "@/_skeletonLoading/PageSkeletons";
 import OrderTimeline from "@/_UI/OrderTimeline";
 import AuthPrompt from "@/_UI/AuthPrompt";
 import { BackendOrder, BackendOrderItem } from "@/types";
 import { appConstants } from "@/_redux/constants";
-import { Printer } from "lucide-react";
+import { ReceiptList } from "@/_components/ReceiptList";
+import { Printer, Upload } from "lucide-react";
 import { ReceiptModal } from "@/_UI/ReceiptModal";
 
 const getStatusVariant = (status: string): "success" | "warning" | "error" | "info" | "neutral" => {
@@ -161,7 +164,7 @@ const MyOrderDetail: React.FC = () => {
 	if (loading) {
 		return (
 			<Layout>
-				<PageLoader fullScreen={false} message="Loading order details..." />
+				<OrderDetailSkeleton />
 			</Layout>
 		);
 	}
@@ -231,6 +234,73 @@ const MyOrderDetail: React.FC = () => {
 					createdAt={order.createdAt}
 				/>
 
+				{order.payments?.length ? (
+					<DetailSection title="Payment Information">
+						<div className="divide-y" style={{ borderColor: "var(--border-light)" }}>
+							{order.payments.map((payment) => {
+								const isManual = payment.paymentMethod === "MANUAL_TRANSFER";
+								const canUploadReceipt =
+									isManual && (payment.paymentStatus === "AWAITING_PAYMENT" || payment.paymentStatus === "INCOMPLETE_PAYMENT");
+								// Instalments: another receipt can be added while earlier ones await review.
+								const canAddReceipt = isManual && payment.paymentStatus === "AWAITING_VERIFICATION" && order.orderStatus === "PENDING";
+
+								return (
+									<div key={payment.id} className="px-5 py-4 space-y-3">
+										<div className="grid grid-cols-2 gap-4">
+											<div>
+												<span className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+													Payment Method
+												</span>
+												<p className="text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>
+													{payment.paymentMethod === "MANUAL_TRANSFER" ? "Bank Transfer" : payment.paymentMethod}
+												</p>
+											</div>
+											<div>
+												<span className="text-xs font-medium" style={{ color: "var(--text-hint)" }}>
+													Payment Status
+												</span>
+												<p className="text-sm mt-0.5" style={{ color: "var(--text-primary)" }}>
+													{order.orderStatus === "IN_TRANSIT" || order.orderStatus === "DELIVERED"
+														? "VERIFIED"
+														: order.orderStatus === "PROCESSING"
+															? "Processing"
+														: payment.paymentStatus === "AWAITING_VERIFICATION"
+														? "Pending Verification"
+														: payment.paymentMethod === "MANUAL_TRANSFER" &&
+															payment.paymentStatus === "AWAITING_PAYMENT"
+															? "Awaiting Payment Upload"
+														: payment.paymentStatus.replace(/_/g, " ")}
+												</p>
+											</div>
+										</div>
+										{payment.adminNote && payment.paymentStatus === "DECLINED" && (
+											<p className="text-sm" style={{ color: "#ef4444" }}>
+												Payment declined: {payment.adminNote}
+											</p>
+										)}
+										{payment.adminNote && payment.paymentStatus === "INCOMPLETE_PAYMENT" && (
+											<p className="text-sm" style={{ color: "#f59e0b" }}>
+												Payment incomplete: {payment.adminNote}
+											</p>
+										)}
+										<ReceiptList receipts={payment.receipts} legacyUrl={payment.receiptUrl} legacyFileName={payment.receiptFileName} />
+										{(canUploadReceipt || canAddReceipt) && (
+											<Link
+												href={`/payment-instructions/${order.id}`}
+												className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white"
+												style={{ backgroundColor: "var(--color-primary)" }}
+											>
+												<Upload size={16} />
+												{canAddReceipt ? "Upload Another Receipt" : payment.paymentStatus === "INCOMPLETE_PAYMENT" ? "Upload Balance Receipt" : "Upload Payment Receipt"}
+											</Link>
+										)}
+									</div>
+								);
+							})}
+						</div>
+					</DetailSection>
+				) : null}
+
 				<DetailSection title="Order Items">
 					<DataTable
 						columns={itemColumns}
@@ -289,7 +359,7 @@ const MyOrderDetail: React.FC = () => {
 							}),
 							cacReg: "RC-1849204",
 							lineItems: (order.items || []).map((item: any) => ({
-								description: item.productName || item.product?.name || "Produce Item",
+								description: item.itemName || item.item?.name || "Produce Item",
 								quantity: item.quantity,
 								amount: Number(item.unitPrice || 0) * Number(item.quantity || 1),
 							})),
