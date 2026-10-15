@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Plus } from "lucide-react";
@@ -164,7 +165,7 @@ const Invitations: React.FC = () => {
 			header: "Sent",
 			cell: ({ getValue }) => (
 				<span className="text-sm text-gray-500 dark:text-gray-400">
-					{new Date(getValue() as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+					{formatDateTime(getValue() as string)}
 				</span>
 			),
 		},
@@ -174,7 +175,7 @@ const Invitations: React.FC = () => {
 			cell: ({ row }) => (
 				<span className="text-sm text-gray-500 dark:text-gray-400">
 					{row.original.status === "PENDING"
-						? new Date(row.original.expiresAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+						? formatDateTime(row.original.expiresAt)
 						: "—"}
 				</span>
 			),

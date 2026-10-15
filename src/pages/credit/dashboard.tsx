@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -199,7 +200,7 @@ const CreditDashboard: React.FC = () => {
 												{tx.description}
 											</div>
 											<div className="text-xs text-gray-500 dark:text-gray-400">
-												{new Date(tx.createdAt).toLocaleDateString()}
+												{formatDateTime(tx.createdAt)}
 											</div>
 										</div>
 									</div>

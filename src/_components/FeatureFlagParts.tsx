@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -21,7 +22,7 @@ export const apiError = (err: any, fallback: string): string => {
 	return (Array.isArray(m) ? m.join(", ") : m) || fallback;
 };
 
-export const dateTime = (iso?: string | null) => (iso ? new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }) : "—");
+export const dateTime = formatDateTime;
 
 type Stateful = Pick<FlagConfig, "enabled" | "rolloutPercentage" | "targetRoles" | "targetAccountIds">;
 export const stateLabel = (f: Stateful) =>

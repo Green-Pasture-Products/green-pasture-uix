@@ -168,6 +168,7 @@ function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: 
 	const [people, setPeople] = useState<Person[]>([]);
 	const [active, setActive] = useState(0);
 	const [dismissed, setDismissed] = useState(false);
+	const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 	const [busy, setBusy] = useState(false);
 	const [err, setErr] = useState("");
 	const box = useRef<HTMLTextAreaElement>(null);
@@ -185,11 +186,21 @@ function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: 
 	useEffect(() => {
 		if (!open) return setPeople([]);
 		let stale = false;
+		setPeople([]); // never leave the previous query's people pickable while the new search is pending
+		setStatus("loading");
 		const t = setTimeout(() => {
 			axiosInstance
 				.get(`activity/record/${type}/${id}/mentionable`, { params: { q: query } })
-				.then((res) => !stale && setPeople(res.data?.data ?? []))
-				.catch(() => !stale && setPeople([]));
+				.then((res) => {
+					if (stale) return;
+					setPeople(res.data?.data ?? []);
+					setStatus("ready");
+				})
+				.catch(() => {
+					if (stale) return;
+					setPeople([]);
+					setStatus("error");
+				});
 		}, 120);
 		return () => {
 			stale = true;
@@ -234,6 +245,8 @@ function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: 
 	};
 
 	const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+		if (e.nativeEvent.isComposing || e.keyCode === 229) return; // IME: Enter confirms the composition
+		if (open && e.key === "Escape") return setDismissed(true);
 		if (options.length) {
 			if (e.key === "ArrowDown" || e.key === "ArrowUp") {
 				e.preventDefault();
@@ -245,7 +258,6 @@ function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: 
 				choose(options[active] ?? options[0]);
 				return;
 			}
-			if (e.key === "Escape") return setDismissed(true);
 		}
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
@@ -255,8 +267,13 @@ function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: 
 
 	return (
 		<div className="relative border-t p-3" style={{ borderColor: "var(--border-light)" }}>
+			{open && options.length === 0 && (
+				<p role="status" className="absolute inset-x-3 bottom-full z-10 mb-1 rounded-xl border px-3 py-2 text-xs shadow-lg" style={{ background: "var(--surface-paper)", borderColor: "var(--border-light)", color: "var(--text-hint)" }}>
+					{status === "loading" ? "Searching…" : status === "error" ? "Could not load people. Keep typing to retry." : "No one to mention here."}
+				</p>
+			)}
 			{options.length > 0 && (
-				<ul role="listbox" aria-label="People to mention" className="absolute inset-x-3 bottom-full mb-1 overflow-hidden rounded-xl border py-1 shadow-lg" style={{ background: "var(--surface-paper)", borderColor: "var(--border-light)" }}>
+				<ul role="listbox" aria-label="People to mention" className="absolute inset-x-3 bottom-full z-10 mb-1 overflow-hidden rounded-xl border py-1 shadow-lg" style={{ background: "var(--surface-paper)", borderColor: "var(--border-light)" }}>
 					{options.map((p, i) => (
 						<li
 							key={p.id}
@@ -284,6 +301,7 @@ function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: 
 					value={text}
 					onChange={(e) => update(e.target.value, e.target.selectionStart ?? e.target.value.length)}
 					onSelect={(e) => setCaret(e.currentTarget.selectionStart ?? 0)}
+					onBlur={() => setDismissed(true)}
 					onKeyDown={onKeyDown}
 					rows={2}
 					maxLength={2000}

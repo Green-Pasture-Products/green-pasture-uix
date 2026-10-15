@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import React from "react";
 import Badge from "@/_UI/Badge";
 import { formatCurrency } from "@/_UI/FormatValue";
@@ -80,7 +81,7 @@ const CreditTransactionsTable: React.FC<CreditTransactionsTableProps> = ({
 								{formatCurrency(transaction.amount)}
 							</td>
 							<td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-								{new Date(transaction.createdAt).toLocaleDateString()}
+								{formatDateTime(transaction.createdAt)}
 							</td>
 						</tr>
 					))}

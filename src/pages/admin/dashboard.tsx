@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -122,7 +123,7 @@ const orderColumns: ColumnDef<RecentOrder, any>[] = [
 	{
 		accessorKey: "createdAt",
 		header: "DATE",
-		cell: ({ getValue }) => <span className="text-muted-foreground">{new Date(String(getValue())).toLocaleDateString()}</span>,
+		cell: ({ getValue }) => <span className="text-muted-foreground">{formatDateTime(String(getValue()))}</span>,
 	},
 ];
 
@@ -144,7 +145,7 @@ const customerColumns: ColumnDef<RecentCustomer, any>[] = [
 	{
 		accessorKey: "createdAt",
 		header: "JOINED",
-		cell: ({ getValue }) => <span className="text-muted-foreground">{new Date(String(getValue())).toLocaleDateString()}</span>,
+		cell: ({ getValue }) => <span className="text-muted-foreground">{formatDateTime(String(getValue()))}</span>,
 	},
 ];
 

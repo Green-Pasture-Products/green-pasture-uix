@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import React, { useEffect, useState, useCallback } from "react";
 import { statusColumn } from "@/_components/statusColumn";
 import { useRouter } from "next/router";
@@ -261,7 +262,7 @@ const AdminOrders: React.FC = () => {
 			header: "Date",
 			cell: ({ getValue }) => (
 				<span className="text-sm text-gray-500 dark:text-gray-400">
-					{new Date(getValue() as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+					{formatDateTime(getValue() as string)}
 				</span>
 			),
 		},

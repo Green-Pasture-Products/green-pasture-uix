@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import * as React from "react";
 import {
   type ColumnDef,
@@ -136,10 +137,7 @@ export interface DataTableProps<T> {
 }
 
 function formatAuditDate(value: unknown): string {
-  if (!value) return "—";
-  const date = new Date(value as string);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return formatDateTime(value as string);
 }
 
 const DEFAULT_PAGE_SIZES = [10, 15, 20, 50];

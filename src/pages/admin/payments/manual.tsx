@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { statusColumn } from "@/_components/statusColumn";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -175,17 +176,6 @@ const AdminPaymentsManual: React.FC = () => {
     return formatter.format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-NG", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const columns: ColumnDef<ManualPayment, any>[] = [
     {
       id: "orderReference",
@@ -270,7 +260,7 @@ const AdminPaymentsManual: React.FC = () => {
       meta: { width: "160px" },
       cell: ({ row }) => (
         <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-          {row.original.submittedAt ? formatDate(row.original.submittedAt) : "—"}
+          {row.original.submittedAt ? formatDateTime(row.original.submittedAt) : "—"}
         </span>
       ),
     },
