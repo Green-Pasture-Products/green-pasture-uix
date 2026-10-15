@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import withAdminAuth from "@/_components/withAdminAuth";
@@ -154,7 +155,7 @@ const AdminCustomers: React.FC = () => {
 			header: "Joined",
 			cell: ({ getValue }) => (
 				<span className="text-sm text-gray-500 dark:text-gray-400">
-					{new Date(getValue() as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+					{formatDateTime(getValue() as string)}
 				</span>
 			),
 		},

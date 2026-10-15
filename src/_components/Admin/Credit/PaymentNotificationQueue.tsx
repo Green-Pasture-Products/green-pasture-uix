@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import React from "react";
 import Link from "next/link";
 import { Clock, AlertCircle } from "lucide-react";
@@ -87,7 +88,7 @@ const PaymentNotificationQueue: React.FC<PaymentNotificationQueueProps> = ({
 										{notification.customerName}
 									</p>
 									<p className="text-xs text-gray-600 dark:text-gray-400">
-										{new Date(notification.submittedAt).toLocaleDateString()}
+										{formatDateTime(notification.submittedAt)}
 									</p>
 								</div>
 								<Badge variant={getStatusColor(notification.notificationStatus)}>
@@ -99,7 +100,7 @@ const PaymentNotificationQueue: React.FC<PaymentNotificationQueueProps> = ({
 									{formatCurrency(notification.paymentAmount)}
 								</p>
 								<p className="text-xs text-gray-600 dark:text-gray-400">
-									Paid: {new Date(notification.paymentDate).toLocaleDateString()}
+									Paid: {formatDateTime(notification.paymentDate)}
 								</p>
 							</div>
 						</a>

@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -197,7 +198,7 @@ const CreditOrders: React.FC = () => {
 												</Badge>
 											</td>
 											<td className="px-6 py-4 text-gray-600 dark:text-gray-400 text-sm">
-												{new Date(order.createdAt).toLocaleDateString()}
+												{formatDateTime(order.createdAt)}
 											</td>
 										</tr>
 									))}

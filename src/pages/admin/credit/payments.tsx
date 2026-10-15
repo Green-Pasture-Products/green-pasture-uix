@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import { SelectField } from "@/_UI/SelectField";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
@@ -173,7 +174,7 @@ const AdminCreditPayments: React.FC = () => {
 												{payment.paymentMethod.replace(/_/g, " ")}
 											</td>
 											<td className="px-6 py-4 text-gray-600 dark:text-gray-400 text-sm">
-												{new Date(payment.paymentDate).toLocaleDateString()}
+												{formatDateTime(payment.paymentDate)}
 											</td>
 											<td className="px-6 py-4">
 												<Badge variant={getStatusColor(payment.notificationStatus)}>
@@ -181,7 +182,7 @@ const AdminCreditPayments: React.FC = () => {
 												</Badge>
 											</td>
 											<td className="px-6 py-4 text-gray-600 dark:text-gray-400 text-sm">
-												{new Date(payment.submittedAt).toLocaleDateString()}
+												{formatDateTime(payment.submittedAt)}
 											</td>
 											<td className="px-6 py-4 text-center">
 												<Link href={`/admin/credit/payments/${payment.id}`}>

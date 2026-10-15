@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/components/egfm/lib/format-date";
 import { AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -187,10 +188,10 @@ const AdminCreditDashboard: React.FC = () => {
 													{formatCurrency(payment.paymentAmount)}
 												</td>
 												<td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-													{new Date(payment.paymentDate).toLocaleDateString()}
+													{formatDateTime(payment.paymentDate)}
 												</td>
 												<td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-													{new Date(payment.submittedAt).toLocaleDateString()}
+													{formatDateTime(payment.submittedAt)}
 												</td>
 												<td className="py-3 px-4 text-center">
 													<Link href={`/admin/credit/payments/${payment.id}`}>
