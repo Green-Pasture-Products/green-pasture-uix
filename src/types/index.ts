@@ -366,6 +366,9 @@ export interface BackendCustomer {
 	status: string;
 	createdAt: string;
 	updatedAt: string;
+	createdBy?: string;
+	updatedBy?: string;
+	wallet?: { balance?: number; currency?: string } | null;
 }
 
 export interface BackendStaff {
