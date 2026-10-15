@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MapPin, Power, ShoppingBag, UserRound } from "lucide-react";
+import { LayoutGrid, MapPin, Power, ShieldCheck, ShoppingBag, UserRound } from "lucide-react";
 import toast from "react-hot-toast";
 import * as changeCase from "change-case";
 
@@ -12,6 +12,7 @@ import withAdminAuth from "@/_components/withAdminAuth";
 import AdminLayout from "@/_components/AdminLayout";
 import { BackButton, DetailHeader, DetailSection, EditableSection, FactGrid } from "@/_UI/DetailField";
 import Badge from "@/_UI/Badge";
+import AnimatedTabs, { type TabDef } from "@/_UI/AnimatedTabs";
 import Modal from "@/_UI/Modal";
 import { FormInput } from "@/_UI/FormField";
 import { formatCurrency, formatPhoneDisplay } from "@/_UI/FormatValue";
@@ -91,6 +92,14 @@ const CustomerDetail: React.FC = () => {
 	const [confirm, setConfirm] = useState(false);
 	const [busy, setBusy] = useState(false);
 
+	// The open tab lives in the URL (?tab=orders), so a link or a refresh lands on the same one.
+	const queryTab = router.query.tab as string | undefined;
+	const tab = ["overview", "orders", "account"].includes(queryTab ?? "") ? (queryTab as string) : "overview";
+	const setTab = (next: string) => {
+		const { tab: _drop, ...rest } = router.query;
+		router.replace({ pathname: router.pathname, query: next === "overview" ? rest : { ...rest, tab: next } }, undefined, { shallow: true, scroll: false });
+	};
+
 	const load = useCallback(async () => {
 		if (!id) return;
 		try {
@@ -113,7 +122,7 @@ const CustomerDetail: React.FC = () => {
 	useEffect(() => {
 		if (!email) return;
 		axiosInstance
-			.get("order", { params: { page: 1, limit: 5, search: email } })
+			.get("order", { params: { page: 1, limit: 20, search: email } })
 			.then((res) => {
 				const d = res.data?.data ?? res.data;
 				setOrders(d?.items ?? []);
@@ -162,10 +171,38 @@ const CustomerDetail: React.FC = () => {
 
 	const active = customer.status === "A";
 	const address = profile?.address;
+	const tabs: TabDef[] = [
+		{ id: "overview", label: "Overview", icon: LayoutGrid },
+		{ id: "orders", label: "Orders", icon: ShoppingBag, count: orderTotal },
+		{ id: "account", label: "Account", icon: ShieldCheck },
+	];
+
+	const orderList = (rows: OrderRow[]) => (
+		<ul className="divide-border divide-y">
+			{rows.map((o) => (
+				<li key={o.id}>
+					<button type="button" onClick={() => router.push(`/admin/order/${o.orderReference}`)} className="hover:bg-muted/50 flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition-colors">
+						<div className="min-w-0">
+							<p className="truncate text-sm font-semibold">#{o.orderReference}</p>
+							<p className="text-muted-foreground text-xs">{date(o.createdAt)}</p>
+						</div>
+						<div className="flex shrink-0 items-center gap-3">
+							<Badge variant={ORDER_VARIANT[o.orderStatus] ?? "neutral"} dot>
+								{changeCase.capitalCase(o.orderStatus)}
+							</Badge>
+							<span className="text-sm font-semibold tabular-nums">{formatCurrency(o.totalAmount)}</span>
+						</div>
+					</button>
+				</li>
+			))}
+		</ul>
+	);
+	const none = <p className="text-muted-foreground px-5 py-6 text-center text-sm">No orders yet.</p>;
+	const ghost = "text-muted-foreground hover:text-foreground h-7 px-2";
 
 	return (
 		<AdminLayout pageTitle={name || "Customer"}>
-			<div className="mx-auto w-full max-w-5xl space-y-6">
+			<div className="@container mx-auto w-full max-w-5xl space-y-6">
 				<BackButton onClick={() => router.push("/admin/customers")} label="Back to Customers" />
 
 				<DetailHeader
@@ -188,74 +225,99 @@ const CustomerDetail: React.FC = () => {
 					}
 				/>
 
-				<EditableSection
-					key={customer.updatedAt}
-					title="Profile"
-					icon={UserRound}
-					canEdit={canWrite}
-					columns={2}
-					defaultEditing={router.query.edit === "1"}
-					facts={[
-						{ label: "First name", value: profile?.firstName },
-						{ label: "Last name", value: profile?.lastName },
-						{ label: "Email", value: profile?.email },
-						{ label: "Phone", value: profile?.phoneNumber ? formatPhoneDisplay(profile.phoneNumber) : "" },
-						{ label: "Gender", value: profile?.gender ? changeCase.capitalCase(profile.gender) : "" },
-					]}
-				>
-					{(close) => <EditCard customer={customer} onCancel={close} onSaved={load} />}
-				</EditableSection>
+				<AnimatedTabs tabs={tabs} value={tab} onChange={setTab} label="Customer sections">
+					{tab === "overview" && (
+						<div className="tab-stagger space-y-6">
+							<EditableSection
+								key={customer.updatedAt}
+								title="Profile"
+								icon={UserRound}
+								canEdit={canWrite}
+								columns={2}
+								defaultEditing={router.query.edit === "1"}
+								facts={[
+									{ label: "First name", value: profile?.firstName },
+									{ label: "Last name", value: profile?.lastName },
+									{ label: "Email", value: profile?.email },
+									{ label: "Phone", value: profile?.phoneNumber ? formatPhoneDisplay(profile.phoneNumber) : "" },
+									{ label: "Gender", value: profile?.gender ? changeCase.capitalCase(profile.gender) : "" },
+								]}
+							>
+								{(close) => <EditCard customer={customer} onCancel={close} onSaved={load} />}
+							</EditableSection>
 
-				{address && (
-					<DetailSection title="Address" icon={MapPin}>
-						<FactGrid
-							columns={2}
-							facts={[
-								{ label: "Street", value: address.street },
-								{ label: "City", value: address.city },
-								{ label: "State", value: address.state },
-								{ label: "Country", value: address.country },
-								{ label: "Postal code", value: address.postalCode },
-							]}
-						/>
-					</DetailSection>
-				)}
-
-				<DetailSection
-					title="Recent orders"
-					icon={ShoppingBag}
-					flush
-					action={
-						orders.length > 0 && (
-							<Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-7 px-2" onClick={() => router.push(`/admin/orders?search=${encodeURIComponent(email ?? "")}`)}>
-								View all
-							</Button>
-						)
-					}
-				>
-					{orders.length === 0 ? (
-						<p className="text-muted-foreground px-5 py-6 text-center text-sm">No orders yet.</p>
-					) : (
-						<ul className="divide-border divide-y">
-							{orders.map((o) => (
-								<li key={o.id}>
-									<button type="button" onClick={() => router.push(`/admin/order/${o.orderReference}`)} className="hover:bg-muted/50 flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition-colors">
-										<div className="min-w-0">
-											<p className="truncate text-sm font-semibold">#{o.orderReference}</p>
-											<p className="text-muted-foreground text-xs">{date(o.createdAt)}</p>
-										</div>
-										<div className="flex shrink-0 items-center gap-3">
-											<Badge variant={ORDER_VARIANT[o.orderStatus] ?? "neutral"} dot>
-												{changeCase.capitalCase(o.orderStatus)}
-											</Badge>
-											<span className="text-sm font-semibold tabular-nums">{formatCurrency(o.totalAmount)}</span>
-										</div>
-									</button>
-								</li>
-							))}
-						</ul>
+							<div className="grid gap-6 @3xl:grid-cols-2">
+								{address && (
+									<DetailSection title="Address" icon={MapPin}>
+										<FactGrid
+											columns={1}
+											facts={[
+												{ label: "Street", value: address.street },
+												{ label: "City", value: address.city },
+												{ label: "State", value: address.state },
+												{ label: "Country", value: address.country },
+												{ label: "Postal code", value: address.postalCode },
+											]}
+										/>
+									</DetailSection>
+								)}
+								<DetailSection
+									title="Latest orders"
+									icon={ShoppingBag}
+									flush
+									action={orders.length > 0 && <Button variant="ghost" size="sm" className={ghost} onClick={() => setTab("orders")}>See all</Button>}
+								>
+									{orders.length === 0 ? none : orderList(orders.slice(0, 3))}
+								</DetailSection>
+							</div>
+						</div>
 					)}
-				</DetailSection>
+
+					{tab === "orders" && (
+						<div className="tab-stagger">
+							<DetailSection
+								title="Orders"
+								icon={ShoppingBag}
+								flush
+								action={orders.length > 0 && <Button variant="ghost" size="sm" className={ghost} onClick={() => router.push(`/admin/orders?search=${encodeURIComponent(email ?? "")}`)}>View all</Button>}
+							>
+								{orders.length === 0 ? none : orderList(orders)}
+								{orderTotal != null && orderTotal > orders.length && (
+									<p className="text-muted-foreground border-border border-t px-5 py-3 text-xs">
+										Showing the latest {orders.length} of {orderTotal}. Use View all for the rest.
+									</p>
+								)}
+							</DetailSection>
+						</div>
+					)}
+
+					{tab === "account" && (
+						<div className="tab-stagger space-y-6">
+							<DetailSection title="Account" icon={ShieldCheck} description={active ? "Can sign in and place orders." : "Cannot sign in or place orders."}>
+								<FactGrid
+									columns={2}
+									facts={[
+										{ label: "Status", value: active ? "Active" : "Inactive" },
+										{ label: "Joined", value: date(customer.createdAt) },
+										{ label: "Referral code", value: customer.referrerCode || "" },
+										{ label: "Wallet balance", value: customer.wallet?.balance != null ? formatCurrency(customer.wallet.balance) : "" },
+									]}
+								/>
+							</DetailSection>
+							<DetailSection title="Record" description="Who created and last changed this customer.">
+								<FactGrid
+									columns={2}
+									facts={[
+										{ label: "Created by", value: customer.createdBy },
+										{ label: "Created", value: date(customer.createdAt) },
+										{ label: "Last modified by", value: customer.updatedBy },
+										{ label: "Last modified", value: date(customer.updatedAt) },
+									]}
+								/>
+							</DetailSection>
+						</div>
+					)}
+				</AnimatedTabs>
 			</div>
 
 			<RecordActivity type="Customer" id={customer.id} />

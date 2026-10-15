@@ -44,12 +44,16 @@ export const DetailRow: React.FC<DetailRowProps> = ({ label, value, className = 
 
 /** Facts as a property list; two columns side by side on wide screens for long records. */
 export function FactGrid({ facts, columns = 1 }: { facts: Fact[]; columns?: 1 | 2 }) {
+	// The wrapper is the container the two-column switch measures, so it follows the room the section has (a docked Activity
+	// panel narrows it) rather than the window; the dl stays a container for the rows inside it.
 	return (
-		<dl className={cn("@container grid", columns > 1 && "xl:grid-cols-2 xl:gap-x-10")}>
-			{facts.map((f) => (
-				<DetailRow key={f.label} label={f.label} value={f.value} wide={f.wide} className={f.wide ? "xl:col-span-full" : undefined} />
-			))}
-		</dl>
+		<div className="@container">
+			<dl className={cn("@container grid", columns > 1 && "@2xl:grid-cols-2 @2xl:gap-x-10")}>
+				{facts.map((f) => (
+					<DetailRow key={f.label} label={f.label} value={f.value} wide={f.wide} className={f.wide ? "@2xl:col-span-full" : undefined} />
+				))}
+			</dl>
+		</div>
 	);
 }
 
