@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, AlertCircle, ArrowLeft, ArrowRight, Check, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GoogleLogin } from "@react-oauth/google";
+import GoogleButton from "@/_components/GoogleButton";
+import AuthShowcase from "@/_components/AuthShowcase";
 
 import { clearError } from "@/_redux/reducers/auth.reducer";
 import { signupSchema, signupStep1Schema, SignupFormData } from "@/_validations/auth";
@@ -121,11 +122,10 @@ const SignupPage: React.FC = () => {
 	}
 
 	return (
-		<div
-			className="min-h-screen flex flex-col items-center justify-center gap-6 p-4"
-			style={{ background: "var(--background)" }}
-		>
-			<div className="flex flex-col items-center gap-2 text-center">
+		<div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr]" style={{ background: "var(--background)" }}>
+			<AuthShowcase />
+			<main className="flex flex-col items-center justify-center gap-6 p-4 sm:p-10">
+			<div className="flex flex-col items-center gap-2 text-center lg:hidden">
 				<Link href="/" aria-label="Green Pasture Organics home" className="flex flex-col items-center gap-2">
 					<Image
 						src="/images/GP Organic Logo (Primary).png"
@@ -145,7 +145,7 @@ const SignupPage: React.FC = () => {
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-				className="w-full max-w-md rounded-2xl overflow-hidden"
+				className="w-full max-w-md rounded-2xl overflow-hidden lg:!bg-transparent lg:!border-0 lg:!shadow-none"
 				style={{
 					background: "var(--surface-paper)",
 					border: "1px solid var(--border-light)",
@@ -173,20 +173,7 @@ const SignupPage: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         className="mb-4"
     >
-        <div className="w-full flex justify-center overflow-hidden min-h-[44px]">
-            <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                type="standard"
-                theme="outline"
-                size="large"
-                text="signin_with"
-                shape="rectangular"
-                logo_alignment="left"
-                width="300"
-                useOneTap={false}
-            />
-        </div>
+        <GoogleButton onSuccess={handleGoogleSuccess} onError={handleGoogleError} label="Sign up with Google" />
         <div className="flex items-center gap-3 my-4">
             <div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
             <span className="text-xs" style={{ color: "var(--text-hint)" }}>Or continue with email</span>
@@ -393,6 +380,7 @@ const SignupPage: React.FC = () => {
 				</form>
 
 			</motion.div>
+			</main>
 		</div>
 	);
 };

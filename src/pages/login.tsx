@@ -5,7 +5,8 @@ import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
-import { GoogleLogin } from "@react-oauth/google";
+import GoogleButton from "@/_components/GoogleButton";
+import AuthShowcase from "@/_components/AuthShowcase";
 import { motion } from "framer-motion";
 // triger deployment
 import { useAppDispatch, useAppSelector } from "@/_redux/store";
@@ -21,7 +22,6 @@ import { loginAsync, resendOtpAsync } from "@/_redux/actions/auth.action";
 import { appConstants } from "@/_redux/constants";
 import { safeRedirectTarget } from "@/_utils/redirect";
 import { logger } from "@/_utils";
-import Card from "@/_UI/Card";
 import Input from "@/_UI/Input";
 import Button from "@/_UI/Button";
 
@@ -103,78 +103,48 @@ const LoginPage: React.FC = () => {
 	}, [isAuthenticated, user, dispatch, router]);
 
 	return (
-		<div
-			className="min-h-screen flex flex-col items-center justify-center gap-6 p-4"
-			style={{ background: "var(--background)" }}
-		>
-			<div className="flex flex-col items-center gap-2 text-center">
-				<Link href="/" aria-label="Green Pasture Organics home" className="flex flex-col items-center gap-2">
-					<Image
-						src="/images/GP Organic Logo (Primary).png"
-						alt="Green Pasture Organics logo"
-						height={96}
-						width={96}
-						priority
-						className="object-contain"
-					/>
-					<span className="text-2xl font-bold" style={{ color: "var(--color-primary)" }}>
-						Green Pasture Organics
-					</span>
-				</Link>
-			</div>
+		<div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr]" style={{ background: "var(--background)" }}>
+			<AuthShowcase />
 
-			<motion.div
-				initial={{ opacity: 0, y: 20 }}
-				animate={{ opacity: 1, y: 0 }}
-				transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-				className="w-full max-w-md rounded-2xl overflow-hidden"
-				style={{
-					background: "var(--surface-paper)",
-					border: "1px solid var(--border-light)",
-					boxShadow: "var(--shadow-xl)",
-				}}
-			>
-				<Card elevation={0} padding="lg" className="!border-0 !bg-transparent !rounded-none">
-					<h2 className="text-center text-xl font-bold mb-1" style={{ color: "var(--text-primary)" }}>
+			{/* Form */}
+			<main className="flex items-center justify-center p-6 sm:p-10">
+				<motion.div
+					initial={{ opacity: 0, y: 16 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+					className="w-full max-w-sm"
+				>
+					<Link href="/" aria-label="Green Pasture Organics home" className="lg:hidden mb-8 flex items-center gap-3">
+						<Image src="/images/GP Organic Logo (Primary).png" alt="" height={48} width={48} priority className="object-contain" />
+						<span className="text-lg font-bold" style={{ color: "var(--color-primary)" }}>
+							Green Pasture Organics
+						</span>
+					</Link>
+
+					<h2 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
 						Welcome back
 					</h2>
-					{signupOn ? (
-						<p className="text-center text-xs mb-6" style={{ color: "var(--text-hint)" }}>
-							Don't have an account?{" "}
-							<Link href="/signup" className="font-medium" style={{ color: "var(--color-primary)" }}>
-								Sign up
+					{signupOn && (
+						<p className="mt-2 text-sm" style={{ color: "var(--text-hint)" }}>
+							New here?{" "}
+							<Link href="/signup" className="font-semibold" style={{ color: "var(--color-primary)" }}>
+								Create an account
 							</Link>
 						</p>
-					) : (
-						<div className="mb-6" />
 					)}
 
-					{/* Google Sign-In */}
 					<Feature name="auth.google_signin">
-<div className="mb-4">
-    <div className="w-full flex justify-center overflow-hidden min-h-[44px]">
-        <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            type="standard"
-            theme="outline"
-            size="large"
-            text="signin_with"
-            shape="rectangular"
-            logo_alignment="left"
-            width="300"
-            useOneTap={false}
-        />
-    </div>
-    <div className="flex items-center gap-3 my-4">
-        <div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
-        <span className="text-xs" style={{ color: "var(--text-hint)" }}>
-            Or continue with email
-        </span>
-        <div className="flex-1 h-[1px]" style={{ background: "var(--border-light)" }} />
-    </div>
-</div>
-</Feature>
+						<div className="mt-8">
+							<GoogleButton onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
+						</div>
+						<div className="flex items-center gap-3 my-6">
+							<div className="flex-1 h-px" style={{ background: "var(--border-light)" }} />
+							<span className="text-xs uppercase tracking-widest" style={{ color: "var(--text-hint)" }}>
+								or
+							</span>
+							<div className="flex-1 h-px" style={{ background: "var(--border-light)" }} />
+						</div>
+					</Feature>
 
 					<form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
 						{error && (
@@ -182,11 +152,7 @@ const LoginPage: React.FC = () => {
 								initial={{ opacity: 0, y: -8 }}
 								animate={{ opacity: 1, y: 0 }}
 								className="flex items-start gap-2 p-3 rounded-lg text-xs"
-								style={{
-									background: "rgba(239,68,68,0.08)",
-									border: "1px solid rgba(239,68,68,0.2)",
-									color: "#dc2626",
-								}}
+								style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#dc2626" }}
 							>
 								<AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
 								<span>{error}</span>
@@ -224,6 +190,7 @@ const LoginPage: React.FC = () => {
 								rightElement={
 									<button
 										type="button"
+										aria-label={showPassword ? "Hide password" : "Show password"}
 										className="transition-colors"
 										style={{ color: "var(--text-hint)" }}
 										onClick={() => setShowPassword(!showPassword)}
@@ -238,9 +205,8 @@ const LoginPage: React.FC = () => {
 							{isLoading ? "Signing in..." : "Sign In"}
 						</Button>
 					</form>
-
-				</Card>
-			</motion.div>
+				</motion.div>
+			</main>
 		</div>
 	);
 };
