@@ -114,7 +114,8 @@ export const Feature: React.FC<{ name: FeatureKey; fallback?: React.ReactNode; c
 				if (!on && e.target === e.currentTarget && e.propertyName === "grid-template-rows") setPresent(false);
 			}}
 		>
-			<div style={{ overflow: "hidden", minHeight: 0 }}>{children}</div>
+			{/* clip only while collapsed: a popup that opens above its content (the @ picker) must not be cut off */}
+			<div style={{ overflow: on ? "visible" : "hidden", minHeight: 0 }}>{children}</div>
 		</div>
 	);
 };
