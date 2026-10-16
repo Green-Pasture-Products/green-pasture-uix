@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Activity, ChevronDown, MessageSquare, Send, PanelRightClose, PanelRightOpen, Pencil, Plus, ShieldAlert, Trash2, X } from "lucide-react";
+import { Activity, ChevronDown, Loader2, MessageSquare, Send, PanelRightClose, PanelRightOpen, Pencil, Plus, ShieldAlert, Trash2, X } from "lucide-react";
 import { useRecordActivity } from "@/_hooks/useRecordActivity";
 import { Feature } from "@/_components/FeatureFlagProvider";
 import axiosInstance from "@/_utils/axiosInstance";
@@ -321,10 +321,15 @@ function CommentBox({ type, id, onAdded }: { type: string; id: string; onAdded: 
 						disabled={busy || !text.trim()}
 						aria-label="Post comment"
 						data-testid="record-comment-send"
-						className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white transition-opacity disabled:opacity-40"
+						className="group flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white transition-[transform,opacity,box-shadow] duration-150 ease-out enabled:hover:-translate-y-px enabled:hover:shadow-md enabled:active:translate-y-0 enabled:active:scale-95 disabled:cursor-default disabled:opacity-40 motion-reduce:transition-none motion-reduce:enabled:hover:translate-y-0 motion-reduce:enabled:active:scale-100"
 						style={{ background: "var(--color-primary)" }}
 					>
-						<Send size={14} />
+						{/* the plane lifts off on hover; while posting it gives way to a spinner */}
+						{busy ? (
+							<Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden />
+						) : (
+							<Send size={14} className="transition-transform duration-200 ease-out group-enabled:group-hover:translate-x-0.5 group-enabled:group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0" aria-hidden />
+						)}
 					</button>
 				</div>
 			</div>
